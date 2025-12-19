@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { availableLocales, type Locale } from "@/lib/i18n";
+import { availableLocales, type Locale } from "@/lib/i18n.shared";
 
 export function LocaleSwitcher({ value }: { value: Locale }) {
   const router = useRouter();

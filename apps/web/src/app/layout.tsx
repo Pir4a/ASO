@@ -3,7 +3,8 @@ import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { defaultLocale, getLocaleFromCookie, isRtl } from "@/lib/i18n";
+import { getLocaleFromCookie } from "@/lib/i18n.server";
+import { defaultLocale, isRtl } from "@/lib/i18n.shared";
 
 const poppins = Poppins({
   variable: "--font-heading",
@@ -31,8 +32,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const locale = getLocaleFromCookie() || defaultLocale;
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = (await getLocaleFromCookie()) || defaultLocale;
   const dir = isRtl(locale) ? "rtl" : "ltr";
 
   return (

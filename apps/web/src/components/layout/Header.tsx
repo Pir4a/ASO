@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { LocaleSwitcher } from "@/components/common/LocaleSwitcher";
-import { Locale } from "@/lib/i18n";
+import { Locale } from "@/lib/i18n.shared";
 
 const navLinks = [
   { href: "/", label: "Accueil" },

@@ -1,14 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    ppr: true,
-  },
-  i18n: {
-    locales: ["fr", "en", "ar"],
-    defaultLocale: "fr",
-    localeDetection: true,
-  },
+  // `experimental.ppr` was merged into `cacheComponents` in newer Next versions.
+  cacheComponents: true,
   images: {
     remotePatterns: [
       {
