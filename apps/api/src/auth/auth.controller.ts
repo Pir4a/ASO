@@ -11,7 +11,7 @@ export class AuthController {
     return this.authService.register(authDto);
   }
 
-  @HttpCode(HttpStatus.OK) // Par défaut, Post renvoie 201, on veut 200 pour un login
+  @HttpCode(HttpStatus.OK)
   @Post('login')
   login(@Body() authDto: AuthDto) {
     return this.authService.login(authDto);
