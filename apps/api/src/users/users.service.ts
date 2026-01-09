@@ -12,4 +12,13 @@ export class UsersService {
   findAll() {
     return this.repo.find({ select: ['id', 'email', 'role'] });
   }
+
+  async findOneByEmail(email: string) {
+    return this.repo.findOne({ where: { email } });
+  }
+
+  async create(email: string, passwordHash: string) {
+    const user = this.repo.create({ email, passwordHash });
+    return this.repo.save(user);
+  }
 }

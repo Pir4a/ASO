@@ -8,8 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import bcrypt from 'bcryptjs';
 import { User } from '../entities/user.entity';
-import { SignupDto } from './dto/signup.dto';
-import { LoginDto } from './dto/login.dto';
+import { AuthDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -18,38 +17,37 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async signup(dto: SignupDto) {
-    const existing = await this.usersRepo.findOne({
-      where: { email: dto.email },
-    });
-    if (existing) throw new ConflictException('User already exists');
+  async register(authDto: AuthDto) {
+    const { email, password } = authDto;
 
-    const passwordHash = await bcrypt.hash(dto.password, 10);
-    const user = this.usersRepo.create({
-      email: dto.email,
-      passwordHash,
-      role: 'customer',
-    });
-    const saved = await this.usersRepo.save(user);
-    return this.buildToken(saved);
+    const existingUser = await this.usersRepo.findOne({ where: { email } });
+    if (existingUser) {
+      throw new ConflictException('Un utilisateur avec cet email existe déjà.');
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const user = this.usersRepo.create({ email, passwordHash });
+    await this.usersRepo.save(user);
+
+    // On ne retourne pas le hash du mot de passe
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash: _, ...userResult } = user;
+    return userResult;
   }
 
-  async login(dto: LoginDto) {
-    const user = await this.usersRepo.findOne({ where: { email: dto.email } });
-    if (!user) throw new UnauthorizedException('Invalid credentials');
+  async login(authDto: AuthDto) {
+    const { email, password } = authDto;
+    const user = await this.usersRepo.findOne({ where: { email } });
 
-    const valid = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!valid) throw new UnauthorizedException('Invalid credentials');
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      throw new UnauthorizedException('Email ou mot de passe incorrect.');
+    }
 
-    return this.buildToken(user);
-  }
-
-  private buildToken(user: User) {
     const payload = { sub: user.id, email: user.email, role: user.role };
-    const accessToken = this.jwtService.sign(payload);
     return {
-      accessToken,
-      user: { id: user.id, email: user.email, role: user.role },
+      access_token: this.jwtService.sign(payload),
+      user: { id: user.id, email: user.email, role: user.role }, // Ajout de l'objet utilisateur
     };
   }
 }
