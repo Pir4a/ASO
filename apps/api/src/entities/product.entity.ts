@@ -20,7 +20,7 @@ export class Product {
   sku: string;
 
   @Index()
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: false }) // Assurez-vous que le slug est non-nullable
   slug: string;
 
   @Column()
@@ -29,13 +29,16 @@ export class Product {
   @Column({ type: 'text' })
   description: string;
 
-  @Column({ type: 'int' })
-  priceCents: number;
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false, default: 0 }) // Utilisation de decimal pour le prix, avec une valeur par défaut
+  price: number;
 
   @Column({ length: 3, default: 'EUR' })
   currency: string;
 
-  @Column({ type: 'varchar', length: 20 })
+  @Column({ type: 'int', default: 0, nullable: false }) // Ajout de la colonne stock
+  stock: number;
+
+  @Column({ type: 'varchar', length: 20, default: 'new', nullable: false }) // Définition d'un statut par défaut
   status: ProductStatus;
 
   @Column({ nullable: true })

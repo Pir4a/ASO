@@ -59,6 +59,13 @@ export function Header({ locale }: HeaderProps) {
           {isAuthenticated ? (
             <>
               <span className="text-sm text-slate-700">Bonjour, {user?.email}</span>
+              <Link href="/profile" className="rounded-md bg-blue-500 px-3 py-1 text-sm font-semibold text-white shadow-sm hover:bg-blue-600">
+                Mon Profil
+              </Link>
+              {user?.role === "admin" && (
+                <Link href="/backoffice" className="rounded-md bg-purple-500 px-3 py-1 text-sm font-semibold text-white shadow-sm hover:bg-purple-600">
+                  Backoffice
+                </Link>)}
               <button
                 onClick={handleLogout}
                 className="rounded-md bg-red-500 px-3 py-1 text-sm font-semibold text-white shadow-sm hover:bg-red-600"

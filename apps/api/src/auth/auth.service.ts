@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   UnauthorizedException,
+  NotFoundException, // Added NotFoundException
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,6 +10,7 @@ import { Repository } from 'typeorm';
 import bcrypt from 'bcryptjs';
 import { User } from '../entities/user.entity';
 import { AuthDto } from './dto/auth.dto';
+import { UserRole } from '../entities/user.entity'; // Import du type UserRole depuis l'entité User
 
 @Injectable()
 export class AuthService {
@@ -49,5 +51,17 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
       user: { id: user.id, email: user.email, role: user.role }, // Ajout de l'objet utilisateur
     };
+  }
+
+  async updateUserRole(userId: string, newRole: string) {
+    const user = await this.usersRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('Utilisateur non trouvé.');
+    }
+
+    user.role = newRole as UserRole; // Cast newRole au type UserRole
+    await this.usersRepo.save(user);
+
+    return { id: user.id, email: user.email, role: user.role };
   }
 }

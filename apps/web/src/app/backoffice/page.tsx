@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { getCategories, getProducts } from "@/lib/api";
+import { AuthGuard } from "@/components/guards/AuthGuard"; // Importez AuthGuard
+import { ProductForm } from "@/components/backoffice/ProductForm"; // Import du nouveau composant de formulaire
 
 export default async function BackofficePage() {
   const [categories, products] = await Promise.all([getCategories(), getProducts()]);
 
   return (
-    <div className="space-y-6">
-      <div className="card p-6 space-y-2">
+    // Enveloppez le contenu avec AuthGuard
+    <AuthGuard>
+      <div className="space-y-6">
+        <div className="card p-6 space-y-2">
         <h1 className="text-2xl font-semibold text-slate-900">Backoffice (MVP)</h1>
         <p className="text-sm text-slate-600">
           Gestion des contenus : carrousel, catégories, produits. API NestJS sécurisée.
@@ -37,6 +41,9 @@ export default async function BackofficePage() {
         </div>
       </div>
 
+        {/* Nouvelle section pour l'ajout de matériel */}
+        <ProductForm categories={categories} />
+
       <div className="card p-6 space-y-3">
         <p className="text-sm font-semibold text-slate-900">Actions rapides</p>
         <div className="flex flex-wrap gap-2">
@@ -54,7 +61,7 @@ export default async function BackofficePage() {
           Ces actions appelleront les endpoints NestJS protégés (auth admin requise).
         </p>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   );
 }
-
