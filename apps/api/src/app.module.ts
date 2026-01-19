@@ -11,6 +11,7 @@ import { CartModule } from './infrastructure/ioc/cart.module';
 import { OrdersModule } from './infrastructure/ioc/orders.module';
 import { AddressModule } from './infrastructure/ioc/address.module';
 import { ContentModule } from './infrastructure/ioc/content.module';
+import { PaymentModule } from './infrastructure/ioc/payment.module';
 import { AppDataSource } from './db/data-source';
 
 @Module({
@@ -27,6 +28,7 @@ import { AppDataSource } from './db/data-source';
     OrdersModule,
     AddressModule,
     ContentModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

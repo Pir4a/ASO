@@ -47,7 +47,10 @@ Scope analyzed:
 
 ### Checkout complet (PDF p.13–14)
 - [x] **Flow multi-étapes**: adresses → paiement (mock) → confirmation.
-- [ ] **Paiement sécurisé** (Stripe/PayPal) – placeholder mock only.
+- [ ] **Paiement sécurisé** (Stripe/PayPal) – *In Progress*
+  - [ ] Configuration des secrets (`STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`)
+  - [ ] Backend implementation
+  - [ ] Frontend integration
 - [ ] **Email de confirmation d'achat** – not implemented.
 - [ ] **Factures**: modification, suppression → **avoir**, **génération PDF** – not implemented.
 

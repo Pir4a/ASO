@@ -33,6 +33,12 @@ export class Order {
     @Column({ nullable: true })
     paymentMethod?: string;
 
+    @Column({ nullable: true })
+    paymentId?: string;
+
+    @Column({ default: 'unpaid' })
+    paymentStatus: string;
+
     @OneToMany(() => OrderItem, (item) => item.order, { cascade: true, eager: true })
     items: OrderItem[];
 

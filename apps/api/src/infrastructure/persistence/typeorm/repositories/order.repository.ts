@@ -62,4 +62,22 @@ export class TypeOrmOrderRepository implements OrderRepository {
         const savedEntity = await this.repository.save(persistenceEntity);
         return OrderMapper.toDomain(savedEntity);
     }
+
+    async updateStatus(id: string, status: string, metadata?: Record<string, any>): Promise<DomainOrder> {
+        const order = await this.repository.findOne({ where: { id }, relations: ['items'] });
+        if (!order) throw new Error('Order not found');
+
+        // Cast string status to enum if applicable or ensure type safety
+        // Here we assume basic compatibility
+        order.status = status as any;
+
+        if (metadata) {
+            if (metadata.paymentId) order.paymentId = metadata.paymentId;
+            if (metadata.paymentStatus) order.paymentStatus = metadata.paymentStatus;
+            if (metadata.paymentMethod) order.paymentMethod = metadata.paymentMethod;
+        }
+
+        const savedEntity = await this.repository.save(order);
+        return OrderMapper.toDomain(savedEntity);
+    }
 }
