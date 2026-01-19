@@ -7,7 +7,14 @@ Scope analyzed:
 
 ---
 
-## ✅ Completed Work (2026-01-19)
+## ✅ Completed Work
+
+### Cart (Panier) (PDF p.12–13)
+- [x] **Panier invité persistant** (localStorage `guestCartId`) + **fusion au login** (`MergeGuestCartUseCase`).
+- [x] **Modifier quantités / supprimer** (UI + API) + recalcul dynamique (`UpdateCartItemUseCase`, `RemoveFromCartUseCase`).
+- [x] **Gestion réelle des indisponibilités** (stock validation in `AddToCartUseCase` / `UpdateCartItemUseCase`).
+- [x] **Promotions / taxes complètes** (`Promotion` entity, `ApplyPromotionUseCase`, TVA 20%).
+- [x] **Frontend**: Interactive `CartPage` with `useCart` hook (`apps/web/src/hooks/useCart.tsx`) and real API integration.
 
 ### Clean Architecture Migration
 - [x] **Domain Layer**: Created domain entities (`User`, `Product`, `Category`) and repository interfaces
@@ -30,111 +37,78 @@ Scope analyzed:
 - [x] Fixed `TypeOrmUserRepository` dependency injection (switched to DataSource injection)
 - [x] Fixed CORS configuration in `main.ts`
 - [x] Fixed `cookies()` usage during static generation
+- [x] Fixed `AppDataSource` entity registration and schema synchronization
+- [x] Fixed guest cart UUID generation
+- [x] Fixed product price display (EUR vs Cents mismatch)
 
 ---
 
-## Missing features (spec → current state)
+## 🚧 Partial / In Progress
 
-### Panier (PDF p.12–13) ✅ DONE
-- ✅ **Panier invité persistant** (localStorage `guestCartId`) + **fusion au login** (`MergeGuestCartUseCase`).
-- ✅ **Modifier quantités / supprimer** (UI + API) + recalcul dynamique (`UpdateCartItemUseCase`, `RemoveFromCartUseCase`).
-- ✅ **Gestion réelle des indisponibilités** (stock validation in `AddToCartUseCase` / `UpdateCartItemUseCase`).
-- ✅ **Promotions / taxes complètes** (`Promotion` entity, `ApplyPromotionUseCase`, TVA 20%).
+### Checkout complet (PDF p.13–14)
+- [x] **Flow multi-étapes**: adresses → paiement (mock) → confirmation.
+- [ ] **Paiement sécurisé** (Stripe/PayPal) – placeholder mock only.
+- [ ] **Email de confirmation d'achat** – not implemented.
+- [ ] **Factures**: modification, suppression → **avoir**, **génération PDF** – not implemented.
 
-Implemented:
-- API cart endpoints: `GET/POST/PUT/DELETE /cart/*` in `cart.controller.ts`
-- Use cases: `apps/api/src/application/use-cases/cart/*.ts`
-- Promotion system: `apps/api/src/domain/entities/promotion.entity.ts`
-- Frontend: Interactive `CartPage` with `useCart` hook (`apps/web/src/hooks/useCart.tsx`)
+---
 
-### Checkout complet (PDF p.13–14) ✅ PARTIAL
-- ✅ **Flow multi-étapes**: adresses → paiement (mock) → confirmation.
-- ⏳ **Paiement sécurisé** (Stripe/PayPal) – placeholder mock only.
-- ⏳ **Email de confirmation d'achat** – not implemented.
-- ⏳ **Factures**: modification, suppression → **avoir**, **génération PDF** – not implemented.
-
-Implemented:
-- Multi-step checkout: `apps/web/src/app/(shop)/checkout/page.tsx`
-- Address CRUD: `ProfileController`, `CreateUserAddressUseCase`
-- Order creation: `CheckoutController`, `CreateOrderUseCase`
+## 📝 To Do (Backlog)
 
 ### Inscription + validation email (PDF p.15–16)
-- **Nom complet** + validation des champs.
-- **Règles de mot de passe** (CNIL/RGPD) + validation client/serveur.
-- **Email de confirmation** avec lien unique et durée limitée (~24h).
-- **Restriction tant que non confirmé** + auto-login après validation.
-
-Current:
-- Signup/login basiques sans validation email: `apps/api/src/infrastructure/services/auth.service.ts`
-- `User` ne contient pas "nom complet"/statut: `apps/api/src/domain/entities/user.entity.ts`
+- [ ] **Nom complet** + validation des champs.
+- [ ] **Règles de mot de passe** (CNIL/RGPD) + validation client/serveur.
+- [ ] **Email de confirmation** avec lien unique et durée limitée (~24h).
+- [ ] **Restriction tant que non confirmé** + auto-login après validation.
 
 ### Gestion de compte: adresses + méthodes de paiement (PDF p.17–18)
-- CRUD **adresses** (ajouter/éditer/supprimer, choix pendant checkout).
-- Gestion **méthodes de paiement** (ajouter/supprimer carte).
-
-Current:
-- Pas d'entities "Address" / "PaymentMethod" côté API.
-- UI settings **mock**: `apps/web/src/app/(account)/settings/page.tsx`
+- [ ] CRUD **adresses** (ajouter/éditer/supprimer, choix pendant checkout).
+- [ ] Gestion **méthodes de paiement** (ajouter/supprimer carte).
 
 ### Historique des commandes (PDF p.19–20)
-- Commandes **regroupées par année**.
-- **Filtres** (année/type/statut) + **recherche**.
-- **Détails commande** + **téléchargement facture PDF**.
-- Affichage sécurisé (pas de détails carte).
-
-Current:
-- Orders API **mock**: `apps/api/src/infrastructure/ioc/orders.module.ts`
-- UI orders sans groupement/filtre/recherche/factures: `apps/web/src/app/(account)/orders/page.tsx`
+- [ ] Commandes **regroupées par année**.
+- [ ] **Filtres** (année/type/statut) + **recherche**.
+- [ ] **Détails commande** + **téléchargement facture PDF**.
+- [ ] Affichage sécurisé (pas de détails carte).
 
 ### Contact + chatbot + backoffice support (PDF p.20)
-- Formulaire contact: **email + sujet + message** + confirmation.
-- Stockage et consultation des messages **dans le backoffice**.
-- Chatbot: FAQ, escalade humain, contexte commande.
-
-Current:
-- UI contact/chatbot **mock**: 
-  - `apps/web/src/app/(misc)/contact/page.tsx`
-  - `apps/web/src/app/(misc)/chatbot/page.tsx`
-- Pas de module API "support/contact".
+- [ ] Formulaire contact: **email + sujet + message** + confirmation.
+- [ ] Stockage et consultation des messages **dans le backoffice**.
+- [ ] Chatbot: FAQ, escalade humain, contexte commande.
 
 ### Backoffice complet (PDF p.24)
-- **Catégories**: CRUD, statut active/inactive, ordre d'affichage, bulk actions, drag & drop.
-- **Utilisateurs**: tri/recherche, statut (actif/inactif/en attente), nb commandes, CA, dernière connexion, adresses.
-- **Actions admin**: reset mdp, désactiver, supprimer (RGPD), envoyer mail.
-- **Accès admin**: RBAC + **2FA**.
-
-Current:
-- Page backoffice = dashboard MVP non sécurisé: `apps/web/src/app/backoffice/page.tsx`
-- Rôle existe côté user (`customer|admin`) mais pas de guards RBAC/2FA ni endpoints admin complets.
+- [ ] **Catégories**: CRUD, statut active/inactive, ordre d'affichage, bulk actions, drag & drop.
+- [ ] **Utilisateurs**: tri/recherche, statut (actif/inactif/en attente), nb commandes, CA, dernière connexion, adresses.
+- [ ] **Actions admin**: reset mdp, désactiver, supprimer (RGPD), envoyer mail.
+- [ ] **Accès admin**: RBAC + **2FA**.
 
 ### i18n + RTL (PDF p.27)
-- Multilingue réel (stratégie App Router) + RTL robuste pour `ar`.
-
-Current:
-- Sélecteur de langue + `dir` RTL (cookie locale), mais pas de vraie infra de traduction/routing.
+- [ ] Multilingue réel (stratégie App Router) + RTL robuste pour `ar`.
 
 ### a11y WCAG 2.1 (PDF p.27)
-- Audit et conformité (clavier, lecteurs d'écran, focus, contrastes).
-
-Current:
-- Partiel / non audité (ex: quelques `aria-*`).
+- [ ] Audit et conformité (clavier, lecteurs d'écran, focus, contrastes).
 
 ### Sécurité / RGPD / pratiques (PDF p.27 + p.29)
-- Chiffrement données sensibles, sessions/authZ, protections XSS/CSRF/SQLi.
-- Tests sécurité réguliers.
-- RGPD opérationnel (droits, suppression, gestion consentement).
-
-Current:
-- Bon socle: Helmet + ValidationPipe + throttling (`apps/api/src/main.ts`, `apps/api/src/app.module.ts`).
-- Manquent les features qui "portent" la sécurité: paiement, email verification, 2FA, RGPD complet, etc.
+- [ ] Chiffrement données sensibles, sessions/authZ, protections XSS/CSRF/SQLi.
+- [ ] Tests sécurité réguliers.
+- [ ] RGPD opérationnel (droits, suppression, gestion consentement).
 
 ---
 
-## Optimizations / technical debt (recommended priorities)
+## 🔮 New Iteration (Forgotten Specs)
+
+> *Please list here any specific requirements from the "Cahier des charges" that are not covered above.*
+
+- [ ] ...
+- [ ] ...
+
+---
+
+## Optimizations / Technical Debt
 
 ### P0 — Stop mocks / make core flows real
 - **Replace mocks** with persistence + real endpoints:
-  - `CartService`, `OrdersService`, checkout, contact/chatbot.
+  - `CartService` (DONE), `OrdersService`, checkout, contact/chatbot.
 - Introduire un **modèle e-commerce** complet (Postgres):
   - `Order`, `OrderItem`, `Invoice`, `CreditNote`, `Address`, `PaymentMethod`.
 
@@ -151,27 +125,10 @@ Current:
 - Reset password.
 - Optionnel: refresh tokens.
 
-### P1 — Next.js performance / UX
-- ~~Éviter le rendu bloquant lié à `cookies()` (warning "blocking route")~~ ✅ Fixed with try-catch
-- Caching et gestion propre des erreurs d'images externes.
-
 ### P1 — Production readiness
 - **TypeORM**: remplacer `synchronize: true` par migrations en prod.
 - Logging structuré + monitoring + alerting.
-- ~~Durcir config CORS/cookies selon déploiement.~~ ✅ CORS configured
 
 ### P2 — Quality / compliance
 - Tests unit + e2e sur parcours critiques (auth, panier, checkout).
 - Checklist a11y/SEO (Lighthouse/WCAG) + correctifs.
-
----
-
-## Quick mapping (spec → code entry points)
-
-- **Cart**: `apps/web/src/app/(shop)/cart/page.tsx` + `apps/api/src/infrastructure/ioc/cart.module.ts`
-- **Checkout**: `apps/web/src/app/(shop)/checkout/page.tsx`
-- **Auth**: `apps/api/src/infrastructure/ioc/auth.module.ts` + `apps/web/src/app/(account)/*`
-- **Orders**: `apps/web/src/app/(account)/orders/page.tsx` + `apps/api/src/infrastructure/ioc/orders.module.ts`
-- **Backoffice**: `apps/web/src/app/backoffice/page.tsx`
-- **i18n**: `apps/web/src/lib/i18n.*` + header locale switch
-- **Docker**: `docker-compose.yml` + `apps/api/Dockerfile` + `apps/web/Dockerfile`
