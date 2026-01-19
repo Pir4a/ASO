@@ -68,39 +68,181 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
   }
 }
 
-export async function getCart(): Promise<{
-  items: { productId: string; quantity: number; priceCents: number; currency: string; name?: string }[];
+export async function getCart(guestCartId?: string): Promise<{
+  id?: string;
+  items: { productId: string; quantity: number; priceCents: number; currency: string; name?: string; stock?: number }[];
   subtotal: number;
   vat: number;
   total: number;
   currency: string;
 }> {
   try {
-    return await fetchJson("/cart");
-  } catch {
-    const items = mockProducts.slice(0, 2).map((p) => ({
-      productId: p.id,
-      quantity: 1,
-      priceCents: p.priceCents,
-      currency: p.currency,
-      name: p.name,
+    const headers: Record<string, string> = {};
+    if (guestCartId) {
+      headers['x-guest-cart-id'] = guestCartId;
+    }
+
+    const res = await fetch(`${API_URL}/cart`, {
+      headers,
+      cache: 'no-store'
+    });
+
+    if (!res.ok) {
+      throw new Error(`API error ${res.status}`);
+    }
+
+    const cart = await res.json();
+
+    if (!cart || !cart.items) {
+      return { items: [], subtotal: 0, vat: 0, total: 0, currency: "EUR" };
+    }
+
+    const items = cart.items.map((item: any) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+      priceCents: Math.round((item.productPrice || 0) * 100),
+      currency: item.productCurrency || "EUR",
+      name: item.productName || "Unknown Product",
+      stock: item.productStock,
     }));
-    const subtotal = items.reduce((sum, item) => sum + item.priceCents * item.quantity, 0);
+
+    const subtotal = items.reduce((sum: number, item: any) => sum + item.priceCents * item.quantity, 0);
     const vat = Math.round(subtotal * 0.2);
-    return { items, subtotal, vat, total: subtotal + vat, currency: "EUR" };
+
+    return { id: cart.id, items, subtotal, vat, total: subtotal + vat, currency: "EUR" };
+  } catch (error) {
+    console.error("Failed to fetch cart:", error);
+    return { items: [], subtotal: 0, vat: 0, total: 0, currency: "EUR" };
+  }
+}
+
+export async function addToCart(productId: string, quantity: number, guestCartId?: string): Promise<any> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (guestCartId) {
+    headers['x-guest-cart-id'] = guestCartId;
+  }
+
+  const res = await fetch(`${API_URL}/cart/items`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ productId, quantity }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.message || "Failed to add item to cart");
+  }
+  return res.json();
+}
+
+export async function updateCartItem(productId: string, quantity: number, guestCartId?: string): Promise<any> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (guestCartId) {
+    headers['x-guest-cart-id'] = guestCartId;
+  }
+
+  const res = await fetch(`${API_URL}/cart/items/${productId}`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({ quantity }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.message || "Failed to update item");
+  }
+  return res.json();
+}
+
+export async function removeCartItem(productId: string, guestCartId?: string): Promise<any> {
+  const headers: Record<string, string> = {};
+  if (guestCartId) {
+    headers['x-guest-cart-id'] = guestCartId;
+  }
+
+  const res = await fetch(`${API_URL}/cart/items/${productId}`, {
+    method: "DELETE",
+    headers,
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to remove item");
+  }
+  return res.json();
+}
+
+export async function applyPromoCode(code: string, orderTotal: number): Promise<{ discount: number; message: string }> {
+  const res = await fetch(`${API_URL}/cart/promo`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code, orderTotal }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.message || "Invalid promo code");
+  }
+  return res.json();
+}
+
+// ... existing imports
+
+export async function getUserAddresses(): Promise<any[]> {
+  try {
+    return await fetchJson("/profile/addresses");
+  } catch {
+    return [];
+  }
+}
+
+export async function createUserAddress(address: any): Promise<any> {
+  try {
+    const res = await fetch(`${API_URL}/profile/addresses`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(address),
+    });
+    if (!res.ok) throw new Error("Failed to create address");
+    return res.json();
+  } catch (e) {
+    console.error(e);
+    throw e;
+  }
+}
+
+export async function createOrder(addressId: string): Promise<any> {
+  try {
+    // Mock user ID for guest flow as handled in backend controller placeholder
+    const res = await fetch(`${API_URL}/checkout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: "guest-user-id", addressId }),
+    });
+    if (!res.ok) throw new Error("Failed to create order");
+    return res.json();
+  } catch (e) {
+    console.error(e);
+    throw e;
   }
 }
 
 export async function getOrders(): Promise<
-  { id: string; totalCents: number; currency: string; status: string; createdAt: string }[]
+  { id: string; total: number; currency: string; status: string; createdAt: string }[]
 > {
   try {
-    return await fetchJson("/orders");
+    const orders = await fetchJson<any[]>("/orders");
+    return orders.map(o => ({
+      id: o.id,
+      total: o.total, // Backend sends decimal
+      currency: o.currency,
+      status: o.status,
+      createdAt: o.createdAt
+    }));
   } catch {
     return [
       {
         id: "CMD-2025-001",
-        totalCents: 1520000,
+        total: 152.00,
         currency: "EUR",
         status: "processing",
         createdAt: new Date().toISOString(),

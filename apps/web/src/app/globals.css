@@ -32,7 +32,43 @@ a {
 }
 
 .card {
-  border: 1px solid rgb(226, 232, 240);
+  /* Refactor Architect: Kill the borders. Use shadow for depth. */
+  border: none;
   border-radius: 16px;
   background: white;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+/* Toast animations */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+/* Button animations */
+@keyframes pulse-success {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-success {
+  animation: pulse-success 0.3s ease-in-out;
 }

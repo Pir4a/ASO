@@ -1,54 +1,251 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { getUserAddresses, createUserAddress, createOrder, getCart } from "@/lib/api";
+
+type Address = {
+  id: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  phone?: string;
+};
+
+type Step = "address" | "payment" | "confirmation";
+
 export default function CheckoutPage() {
+  const [step, setStep] = useState<Step>("address");
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [cartTotal, setCartTotal] = useState<number>(0);
+  const [currency, setCurrency] = useState<string>("EUR");
+  const [orderResult, setOrderResult] = useState<{ id: string } | null>(null);
+
+  // New Address Form State
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+  const [newAddress, setNewAddress] = useState({
+    street: "",
+    city: "",
+    postalCode: "",
+    country: "France",
+    phone: ""
+  });
+
+  useEffect(() => {
+    // Fetch initial data
+    Promise.all([getUserAddresses(), getCart()]).then(([addr, cart]) => {
+      setAddresses(addr);
+      if (addr.length > 0) setSelectedAddressId(addr[0].id);
+      setCartTotal(cart.total);
+      setCurrency(cart.currency);
+    });
+  }, []);
+
+  const handleCreateAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const created = await createUserAddress(newAddress);
+      setAddresses([...addresses, created]);
+      setSelectedAddressId(created.id);
+      setShowNewAddressForm(false);
+      // Reset form
+      setNewAddress({ street: "", city: "", postalCode: "", country: "France", phone: "" });
+    } catch (error) {
+      alert("Erreur lors de la création de l'adresse");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePayment = async () => {
+    if (!selectedAddressId) return;
+    setIsLoading(true);
+    try {
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Create Order
+      const order = await createOrder(selectedAddressId);
+      setOrderResult(order);
+      setStep("confirmation");
+    } catch (error) {
+      alert("Erreur lors de la commande");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (step === "confirmation" && orderResult) {
+    return (
+      <div className="card p-8 text-center space-y-4">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+          <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold text-slate-900">Commande Confirmée !</h2>
+        <p className="text-slate-600">
+          Merci pour votre achat. Votre numéro de commande est <span className="font-mono font-bold text-slate-900">{orderResult.id}</span>.
+        </p>
+        <div className="pt-4">
+          <Link href="/products" className="inline-flex justify-center rounded-md bg-primary px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover">
+            Retour à la boutique
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="card p-6 space-y-2">
-        <h1 className="text-2xl font-semibold text-slate-900">Checkout</h1>
-        <p className="text-sm text-slate-600">
-          Étapes : adresse ➜ paiement ➜ confirmation. Les données seront transmises à l&apos;API
-          NestJS (sécurisée, CSRF/XSS mitigés).
-        </p>
-      </div>
+    <div className="grid gap-8 lg:grid-cols-3">
+      <div className="lg:col-span-2 space-y-6">
+        {/* Steps Indicator */}
+        <div className="flex items-center space-x-4 mb-8">
+          {["address", "payment", "confirmation"].map((s, idx) => (
+            <div key={s} className={`flex items-center ${step === s ? "text-primary font-bold" : "text-slate-500"}`}>
+              <span className={`flex h-8 w-8 items-center justify-center rounded-full border-2 mr-2 ${step === s ? "border-primary bg-primary/10" : "border-slate-300"}`}>
+                {idx + 1}
+              </span>
+              <span className="capitalize">{s === "address" ? "Adresse" : s === "payment" ? "Paiement" : "Confirmation"}</span>
+            </div>
+          ))}
+        </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {[
-          { title: "1. Adresse", detail: "Collecte des infos client, validation RGPD." },
-          { title: "2. Paiement", detail: "Passerelle pluggable (mock par défaut)." },
-          { title: "3. Confirmation", detail: "Résumé, stockage commande dans PostgreSQL." },
-        ].map((step) => (
-          <div key={step.title} className="card space-y-2 p-4">
-            <p className="text-sm font-semibold text-slate-900">{step.title}</p>
-            <p className="text-sm text-slate-600">{step.detail}</p>
+        {step === "address" && (
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold text-slate-900">Adresse de livraison</h2>
+
+              {/* Saved Addresses List */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                {addresses.map(addr => (
+                  <div
+                    key={addr.id}
+                    onClick={() => setSelectedAddressId(addr.id)}
+                    className={`cursor-pointer rounded-lg border p-4 shadow-sm transition-all ${selectedAddressId === addr.id ? "border-primary ring-1 ring-primary bg-primary/5" : "border-slate-200 hover:border-primary/50"}`}
+                  >
+                    <p className="font-semibold text-slate-900">{addr.street}</p>
+                    <p className="text-sm text-slate-600">{addr.postalCode} {addr.city}</p>
+                    <p className="text-sm text-slate-600 uppercase">{addr.country}</p>
+                  </div>
+                ))}
+
+                <button
+                  onClick={() => setShowNewAddressForm(!showNewAddressForm)}
+                  className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 p-4 text-slate-500 hover:border-primary hover:text-primary transition-colors"
+                >
+                  <span className="text-2xl mb-1">+</span>
+                  <span className="text-sm font-medium">Nouvelle adresse</span>
+                </button>
+              </div>
+            </div>
+
+            {/* New Address Form */}
+            {showNewAddressForm && (
+              <form onSubmit={handleCreateAddress} className="card p-6 space-y-4 bg-slate-50 border-slate-200">
+                <h3 className="font-semibold text-slate-900">Ajouter une nouvelle adresse</h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <input
+                    required placeholder="Rue" value={newAddress.street}
+                    onChange={e => setNewAddress({ ...newAddress, street: e.target.value })}
+                    className="col-span-2 rounded-md border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    required placeholder="Code Postal" value={newAddress.postalCode}
+                    onChange={e => setNewAddress({ ...newAddress, postalCode: e.target.value })}
+                    className="rounded-md border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    required placeholder="Ville" value={newAddress.city}
+                    onChange={e => setNewAddress({ ...newAddress, city: e.target.value })}
+                    className="rounded-md border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    required placeholder="Pays" value={newAddress.country}
+                    onChange={e => setNewAddress({ ...newAddress, country: e.target.value })}
+                    className="rounded-md border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    placeholder="Téléphone" value={newAddress.phone}
+                    onChange={e => setNewAddress({ ...newAddress, phone: e.target.value })}
+                    className="rounded-md border-slate-200 px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="flex justify-end space-x-3">
+                  <button type="button" onClick={() => setShowNewAddressForm(false)} className="text-sm text-slate-600 hover:text-slate-900">Annuler</button>
+                  <button type="submit" disabled={isLoading} className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
+                    {isLoading ? "Enregistrement..." : "Enregistrer l'adresse"}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            <div className="flex justify-end pt-4">
+              <button
+                onClick={() => setStep("payment")}
+                disabled={!selectedAddressId}
+                className="rounded-md bg-primary px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Passer au paiement
+              </button>
+            </div>
           </div>
-        ))}
+        )}
+
+        {step === "payment" && (
+          <div className="space-y-6">
+            <div className="card p-6 space-y-4">
+              <h2 className="text-xl font-semibold text-slate-900">Paiement sécurisé</h2>
+              <div className="p-4 rounded-lg bg-blue-50 border border-blue-100 text-blue-800 text-sm">
+                <span className="font-bold">Mode simulation:</span> Aucun débit ne sera effectué. Ceci est une démonstration technique.
+              </div>
+
+              <div className="space-y-3">
+                <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer bg-white shadow-sm ring-1 ring-primary/20">
+                  <input type="radio" name="payment" defaultChecked className="h-4 w-4 text-primary" />
+                  <span className="font-medium text-slate-900">Carte Bancaire (Simulé)</span>
+                </label>
+                <label className="flex items-center space-x-3 p-4 border rounded-lg opacity-50 cursor-not-allowed">
+                  <input type="radio" name="payment" disabled className="h-4 w-4" />
+                  <span className="text-slate-500">PayPal (Bientôt disponible)</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-between pt-4">
+              <button onClick={() => setStep("address")} className="text-slate-600 font-medium hover:text-slate-900">
+                ← Retour
+              </button>
+              <button
+                onClick={handlePayment}
+                disabled={isLoading}
+                className="rounded-md bg-primary px-8 py-3 text-base font-bold text-white shadow-lg hover:bg-primary-hover hover:-translate-y-0.5 transition-all disabled:opacity-50"
+              >
+                {isLoading ? "Traitement..." : `Payer ${(cartTotal / 100).toFixed(2)} ${currency}`}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="card p-6 space-y-3">
-        <p className="text-sm font-semibold text-slate-900">Mock form (à brancher sur l&apos;API)</p>
-        <form className="grid gap-3 md:grid-cols-2">
-          <input
-            required
-            placeholder="Email"
-            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
-          />
-          <input
-            required
-            placeholder="Téléphone"
-            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
-          />
-          <input
-            required
-            placeholder="Adresse"
-            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none md:col-span-2"
-          />
-          <button className="mt-2 inline-flex w-full justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover md:col-span-2">
-            Continuer (mock)
-          </button>
-        </form>
-        <p className="text-xs text-slate-500">
-          Les validations côté serveur seront gérées par class-validator dans l&apos;API.
-        </p>
+      {/* Sidebar Summary */}
+      <div className="lg:col-span-1">
+        <div className="card p-6 sticky top-24 space-y-4">
+          <h3 className="text-lg font-semibold text-slate-900">Récapitulatif</h3>
+          <div className="flex justify-between text-sm text-slate-600">
+            <span>Sous-total</span>
+            <span>{(cartTotal / 100).toFixed(2)} {currency}</span>
+          </div>
+          <div className="flex justify-between text-base font-bold text-slate-900 pt-4 border-t border-slate-100">
+            <span>Total à payer</span>
+            <span>{(cartTotal / 100).toFixed(2)} {currency}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-

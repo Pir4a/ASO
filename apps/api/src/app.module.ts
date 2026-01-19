@@ -9,6 +9,7 @@ import { ProductsModule } from './infrastructure/ioc/products.module';
 import { CategoriesModule } from './infrastructure/ioc/categories.module';
 import { CartModule } from './infrastructure/ioc/cart.module';
 import { OrdersModule } from './infrastructure/ioc/orders.module';
+import { AddressModule } from './infrastructure/ioc/address.module';
 import { ContentModule } from './infrastructure/ioc/content.module';
 import { AppDataSource } from './db/data-source';
 
@@ -24,6 +25,7 @@ import { AppDataSource } from './db/data-source';
     CategoriesModule,
     CartModule,
     OrdersModule,
+    AddressModule,
     ContentModule,
   ],
   controllers: [AppController],
