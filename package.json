@@ -1,0 +1,36 @@
+{
+  "name": "bootstrap",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo e-commerce Althea Systems (Next.js, NestJS, PostgreSQL, MongoDB)",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "format": "prettier --write .",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  },
+  "keywords": [
+    "ecommerce",
+    "nextjs",
+    "nestjs",
+    "postgresql",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "prettier": "^3.2.0",
+    "turbo": "^2.0.0"
+  },
+  "dependencies": {
+    "slugify": "^1.6.6"
+  }
+}
