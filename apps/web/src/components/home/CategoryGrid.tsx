@@ -8,7 +8,7 @@ export function CategoryGrid({ categories }: { categories: Category[] }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
       {categories.map((cat) => (
-        <Link key={cat.id} href={`/categories/${cat.slug}`}>
+        <Link key={cat.id} href={`/products?category=${cat.id}`}>
           <Card className="group h-full transition-all hover:-translate-y-1 hover:shadow-lg hover:border-primary cursor-pointer overflow-hidden">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between gap-2">

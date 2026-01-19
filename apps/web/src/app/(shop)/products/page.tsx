@@ -1,46 +1,90 @@
+import { Suspense } from "react";
 import Link from "next/link";
-import { getProducts } from "@/lib/api";
+import { searchProducts, getCategories } from "@/lib/api";
+import { ProductGrid } from "@/components/home/ProductGrid";
+import { ProductFilters } from "@/components/product/ProductFilters";
+import { Pagination } from "@/components/product/Pagination";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
-export default async function ProductsListPage() {
-  const products = await getProducts();
+interface SearchParams {
+  search?: string;
+  category?: string;
+  sortBy?: string;
+  sortOrder?: string;
+  page?: string;
+}
+
+export default async function ProductsListPage({
+  searchParams,
+}: {
+  searchParams?: SearchParams;
+}) {
+  const search = searchParams?.search || "";
+  const categoryId = searchParams?.category || "";
+  const sortBy = (searchParams?.sortBy as "createdAt" | "name" | "price") || "createdAt";
+  const sortOrder = (searchParams?.sortOrder as "asc" | "desc") || "desc";
+  const page = parseInt(searchParams?.page || "1", 10);
+
+  const [productsResult, categories] = await Promise.all([
+    searchProducts({
+      search: search || undefined,
+      categoryId: categoryId || undefined,
+      sortBy,
+      sortOrder,
+      page,
+      limit: 12,
+    }),
+    getCategories(),
+  ]);
+
+  const selectedCategory = categories.find((c) => c.id === categoryId);
 
   return (
     <div className="space-y-6">
+      {/* Header and Filters */}
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Catalogue produits</CardTitle>
           <CardDescription>
-            Pagination et filtres seront gérés côté API.
+            {productsResult.total} produit{productsResult.total !== 1 ? "s" : ""} trouvé{productsResult.total !== 1 ? "s" : ""}
+            {search && ` pour "${search}"`}
+            {selectedCategory && ` dans ${selectedCategory.name}`}
           </CardDescription>
         </CardHeader>
+        <CardContent>
+          <Suspense fallback={<div>Chargement des filtres...</div>}>
+            <ProductFilters
+              categories={categories}
+              initialSearch={search}
+              initialCategory={categoryId}
+              initialSortBy={sortBy}
+              initialSortOrder={sortOrder}
+            />
+          </Suspense>
+        </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {products.map((product) => (
-          <Link key={product.id} href={`/products/${product.slug}`}>
-            <Card className="h-full transition-all hover:-translate-y-1 hover:shadow-lg cursor-pointer">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between gap-2">
-                  <CardTitle className="text-base line-clamp-1">{product.name}</CardTitle>
-                  <Badge variant="secondary" className="shrink-0">
-                    {product.sku}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-lg font-semibold text-primary">
-                  {(product.priceCents / 100).toFixed(2)} {product.currency}
-                </p>
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {product.description}
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+      {/* Products Grid */}
+      {productsResult.items.length > 0 ? (
+        <ProductGrid products={productsResult.items} />
+      ) : (
+        <Card>
+          <CardContent className="py-10 text-center">
+            <p className="text-muted-foreground">Aucun produit trouvé.</p>
+            <Link href="/products" className="text-primary hover:underline mt-2 inline-block">
+              Voir tous les produits
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Pagination */}
+      <Suspense fallback={null}>
+        <Pagination
+          currentPage={productsResult.page}
+          totalPages={productsResult.totalPages}
+        />
+      </Suspense>
     </div>
   );
 }

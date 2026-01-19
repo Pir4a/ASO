@@ -6,6 +6,7 @@ import { ProductsController } from '../controllers/products/products.controller'
 import { GetProductsUseCase } from '../../application/use-cases/products/get-products.use-case';
 import { FindProductBySlugUseCase } from '../../application/use-cases/products/find-product-by-slug.use-case';
 import { CreateProductUseCase } from '../../application/use-cases/products/create-product.use-case';
+import { SearchProductsUseCase } from '../../application/use-cases/products/search-products.use-case';
 import { PRODUCT_REPOSITORY_TOKEN } from '../../domain/repositories/product.repository.interface';
 import { CategoriesModule } from './categories.module';
 
@@ -23,7 +24,9 @@ import { CategoriesModule } from './categories.module';
     GetProductsUseCase,
     FindProductBySlugUseCase,
     CreateProductUseCase,
+    SearchProductsUseCase,
   ],
-  exports: [PRODUCT_REPOSITORY_TOKEN, GetProductsUseCase, FindProductBySlugUseCase],
+  exports: [PRODUCT_REPOSITORY_TOKEN, GetProductsUseCase, FindProductBySlugUseCase, SearchProductsUseCase],
 })
 export class ProductsModule { }
+

@@ -15,8 +15,11 @@ export class Product {
     thumbnailUrl?: string;
     categoryId: string;
     category?: Category;
+    createdAt?: Date;
+    updatedAt?: Date;
 
     constructor(partial: Partial<Product>) {
         Object.assign(this, partial);
     }
 }
+

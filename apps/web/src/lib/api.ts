@@ -77,6 +77,75 @@ export async function getProducts(): Promise<Product[]> {
   }
 }
 
+// Search/Filter/Pagination types
+export interface ProductSearchParams {
+  search?: string;
+  categoryId?: string;
+  sortBy?: 'createdAt' | 'name' | 'price';
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedProducts {
+  items: Product[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export async function searchProducts(params: ProductSearchParams = {}): Promise<PaginatedProducts> {
+  try {
+    const searchParams = new URLSearchParams();
+
+    if (params.search) searchParams.set('search', params.search);
+    if (params.categoryId) searchParams.set('category', params.categoryId);
+    if (params.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
+    if (params.page) searchParams.set('page', params.page.toString());
+    if (params.limit) searchParams.set('limit', params.limit.toString());
+
+    const queryString = searchParams.toString();
+    const url = `${API_URL}/products${queryString ? `?${queryString}` : ''}`;
+
+    // Use no-store to bypass cache for dynamic filtering
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) {
+      throw new Error(`API error ${res.status}`);
+    }
+    const result = await res.json();
+
+    // Handle both paginated response and array response (backward compatibility)
+    if (Array.isArray(result)) {
+      const items = result.map(mapProduct);
+      return {
+        items,
+        total: items.length,
+        page: 1,
+        limit: items.length,
+        totalPages: 1,
+      };
+    }
+
+    return {
+      items: result.items.map(mapProduct),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+    };
+  } catch {
+    return {
+      items: mockProducts,
+      total: mockProducts.length,
+      page: 1,
+      limit: mockProducts.length,
+      totalPages: 1,
+    };
+  }
+}
+
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
   try {
     const product = await fetchJson<any>(`/products/${slug}`);

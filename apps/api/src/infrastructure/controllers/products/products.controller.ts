@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { GetProductsUseCase } from '../../../application/use-cases/products/get-products.use-case';
 import { FindProductBySlugUseCase } from '../../../application/use-cases/products/find-product-by-slug.use-case';
 import { CreateProductUseCase } from '../../../application/use-cases/products/create-product.use-case';
+import { SearchProductsUseCase } from '../../../application/use-cases/products/search-products.use-case';
 import { CreateProductDto } from './dto/create-product.dto';
 
 @Controller('products')
@@ -10,11 +11,34 @@ export class ProductsController {
         private readonly getProductsUseCase: GetProductsUseCase,
         private readonly findProductBySlugUseCase: FindProductBySlugUseCase,
         private readonly createProductUseCase: CreateProductUseCase,
+        private readonly searchProductsUseCase: SearchProductsUseCase,
     ) { }
 
     @Get()
-    findAll() {
-        return this.getProductsUseCase.execute();
+    findAll(
+        @Query('search') search?: string,
+        @Query('category') categoryId?: string,
+        @Query('sortBy') sortBy?: 'createdAt' | 'name' | 'price',
+        @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+    ) {
+        // If no query params provided, return all products (backward compatible)
+        const hasFilters = search || categoryId || sortBy || sortOrder || page || limit;
+
+        if (!hasFilters) {
+            return this.getProductsUseCase.execute();
+        }
+
+        // Use search with filters
+        return this.searchProductsUseCase.execute({
+            search,
+            categoryId,
+            sortBy: sortBy || 'createdAt',
+            sortOrder: sortOrder || 'desc',
+            page: page ? parseInt(page, 10) : 1,
+            limit: limit ? parseInt(limit, 10) : 12,
+        });
     }
 
     @Get(':slug')

@@ -42,9 +42,6 @@ export function Header({ locale }: HeaderProps) {
           <Link href="/products" className="text-sm font-medium text-slate-700 hover:text-primary">
             Produits
           </Link>
-          <Link href="/search" className="text-sm font-medium text-slate-700 hover:text-primary">
-            Recherche
-          </Link>
           <Link href="/contact" className="text-sm font-medium text-slate-700 hover:text-primary">
             Contact
           </Link>
