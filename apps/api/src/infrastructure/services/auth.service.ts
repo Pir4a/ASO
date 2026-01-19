@@ -14,7 +14,8 @@ import { FindUserByIdUseCase } from '../../application/use-cases/users/find-user
 import { UpdateUserUseCase } from '../../application/use-cases/users/update-user.use-case';
 import { UserRole } from '../../domain/entities/user.entity';
 
-import { EMAIL_GATEWAY, EmailGateway } from '../../domain/gateways/email.gateway';
+import { EMAIL_GATEWAY } from '../../domain/gateways/email.gateway';
+import type { EmailGateway } from '../../domain/gateways/email.gateway';
 import { VerifyEmailUseCase } from '../../application/use-cases/auth/verify-email.use-case';
 import { randomBytes } from 'crypto';
 

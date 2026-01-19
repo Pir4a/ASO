@@ -3,7 +3,7 @@ import { DataSource, Repository } from 'typeorm';
 import { Order as TypeOrmOrder } from '../entities/order.entity';
 import { OrderItem as TypeOrmOrderItem } from '../entities/order-item.entity';
 import { Order as DomainOrder } from '../../../../domain/entities/order.entity';
-import { OrderRepository } from '../../../../domain/repositories/order.repository.interface';
+import { OrderRepository, OrderFilters } from '../../../../domain/repositories/order.repository.interface';
 import { OrderMapper } from '../mappers/order.mapper';
 
 @Injectable()
@@ -23,6 +23,40 @@ export class TypeOrmOrderRepository implements OrderRepository {
             relations: ['items']
         });
         return entities.map(OrderMapper.toDomain);
+    }
+
+    async findByUserIdWithFilters(userId: string, filters: OrderFilters): Promise<DomainOrder[]> {
+        const qb = this.repository.createQueryBuilder('order')
+            .leftJoinAndSelect('order.items', 'items')
+            .where('order.userId = :userId', { userId })
+            .orderBy('order.createdAt', 'DESC');
+
+        if (filters.year) {
+            qb.andWhere('EXTRACT(YEAR FROM order.createdAt) = :year', { year: filters.year });
+        }
+
+        if (filters.status) {
+            qb.andWhere('order.status = :status', { status: filters.status });
+        }
+
+        if (filters.search) {
+            qb.andWhere(
+                '(order.id::text ILIKE :search OR EXISTS (SELECT 1 FROM order_items oi WHERE oi."orderId" = order.id AND oi."productName" ILIKE :search))',
+                { search: `%${filters.search}%` }
+            );
+        }
+
+        const entities = await qb.getMany();
+        return entities.map(OrderMapper.toDomain);
+    }
+
+    async findOneByIdAndUserId(id: string, userId: string): Promise<DomainOrder | null> {
+        const entity = await this.repository.findOne({
+            where: { id, userId },
+            relations: ['items']
+        });
+        if (!entity) return null;
+        return OrderMapper.toDomain(entity);
     }
 
     async findById(id: string): Promise<DomainOrder | null> {
@@ -67,8 +101,6 @@ export class TypeOrmOrderRepository implements OrderRepository {
         const order = await this.repository.findOne({ where: { id }, relations: ['items'] });
         if (!order) throw new Error('Order not found');
 
-        // Cast string status to enum if applicable or ensure type safety
-        // Here we assume basic compatibility
         order.status = status as any;
 
         if (metadata) {
@@ -81,3 +113,4 @@ export class TypeOrmOrderRepository implements OrderRepository {
         return OrderMapper.toDomain(savedEntity);
     }
 }
+

@@ -6,6 +6,8 @@ import { ADDRESS_REPOSITORY_TOKEN } from '../../domain/repositories/address.repo
 import { ProfileController } from '../controllers/profile.controller';
 import { GetUserAddressesUseCase } from '../../application/use-cases/users/get-user-addresses.use-case';
 import { CreateUserAddressUseCase } from '../../application/use-cases/users/create-user-address.use-case';
+import { UpdateUserAddressUseCase } from '../../application/use-cases/users/update-user-address.use-case';
+import { DeleteUserAddressUseCase } from '../../application/use-cases/users/delete-user-address.use-case';
 
 @Module({
     imports: [
@@ -19,6 +21,8 @@ import { CreateUserAddressUseCase } from '../../application/use-cases/users/crea
         },
         GetUserAddressesUseCase,
         CreateUserAddressUseCase,
+        UpdateUserAddressUseCase,
+        DeleteUserAddressUseCase,
     ],
     exports: [ADDRESS_REPOSITORY_TOKEN],
 })

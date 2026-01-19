@@ -31,4 +31,7 @@ export class User {
 
     @Column({ nullable: true })
     verificationTokenExpires: Date;
+
+    @Column({ nullable: true })
+    stripeCustomerId: string;
 }

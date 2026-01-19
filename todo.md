@@ -65,8 +65,8 @@ Scope analyzed:
 - [x] **Restriction tant que non confirmé** + auto-login après validation.
 
 ### Gestion de compte: adresses + méthodes de paiement (PDF p.17–18)
-- [ ] CRUD **adresses** (ajouter/éditer/supprimer, choix pendant checkout).
-- [ ] Gestion **méthodes de paiement** (ajouter/supprimer carte).
+- [x] CRUD **adresses** (ajouter/éditer/supprimer, choix pendant checkout).
+- [x] Gestion **méthodes de paiement** (ajouter/supprimer carte).
 
 ### Historique des commandes (PDF p.19–20)
 - [ ] Commandes **regroupées par année**.

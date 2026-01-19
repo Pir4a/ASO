@@ -1,14 +1,18 @@
-import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, UseGuards, Request, Param } from '@nestjs/common';
 import { GetUserAddressesUseCase } from '../../application/use-cases/users/get-user-addresses.use-case';
 // import { JwtAuthGuard } from '../guards/jwt-auth.guard'; 
 
 import { CreateUserAddressUseCase } from '../../application/use-cases/users/create-user-address.use-case';
+import { UpdateUserAddressUseCase } from '../../application/use-cases/users/update-user-address.use-case';
+import { DeleteUserAddressUseCase } from '../../application/use-cases/users/delete-user-address.use-case';
 
 @Controller('profile')
 export class ProfileController {
     constructor(
         private readonly getUserAddressesUseCase: GetUserAddressesUseCase,
         private readonly createUserAddressUseCase: CreateUserAddressUseCase,
+        private readonly updateUserAddressUseCase: UpdateUserAddressUseCase,
+        private readonly deleteUserAddressUseCase: DeleteUserAddressUseCase,
     ) { }
 
     // @UseGuards(JwtAuthGuard)
@@ -23,5 +27,21 @@ export class ProfileController {
     async createAddress(@Request() req: any, @Body() body: { street: string; city: string; postalCode: string; country: string; phone?: string }) {
         const userId = req.user?.id || 'guest-user-id';
         return this.createUserAddressUseCase.execute(userId, body);
+    }
+
+    @Put('addresses/:id')
+    async updateAddress(
+        @Request() req: any,
+        @Param('id') addressId: string,
+        @Body() body: { street?: string; city?: string; postalCode?: string; country?: string; phone?: string }
+    ) {
+        const userId = req.user?.id || 'guest-user-id';
+        return this.updateUserAddressUseCase.execute(userId, addressId, body);
+    }
+
+    @Delete('addresses/:id')
+    async deleteAddress(@Request() req: any, @Param('id') addressId: string) {
+        const userId = req.user?.id || 'guest-user-id';
+        return this.deleteUserAddressUseCase.execute(userId, addressId);
     }
 }

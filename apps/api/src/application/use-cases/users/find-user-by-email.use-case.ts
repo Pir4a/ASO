@@ -11,6 +11,6 @@ export class FindUserByEmailUseCase {
     ) { }
 
     async execute(email: string): Promise<User | null> {
-        return this.userRepository.findOneByEmail(email);
+        return this.userRepository.findByEmail(email);
     }
 }
