@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   UnauthorizedException,
   NotFoundException,
@@ -13,6 +14,10 @@ import { FindUserByIdUseCase } from '../../application/use-cases/users/find-user
 import { UpdateUserUseCase } from '../../application/use-cases/users/update-user.use-case';
 import { UserRole } from '../../domain/entities/user.entity';
 
+import { EMAIL_GATEWAY, EmailGateway } from '../../domain/gateways/email.gateway';
+import { VerifyEmailUseCase } from '../../application/use-cases/auth/verify-email.use-case';
+import { randomBytes } from 'crypto';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -21,10 +26,12 @@ export class AuthService {
     private readonly createUserUseCase: CreateUserUseCase,
     private readonly findUserByIdUseCase: FindUserByIdUseCase,
     private readonly updateUserUseCase: UpdateUserUseCase,
+    @Inject(EMAIL_GATEWAY) private readonly emailGateway: EmailGateway,
+    private readonly verifyEmailUseCase: VerifyEmailUseCase,
   ) { }
 
   async register(authDto: AuthDto) {
-    const { email, password } = authDto;
+    const { email, password, firstName, lastName } = authDto;
 
     const existingUser = await this.findUserByEmailUseCase.execute(email);
     if (existingUser) {
@@ -32,13 +39,32 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const verificationToken = randomBytes(32).toString('hex');
 
-    const user = await this.createUserUseCase.execute(email, passwordHash);
+    const user = await this.createUserUseCase.execute(
+      email,
+      passwordHash,
+      firstName,
+      lastName,
+      verificationToken
+    );
+
+    try {
+      await this.emailGateway.sendVerificationEmail(email, verificationToken);
+    } catch (e) {
+      console.error('Failed to send verification email:', e);
+      // We might want to rollback or just warn the user. 
+      // For now, logging logic is sufficient for "soft" verification requirement.
+    }
 
     // On ne retourne pas le hash du mot de passe
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash: _, ...userResult } = user;
     return userResult;
+  }
+
+  async verifyEmail(token: string) {
+    return this.verifyEmailUseCase.execute(token);
   }
 
   async login(authDto: AuthDto) {
@@ -47,6 +73,10 @@ export class AuthService {
 
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       throw new UnauthorizedException('Email ou mot de passe incorrect.');
+    }
+
+    if (!user.isVerified) {
+      throw new UnauthorizedException('Veuillez vérifier votre email avant de vous connecter.');
     }
 
     const payload = { sub: user.id, email: user.email, role: user.role };

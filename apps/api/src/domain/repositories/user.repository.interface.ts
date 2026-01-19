@@ -1,11 +1,11 @@
 import { User } from '../entities/user.entity';
 
+export const USER_REPOSITORY_TOKEN = 'USER_REPOSITORY_TOKEN';
+
 export interface UserRepository {
-    findAll(): Promise<User[]>;
-    findOneByEmail(email: string): Promise<User | null>;
     findById(id: string): Promise<User | null>;
+    findByEmail(email: string): Promise<User | null>;
+    findByVerificationToken(token: string): Promise<User | null>;
     create(user: User): Promise<User>;
     update(user: User): Promise<User>;
 }
-
-export const USER_REPOSITORY_TOKEN = 'UserRepository';

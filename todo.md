@@ -48,9 +48,9 @@ Scope analyzed:
 ### Checkout complet (PDF p.13–14)
 - [x] **Flow multi-étapes**: adresses → paiement (mock) → confirmation.
 - [ ] **Paiement sécurisé** (Stripe/PayPal) – *In Progress*
-  - [ ] Configuration des secrets (`STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`)
-  - [ ] Backend implementation
-  - [ ] Frontend integration
+  - [x] Configuration des secrets (`STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`)
+  - [x] Backend implementation
+  - [x] Frontend integration
 - [ ] **Email de confirmation d'achat** – not implemented.
 - [ ] **Factures**: modification, suppression → **avoir**, **génération PDF** – not implemented.
 
@@ -59,10 +59,10 @@ Scope analyzed:
 ## 📝 To Do (Backlog)
 
 ### Inscription + validation email (PDF p.15–16)
-- [ ] **Nom complet** + validation des champs.
-- [ ] **Règles de mot de passe** (CNIL/RGPD) + validation client/serveur.
-- [ ] **Email de confirmation** avec lien unique et durée limitée (~24h).
-- [ ] **Restriction tant que non confirmé** + auto-login après validation.
+- [x] **Nom complet** + validation des champs.
+- [x] **Règles de mot de passe** (CNIL/RGPD) + validation client/serveur.
+- [x] **Email de confirmation** avec lien unique et durée limitée (~24h).
+- [x] **Restriction tant que non confirmé** + auto-login après validation.
 
 ### Gestion de compte: adresses + méthodes de paiement (PDF p.17–18)
 - [ ] CRUD **adresses** (ajouter/éditer/supprimer, choix pendant checkout).

@@ -10,11 +10,22 @@ export class CreateUserUseCase {
         private readonly userRepository: UserRepository,
     ) { }
 
-    async execute(email: string, passwordHash: string): Promise<User> {
-        const user = new User({ email, passwordHash });
-        // Note: ID generation should probably happen here or in repo.
-        // Repo usually generates it if DB handles it (uuid v4).
-        // TypeORM repo handles this via PrimaryGeneratedColumn.
+    async execute(
+        email: string,
+        passwordHash: string,
+        firstName?: string,
+        lastName?: string,
+        verificationToken?: string
+    ): Promise<User> {
+        const user = new User({
+            email,
+            passwordHash,
+            firstName,
+            lastName,
+            isVerified: false,
+            verificationToken,
+            verificationTokenExpires: verificationToken ? new Date(Date.now() + 24 * 60 * 60 * 1000) : undefined // 24h
+        });
         return this.userRepository.create(user);
     }
 }

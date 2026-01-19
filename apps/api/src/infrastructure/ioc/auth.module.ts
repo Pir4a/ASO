@@ -6,6 +6,10 @@ import { AuthService } from '../services/auth.service';
 import { AuthController } from '../controllers/auth.controller';
 import { UsersModule } from './users.module';
 
+import { NodemailerService } from '../services/email/nodemailer.service';
+import { EMAIL_GATEWAY } from '../../domain/gateways/email.gateway';
+import { VerifyEmailUseCase } from '../../application/use-cases/auth/verify-email.use-case';
+
 @Module({
   imports: [
     UsersModule,
@@ -19,7 +23,14 @@ import { UsersModule } from './users.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [
+    AuthService,
+    {
+      provide: EMAIL_GATEWAY,
+      useClass: NodemailerService,
+    },
+    VerifyEmailUseCase,
+  ],
   exports: [AuthService],
 })
 export class AuthModule { }
