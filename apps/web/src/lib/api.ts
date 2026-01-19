@@ -1,7 +1,9 @@
 import { categories as mockCategories, slides as mockSlides, topProducts as mockProducts } from "@/data/mock";
 import type { Category, Product, CarouselSlide } from "@bootstrap/types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_URL = typeof window === 'undefined'
+  ? (process.env.INTERNAL_API_URL || "http://api:3001/api")
+  : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api");
 
 async function fetchJson<T>(path: string): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, { next: { revalidate: 60 } });
@@ -11,17 +13,31 @@ async function fetchJson<T>(path: string): Promise<T> {
   return res.json();
 }
 
+function mapProduct(p: any): Product {
+  // Backend returns 'price' (decimal/number in major unit), Frontend expects 'priceCents'
+  if (p.price !== undefined && p.priceCents === undefined) {
+    return {
+      ...p,
+      priceCents: Math.round(Number(p.price) * 100),
+      currency: p.currency || "EUR",
+    };
+  }
+  return p;
+}
+
 export async function getHomepageData(): Promise<{
   categories: Category[];
   products: Product[];
   slides: CarouselSlide[];
 }> {
   try {
-    const [categories, products, content] = await Promise.all([
+    const [categories, productsRaw, content] = await Promise.all([
       fetchJson<Category[]>("/categories"),
-      fetchJson<Product[]>("/products"),
+      fetchJson<any[]>("/products"),
       fetchJson<{ type: string; payload?: Record<string, unknown> }[]>("/content"),
     ]);
+
+    const products = productsRaw.map(mapProduct);
 
     const slides =
       (content
@@ -54,7 +70,8 @@ export async function getCategories(): Promise<Category[]> {
 
 export async function getProducts(): Promise<Product[]> {
   try {
-    return await fetchJson<Product[]>("/products");
+    const products = await fetchJson<any[]>("/products");
+    return products.map(mapProduct);
   } catch {
     return mockProducts;
   }
@@ -62,7 +79,8 @@ export async function getProducts(): Promise<Product[]> {
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
   try {
-    return await fetchJson<Product>(`/products/${slug}`);
+    const product = await fetchJson<any>(`/products/${slug}`);
+    return mapProduct(product);
   } catch {
     return mockProducts.find((p) => p.slug === slug);
   }

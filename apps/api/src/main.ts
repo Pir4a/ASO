@@ -12,7 +12,7 @@ async function bootstrap() {
     origin: ['http://localhost:3000'],
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Accept, Authorization',
+    allowedHeaders: 'Content-Type, Accept, Authorization, x-guest-cart-id',
   });
 
   app.use(helmet());

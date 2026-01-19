@@ -4,12 +4,24 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { getCart, addToCart, updateCartItem, removeCartItem, applyPromoCode } from "@/lib/api";
 
 // Generate or retrieve guest cart ID from localStorage
+// Generate or retrieve guest cart ID from localStorage
 function getGuestCartId(): string {
     if (typeof window === "undefined") return "";
 
     let guestId = localStorage.getItem("guestCartId");
-    if (!guestId) {
-        guestId = `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    if (!guestId || !uuidRegex.test(guestId)) {
+        // Use crypto.randomUUID() if available, otherwise a simple fallback
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+            guestId = crypto.randomUUID();
+        } else {
+            // Simple UUID v4 fallback
+            guestId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
         localStorage.setItem("guestCartId", guestId);
     }
     return guestId;
