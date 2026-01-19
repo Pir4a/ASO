@@ -1,24 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import type { CartRepository } from '../../../domain/repositories/cart.repository.interface';
+import { CART_REPOSITORY_TOKEN } from '../../../domain/repositories/cart.repository.interface';
+import { Cart } from '../../../domain/entities/cart.entity';
 
 @Injectable()
 export class GetCartUseCase {
-    execute() {
-        // Mock logic from original CartService
-        const items = [
-            {
-                productId: 'prod-1',
-                name: 'Scanner CT 500',
-                quantity: 1,
-                priceCents: 12500000,
-                currency: 'EUR',
-            },
-        ];
-        const subtotal = items.reduce(
-            (sum, item) => sum + item.priceCents * item.quantity,
-            0,
-        );
-        const vat = Math.round(subtotal * 0.2);
-        const total = subtotal + vat;
-        return { items, subtotal, vat, total, currency: 'EUR' };
+    constructor(
+        @Inject(CART_REPOSITORY_TOKEN)
+        private readonly cartRepository: CartRepository,
+    ) { }
+
+    async execute(userId: string): Promise<Cart | null> {
+        return this.cartRepository.findByUserId(userId);
     }
 }

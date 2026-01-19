@@ -6,6 +6,8 @@ import { Footer } from "@/components/layout/Footer";
 import { getLocaleFromCookie } from "@/lib/i18n.server";
 import { defaultLocale, isRtl } from "@/lib/i18n.shared";
 import { AuthProvider } from "@/context/AuthContext";
+import { CartProvider } from "@/hooks/useCart";
+import { ToastProvider } from "@/components/ui/Toast";
 
 const poppins = Poppins({
   variable: "--font-heading",
@@ -41,9 +43,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} dir={dir}>
       <body className={`${poppins.variable} ${inter.variable} bg-background text-foreground`}>
         <AuthProvider>
-          <Header locale={locale} />
-          <main className="mx-auto min-h-screen max-w-6xl px-4 py-8">{children}</main>
-          <Footer />
+          <CartProvider>
+            <ToastProvider>
+              <Header locale={locale} />
+              <main className="mx-auto min-h-screen max-w-6xl px-4 py-8">{children}</main>
+              <Footer />
+            </ToastProvider>
+          </CartProvider>
         </AuthProvider>
       </body>
     </html>

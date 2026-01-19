@@ -9,7 +9,9 @@ import { ProductsModule } from './infrastructure/ioc/products.module';
 import { CategoriesModule } from './infrastructure/ioc/categories.module';
 import { CartModule } from './infrastructure/ioc/cart.module';
 import { OrdersModule } from './infrastructure/ioc/orders.module';
+import { AddressModule } from './infrastructure/ioc/address.module';
 import { ContentModule } from './infrastructure/ioc/content.module';
+import { PaymentModule } from './infrastructure/ioc/payment.module';
 import { AppDataSource } from './db/data-source';
 
 @Module({
@@ -24,7 +26,9 @@ import { AppDataSource } from './db/data-source';
     CategoriesModule,
     CartModule,
     OrdersModule,
+    AddressModule,
     ContentModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

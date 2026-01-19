@@ -24,6 +24,6 @@ import { CategoriesModule } from './categories.module';
     FindProductBySlugUseCase,
     CreateProductUseCase,
   ],
-  exports: [GetProductsUseCase, FindProductBySlugUseCase],
+  exports: [PRODUCT_REPOSITORY_TOKEN, GetProductsUseCase, FindProductBySlugUseCase],
 })
 export class ProductsModule { }

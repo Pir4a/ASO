@@ -16,7 +16,7 @@ export function ProductGrid({ products }: { products: Product[] }) {
         <Link
           key={product.id}
           href={`/products/${product.slug}`}
-          className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+          className="group rounded-xl bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
         >
           <div className="relative mb-3 h-40 w-full overflow-hidden rounded-lg bg-slate-50">
             {product.thumbnailUrl ? (
@@ -35,7 +35,7 @@ export function ProductGrid({ products }: { products: Product[] }) {
           </div>
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-sm font-semibold text-slate-900">{product.name}</p>
+              <p className="text-sm font-semibold text-foreground">{product.name}</p>
               <p className="text-xs text-slate-500">{product.sku}</p>
             </div>
             <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700">

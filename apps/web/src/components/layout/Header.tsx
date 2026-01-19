@@ -20,15 +20,15 @@ export function Header({ locale }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
+    <header className="sticky top-0 z-30 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75 shadow-sm">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white font-semibold">
             AS
           </div>
           <div>
-            <p className="text-lg font-semibold text-slate-900">Althea Systems</p>
-            <p className="text-xs text-slate-500">Matériel médical de pointe</p>
+            <p className="text-lg font-bold text-foreground">Althea Systems</p>
+            <p className="text-xs text-foreground/70">Matériel médical de pointe</p>
           </div>
         </div>
         {/* La navigation principale est retirée pour simplifier le header comme demandé */}
@@ -51,7 +51,7 @@ export function Header({ locale }: HeaderProps) {
 
           <Link
             href="/cart"
-            className="relative rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-800 hover:border-primary hover:text-primary"
+            className="relative rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-800 hover:border-primary hover:text-primary transition-colors"
           >
             Panier
             <span className="absolute -right-1 -top-1 inline-flex h-2 w-2 rounded-full bg-primary" />

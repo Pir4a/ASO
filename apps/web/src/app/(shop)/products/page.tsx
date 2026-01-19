@@ -7,7 +7,7 @@ export default async function ProductsListPage() {
   return (
     <div className="space-y-4">
       <div className="card p-6 space-y-2">
-        <h1 className="text-2xl font-semibold text-slate-900">Catalogue produits</h1>
+        <h1 className="text-2xl font-bold text-foreground">Catalogue produits</h1>
         <p className="text-sm text-slate-600">Pagination et filtres seront gérés côté API.</p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -15,7 +15,7 @@ export default async function ProductsListPage() {
           <Link
             key={product.id}
             href={`/products/${product.slug}`}
-            className="card p-4 hover:border-primary"
+            className="group block rounded-xl bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
           >
             <div className="flex items-center justify-between">
               <p className="font-semibold text-slate-900">{product.name}</p>
