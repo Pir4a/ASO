@@ -69,10 +69,10 @@ Scope analyzed:
 - [x] Gestion **méthodes de paiement** (ajouter/supprimer carte).
 
 ### Historique des commandes (PDF p.19–20)
-- [ ] Commandes **regroupées par année**.
-- [ ] **Filtres** (année/type/statut) + **recherche**.
-- [ ] **Détails commande** + **téléchargement facture PDF**.
-- [ ] Affichage sécurisé (pas de détails carte).
+- [x] Commandes **regroupées par année**.
+- [x] **Filtres** (année/type/statut) + **recherche**.
+- [x] **Détails commande** + **téléchargement facture PDF**.
+- [x] Affichage sécurisé (pas de détails carte).
 
 ### Contact + chatbot + backoffice support (PDF p.20)
 - [ ] Formulaire contact: **email + sujet + message** + confirmation.
