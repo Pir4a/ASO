@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getUserAddresses, createUserAddress, createOrder, getCart } from "@/lib/api";
+import { getUserAddresses, createUserAddress, createOrder, getCart, createPaymentIntent } from "@/lib/api";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import { CheckoutForm } from "@/components/checkout/CheckoutForm";
+
+// Initialize Stripe outside component
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 type Address = {
   id: string;
@@ -23,6 +29,7 @@ export default function CheckoutPage() {
   const [cartTotal, setCartTotal] = useState<number>(0);
   const [currency, setCurrency] = useState<string>("EUR");
   const [orderResult, setOrderResult] = useState<{ id: string } | null>(null);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   // New Address Form State
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
@@ -61,22 +68,30 @@ export default function CheckoutPage() {
     }
   };
 
-  const handlePayment = async () => {
+  const handleGoToPayment = async () => {
     if (!selectedAddressId) return;
     setIsLoading(true);
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Create Order
+      // 1. Create Order
       const order = await createOrder(selectedAddressId);
       setOrderResult(order);
-      setStep("confirmation");
+
+      // 2. Create Payment Intent
+      const intent = await createPaymentIntent(order.id);
+      setClientSecret(intent.clientSecret);
+
+      setStep("payment");
     } catch (error) {
-      alert("Erreur lors de la commande");
+      // alert("Erreur lors de la préparation de la commande");
+      console.error(error);
+      alert("Erreur technique: Impossible d'initialiser le paiement.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePaymentSuccess = (paymentId: string) => {
+    setStep("confirmation");
   };
 
   if (step === "confirmation" && orderResult) {
@@ -186,7 +201,7 @@ export default function CheckoutPage() {
 
             <div className="flex justify-end pt-4">
               <button
-                onClick={() => setStep("payment")}
+                onClick={handleGoToPayment}
                 disabled={!selectedAddressId}
                 className="rounded-md bg-primary px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -196,36 +211,22 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        {step === "payment" && (
+        {step === "payment" && clientSecret && (
           <div className="space-y-6">
             <div className="card p-6 space-y-4">
               <h2 className="text-xl font-semibold text-slate-900">Paiement sécurisé</h2>
-              <div className="p-4 rounded-lg bg-blue-50 border border-blue-100 text-blue-800 text-sm">
-                <span className="font-bold">Mode simulation:</span> Aucun débit ne sera effectué. Ceci est une démonstration technique.
-              </div>
-
-              <div className="space-y-3">
-                <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer bg-white shadow-sm ring-1 ring-primary/20">
-                  <input type="radio" name="payment" defaultChecked className="h-4 w-4 text-primary" />
-                  <span className="font-medium text-slate-900">Carte Bancaire (Simulé)</span>
-                </label>
-                <label className="flex items-center space-x-3 p-4 border rounded-lg opacity-50 cursor-not-allowed">
-                  <input type="radio" name="payment" disabled className="h-4 w-4" />
-                  <span className="text-slate-500">PayPal (Bientôt disponible)</span>
-                </label>
-              </div>
+              <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
+                <CheckoutForm
+                  amount={cartTotal}
+                  currency={currency}
+                  onSuccess={handlePaymentSuccess}
+                />
+              </Elements>
             </div>
 
             <div className="flex justify-between pt-4">
               <button onClick={() => setStep("address")} className="text-slate-600 font-medium hover:text-slate-900">
                 ← Retour
-              </button>
-              <button
-                onClick={handlePayment}
-                disabled={isLoading}
-                className="rounded-md bg-primary px-8 py-3 text-base font-bold text-white shadow-lg hover:bg-primary-hover hover:-translate-y-0.5 transition-all disabled:opacity-50"
-              >
-                {isLoading ? "Traitement..." : `Payer ${(cartTotal / 100).toFixed(2)} ${currency}`}
               </button>
             </div>
           </div>

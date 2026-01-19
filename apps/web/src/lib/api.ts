@@ -244,6 +244,20 @@ export async function createOrder(addressId: string): Promise<any> {
   }
 }
 
+export async function createPaymentIntent(orderId: string): Promise<{ clientSecret: string }> {
+  const res = await fetch(`${API_URL}/payment/intent`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ orderId }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.message || "Failed to create payment intent");
+  }
+  return res.json();
+}
+
 export async function getOrders(): Promise<
   { id: string; total: number; currency: string; status: string; createdAt: string }[]
 > {
