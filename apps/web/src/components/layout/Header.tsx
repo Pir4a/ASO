@@ -4,9 +4,10 @@ import Link from "next/link";
 import { LocaleSwitcher } from "@/components/common/LocaleSwitcher";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import type { Locale } from "@/lib/i18n.shared";
 
 interface HeaderProps {
-  locale: string;
+  locale: Locale;
 }
 
 export function Header({ locale }: HeaderProps) {

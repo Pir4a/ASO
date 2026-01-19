@@ -1,9 +1,9 @@
-import 'dotenv/config';
+import 'dotenv/config'; // Trigger rebuild
 import { DataSource } from 'typeorm';
-import { User } from '../entities/user.entity';
-import { Category } from '../entities/category.entity';
-import { Product } from '../entities/product.entity';
-import { ContentBlock } from '../entities/content-block.entity';
+import { User } from '../infrastructure/persistence/typeorm/entities/user.entity';
+import { Category } from '../infrastructure/persistence/typeorm/entities/category.entity';
+import { Product } from '../infrastructure/persistence/typeorm/entities/product.entity';
+import { ContentBlock } from '../infrastructure/persistence/typeorm/entities/content-block.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',

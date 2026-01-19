@@ -2,14 +2,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCategories, getProductBySlug } from "@/lib/api";
+import type { Category } from "@bootstrap/types";
 
-export default async function ProductPage({ params }: { params: { slug: string } }) {
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const [product, categories] = await Promise.all([
-    getProductBySlug(params.slug),
+    getProductBySlug(slug),
     getCategories(),
   ]);
   if (!product) return notFound();
-  const category = categories.find((c) => c.id === product.categoryId);
+  const category = categories.find((c: Category) => c.id === product.categoryId);
 
   return (
     <div className="space-y-6">

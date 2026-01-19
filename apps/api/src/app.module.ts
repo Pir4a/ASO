@@ -1,57 +1,32 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MongooseModule } from '@nestjs/mongoose';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { appEnv } from './config/env';
-import { CategoriesModule } from './categories/categories.module';
-import { ProductsModule } from './products/products.module';
-import { ContentModule } from './content/content.module';
-import { UsersModule } from './users/users.module';
-import { HealthModule } from './health/health.module';
-import { AuthModule } from './auth/auth.module';
-import { CartModule } from './cart/cart.module';
-import { OrdersModule } from './orders/orders.module';
+import { UsersModule } from './infrastructure/ioc/users.module';
+import { AuthModule } from './infrastructure/ioc/auth.module';
+import { ProductsModule } from './infrastructure/ioc/products.module';
+import { CategoriesModule } from './infrastructure/ioc/categories.module';
+import { CartModule } from './infrastructure/ioc/cart.module';
+import { OrdersModule } from './infrastructure/ioc/orders.module';
+import { ContentModule } from './infrastructure/ioc/content.module';
+import { AppDataSource } from './db/data-source';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appEnv],
     }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60_000,
-        limit: 100,
-      },
-    ]),
-    TypeOrmModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        url: config.get<string>('DATABASE_URL'),
-        autoLoadEntities: true,
-        synchronize: true, // TODO: disable in production, use migrations
-      }),
-    }),
-    MongooseModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        uri: config.get<string>('MONGODB_URI'),
-      }),
-    }),
-    CategoriesModule,
-    ProductsModule,
-    ContentModule,
+    TypeOrmModule.forRoot(AppDataSource.options),
     UsersModule,
-    HealthModule,
     AuthModule,
+    ProductsModule,
+    CategoriesModule,
     CartModule,
     OrdersModule,
+    ContentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
