@@ -18,8 +18,14 @@ export class PostgresUserRepository implements UserRepository {
         return entities.map(UserMapper.toDomain);
     }
 
-    async findOneByEmail(email: string): Promise<DomainUser | null> {
+    async findByEmail(email: string): Promise<DomainUser | null> {
         const entity = await this.repository.findOne({ where: { email } });
+        if (!entity) return null;
+        return UserMapper.toDomain(entity);
+    }
+
+    async findByVerificationToken(token: string): Promise<DomainUser | null> {
+        const entity = await this.repository.findOne({ where: { verificationToken: token } });
         if (!entity) return null;
         return UserMapper.toDomain(entity);
     }

@@ -5,6 +5,12 @@ export class User {
     email: string;
     passwordHash: string;
     role: UserRole;
+    firstName?: string;
+    lastName?: string;
+    isVerified: boolean;
+    verificationToken?: string;
+    verificationTokenExpires?: Date;
+    stripeCustomerId?: string;
 
     constructor(partial: Partial<User>) {
         Object.assign(this, partial);

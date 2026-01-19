@@ -1,14 +1,20 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { PassportModule } from '@nestjs/passport';
 import type { StringValue } from 'ms';
 import { AuthService } from '../services/auth.service';
 import { AuthController } from '../controllers/auth.controller';
 import { UsersModule } from './users.module';
+import { JwtStrategy } from '../auth/jwt.strategy';
+
+import { NodemailerService } from '../services/email/nodemailer.service';
+import { EMAIL_GATEWAY } from '../../domain/gateways/email.gateway';
+import { VerifyEmailUseCase } from '../../application/use-cases/auth/verify-email.use-case';
 
 @Module({
   imports: [
     UsersModule,
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       useFactory: () => ({
         secret: process.env.JWT_SECRET || 'dev-secret',
@@ -19,7 +25,16 @@ import { UsersModule } from './users.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
-  exports: [AuthService],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    {
+      provide: EMAIL_GATEWAY,
+      useClass: NodemailerService,
+    },
+    VerifyEmailUseCase,
+  ],
+  exports: [AuthService, JwtStrategy, PassportModule],
 })
 export class AuthModule { }
+

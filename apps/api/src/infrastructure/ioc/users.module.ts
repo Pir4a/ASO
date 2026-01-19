@@ -8,6 +8,7 @@ import { GetUsersUseCase } from '../../application/use-cases/users/get-users.use
 import { FindUserByEmailUseCase } from '../../application/use-cases/users/find-user-by-email.use-case';
 import { FindUserByIdUseCase } from '../../application/use-cases/users/find-user-by-id.use-case';
 import { UpdateUserUseCase } from '../../application/use-cases/users/update-user.use-case';
+import { VerifyEmailUseCase } from '../../application/use-cases/auth/verify-email.use-case';
 import { USER_REPOSITORY_TOKEN } from '../../domain/repositories/user.repository.interface';
 
 @Module({
@@ -23,6 +24,7 @@ import { USER_REPOSITORY_TOKEN } from '../../domain/repositories/user.repository
     FindUserByEmailUseCase,
     FindUserByIdUseCase,
     UpdateUserUseCase,
+    VerifyEmailUseCase,
   ],
   exports: [
     CreateUserUseCase,
@@ -30,6 +32,7 @@ import { USER_REPOSITORY_TOKEN } from '../../domain/repositories/user.repository
     FindUserByEmailUseCase,
     FindUserByIdUseCase,
     UpdateUserUseCase,
+    VerifyEmailUseCase,
   ],
 })
 export class UsersModule { }

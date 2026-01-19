@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Patch, Param } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Patch, Param, Get, Query } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { AuthDto, UpdateUserRoleDto } from '../dto/auth/auth.dto';
 
@@ -23,5 +23,10 @@ export class AuthController {
     @Body() updateUserRoleDto: UpdateUserRoleDto,
   ) {
     return this.authService.updateUserRole(userId, updateUserRoleDto.role);
+  }
+
+  @Get('verify')
+  async verifyEmail(@Query('token') token: string) {
+    return this.authService.verifyEmail(token);
   }
 }
