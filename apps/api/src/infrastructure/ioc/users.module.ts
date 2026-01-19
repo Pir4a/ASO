@@ -33,6 +33,7 @@ import { USER_REPOSITORY_TOKEN } from '../../domain/repositories/user.repository
     FindUserByIdUseCase,
     UpdateUserUseCase,
     VerifyEmailUseCase,
+    USER_REPOSITORY_TOKEN,
   ],
 })
 export class UsersModule { }

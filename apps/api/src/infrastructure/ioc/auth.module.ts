@@ -32,7 +32,6 @@ import { VerifyEmailUseCase } from '../../application/use-cases/auth/verify-emai
       provide: EMAIL_GATEWAY,
       useClass: NodemailerService,
     },
-    VerifyEmailUseCase,
   ],
   exports: [AuthService, JwtStrategy, PassportModule],
 })

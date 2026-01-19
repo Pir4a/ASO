@@ -3,6 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { Category, Product } from "@bootstrap/types";
 
 interface ProductDetailClientProps {
@@ -10,79 +13,88 @@ interface ProductDetailClientProps {
     category?: Category;
 }
 
+const stockStatusConfig: Record<string, { label: string; variant: "success" | "warning" | "destructive" }> = {
+    in_stock: { label: "En stock", variant: "success" },
+    low_stock: { label: "Stock faible", variant: "warning" },
+    out_of_stock: { label: "Rupture de stock", variant: "destructive" },
+    new: { label: "Nouveau", variant: "success" },
+};
+
 export function ProductDetailClient({ product, category }: ProductDetailClientProps) {
+    const stockStatus = stockStatusConfig[product.status] || stockStatusConfig.in_stock;
+
     return (
         <div className="space-y-6">
-            <div className="card p-6">
-                <div className="grid gap-6 md:grid-cols-[2fr,1fr] md:items-start">
-                    <div className="relative h-64 w-full overflow-hidden rounded-xl bg-slate-100">
-                        {product.thumbnailUrl ? (
-                            <Image
-                                src={product.thumbnailUrl}
-                                alt={product.name}
-                                fill
-                                sizes="(max-width: 768px) 100vw, 50vw"
-                                className="object-cover"
-                            />
-                        ) : (
-                            <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
-                                Image à venir
-                            </div>
-                        )}
-                    </div>
-                    <div className="space-y-3">
-                        <p className="text-xs uppercase text-slate-500">Produit</p>
-                        <h1 className="text-2xl font-semibold text-slate-900">{product.name}</h1>
-                        <p className="text-sm text-slate-600">{product.description}</p>
-                        <p className="text-sm text-slate-500">SKU : {product.sku}</p>
-                        {category && (
-                            <Link href={`/categories/${category.slug}`} className="text-sm text-primary">
-                                {category.name}
-                            </Link>
-                        )}
-                        <p className="text-xl font-semibold text-primary">
-                            {(product.priceCents / 100).toFixed(2)} {product.currency}
-                        </p>
-
-                        {/* Stock Status */}
-                        <div className="flex items-center gap-2">
-                            {product.status === "out_of_stock" ? (
-                                <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
-                                    Rupture de stock
-                                </span>
-                            ) : product.status === "low_stock" ? (
-                                <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700">
-                                    Stock faible
-                                </span>
-                            ) : (
-                                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
-                                    En stock
-                                </span>
-                            )}
-                        </div>
-
-                        <div className="flex gap-2 pt-2">
-                            {product.status !== "out_of_stock" ? (
-                                <AddToCartButton
-                                    productId={product.id}
-                                    productName={product.name}
-                                    variant="primary"
+            <Card>
+                <CardContent className="pt-6">
+                    <div className="grid gap-6 md:grid-cols-[2fr,1fr] md:items-start">
+                        {/* Product Image */}
+                        <div className="relative h-64 w-full overflow-hidden rounded-xl bg-muted">
+                            {product.thumbnailUrl ? (
+                                <Image
+                                    src={product.thumbnailUrl}
+                                    alt={product.name}
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                    className="object-cover"
                                 />
                             ) : (
-                                <button
-                                    disabled
-                                    className="rounded-md bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-500 cursor-not-allowed"
-                                >
-                                    Indisponible
-                                </button>
+                                <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+                                    Image à venir
+                                </div>
                             )}
-                            <button className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-primary hover:text-primary">
-                                Demander un devis
-                            </button>
+                        </div>
+
+                        {/* Product Info */}
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <p className="text-xs uppercase text-muted-foreground">Produit</p>
+                                <h1 className="text-2xl font-semibold text-foreground">{product.name}</h1>
+                                <p className="text-sm text-muted-foreground">{product.description}</p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <p className="text-sm text-muted-foreground">SKU : {product.sku}</p>
+                                {category && (
+                                    <Link
+                                        href={`/categories/${category.slug}`}
+                                        className="inline-block text-sm text-primary hover:underline"
+                                    >
+                                        {category.name}
+                                    </Link>
+                                )}
+                            </div>
+
+                            <p className="text-2xl font-bold text-primary">
+                                {(product.priceCents / 100).toFixed(2)} {product.currency}
+                            </p>
+
+                            {/* Stock Status */}
+                            <Badge variant={stockStatus.variant}>
+                                {stockStatus.label}
+                            </Badge>
+
+                            {/* Actions */}
+                            <div className="flex flex-wrap gap-3 pt-2">
+                                {product.status !== "out_of_stock" ? (
+                                    <AddToCartButton
+                                        productId={product.id}
+                                        productName={product.name}
+                                        variant="primary"
+                                    />
+                                ) : (
+                                    <Button disabled variant="secondary">
+                                        Indisponible
+                                    </Button>
+                                )}
+                                <Button variant="outline">
+                                    Demander un devis
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }
