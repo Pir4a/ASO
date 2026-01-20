@@ -5,6 +5,8 @@ import { LocaleSwitcher } from "@/components/common/LocaleSwitcher";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/i18n.shared";
+import { ShoppingCart, User, LogOut, Menu, Activity } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
   locale: Locale;
@@ -20,67 +22,91 @@ export function Header({ locale }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75 shadow-sm">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white font-semibold">
-            AS
-          </div>
-          <div>
-            <p className="text-lg font-bold text-foreground">Althea Systems</p>
-            <p className="text-xs text-foreground/70">Matériel médical de pointe</p>
-          </div>
+    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-white/80 backdrop-blur-md transition-all duration-200 supports-[backdrop-filter]:bg-white/60 dark:bg-slate-950/80 dark:border-slate-800/60">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Logo / Brand */}
+        <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-blue-600 text-white shadow-lg shadow-blue-500/20 transition-transform group-hover:scale-105">
+              <Activity className="size-6" />
+            </div>
+            <div className="hidden flex-col md:flex">
+              <span className="font-heading text-lg font-bold tracking-tight text-foreground leading-none">
+                Althea
+              </span>
+              <span className="text-[11px] font-medium text-muted-foreground tracking-widest uppercase leading-none">
+                Systems
+              </span>
+            </div>
+          </Link>
         </div>
-        {/* La navigation principale est retirée pour simplifier le header comme demandé */}
-        {/* Si tu souhaites la remettre, il faudra la réintégrer ici */}
 
-        <div className="flex items-center gap-3">
-          {/* Liens de navigation basiques pour l'exemple */}
-          <Link href="/categories" className="text-sm font-medium text-slate-700 hover:text-primary">
-            Catégories
-          </Link>
-          <Link href="/products" className="text-sm font-medium text-slate-700 hover:text-primary">
-            Produits
-          </Link>
-          <Link href="/contact" className="text-sm font-medium text-slate-700 hover:text-primary">
-            Contact
-          </Link>
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-10">
+          {[
+            ["Produits", "/products"],
+            ["Catégories", "/categories"],
+            ["À propos", "/about"],
+            ["Contact", "/contact"],
+          ].map(([label, href]) => (
+            <Link
+              key={href}
+              href={href}
+              className="text-sm font-medium text-slate-600 hover:text-primary transition-colors dark:text-slate-400 dark:hover:text-primary"
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
 
-          <Link
-            href="/cart"
-            className="relative rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-800 hover:border-primary hover:text-primary transition-colors"
-          >
-            Panier
-            <span className="absolute -right-1 -top-1 inline-flex h-2 w-2 rounded-full bg-primary" />
-          </Link>
+        {/* Actions */}
+        <div className="flex items-center gap-3 md:gap-4">
           <LocaleSwitcher value={locale} />
+
+          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden md:block" />
+
+          <Button variant="ghost" size="icon-sm" className="relative group text-slate-600 hover:text-primary dark:text-slate-400" asChild>
+            <Link href="/cart">
+              <ShoppingCart className="size-5 transition-transform group-hover:scale-110" />
+              <span className="sr-only">Panier</span>
+              {/* Badge placeholder */}
+              <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-950">
+                2
+              </span>
+            </Link>
+          </Button>
+
           {isAuthenticated ? (
-            <>
-              <span className="text-sm text-slate-700">Bonjour, {user?.email}</span>
-              <Link href="/profile" className="rounded-md bg-blue-500 px-3 py-1 text-sm font-semibold text-white shadow-sm hover:bg-blue-600">
-                Mon Profil
-              </Link>
+            <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800/60">
+              <Button variant="ghost" size="icon-sm" asChild className="rounded-full">
+                <Link href="/profile">
+                  <User className="size-5 text-slate-600 dark:text-slate-400" />
+                </Link>
+              </Button>
               {user?.role === "admin" && (
-                <Link href="/backoffice" className="rounded-md bg-purple-500 px-3 py-1 text-sm font-semibold text-white shadow-sm hover:bg-purple-600">
-                  Backoffice
-                </Link>)}
-              <button
-                onClick={handleLogout}
-                className="rounded-md bg-red-500 px-3 py-1 text-sm font-semibold text-white shadow-sm hover:bg-red-600"
-              >
-                Déconnexion
-              </button>
-            </>
+                <Button variant="outline" size="sm" asChild className="hidden md:flex h-8 text-xs font-medium">
+                  <Link href="/backoffice">Admin</Link>
+                </Button>
+              )}
+              <Button variant="ghost" size="icon-sm" onClick={handleLogout} className="text-slate-400 hover:text-destructive hover:bg-destructive/10">
+                <LogOut className="size-5" />
+              </Button>
+            </div>
           ) : (
-            <>
-              <Link href="/login" className="text-sm font-medium text-slate-700 hover:text-primary">
+            <div className="flex items-center gap-3">
+              <Link href="/login" className="hidden text-sm font-medium text-slate-600 hover:text-primary md:block dark:text-slate-400">
                 Connexion
               </Link>
-              <Link href="/signup" className="rounded-md bg-primary px-3 py-1 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover">
-                S'inscrire
-              </Link>
-            </>
+              <Button size="sm" asChild className="rounded-full shadow-md shadow-primary/20 bg-primary hover:bg-blue-600 text-white font-medium px-5">
+                <Link href="/signup">Commencer</Link>
+              </Button>
+            </div>
           )}
+
+          {/* Mobile Menu Toggle (Visual only for now) */}
+          <Button variant="ghost" size="icon" className="md:hidden text-slate-600 dark:text-slate-400">
+            <Menu className="size-5" />
+          </Button>
         </div>
       </div>
     </header>

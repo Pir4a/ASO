@@ -40,19 +40,20 @@ export default async function ProductsListPage({
   const selectedCategory = categories.find((c) => c.id === categoryId);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-12">
       {/* Header and Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Catalogue produits</CardTitle>
-          <CardDescription>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Catalogue</h1>
+          <p className="text-muted-foreground mt-2">
             {productsResult.total} produit{productsResult.total !== 1 ? "s" : ""} trouvé{productsResult.total !== 1 ? "s" : ""}
             {search && ` pour "${search}"`}
             {selectedCategory && ` dans ${selectedCategory.name}`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Suspense fallback={<div>Chargement des filtres...</div>}>
+          </p>
+        </div>
+
+        <div className="rounded-xl bg-white p-1">
+          <Suspense fallback={<div className="p-4 text-sm text-muted-foreground animate-pulse">Chargement des filtres...</div>}>
             <ProductFilters
               categories={categories}
               initialSearch={search}
@@ -61,21 +62,22 @@ export default async function ProductsListPage({
               initialSortOrder={sortOrder}
             />
           </Suspense>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Products Grid */}
       {productsResult.items.length > 0 ? (
-        <ProductGrid products={productsResult.items} />
+        <div className="bg-slate-50/50 rounded-3xl p-6 border border-slate-100">
+          <ProductGrid products={productsResult.items} />
+        </div>
       ) : (
-        <Card>
-          <CardContent className="py-10 text-center">
-            <p className="text-muted-foreground">Aucun produit trouvé.</p>
-            <Link href="/products" className="text-primary hover:underline mt-2 inline-block">
-              Voir tous les produits
-            </Link>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+          <p className="text-lg font-medium text-slate-900">Aucun produit trouvé</p>
+          <p className="text-muted-foreground mb-4">Essayez de modifier vos filtres.</p>
+          <Link href="/products" className="text-primary font-semibold hover:underline">
+            Réinitialiser les filtres
+          </Link>
+        </div>
       )}
 
       {/* Pagination */}

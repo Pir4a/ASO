@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -30,39 +32,49 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
     }
 
     return (
-        <div className="flex items-center justify-center gap-2">
-            <Link
-                href={createPageUrl(Math.max(1, currentPage - 1))}
-                className={`px-3 py-2 rounded-md border transition-colors ${currentPage === 1
-                        ? "pointer-events-none opacity-50"
-                        : "hover:bg-accent"
-                    }`}
+        <div className="flex items-center justify-center gap-2 py-8">
+            <Button
+                variant="outline"
+                size="icon"
+                disabled={currentPage === 1}
+                asChild={currentPage !== 1}
             >
-                ←
-            </Link>
+                {currentPage === 1 ? (
+                    <ChevronLeft className="size-4" />
+                ) : (
+                    <Link href={createPageUrl(Math.max(1, currentPage - 1))}>
+                        <ChevronLeft className="size-4" />
+                    </Link>
+                )}
+            </Button>
 
             {pages.map((page) => (
-                <Link
+                <Button
                     key={page}
-                    href={createPageUrl(page)}
-                    className={`px-3 py-2 rounded-md border transition-colors ${page === currentPage
-                            ? "bg-primary text-primary-foreground"
-                            : "hover:bg-accent"
-                        }`}
+                    variant={page === currentPage ? "default" : "outline"}
+                    size="icon"
+                    asChild
                 >
-                    {page}
-                </Link>
+                    <Link href={createPageUrl(page)}>
+                        {page}
+                    </Link>
+                </Button>
             ))}
 
-            <Link
-                href={createPageUrl(Math.min(totalPages, currentPage + 1))}
-                className={`px-3 py-2 rounded-md border transition-colors ${currentPage === totalPages
-                        ? "pointer-events-none opacity-50"
-                        : "hover:bg-accent"
-                    }`}
+            <Button
+                variant="outline"
+                size="icon"
+                disabled={currentPage === totalPages}
+                asChild={currentPage !== totalPages}
             >
-                →
-            </Link>
+                {currentPage === totalPages ? (
+                    <ChevronRight className="size-4" />
+                ) : (
+                    <Link href={createPageUrl(Math.min(totalPages, currentPage + 1))}>
+                        <ChevronRight className="size-4" />
+                    </Link>
+                )}
+            </Button>
         </div>
     );
 }

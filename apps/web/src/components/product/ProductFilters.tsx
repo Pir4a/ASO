@@ -5,6 +5,7 @@ import { useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { Category } from "@bootstrap/types";
+import { Search, SlidersHorizontal } from "lucide-react";
 
 interface ProductFiltersProps {
     categories: Category[];
@@ -52,53 +53,57 @@ export function ProductFilters({
     };
 
     return (
-        <div className="space-y-4">
-            {/* Search Form */}
-            <form onSubmit={handleSearch} className="flex flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-6">
+            {/* Search Bar */}
+            <form onSubmit={handleSearch} className="relative max-w-lg">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
                 <Input
                     name="search"
                     defaultValue={initialSearch}
                     placeholder="Rechercher un produit..."
-                    className="flex-1"
+                    className="pl-9 bg-white border-slate-200 focus-visible:ring-primary h-11 shadow-sm"
                 />
-                <Button type="submit">Rechercher</Button>
             </form>
 
-            {/* Filters Row */}
-            <div className="flex flex-wrap items-center gap-4">
-                {/* Category Filter */}
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Catégorie:</span>
-                    <select
-                        value={initialCategory}
-                        onChange={(e) => updateParams({ category: e.target.value })}
-                        className="rounded-md border border-input bg-background px-3 py-1.5 text-sm"
-                    >
-                        <option value="">Toutes</option>
-                        {categories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>
-                                {cat.name}
-                            </option>
-                        ))}
-                    </select>
+            {/* Filters Bar */}
+            <div className="flex flex-wrap items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                    <SlidersHorizontal className="size-4" />
+                    <span>Filtres :</span>
                 </div>
 
+                {/* Category Filter */}
+                <select
+                    value={initialCategory}
+                    onChange={(e) => updateParams({ category: e.target.value })}
+                    className="h-9 w-full sm:w-auto rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                    <option value="">Toutes les catégories</option>
+                    {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                        </option>
+                    ))}
+                </select>
+
+                <div className="h-4 w-px bg-slate-200 hidden sm:block" />
+
                 {/* Sort */}
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Trier par:</span>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">Trier par:</span>
                     <select
                         value={initialSortBy}
                         onChange={(e) => updateParams({ sortBy: e.target.value })}
-                        className="rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                        className="h-9 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     >
-                        <option value="createdAt">Date d&apos;ajout</option>
+                        <option value="createdAt">Nouveauté</option>
                         <option value="name">Nom</option>
                         <option value="price">Prix</option>
                     </select>
                     <select
                         value={initialSortOrder}
                         onChange={(e) => updateParams({ sortOrder: e.target.value })}
-                        className="rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                        className="h-9 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     >
                         <option value="desc">Décroissant</option>
                         <option value="asc">Croissant</option>

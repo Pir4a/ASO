@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/components/ui/Toast";
+import { ShoppingCart } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AddToCartButtonProps {
     productId: string;
     productName?: string;
     className?: string;
-    variant?: "primary" | "small";
+    variant?: "primary" | "small" | "icon";
 }
 
 export function AddToCartButton({
@@ -39,6 +41,32 @@ export function AddToCartButton({
         }
     };
 
+    if (variant === "icon") {
+        return (
+            <button
+                onClick={handleClick}
+                disabled={isAdding || isLoading}
+                className={cn(
+                    "flex items-center justify-center transition-all",
+                    showSuccess ? "bg-emerald-500 text-white" : "",
+                    "disabled:opacity-50",
+                    className
+                )}
+                aria-label="Ajouter au panier"
+            >
+                {isAdding ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                ) : showSuccess ? (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                ) : (
+                    <ShoppingCart className="h-5 w-5" />
+                )}
+            </button>
+        );
+    }
+
     const baseStyles = variant === "primary"
         ? "rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover disabled:opacity-50"
         : "rounded-md bg-primary/90 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary disabled:opacity-50";
@@ -47,7 +75,7 @@ export function AddToCartButton({
         <button
             onClick={handleClick}
             disabled={isAdding || isLoading}
-            className={`${baseStyles} ${className} ${showSuccess ? "animate-pulse-success bg-green-600" : ""} transition-all`}
+            className={cn(baseStyles, className, showSuccess && "animate-pulse-success bg-green-600", "transition-all")}
         >
             {isAdding ? (
                 <span className="flex items-center justify-center gap-2">

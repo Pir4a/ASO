@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -9,14 +9,14 @@ import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/hooks/useCart";
 import { ToastProvider } from "@/components/ui/Toast";
 
-const poppins = Poppins({
+const fontHeading = Plus_Jakarta_Sans({
   variable: "--font-heading",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["500", "600", "700", "800"],
   display: "swap",
 });
 
-const inter = Inter({
+const fontBody = Inter({
   variable: "--font-body",
   subsets: ["latin"],
   display: "swap",
@@ -41,7 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang={locale} dir={dir}>
-      <body className={`${poppins.variable} ${inter.variable} bg-background text-foreground`}>
+      <body className={`${fontHeading.variable} ${fontBody.variable} bg-background text-foreground`}>
         <AuthProvider>
           <CartProvider>
             <ToastProvider>
