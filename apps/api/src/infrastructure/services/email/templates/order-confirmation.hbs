@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Confirmation de commande</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; color: #1f2933;">
+    <h1 style="color:#00a8b5;">Merci pour votre commande, {{customerName}} !</h1>
+    <p>Votre commande <strong>{{orderId}}</strong> a bien ete enregistree.</p>
+
+    <h2>Recapitulatif</h2>
+    <table style="width:100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th align="left">Produit</th>
+          <th align="left">Ref.</th>
+          <th align="center">Qte</th>
+          <th align="right">Prix</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{items}}
+      </tbody>
+    </table>
+
+    <p style="margin-top: 16px;"><strong>Total TTC :</strong> {{total}}</p>
+
+    {{invoiceSection}}
+
+    <p>Si vous avez des questions, repondez a cet email ou contactez notre support.</p>
+  </body>
+</html>

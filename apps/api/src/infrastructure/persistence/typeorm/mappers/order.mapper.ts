@@ -14,6 +14,11 @@ export class OrderMapper {
             shippingAddress: new DomainAddress(entity.shippingAddress),
             billingAddress: entity.billingAddress ? new DomainAddress(entity.billingAddress) : undefined,
             paymentMethod: entity.paymentMethod,
+            paymentId: entity.paymentId,
+            paymentStatus: entity.paymentStatus,
+            paidAt: entity.paidAt,
+            refundId: entity.refundId,
+            refundedAt: entity.refundedAt,
             createdAt: entity.createdAt,
             updatedAt: entity.updatedAt,
             items: entity.items ? entity.items.map(item => new DomainOrderItem({
@@ -39,6 +44,11 @@ export class OrderMapper {
         entity.shippingAddress = domain.shippingAddress; // JSONB stores object directly
         entity.billingAddress = domain.billingAddress;
         entity.paymentMethod = domain.paymentMethod;
+        entity.paymentId = domain.paymentId;
+        entity.paymentStatus = domain.paymentStatus;
+        entity.paidAt = domain.paidAt;
+        entity.refundId = domain.refundId;
+        entity.refundedAt = domain.refundedAt;
         return entity;
     }
 }

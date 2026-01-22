@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import nodemailer from 'nodemailer';
+import fs from 'fs';
+import path from 'path';
 import { EmailGateway } from '../../../domain/gateways/email.gateway';
 
 @Injectable()
@@ -46,5 +48,76 @@ export class NodemailerService implements EmailGateway {
         if (info.messageId) {
             console.log('Message ID:', info.messageId);
         }
+    }
+
+    async sendOrderConfirmationEmail(
+        to: string,
+        payload: {
+            orderId: string;
+            total: number;
+            currency: string;
+            items: Array<{ name: string; sku?: string; quantity: number; price: number }>;
+            invoiceUrl?: string;
+            customerName?: string;
+        }
+    ): Promise<void> {
+        const template = this.loadTemplate('order-confirmation.hbs');
+        const itemsHtml = payload.items.map(item => `
+            <tr>
+              <td style="padding: 6px 0;">${item.name}</td>
+              <td style="padding: 6px 0;">${item.sku || '-'}</td>
+              <td style="padding: 6px 0; text-align:center;">${item.quantity}</td>
+              <td style="padding: 6px 0; text-align:right;">${this.formatPrice(item.price, payload.currency)}</td>
+            </tr>
+        `).join('');
+
+        const html = this.renderTemplate(template, {
+            customerName: payload.customerName || 'Client',
+            orderId: payload.orderId,
+            total: this.formatPrice(payload.total, payload.currency),
+            invoiceUrl: payload.invoiceUrl || '',
+            invoiceSection: payload.invoiceUrl
+                ? `<p>Votre facture est disponible ici : <a href="${payload.invoiceUrl}">Telecharger la facture</a></p>`
+                : '',
+            items: itemsHtml,
+        });
+
+        const info = await this.transporter.sendMail({
+            from: '"Althea Shop" <no-reply@althea.local>',
+            to,
+            subject: 'Confirmation de votre commande Althea',
+            html,
+        });
+
+        console.log(`Order confirmation email sent to ${to}. Order: ${payload.orderId}`);
+        if (info.messageId) {
+            console.log('Message ID:', info.messageId);
+        }
+    }
+
+    private loadTemplate(fileName: string): string {
+        const candidatePaths = [
+            path.resolve(process.cwd(), 'src', 'infrastructure', 'services', 'email', 'templates', fileName),
+            path.resolve(process.cwd(), 'apps', 'api', 'src', 'infrastructure', 'services', 'email', 'templates', fileName),
+        ];
+
+        for (const candidate of candidatePaths) {
+            if (fs.existsSync(candidate)) {
+                return fs.readFileSync(candidate, 'utf-8');
+            }
+        }
+
+        return '<p>Bonjour {{customerName}},</p><p>Votre commande {{orderId}} est confirmée.</p>';
+    }
+
+    private renderTemplate(template: string, variables: Record<string, string>): string {
+        return template.replace(/\{\{(\w+)\}\}/g, (_, key) => variables[key] || '');
+    }
+
+    private formatPrice(amount: number, currency: string): string {
+        return new Intl.NumberFormat('fr-FR', {
+            style: 'currency',
+            currency: currency || 'EUR',
+        }).format(amount);
     }
 }

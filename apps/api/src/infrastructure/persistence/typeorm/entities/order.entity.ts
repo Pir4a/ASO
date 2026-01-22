@@ -39,6 +39,15 @@ export class Order {
     @Column({ default: 'unpaid' })
     paymentStatus: string;
 
+    @Column({ type: 'timestamptz', nullable: true })
+    paidAt?: Date;
+
+    @Column({ nullable: true })
+    refundId?: string;
+
+    @Column({ type: 'timestamptz', nullable: true })
+    refundedAt?: Date;
+
     @OneToMany(() => OrderItem, (item) => item.order, { cascade: true, eager: true })
     items: OrderItem[];
 

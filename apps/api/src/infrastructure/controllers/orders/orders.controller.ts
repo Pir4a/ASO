@@ -1,10 +1,12 @@
-import { Controller, Get, Param, Query, Req, Res, UseGuards, StreamableFile } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, Res, UseGuards, StreamableFile, Put, Delete, Body } from '@nestjs/common';
 import { Request } from 'express';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { GetOrdersUseCase } from '../../../application/use-cases/orders/get-orders.use-case';
 import { GetOrderDetailsUseCase } from '../../../application/use-cases/orders/get-order-details.use-case';
 import { GenerateInvoicePdfUseCase } from '../../../application/use-cases/orders/generate-invoice-pdf.use-case';
+import { ModifyInvoiceUseCase, InvoiceUpdatePayload } from '../../../application/use-cases/orders/modify-invoice.use-case';
+import { DeleteInvoiceUseCase } from '../../../application/use-cases/orders/delete-invoice.use-case';
 
 interface AuthenticatedRequest extends Request {
     user: { sub: string; email: string };
@@ -17,6 +19,8 @@ export class OrdersController {
         private readonly getOrdersUseCase: GetOrdersUseCase,
         private readonly getOrderDetailsUseCase: GetOrderDetailsUseCase,
         private readonly generateInvoicePdfUseCase: GenerateInvoicePdfUseCase,
+        private readonly modifyInvoiceUseCase: ModifyInvoiceUseCase,
+        private readonly deleteInvoiceUseCase: DeleteInvoiceUseCase,
     ) { }
 
     /**
@@ -74,5 +78,33 @@ export class OrdersController {
         });
 
         return new StreamableFile(pdfBuffer);
+    }
+
+    /**
+     * PUT /orders/:id/invoice
+     * Update invoice metadata and regenerate PDF.
+     */
+    @Put(':id/invoice')
+    async updateInvoice(
+        @Req() req: AuthenticatedRequest,
+        @Param('id') orderId: string,
+        @Body() body: InvoiceUpdatePayload,
+    ) {
+        const userId = req.user.sub;
+        return this.modifyInvoiceUseCase.execute(orderId, userId, body);
+    }
+
+    /**
+     * DELETE /orders/:id/invoice
+     * Void an invoice and create a credit note.
+     */
+    @Delete(':id/invoice')
+    async deleteInvoice(
+        @Req() req: AuthenticatedRequest,
+        @Param('id') orderId: string,
+        @Body('reason') reason?: string,
+    ) {
+        const userId = req.user.sub;
+        return this.deleteInvoiceUseCase.execute(orderId, userId, reason);
     }
 }

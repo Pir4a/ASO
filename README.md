@@ -28,11 +28,33 @@ Stack cible : Next.js (Front), NestJS (API), PostgreSQL (données transactionnel
 - API NestJS : modules auth (JWT), users, categories, products, content (GridFS schema), cart, orders, health. Sécurité de base (helmet, CORS, rate-limit, ValidationPipe).
 - Modèles Postgres (TypeORM) + migration initiale + seed (catégories, produits, contenu, admin). Mongo connecté pour médias.
 - Docker Compose pour Postgres + pgAdmin, Mongo + mongo-express.
+- Paiement Stripe complet (intent, webhook sécurisé, idempotence, remboursement) + suivi paiement en BDD.
+- Facturation PDF (génération/édition/suppression + avoirs) avec stockage local.
+- Email de confirmation de commande avec recap et lien facture.
+- Messages de contact persistés via `/api/contact`.
 
 ## Scripts utiles
 - Racine : `npm run dev|build|lint`, `npm run docker:up`, `npm run docker:down`
 - Web : `npm run dev --workspace web`, `npm run lint --workspace web`
 - API : `npm run start:dev --workspace api`, `npm run lint --workspace api`, `npm run db:migrate`, `npm run db:revert`, `npm run seed`
+
+## Paiement Stripe (env)
+- `STRIPE_SECRET_KEY` : clé secrète Stripe (mode test recommandé en local).
+- `STRIPE_WEBHOOK_SECRET` : secret de signature des webhooks Stripe.
+- Webhook Stripe : `POST /api/payment/webhooks/stripe`.
+ - Remboursement : `POST /api/payment/refund/:orderId`.
+ - Idempotence : header `idempotency-key` sur `POST /api/payment/intent`.
+
+## Facturation (env)
+- `COMPANY_NAME`, `COMPANY_ADDRESS_LINE1`, `COMPANY_ADDRESS_LINE2`
+- `COMPANY_EMAIL`, `COMPANY_PHONE`
+- `COMPANY_VAT_NUMBER`, `COMPANY_SIRET`, `COMPANY_RCS`
+- `COMPANY_LEGAL_MENTIONS`, `INVOICE_NOTES`
+
+## Factures (endpoints)
+- `GET /api/orders/:orderId/invoice` : telechargement PDF.
+- `PUT /api/orders/:orderId/invoice` : mise a jour (regeneration PDF).
+- `DELETE /api/orders/:orderId/invoice` : annulation + creation d'avoir.
 
 ## Sécurité / Perf / SEO
 - SSR/ISR prêt, images optimisées (remote patterns), sitemap/robots, hreflang via i18n.

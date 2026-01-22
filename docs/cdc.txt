@@ -1,0 +1,81 @@
+
+29
+
+Zoom automatique
+28
+• Le repository contiendra tout le code source lié à ces interfaces et permettra un suivi de
+version détaillé, assurant une traçabilité des modifications à chaque étape du projet.
+• Chaque commit devra inclure des descriptions claires, expliquant les changements apportés
+pour faciliter les revues de code et garantir la cohérence du projet.
+• Le code sera testé et ne devra comporter aucune erreur ou bugs avant livraison finale.
+2. Code propre et bien architecturé :
+• Le code livré devra être propre, bien organisé et conforme aux standards de l'industrie. Cela
+inclut :
+o Nomenclature claire des variables, fonctions et composants.
+o Architecture modulaire pour assurer une maintenabilité et une extensibilité à long
+terme.
+o Respect des principes SOLID et autres bonnes pratiques de conception de logiciels.
+• Le code devra également être documenté de manière adéquate, pour permettre aux
+développeurs futurs de comprendre facilement les choix de conception.
+3. Documentation technique complète :
+Une documentation technique détaillée doit être fournie pour accompagner les repositories GIT, et
+elle devra inclure les éléments suivants :
+1. Guide d'installation :
+o Dépendances nécessaires.
+o Instructions pour configurer l'environnement de développement, le déploiement et la
+production.
+o Étapes détaillées pour installer et déployer le site web (versions desktop et mobile)
+ainsi que l’application mobile.
+2. Documentation des API :
+o Tous les endpoints API utilisés ou créés dans le cadre du projet devront être
+documentés, y compris les méthodes HTTP, les paramètres attendus, et les réponses
+possibles.
+o Un outil comme Swagger ou Postman pourra être utilisé pour faciliter cette
+documentation et permettre des tests interactifs.
+3. Structure du code :
+o Explication de l'architecture du code : comment les composants sont organisés,
+comment les modules interagissent entre eux, etc.
+o Description des principaux composants, services, et systèmes (backend, frontend,
+services API).
+o Justification des choix technologiques, par exemple l’utilisation d’un framework
+particulier (React, Angular, etc.), des bibliothèques ou des outils de gestion d’état.
+4. Tests :
+o Instructions sur les tests unitaires, tests d’intégration et tests fonctionnels à effectuer.
+o Explication de la mise en place des tests automatisés pour garantir la qualité continue
+du produit.
+o Utilisation de frameworks de test comme Jest, Mocha, ou similaires pour tester les
+différents aspects du code.
+5. Document de Conception Technique (DCT) : Le Document de Conception Technique (DCT)
+comprendra :
+o Architecture du système : Vue d'ensemble de l’infrastructure technique, décrivant les
+interactions entre le frontend, le backend, les bases de données, les services API, et les
+systèmes d'authentification.
+29
+o Diagrammes techniques :
+▪ Diagramme d'architecture globale illustrant la structure des composants
+principaux du site web, de l'application mobile, et du backoffice.
+▪ Diagramme de flux de données montrant comment les données sont traitées
+et circulent entre les différents systèmes.
+▪ Diagramme de communication des services (API, interactions front-back).
+o Choix technologiques : Justification des piles technologiques sélectionnées pour
+répondre aux objectifs de performance, de scalabilité et de sécurité.
+o Plan de sécurité (Bonus) :
+▪ Détail des mesures de sécurité mises en place, incluant le chiffrement des
+données sensibles, la gestion des sessions utilisateur, et la protection contre
+les menaces comme les attaques XSS, CSRF, etc.
+▪ Conformité aux normes de sécurité telles que le RGPD pour garantir la
+protection des données personnelles.
+o Plan de maintenance et évolutivité :
+▪ Recommandations pour la maintenance continue du produit, incluant la
+gestion des mises à jour et des correctifs de sécurité.
+▪ Stratégies pour assurer la scalabilité du site web et de l’application mobile,
+avec une extension possible de l’infrastructure pour répondre à une
+augmentation du nombre d’utilisateurs.
+6. Suivi de l’évolution des livrables :
+• Les étapes de développement du projet devront être visibles et accessibles via les repositories
+GIT tout au long du processus.
+• Chaque sprint devra être documenté et inclure des rapports de progression, afin que
+l’ensemble des parties prenantes puisse suivre l’évolution du projet.
+• Les mises à jour régulières et les revues de code permettront de garantir la transparence du
+développement.
+7. Maquettage et prototype des 2 parties front office et backoffice.

@@ -2,9 +2,30 @@ import { Injectable } from '@nestjs/common';
 import PDFDocument from 'pdfkit';
 import { Order } from '../../domain/entities/order.entity';
 
+export interface InvoicePdfDetails {
+    invoiceNumber: string;
+    issuedAt: Date;
+    seller: {
+        name: string;
+        addressLines: string[];
+        email?: string;
+        phone?: string;
+        vatNumber?: string;
+        siret?: string;
+        rcs?: string;
+        legalMentions?: string;
+    };
+    buyer?: {
+        name?: string;
+        addressLines?: string[];
+        email?: string;
+    };
+    notes?: string;
+}
+
 @Injectable()
 export class PdfService {
-    generateInvoice(order: Order): Promise<Buffer> {
+    generateInvoice(order: Order, details?: InvoicePdfDetails): Promise<Buffer> {
         return new Promise((resolve, reject) => {
             const doc = new PDFDocument({ margin: 50 });
             const chunks: Buffer[] = [];
@@ -13,41 +34,39 @@ export class PdfService {
             doc.on('end', () => resolve(Buffer.concat(chunks)));
             doc.on('error', reject);
 
+            const invoiceNumber = details?.invoiceNumber || `CMD-${order.id}`;
+            const issuedAt = details?.issuedAt || order.createdAt;
+            const seller = details?.seller || this.getSellerInfo();
+
             // Header
             doc.fontSize(20).font('Helvetica-Bold').text('FACTURE', { align: 'center' });
             doc.moveDown();
 
-            // Company info (placeholder)
-            doc.fontSize(10).font('Helvetica')
-                .text('E-Commerce Store', { align: 'left' })
-                .text('123 Commerce Street')
-                .text('75001 Paris, France')
-                .text('contact@store.com');
+            // Company info
+            doc.fontSize(10).font('Helvetica').text(seller.name, { align: 'left' });
+            seller.addressLines.forEach(line => doc.text(line));
+            if (seller.email) doc.text(seller.email);
+            if (seller.phone) doc.text(seller.phone);
+            if (seller.vatNumber) doc.text(`TVA: ${seller.vatNumber}`);
+            if (seller.siret) doc.text(`SIRET: ${seller.siret}`);
+            if (seller.rcs) doc.text(`RCS: ${seller.rcs}`);
             doc.moveDown();
 
             // Invoice details
             doc.fontSize(12).font('Helvetica-Bold').text('Détails de la facture');
             doc.fontSize(10).font('Helvetica')
+                .text(`Numéro de facture: ${invoiceNumber}`)
                 .text(`Numéro de commande: ${order.id}`)
-                .text(`Date: ${new Date(order.createdAt).toLocaleDateString('fr-FR')}`)
+                .text(`Date: ${new Date(issuedAt).toLocaleDateString('fr-FR')}`)
                 .text(`Statut: ${this.translateStatus(order.status)}`);
             doc.moveDown();
 
             // Shipping address
-            if (order.shippingAddress) {
+            const buyerAddress = this.resolveBuyerAddress(order, details?.buyer);
+            if (buyerAddress.length > 0) {
                 doc.fontSize(12).font('Helvetica-Bold').text('Adresse de livraison');
                 doc.fontSize(10).font('Helvetica');
-                const addr = order.shippingAddress as Record<string, any>;
-                // Handle different address field formats
-                const name = addr.name || (addr.firstName && addr.lastName ? `${addr.firstName} ${addr.lastName}` : null);
-                if (name) doc.text(name);
-                if (addr.street) doc.text(addr.street);
-                if (addr.line1) doc.text(addr.line1);
-                if (addr.line2) doc.text(addr.line2);
-                const postal = addr.postalCode || addr.postal_code || '';
-                const city = addr.city || '';
-                if (postal || city) doc.text(`${postal} ${city}`.trim());
-                if (addr.country) doc.text(addr.country);
+                buyerAddress.forEach(line => doc.text(line));
                 doc.moveDown();
             }
 
@@ -115,6 +134,16 @@ export class PdfService {
                     'Cette facture est générée automatiquement et ne nécessite pas de signature.',
                     { align: 'center' }
                 );
+            if (seller.legalMentions) {
+                doc.moveDown(0.5);
+                doc.fontSize(7).font('Helvetica').text(seller.legalMentions, {
+                    align: 'center'
+                });
+            }
+            if (details?.notes) {
+                doc.moveDown(0.5);
+                doc.fontSize(7).font('Helvetica').text(details.notes, { align: 'center' });
+            }
 
             doc.end();
         });
@@ -136,5 +165,41 @@ export class PdfService {
             style: 'currency',
             currency: currency || 'EUR',
         }).format(amount);
+    }
+
+    private getSellerInfo(): InvoicePdfDetails['seller'] {
+        return {
+            name: process.env.COMPANY_NAME || 'Althea Systems',
+            addressLines: [
+                process.env.COMPANY_ADDRESS_LINE1 || 'Adresse société',
+                process.env.COMPANY_ADDRESS_LINE2 || '75000 Paris, France',
+            ].filter(Boolean),
+            email: process.env.COMPANY_EMAIL || 'contact@althea.local',
+            phone: process.env.COMPANY_PHONE,
+            vatNumber: process.env.COMPANY_VAT_NUMBER,
+            siret: process.env.COMPANY_SIRET,
+            rcs: process.env.COMPANY_RCS,
+            legalMentions: process.env.COMPANY_LEGAL_MENTIONS,
+        };
+    }
+
+    private resolveBuyerAddress(order: Order, buyer?: InvoicePdfDetails['buyer']): string[] {
+        if (buyer?.addressLines && buyer.addressLines.length > 0) {
+            return buyer.addressLines;
+        }
+
+        if (!order.shippingAddress) return [];
+        const addr = order.shippingAddress as Record<string, any>;
+        const lines: string[] = [];
+        const name = buyer?.name || addr.name || (addr.firstName && addr.lastName ? `${addr.firstName} ${addr.lastName}` : undefined);
+        if (name) lines.push(name);
+        if (addr.street) lines.push(addr.street);
+        if (addr.line1) lines.push(addr.line1);
+        if (addr.line2) lines.push(addr.line2);
+        const postal = addr.postalCode || addr.postal_code || '';
+        const city = addr.city || '';
+        if (postal || city) lines.push(`${postal} ${city}`.trim());
+        if (addr.country) lines.push(addr.country);
+        return lines;
     }
 }

@@ -26,6 +26,11 @@ export class Order {
     shippingAddress: Address;
     billingAddress?: Address;
     paymentMethod?: string; // e.g., 'stripe', 'paypal'
+    paymentId?: string;
+    paymentStatus?: string;
+    paidAt?: Date;
+    refundId?: string;
+    refundedAt?: Date;
     createdAt: Date;
     updatedAt: Date;
     items: OrderItem[];

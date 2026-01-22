@@ -107,6 +107,9 @@ export class TypeOrmOrderRepository implements OrderRepository {
             if (metadata.paymentId) order.paymentId = metadata.paymentId;
             if (metadata.paymentStatus) order.paymentStatus = metadata.paymentStatus;
             if (metadata.paymentMethod) order.paymentMethod = metadata.paymentMethod;
+            if (metadata.paidAt) order.paidAt = metadata.paidAt;
+            if (metadata.refundId) order.refundId = metadata.refundId;
+            if (metadata.refundedAt) order.refundedAt = metadata.refundedAt;
         }
 
         const savedEntity = await this.repository.save(order);

@@ -1,8 +1,10 @@
-import { Controller, Post, Get, Delete, Body, HttpCode, HttpStatus, Headers, BadRequestException, Request, Param } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Body, HttpCode, HttpStatus, Headers, BadRequestException, Request, Param, Req } from '@nestjs/common';
 import { CreatePaymentIntentUseCase } from '../../application/use-cases/payment/create-payment-intent.use-case';
 import { CreateSetupIntentUseCase } from '../../application/use-cases/payment/create-setup-intent.use-case';
 import { GetPaymentMethodsUseCase } from '../../application/use-cases/payment/get-payment-methods.use-case';
 import { DeletePaymentMethodUseCase } from '../../application/use-cases/payment/delete-payment-method.use-case';
+import { HandleStripeWebhookUseCase } from '../../application/use-cases/payment/handle-stripe-webhook.use-case';
+import { RefundPaymentUseCase } from '../../application/use-cases/payment/refund-payment.use-case';
 
 @Controller('payment')
 export class PaymentController {
@@ -11,15 +13,17 @@ export class PaymentController {
         private readonly createSetupIntentUseCase: CreateSetupIntentUseCase,
         private readonly getPaymentMethodsUseCase: GetPaymentMethodsUseCase,
         private readonly deletePaymentMethodUseCase: DeletePaymentMethodUseCase,
+        private readonly handleStripeWebhookUseCase: HandleStripeWebhookUseCase,
+        private readonly refundPaymentUseCase: RefundPaymentUseCase,
     ) { }
 
     @Post('intent')
     @HttpCode(HttpStatus.OK)
-    async createIntent(@Body('orderId') orderId: string) {
+    async createIntent(@Body('orderId') orderId: string, @Headers('idempotency-key') idempotencyKey?: string) {
         if (!orderId) {
             throw new BadRequestException('Order ID is required');
         }
-        return this.createPaymentIntentUseCase.execute(orderId);
+        return this.createPaymentIntentUseCase.execute(orderId, idempotencyKey);
     }
 
     @Post('intent/setup')
@@ -40,12 +44,16 @@ export class PaymentController {
         return this.deletePaymentMethodUseCase.execute(paymentMethodId);
     }
 
-    @Post('webhook')
+    @Post('webhooks/stripe')
     @HttpCode(HttpStatus.OK)
-    async handleWebhook(@Headers('stripe-signature') signature: string, @Body() body: any) {
-        // Placeholder for webhook handling (Task 2)
-        // For now just acknowledge receipt to avoid retries
-        console.log('Received webhook', body.type);
-        return { received: true };
+    async handleWebhook(@Headers('stripe-signature') signature: string, @Req() req: any) {
+        const payload = req.rawBody ?? req.body;
+        return this.handleStripeWebhookUseCase.execute(signature, payload);
+    }
+
+    @Post('refund/:orderId')
+    @HttpCode(HttpStatus.OK)
+    async refundOrder(@Param('orderId') orderId: string) {
+        return this.refundPaymentUseCase.execute(orderId);
     }
 }

@@ -27,6 +27,6 @@ export class CreateSetupIntentUseCase {
             await this.userRepository.update(user);
         }
 
-        return this.paymentGateway.createSetupIntent(stripeCustomerId);
+        return this.paymentGateway.createSetupIntent(stripeCustomerId, { userId });
     }
 }

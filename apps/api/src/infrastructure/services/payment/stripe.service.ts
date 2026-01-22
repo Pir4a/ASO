@@ -15,16 +15,24 @@ export class StripePaymentService implements PaymentGateway {
         });
     }
 
-    async createPaymentIntent(amount: number, currency: string, metadata?: any): Promise<{ clientSecret: string; id: string }> {
+    async createPaymentIntent(
+        amount: number,
+        currency: string,
+        metadata?: any,
+        idempotencyKey?: string
+    ): Promise<{ clientSecret: string; id: string }> {
         try {
-            const paymentIntent = await this.stripe.paymentIntents.create({
-                amount: Math.round(amount * 100), // Stripe expects cents
-                currency,
-                metadata,
-                automatic_payment_methods: {
-                    enabled: true,
+            const paymentIntent = await this.stripe.paymentIntents.create(
+                {
+                    amount: Math.round(amount * 100), // Stripe expects cents
+                    currency,
+                    metadata,
+                    automatic_payment_methods: {
+                        enabled: true,
+                    },
                 },
-            });
+                idempotencyKey ? { idempotencyKey } : undefined
+            );
 
             return {
                 clientSecret: paymentIntent.client_secret!,
@@ -49,11 +57,12 @@ export class StripePaymentService implements PaymentGateway {
         }
     }
 
-    async createSetupIntent(stripeCustomerId: string): Promise<{ clientSecret: string }> {
+    async createSetupIntent(stripeCustomerId: string, metadata?: any): Promise<{ clientSecret: string }> {
         try {
             const setupIntent = await this.stripe.setupIntents.create({
                 customer: stripeCustomerId,
                 payment_method_types: ['card'],
+                metadata,
             });
             return { clientSecret: setupIntent.client_secret! };
         } catch (error) {
@@ -97,6 +106,43 @@ export class StripePaymentService implements PaymentGateway {
         } catch (error) {
             console.error('Stripe verifyPayment failed:', error);
             throw new InternalServerErrorException('Failed to verify payment');
+        }
+    }
+
+    constructWebhookEvent(payload: Buffer | string, signature: string): Stripe.Event {
+        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+        if (!webhookSecret) {
+            throw new InternalServerErrorException('STRIPE_WEBHOOK_SECRET not set');
+        }
+        return this.stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+    }
+
+    async refundPayment(paymentIntentId: string, amount?: number): Promise<{ id: string; status: string }> {
+        try {
+            const refund = await this.stripe.refunds.create({
+                payment_intent: paymentIntentId,
+                amount: amount ? Math.round(amount * 100) : undefined,
+            });
+            return { id: refund.id, status: refund.status || 'unknown' };
+        } catch (error) {
+            console.error('Stripe refundPayment failed:', error);
+            throw new InternalServerErrorException('Failed to refund payment');
+        }
+    }
+
+    async getPaymentMethodDetails(paymentMethodId: string): Promise<any> {
+        try {
+            const paymentMethod = await this.stripe.paymentMethods.retrieve(paymentMethodId);
+            return {
+                id: paymentMethod.id,
+                brand: paymentMethod.card?.brand,
+                last4: paymentMethod.card?.last4,
+                expMonth: paymentMethod.card?.exp_month,
+                expYear: paymentMethod.card?.exp_year,
+            };
+        } catch (error) {
+            console.error('Stripe getPaymentMethodDetails failed:', error);
+            throw new InternalServerErrorException('Failed to retrieve payment method');
         }
     }
 }
