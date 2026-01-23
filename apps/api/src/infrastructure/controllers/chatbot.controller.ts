@@ -16,7 +16,7 @@ export class ChatbotController {
     private readonly chatbotService: ChatbotService,
     @Inject(CHAT_CONVERSATION_REPOSITORY_TOKEN)
     private readonly conversationRepository: ChatConversationRepository,
-  ) {}
+  ) { }
 
   @Post('message')
   async sendMessage(
@@ -42,7 +42,7 @@ export class ChatbotController {
 
     // Handle escalation if needed
     if (response.type === 'escalation') {
-      await this.escalateConversation(finalSessionId, userId);
+      await this.handleEscalation(finalSessionId, userId);
     }
 
     return {
@@ -55,8 +55,8 @@ export class ChatbotController {
 
   @Get('conversations')
   async getConversations(
-    @Query('sessionId') sessionId?: string,
     @Request() req: AuthenticatedRequest,
+    @Query('sessionId') sessionId?: string,
   ) {
     const userId = req.user?.sub;
 
@@ -70,9 +70,9 @@ export class ChatbotController {
   }
 
   @Post('escalate')
-  async escalateConversation(
-    @Body() body: { sessionId?: string },
+  async escalateToHuman(
     @Request() req: AuthenticatedRequest,
+    @Body() body: { sessionId?: string },
   ) {
     const sessionId = body.sessionId;
     const userId = req.user?.sub;
@@ -81,7 +81,7 @@ export class ChatbotController {
       return { success: false, message: 'Session ID or user authentication required' };
     }
 
-    await this.escalateConversation(sessionId || '', userId);
+    await this.handleEscalation(sessionId || '', userId);
 
     // Create a system message about escalation
     await this.saveMessage(sessionId || '', userId, 'Conversation escalated to human support', 'system', {
@@ -126,7 +126,7 @@ export class ChatbotController {
     await this.conversationRepository.create(conversation);
   }
 
-  private async escalateConversation(sessionId: string, userId?: string): Promise<void> {
+  private async handleEscalation(sessionId: string, userId?: string): Promise<void> {
     // Find recent conversations for this session/user and mark as escalated
     const conversations = userId
       ? await this.conversationRepository.findByUserId(userId)

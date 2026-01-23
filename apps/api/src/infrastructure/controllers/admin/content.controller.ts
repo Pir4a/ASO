@@ -25,6 +25,7 @@ import { CreateContentBlockUseCase } from '../../../application/use-cases/conten
 import { UpdateContentBlockUseCase } from '../../../application/use-cases/content/update-content-block.use-case';
 import { DeleteContentBlockUseCase } from '../../../application/use-cases/content/delete-content-block.use-case';
 import { UpdateHomepageContentUseCase } from '../../../application/use-cases/content/update-homepage-content.use-case';
+import { ContentBlock, ContentType } from '../../../infrastructure/persistence/typeorm/entities/content-block.entity';
 
 @Controller('admin/content')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -36,11 +37,15 @@ export class AdminContentController {
     private readonly updateContentBlockUseCase: UpdateContentBlockUseCase,
     private readonly deleteContentBlockUseCase: DeleteContentBlockUseCase,
     private readonly updateHomepageContentUseCase: UpdateHomepageContentUseCase,
-  ) {}
+  ) { }
 
   @Get()
   async getAllContent(@Query('type') type?: string) {
-    return this.getContentUseCase.execute(type);
+    const allContent = await this.getContentUseCase.execute();
+    if (type) {
+      return allContent.filter(c => c.type === type);
+    }
+    return allContent;
   }
 
   @Get('homepage')
@@ -74,7 +79,11 @@ export class AdminContentController {
     payload?: Record<string, unknown>;
     order?: number;
   }) {
-    return this.createContentBlockUseCase.execute(body);
+    return this.createContentBlockUseCase.execute({
+      type: body.type as ContentType,
+      payload: body.payload,
+      order: body.order,
+    });
   }
 
   @Put(':id')
@@ -86,7 +95,12 @@ export class AdminContentController {
       order?: number;
     }
   ) {
-    return this.updateContentBlockUseCase.execute({ id, ...body });
+    return this.updateContentBlockUseCase.execute({
+      id,
+      type: body.type as ContentType | undefined,
+      payload: body.payload,
+      order: body.order,
+    });
   }
 
   @Delete(':id')

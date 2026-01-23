@@ -15,8 +15,8 @@ export class TypeOrmChatConversationRepository implements ChatConversationReposi
   async create(conversation: DomainChatConversation): Promise<DomainChatConversation> {
     const entity = new TypeOrmChatConversation();
     entity.id = conversation.id;
-    entity.sessionId = conversation.sessionId;
-    entity.userId = conversation.userId;
+    entity.sessionId = conversation.sessionId ?? '';
+    entity.userId = conversation.userId ?? '';
     entity.message = conversation.message;
     entity.type = conversation.type;
     entity.metadata = conversation.metadata;

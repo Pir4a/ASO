@@ -28,14 +28,15 @@ export class UserMapper {
         entity.email = domain.email;
         entity.passwordHash = domain.passwordHash;
         entity.role = domain.role;
-        entity.firstName = domain.firstName;
-        entity.lastName = domain.lastName;
+        entity.firstName = domain.firstName ?? '';
+        entity.lastName = domain.lastName ?? '';
         entity.isVerified = domain.isVerified ?? entity.isVerified;
-        entity.verificationToken = domain.verificationToken;
-        entity.verificationTokenExpires = domain.verificationTokenExpires;
-        entity.stripeCustomerId = domain.stripeCustomerId;
+        entity.verificationToken = domain.verificationToken ?? '';
+        entity.verificationTokenExpires = domain.verificationTokenExpires ?? new Date();
+        entity.stripeCustomerId = domain.stripeCustomerId ?? '';
         entity.isActive = domain.isActive ?? true;
         entity.lastLoginAt = domain.lastLoginAt;
         return entity;
     }
 }
+

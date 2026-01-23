@@ -141,7 +141,7 @@ export default function BackofficeProductsPage() {
           </select>
         </div>
 
-        <ProductForm token={token} categories={categories} products={products} onCreated={handleCreated} />
+        <ProductForm categories={categories} products={products} onCreated={handleCreated} />
 
         {loading ? (
           <div className="card p-6 text-sm text-slate-500">Chargement...</div>

@@ -45,7 +45,7 @@ export class OrderMapper {
         entity.billingAddress = domain.billingAddress;
         entity.paymentMethod = domain.paymentMethod;
         entity.paymentId = domain.paymentId;
-        entity.paymentStatus = domain.paymentStatus;
+        entity.paymentStatus = domain.paymentStatus ?? 'pending';
         entity.paidAt = domain.paidAt;
         entity.refundId = domain.refundId;
         entity.refundedAt = domain.refundedAt;

@@ -5,7 +5,8 @@ import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { GetOrdersUseCase } from '../../../application/use-cases/orders/get-orders.use-case';
 import { GetOrderDetailsUseCase } from '../../../application/use-cases/orders/get-order-details.use-case';
 import { GenerateInvoicePdfUseCase } from '../../../application/use-cases/orders/generate-invoice-pdf.use-case';
-import { ModifyInvoiceUseCase, InvoiceUpdatePayload } from '../../../application/use-cases/orders/modify-invoice.use-case';
+import { ModifyInvoiceUseCase } from '../../../application/use-cases/orders/modify-invoice.use-case';
+import type { InvoiceUpdatePayload } from '../../../application/use-cases/orders/modify-invoice.use-case';
 import { DeleteInvoiceUseCase } from '../../../application/use-cases/orders/delete-invoice.use-case';
 
 interface AuthenticatedRequest extends Request {

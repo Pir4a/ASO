@@ -1,18 +1,21 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import type { Category, Product } from "@bootstrap/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 interface ProductFormProps {
-  token: string | null;
   categories: Category[];
-  products: Product[];
-  onCreated: (product: Product) => void;
+  products?: Product[];
+  onCreated?: (product: Product) => void;
 }
 
-export function ProductForm({ token, categories, products, onCreated }: ProductFormProps) {
+export function ProductForm({ categories, products = [], onCreated }: ProductFormProps) {
+  const { token } = useAuth();
+  const router = useRouter();
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [images, setImages] = useState<File[]>([]);
   const [specsText, setSpecsText] = useState("{}");
@@ -86,7 +89,12 @@ export function ProductForm({ token, categories, products, onCreated }: ProductF
         }
       }
 
-      onCreated(product);
+      if (onCreated) {
+        onCreated(product);
+      } else {
+        router.refresh();
+      }
+
       setImages([]);
       setSpecsText("{}");
       event.currentTarget.reset();
