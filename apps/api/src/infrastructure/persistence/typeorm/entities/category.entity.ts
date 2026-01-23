@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Product } from './product.entity';
 
 @Entity({ name: 'categories' })
@@ -15,8 +15,23 @@ export class Category {
     @Column({ nullable: true })
     description?: string;
 
-    @Column({ type: 'int', default: 0 })
-    order: number;
+    @Column({ nullable: true })
+    imageUrl?: string;
+
+    @Column({ default: true })
+    isActive: boolean;
+
+    @Column({ name: 'order', type: 'int', default: 0 })
+    displayOrder: number;
+
+    @Column({ type: 'timestamptz', nullable: true })
+    deletedAt?: Date;
+
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @UpdateDateColumn()
+    updatedAt: Date;
 
     @OneToMany(() => Product, (product) => product.category)
     products: Product[];

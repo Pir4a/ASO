@@ -81,7 +81,7 @@ export async function getProducts(): Promise<Product[]> {
 export interface ProductSearchParams {
   search?: string;
   categoryId?: string;
-  sortBy?: 'createdAt' | 'name' | 'price';
+  sortBy?: 'createdAt' | 'name' | 'price' | 'displayOrder';
   sortOrder?: 'asc' | 'desc';
   page?: number;
   limit?: number;

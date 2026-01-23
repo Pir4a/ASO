@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository, SelectQueryBuilder } from 'typeorm';
+import { DataSource, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { Product as TypeOrmProduct } from '../entities/product.entity';
 import { Product as DomainProduct } from '../../../../domain/entities/product.entity';
 import {
@@ -40,6 +40,21 @@ export class TypeOrmProductRepository implements ProductRepository {
         return ProductMapper.toDomain(newEntity);
     }
 
+    async update(product: DomainProduct): Promise<DomainProduct> {
+        const persistenceEntity = ProductMapper.toPersistence(product);
+        const savedEntity = await this.repository.save(persistenceEntity);
+        return ProductMapper.toDomain(savedEntity);
+    }
+
+    async delete(id: string): Promise<void> {
+        await this.repository.delete({ id });
+    }
+
+    async bulkUpdate(ids: string[], payload: Partial<DomainProduct>): Promise<void> {
+        if (ids.length === 0) return;
+        await this.repository.update({ id: In(ids) }, payload as any);
+    }
+
     async findWithFilters(params: ProductSearchParams): Promise<PaginatedResult<DomainProduct>> {
         const {
             search,
@@ -58,7 +73,7 @@ export class TypeOrmProductRepository implements ProductRepository {
         if (search && search.trim()) {
             const searchTerm = `%${search.trim().toLowerCase()}%`;
             queryBuilder.andWhere(
-                '(LOWER(product.name) LIKE :search OR LOWER(product.description) LIKE :search)',
+                '(LOWER(product.name) LIKE :search OR LOWER(product.description) LIKE :search OR LOWER(product.sku) LIKE :search)',
                 { search: searchTerm }
             );
         }
@@ -68,8 +83,21 @@ export class TypeOrmProductRepository implements ProductRepository {
             queryBuilder.andWhere('product.categoryId = :categoryId', { categoryId });
         }
 
+        if (params.status) {
+            queryBuilder.andWhere('product.status = :status', { status: params.status });
+        }
+
+        if (params.availability) {
+            if (params.availability === 'in_stock') {
+                queryBuilder.andWhere('product.stock > 0');
+            }
+            if (params.availability === 'out_of_stock') {
+                queryBuilder.andWhere('product.stock <= 0');
+            }
+        }
+
         // Sorting
-        const validSortFields = ['createdAt', 'name', 'price'];
+        const validSortFields = ['createdAt', 'name', 'price', 'displayOrder'];
         const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
         const order = sortOrder === 'asc' ? 'ASC' : 'DESC';
         queryBuilder.orderBy(`product.${sortField}`, order);

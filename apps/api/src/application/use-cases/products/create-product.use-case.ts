@@ -14,6 +14,12 @@ export interface CreateProductCommand {
     price: number;
     stock: number;
     description: string;
+    status?: 'in_stock' | 'low_stock' | 'out_of_stock' | 'new';
+    thumbnailUrl?: string;
+    imageUrls?: string[];
+    specs?: Record<string, any>;
+    displayOrder?: number;
+    relatedProductIds?: string[];
 }
 
 @Injectable()
@@ -50,9 +56,14 @@ export class CreateProductUseCase {
             stock,
             sku: generatedSku,
             currency: 'EUR',
-            status: 'new',
+            status: command.status || 'new',
             categoryId,
             category,
+            thumbnailUrl: command.thumbnailUrl || command.imageUrls?.[0],
+            imageUrls: command.imageUrls || [],
+            specs: command.specs || {},
+            displayOrder: command.displayOrder || 0,
+            relatedProductIds: command.relatedProductIds || [],
         });
 
         return this.productRepository.create(product);

@@ -1,159 +1,218 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, FormEvent } from "react";
+import type { Category, Product } from "@bootstrap/types";
 
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-}
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 interface ProductFormProps {
+  token: string | null;
   categories: Category[];
+  products: Product[];
+  onCreated: (product: Product) => void;
 }
 
-export function ProductForm({ categories }: ProductFormProps) {
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [stock, setStock] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+export function ProductForm({ token, categories, products, onCreated }: ProductFormProps) {
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [images, setImages] = useState<File[]>([]);
+  const [specsText, setSpecsText] = useState("{}");
 
   const generateSlug = (productName: string) => {
     return productName
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "") // Supprime les caractères non alphanumériques sauf espaces et tirets
+      .replace(/[^a-z0-9\s-]/g, "")
       .trim()
-      .replace(/\s+/g, "-") // Remplace les espaces par des tirets
-      .replace(/-+/g, "-"); // Remplace les tirets multiples par un seul
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
   };
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newName = e.target.value;
-    setName(newName);
-    setSlug(generateSlug(newName)); // Génère automatiquement le slug
-  };
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!token) return;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    setLoading(true);
+    setStatus("loading");
+    const formData = new FormData(event.currentTarget);
+    let specsPayload: Record<string, any> = {};
+    try {
+      specsPayload = specsText ? JSON.parse(specsText) : {};
+    } catch {
+      setStatus("error");
+      return;
+    }
+
+    const imageUrls = String(formData.get("imageUrls") || "")
+      .split("\n")
+      .map(item => item.trim())
+      .filter(Boolean);
+
+    const payload = {
+      name: String(formData.get("name") || "").trim(),
+      slug: String(formData.get("slug") || "").trim() || undefined,
+      description: String(formData.get("description") || "").trim(),
+      price: Number(formData.get("price") || 0),
+      stock: Number(formData.get("stock") || 0),
+      categoryId: String(formData.get("categoryId") || ""),
+      status: formData.get("status") as Product["status"],
+      displayOrder: Number(formData.get("displayOrder") || 0),
+      imageUrls,
+      specs: specsPayload,
+      relatedProductIds: Array.from(formData.getAll("relatedProductIds")).map(String),
+    };
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
+      const res = await fetch(`${API_URL}/admin/products`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // TODO: Ajouter l'en-tête Authorization avec le token JWT une fois que AuthGuard est implémenté sur le backend
-          // 'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name,
-          slug,
-          description,
-          price: parseFloat(price),
-          stock: parseInt(stock, 10),
-          categoryId,
-        }),
+        body: JSON.stringify(payload),
       });
+      if (!res.ok) throw new Error("Erreur lors de la creation du produit.");
+      let product: Product = await res.json();
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Erreur lors de l'ajout du produit.");
+      if (images.length > 0) {
+        const upload = new FormData();
+        images.forEach(file => upload.append("images", file));
+        const uploadRes = await fetch(`${API_URL}/admin/products/${product.id}/images`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: upload,
+        });
+        if (uploadRes.ok) {
+          product = await uploadRes.json();
+        }
       }
 
-      setSuccess("Produit ajouté avec succès !");
-      // Optionnellement, vider le formulaire ou rediriger
-      setName("");
-      setSlug("");
-      setDescription("");
-      setPrice("");
-      setStock("");
-      setCategoryId("");
-      router.refresh(); // Rafraîchir la page actuelle pour mettre à jour la liste des produits si affichée
-    } catch (err: any) {
-      setError(err.message || "Une erreur inattendue est survenue.");
-    } finally {
-      setLoading(false);
+      onCreated(product);
+      setImages([]);
+      setSpecsText("{}");
+      event.currentTarget.reset();
+      setStatus("success");
+    } catch {
+      setStatus("error");
     }
-  };
+  }
 
   return (
-    <div className="card p-6 space-y-4">
-      <h2 className="text-xl font-semibold text-slate-900">Ajouter un nouveau matériel</h2>
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-slate-700">Nom du produit</label>
-          <input
-            type="text"
-            id="name"
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
-            value={name}
-            onChange={handleNameChange}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="slug" className="block text-sm font-medium text-slate-700">Slug (URL)</label>
-          <input
-            type="text"
-            id="slug"
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-slate-700">Description</label>
-          <textarea
-            id="description"
-            rows={4}
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-          ></textarea>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="price" className="block text-sm font-medium text-slate-700">Prix</label>
-            <input type="number" id="price" step="0.01" className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none" value={price} onChange={(e) => setPrice(e.target.value)} required />
-          </div>
-          <div>
-            <label htmlFor="stock" className="block text-sm font-medium text-slate-700">Stock</label>
-            <input type="number" id="stock" className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none" value={stock} onChange={(e) => setStock(e.target.value)} required />
-          </div>
-        </div>
-        <div>
-          <label htmlFor="category" className="block text-sm font-medium text-slate-700">Catégorie</label>
-          <select id="category" className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
-            <option value="">Sélectionner une catégorie</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        {error && <p className="text-sm text-red-500">{error}</p>}
-        {success && <p className="text-sm text-green-500">{success}</p>}
-        <button
-          type="submit"
-          className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover disabled:opacity-50"
-          disabled={loading}
+    <form className="card space-y-4 p-6" onSubmit={handleSubmit}>
+      <h2 className="text-xl font-semibold text-slate-900">Ajouter un produit</h2>
+      <div className="grid gap-3 md:grid-cols-2">
+        <input
+          name="name"
+          required
+          placeholder="Nom du produit"
+          className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+          onChange={(event) => {
+            const slugInput = event.currentTarget.form?.querySelector<HTMLInputElement>('input[name="slug"]');
+            if (slugInput && !slugInput.value) {
+              slugInput.value = generateSlug(event.target.value);
+            }
+          }}
+        />
+        <input
+          name="slug"
+          placeholder="Slug (auto)"
+          className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+        />
+      </div>
+      <textarea
+        name="description"
+        required
+        placeholder="Description"
+        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+        rows={4}
+      />
+      <div className="grid gap-3 md:grid-cols-3">
+        <input
+          name="price"
+          type="number"
+          step="0.01"
+          required
+          placeholder="Prix"
+          className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+        />
+        <input
+          name="stock"
+          type="number"
+          required
+          placeholder="Stock"
+          className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+        />
+        <select
+          name="status"
+          className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+          defaultValue="new"
         >
-          {loading ? "Ajout en cours..." : "Ajouter le matériel"}
-        </button>
-      </form>
-    </div>
+          <option value="new">Nouveau</option>
+          <option value="in_stock">En stock</option>
+          <option value="low_stock">Stock faible</option>
+          <option value="out_of_stock">Rupture</option>
+        </select>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        <select
+          name="categoryId"
+          required
+          className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+        >
+          <option value="">Categorie</option>
+          {categories.map(category => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+        <input
+          name="displayOrder"
+          type="number"
+          placeholder="Priorite d'affichage"
+          className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+        />
+      </div>
+      <textarea
+        name="imageUrls"
+        placeholder="URLs images (une par ligne)"
+        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+        rows={3}
+      />
+      <input
+        type="file"
+        multiple
+        accept="image/*"
+        onChange={(event) => setImages(Array.from(event.target.files || []))}
+        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+      />
+      <textarea
+        value={specsText}
+        onChange={(event) => setSpecsText(event.target.value)}
+        placeholder='Specifications (JSON), ex: {"puissance":"120W"}'
+        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+        rows={3}
+      />
+      <label className="text-sm font-medium text-slate-700">Produits similaires</label>
+      <select
+        name="relatedProductIds"
+        multiple
+        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+      >
+        {products.map(product => (
+          <option key={product.id} value={product.id}>
+            {product.name}
+          </option>
+        ))}
+      </select>
+      <button
+        type="submit"
+        disabled={status === "loading" || !token}
+        className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover disabled:opacity-60"
+      >
+        {status === "loading" ? "Creation..." : "Creer le produit"}
+      </button>
+      {status === "success" && <p className="text-sm text-emerald-600">Produit cree.</p>}
+      {status === "error" && <p className="text-sm text-rose-600">Erreur lors de la creation.</p>}
+    </form>
   );
 }

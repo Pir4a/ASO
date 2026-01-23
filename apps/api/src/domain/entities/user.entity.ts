@@ -11,6 +11,10 @@ export class User {
     verificationToken?: string;
     verificationTokenExpires?: Date;
     stripeCustomerId?: string;
+    isActive?: boolean;
+    lastLoginAt?: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 
     constructor(partial: Partial<User>) {
         Object.assign(this, partial);

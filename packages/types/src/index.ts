@@ -7,6 +7,9 @@ export interface Category {
   description?: string;
   imageUrl?: string;
   order: number;
+  displayOrder?: number;
+  isActive?: boolean;
+  deletedAt?: string | null;
 }
 
 export interface Product {
@@ -19,7 +22,12 @@ export interface Product {
   priceCents: number;
   currency: string;
   status: 'in_stock' | 'low_stock' | 'out_of_stock' | 'new';
+  stock?: number;
   thumbnailUrl?: string;
+  imageUrls?: string[];
+  specs?: Record<string, any>;
+  displayOrder?: number;
+  relatedProductIds?: string[];
 }
 
 export interface CartItem {

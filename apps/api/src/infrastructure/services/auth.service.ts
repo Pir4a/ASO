@@ -79,6 +79,12 @@ export class AuthService {
     if (!user.isVerified) {
       throw new UnauthorizedException('Veuillez vérifier votre email avant de vous connecter.');
     }
+    if (user.isActive === false) {
+      throw new UnauthorizedException('Compte desactive.');
+    }
+
+    user.lastLoginAt = new Date();
+    await this.updateUserUseCase.execute(user);
 
     const payload = { sub: user.id, email: user.email, role: user.role };
     return {

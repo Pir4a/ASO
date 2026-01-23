@@ -1,12 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import { ValidationPipe } from '@nestjs/common';
+import express from 'express';
+import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: false, rawBody: true });
 
   app.setGlobalPrefix('api');
+
+  app.use('/uploads', express.static(join(process.cwd(), 'storage', 'uploads')));
 
   app.enableCors({
     origin: ['http://localhost:3000'],

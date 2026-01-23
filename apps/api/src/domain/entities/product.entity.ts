@@ -13,6 +13,10 @@ export class Product {
     stock: number;
     status: ProductStatus;
     thumbnailUrl?: string;
+    imageUrls?: string[];
+    specs?: Record<string, any>;
+    displayOrder?: number;
+    relatedProductIds?: string[];
     categoryId: string;
     category?: Category;
     createdAt?: Date;

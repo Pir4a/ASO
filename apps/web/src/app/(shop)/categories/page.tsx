@@ -24,7 +24,7 @@ export default async function CategoriesPage() {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between gap-2">
                   <CardTitle className="text-base">{cat.name}</CardTitle>
-                  <Badge variant="outline">#{cat.order}</Badge>
+                  <Badge variant="outline">#{cat.displayOrder ?? cat.order ?? 0}</Badge>
                 </div>
               </CardHeader>
               <CardContent>

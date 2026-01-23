@@ -21,15 +21,22 @@ export default async function BackofficePage() {
         <div className="card p-4">
           <p className="text-sm font-semibold text-slate-900">Produits</p>
           <p className="text-2xl font-semibold text-primary">{products.length}</p>
-          <Link href="/products" className="text-sm text-primary">
+          <Link href="/backoffice/products" className="text-sm text-primary">
             Voir la liste
           </Link>
         </div>
         <div className="card p-4">
           <p className="text-sm font-semibold text-slate-900">Catégories</p>
           <p className="text-2xl font-semibold text-primary">{categories.length}</p>
-          <Link href="/categories" className="text-sm text-primary">
+          <Link href="/backoffice/categories" className="text-sm text-primary">
             Gérer les catégories
+          </Link>
+        </div>
+        <div className="card p-4">
+          <p className="text-sm font-semibold text-slate-900">Utilisateurs</p>
+          <p className="text-2xl font-semibold text-primary">Backoffice</p>
+          <Link href="/backoffice/users" className="text-sm text-primary">
+            Gérer les utilisateurs
           </Link>
         </div>
         <div className="card p-4">

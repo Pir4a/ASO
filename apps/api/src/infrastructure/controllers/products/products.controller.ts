@@ -18,13 +18,15 @@ export class ProductsController {
     findAll(
         @Query('search') search?: string,
         @Query('category') categoryId?: string,
-        @Query('sortBy') sortBy?: 'createdAt' | 'name' | 'price',
+        @Query('status') status?: 'in_stock' | 'low_stock' | 'out_of_stock' | 'new',
+        @Query('availability') availability?: 'in_stock' | 'out_of_stock',
+        @Query('sortBy') sortBy?: 'createdAt' | 'name' | 'price' | 'displayOrder',
         @Query('sortOrder') sortOrder?: 'asc' | 'desc',
         @Query('page') page?: string,
         @Query('limit') limit?: string,
     ) {
         // If no query params provided, return all products (backward compatible)
-        const hasFilters = search || categoryId || sortBy || sortOrder || page || limit;
+        const hasFilters = search || categoryId || status || availability || sortBy || sortOrder || page || limit;
 
         if (!hasFilters) {
             return this.getProductsUseCase.execute();
@@ -34,6 +36,8 @@ export class ProductsController {
         return this.searchProductsUseCase.execute({
             search,
             categoryId,
+            status,
+            availability,
             sortBy: sortBy || 'createdAt',
             sortOrder: sortOrder || 'desc',
             page: page ? parseInt(page, 10) : 1,

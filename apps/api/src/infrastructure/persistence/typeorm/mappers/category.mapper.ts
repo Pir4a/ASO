@@ -8,7 +8,13 @@ export class CategoryMapper {
             slug: entity.slug,
             name: entity.name,
             description: entity.description,
-            order: entity.order,
+            order: entity.displayOrder,
+            displayOrder: entity.displayOrder,
+            imageUrl: entity.imageUrl,
+            isActive: entity.isActive,
+            deletedAt: entity.deletedAt,
+            createdAt: entity.createdAt,
+            updatedAt: entity.updatedAt,
         });
         return category;
     }
@@ -19,7 +25,10 @@ export class CategoryMapper {
         entity.slug = domain.slug;
         entity.name = domain.name;
         entity.description = domain.description;
-        entity.order = domain.order;
+        entity.imageUrl = domain.imageUrl;
+        entity.isActive = domain.isActive ?? true;
+        entity.displayOrder = domain.displayOrder ?? domain.order ?? 0;
+        entity.deletedAt = domain.deletedAt;
         return entity;
     }
 }

@@ -46,6 +46,18 @@ export class Product {
     @Column({ nullable: true })
     thumbnailUrl?: string;
 
+    @Column({ type: 'jsonb', default: () => "'[]'" })
+    imageUrls: string[];
+
+    @Column({ type: 'jsonb', default: () => "'{}'" })
+    specs: Record<string, any>;
+
+    @Column({ type: 'int', default: 0 })
+    displayOrder: number;
+
+    @Column({ type: 'jsonb', default: () => "'[]'" })
+    relatedProductIds: string[];
+
     @Column({ type: 'uuid' })
     categoryId!: string;
 
