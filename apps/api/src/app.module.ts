@@ -12,7 +12,10 @@ import { OrdersModule } from './infrastructure/ioc/orders.module';
 import { AddressModule } from './infrastructure/ioc/address.module';
 import { ContentModule } from './infrastructure/ioc/content.module';
 import { PaymentModule } from './infrastructure/ioc/payment.module';
+import { FAQModule } from './infrastructure/ioc/faq.module';
 import { ContactModule } from './infrastructure/ioc/contact.module';
+import { ChatbotModule } from './infrastructure/ioc/chatbot.module';
+import { CacheModule } from './infrastructure/ioc/cache.module';
 import { AppDataSource } from './db/data-source';
 
 @Module({
@@ -21,6 +24,7 @@ import { AppDataSource } from './db/data-source';
       isGlobal: true,
     }),
     TypeOrmModule.forRoot(AppDataSource.options),
+    CacheModule, // Global cache module - Redis
     UsersModule,
     AuthModule,
     ProductsModule,
@@ -30,9 +34,12 @@ import { AppDataSource } from './db/data-source';
     AddressModule,
     ContentModule,
     PaymentModule,
+    FAQModule,
     ContactModule,
+    ChatbotModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule { }
+

@@ -6,6 +6,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+export type ContactMessageStatus = 'new' | 'read' | 'replied' | 'archived';
+
 @Entity({ name: 'contact_messages' })
 export class ContactMessage {
   @PrimaryGeneratedColumn('uuid')
@@ -17,11 +19,20 @@ export class ContactMessage {
   @Column()
   email: string;
 
+  @Column({ nullable: true })
+  subject?: string;
+
   @Column({ type: 'text' })
   message: string;
 
-  @Column({ default: 'new' })
-  status: string;
+  @Column({ type: 'varchar', length: 20, default: 'new' })
+  status: ContactMessageStatus;
+
+  @Column({ type: 'text', nullable: true })
+  adminReply?: string;
+
+  @Column({ nullable: true })
+  repliedAt?: Date;
 
   @CreateDateColumn()
   createdAt: Date;

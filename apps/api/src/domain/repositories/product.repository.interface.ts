@@ -5,10 +5,30 @@ export interface ProductSearchParams {
     categoryId?: string;
     status?: 'in_stock' | 'low_stock' | 'out_of_stock' | 'new';
     availability?: 'in_stock' | 'out_of_stock';
-    sortBy?: 'createdAt' | 'name' | 'price' | 'displayOrder';
+    minPrice?: number;
+    maxPrice?: number;
+    sortBy?: 'createdAt' | 'name' | 'price' | 'displayOrder' | 'relevance';
     sortOrder?: 'asc' | 'desc';
     page?: number;
     limit?: number;
+}
+
+export interface CategoryFacet {
+    id: string;
+    name: string;
+    count: number;
+}
+
+export interface PriceRangeFacet {
+    min: number;
+    max: number;
+    count: number;
+}
+
+export interface SearchFacets {
+    categories: CategoryFacet[];
+    priceRanges: PriceRangeFacet[];
+    availability: { inStock: number; outOfStock: number };
 }
 
 export interface PaginatedResult<T> {
@@ -17,6 +37,7 @@ export interface PaginatedResult<T> {
     page: number;
     limit: number;
     totalPages: number;
+    facets?: SearchFacets;
 }
 
 export interface ProductRepository {

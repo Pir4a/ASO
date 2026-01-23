@@ -22,6 +22,9 @@ export class Promotion {
     @Column({ type: 'int', nullable: true })
     maxUsages?: number;
 
+    @Column({ type: 'int', nullable: true })
+    maxUsagesPerUser?: number;
+
     @Column({ type: 'int', default: 0 })
     currentUsages: number;
 

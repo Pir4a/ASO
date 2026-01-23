@@ -7,6 +7,7 @@ export class Promotion {
     value: number; // percentage (0-100) or fixed amount in cents
     minOrderAmount?: number; // in cents
     maxUsages?: number;
+    maxUsagesPerUser?: number;
     currentUsages: number;
     validFrom: Date;
     validUntil: Date;

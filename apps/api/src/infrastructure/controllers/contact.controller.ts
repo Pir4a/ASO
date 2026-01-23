@@ -7,7 +7,7 @@ export class ContactController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async createMessage(@Body() body: { name: string; email: string; message: string }) {
+  async createMessage(@Body() body: { name: string; email: string; subject?: string; message: string }) {
     return this.createContactMessageUseCase.execute(body);
   }
 }

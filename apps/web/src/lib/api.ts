@@ -29,6 +29,11 @@ export async function getHomepageData(): Promise<{
   categories: Category[];
   products: Product[];
   slides: CarouselSlide[];
+  heroContent?: any;
+  featuresContent?: any;
+  ctaContent?: any;
+  featuredProducts?: any;
+  featuredCategories?: any;
 }> {
   try {
     const [categories, productsRaw, content] = await Promise.all([
@@ -50,10 +55,22 @@ export async function getHomepageData(): Promise<{
           order: c.payload?.order ? Number(c.payload.order) : index,
         })) as CarouselSlide[]) || mockSlides;
 
+    // Extract homepage content
+    const heroContent = content.find(c => c.type === "homepage_hero")?.payload;
+    const featuresContent = content.find(c => c.type === "homepage_features")?.payload;
+    const ctaContent = content.find(c => c.type === "homepage_cta")?.payload;
+    const featuredProductsContent = content.find(c => c.type === "featured_products")?.payload;
+    const featuredCategoriesContent = content.find(c => c.type === "featured_categories")?.payload;
+
     return {
       categories: categories.length ? categories : mockCategories,
       products: products.length ? products : mockProducts,
       slides: slides.length ? slides : mockSlides,
+      heroContent,
+      featuresContent,
+      ctaContent,
+      featuredProducts: featuredProductsContent,
+      featuredCategories: featuredCategoriesContent,
     };
   } catch {
     return { categories: mockCategories, products: mockProducts, slides: mockSlides };
@@ -81,10 +98,13 @@ export async function getProducts(): Promise<Product[]> {
 export interface ProductSearchParams {
   search?: string;
   categoryId?: string;
-  sortBy?: 'createdAt' | 'name' | 'price' | 'displayOrder';
+  sortBy?: 'createdAt' | 'name' | 'price' | 'displayOrder' | 'relevance';
   sortOrder?: 'asc' | 'desc';
   page?: number;
   limit?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  availability?: 'in_stock' | 'out_of_stock';
 }
 
 export interface PaginatedProducts {
@@ -105,6 +125,9 @@ export async function searchProducts(params: ProductSearchParams = {}): Promise<
     if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
     if (params.page) searchParams.set('page', params.page.toString());
     if (params.limit) searchParams.set('limit', params.limit.toString());
+    if (params.minPrice !== undefined) searchParams.set('minPrice', params.minPrice.toString());
+    if (params.maxPrice !== undefined) searchParams.set('maxPrice', params.maxPrice.toString());
+    if (params.availability) searchParams.set('availability', params.availability);
 
     const queryString = searchParams.toString();
     const url = `${API_URL}/products${queryString ? `?${queryString}` : ''}`;

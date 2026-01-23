@@ -20,13 +20,15 @@ export class ProductsController {
         @Query('category') categoryId?: string,
         @Query('status') status?: 'in_stock' | 'low_stock' | 'out_of_stock' | 'new',
         @Query('availability') availability?: 'in_stock' | 'out_of_stock',
-        @Query('sortBy') sortBy?: 'createdAt' | 'name' | 'price' | 'displayOrder',
+        @Query('minPrice') minPrice?: string,
+        @Query('maxPrice') maxPrice?: string,
+        @Query('sortBy') sortBy?: 'createdAt' | 'name' | 'price' | 'displayOrder' | 'relevance',
         @Query('sortOrder') sortOrder?: 'asc' | 'desc',
         @Query('page') page?: string,
         @Query('limit') limit?: string,
     ) {
         // If no query params provided, return all products (backward compatible)
-        const hasFilters = search || categoryId || status || availability || sortBy || sortOrder || page || limit;
+        const hasFilters = search || categoryId || status || availability || minPrice || maxPrice || sortBy || sortOrder || page || limit;
 
         if (!hasFilters) {
             return this.getProductsUseCase.execute();
@@ -38,6 +40,8 @@ export class ProductsController {
             categoryId,
             status,
             availability,
+            minPrice: minPrice ? parseInt(minPrice, 10) : undefined,
+            maxPrice: maxPrice ? parseInt(maxPrice, 10) : undefined,
             sortBy: sortBy || 'createdAt',
             sortOrder: sortOrder || 'desc',
             page: page ? parseInt(page, 10) : 1,

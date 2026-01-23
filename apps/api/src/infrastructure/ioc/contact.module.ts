@@ -5,10 +5,11 @@ import { CONTACT_MESSAGE_REPOSITORY_TOKEN } from '../../domain/repositories/cont
 import { TypeOrmContactMessageRepository } from '../persistence/typeorm/repositories/contact-message.repository';
 import { CreateContactMessageUseCase } from '../../application/use-cases/contact/create-contact-message.use-case';
 import { ContactController } from '../controllers/contact.controller';
+import { AdminContactMessagesController } from '../controllers/admin/contact-messages.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ContactMessage])],
-  controllers: [ContactController],
+  controllers: [ContactController, AdminContactMessagesController],
   providers: [
     {
       provide: CONTACT_MESSAGE_REPOSITORY_TOKEN,

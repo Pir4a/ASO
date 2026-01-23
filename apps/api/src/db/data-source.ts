@@ -15,6 +15,9 @@ import { Invoice } from '../infrastructure/persistence/typeorm/entities/invoice.
 import { CreditNote } from '../infrastructure/persistence/typeorm/entities/credit-note.entity';
 import { PaymentMethod } from '../infrastructure/persistence/typeorm/entities/payment-method.entity';
 import { ContactMessage } from '../infrastructure/persistence/typeorm/entities/contact-message.entity';
+import { FAQ } from '../infrastructure/persistence/typeorm/entities/faq.entity';
+import { ChatConversation } from '../infrastructure/persistence/typeorm/entities/chat-conversation.entity';
+import { PromoCodeUsage } from '../infrastructure/persistence/typeorm/entities/promo-code-usage.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -34,7 +37,10 @@ export const AppDataSource = new DataSource({
     Invoice,
     CreditNote,
     PaymentMethod,
-    ContactMessage
+    ContactMessage,
+    FAQ,
+    ChatConversation,
+    PromoCodeUsage
   ],
   migrations: ['src/migrations/*.ts'],
   synchronize: true,

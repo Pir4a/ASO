@@ -4,6 +4,7 @@ import { Category } from '../infrastructure/persistence/typeorm/entities/categor
 import { Product } from '../infrastructure/persistence/typeorm/entities/product.entity';
 import { ContentBlock } from '../infrastructure/persistence/typeorm/entities/content-block.entity';
 import { User } from '../infrastructure/persistence/typeorm/entities/user.entity';
+import { seedFAQs } from './seed-faqs';
 
 async function seed() {
   await AppDataSource.initialize();
@@ -260,7 +261,10 @@ async function seed() {
     }
   ]);
 
-  console.log('Seed finished with ' + products.length + ' products and ' + categories.length + ' categories.');
+  // Seed FAQs
+  await seedFAQs();
+
+  console.log('Seed finished with ' + products.length + ' products, ' + categories.length + ' categories, and FAQs.');
   await AppDataSource.destroy();
 }
 

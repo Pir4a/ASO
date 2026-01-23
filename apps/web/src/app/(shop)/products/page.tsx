@@ -12,6 +12,9 @@ interface SearchParams {
   sortBy?: string;
   sortOrder?: string;
   page?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  availability?: string;
 }
 
 export default async function ProductsListPage({
@@ -21,9 +24,12 @@ export default async function ProductsListPage({
 }) {
   const search = searchParams?.search || "";
   const categoryId = searchParams?.category || "";
-  const sortBy = (searchParams?.sortBy as "createdAt" | "name" | "price") || "createdAt";
+  const sortBy = (searchParams?.sortBy as "createdAt" | "name" | "price" | "relevance") || "createdAt";
   const sortOrder = (searchParams?.sortOrder as "asc" | "desc") || "desc";
   const page = parseInt(searchParams?.page || "1", 10);
+  const minPrice = searchParams?.minPrice || "";
+  const maxPrice = searchParams?.maxPrice || "";
+  const availability = (searchParams?.availability as "in_stock" | "out_of_stock") || "";
 
   const [productsResult, categories] = await Promise.all([
     searchProducts({
@@ -33,6 +39,9 @@ export default async function ProductsListPage({
       sortOrder,
       page,
       limit: 12,
+      minPrice: minPrice ? parseInt(minPrice, 10) : undefined,
+      maxPrice: maxPrice ? parseInt(maxPrice, 10) : undefined,
+      availability: availability || undefined,
     }),
     getCategories(),
   ]);
@@ -60,6 +69,9 @@ export default async function ProductsListPage({
               initialCategory={categoryId}
               initialSortBy={sortBy}
               initialSortOrder={sortOrder}
+              initialMinPrice={minPrice}
+              initialMaxPrice={maxPrice}
+              initialAvailability={availability}
             />
           </Suspense>
         </div>
@@ -90,3 +102,4 @@ export default async function ProductsListPage({
     </div>
   );
 }
+

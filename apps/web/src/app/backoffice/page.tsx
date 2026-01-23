@@ -41,9 +41,33 @@ export default async function BackofficePage() {
         </div>
         <div className="card p-4">
           <p className="text-sm font-semibold text-slate-900">Contenus</p>
-          <p className="text-2xl font-semibold text-primary">Carrousel</p>
-          <Link href="/contact" className="text-sm text-primary">
-            Support / chatbot
+          <p className="text-2xl font-semibold text-primary">Homepage</p>
+          <Link href="/backoffice/homepage" className="text-sm text-primary">
+            Gérer la page d'accueil
+          </Link>
+        </div>
+
+        <div className="card p-4">
+          <p className="text-sm font-semibold text-slate-900">Support</p>
+          <p className="text-2xl font-semibold text-primary">FAQ</p>
+          <Link href="/backoffice/faq" className="text-sm text-primary">
+            Gestion des FAQ
+          </Link>
+        </div>
+
+        <div className="card p-4">
+          <p className="text-sm font-semibold text-slate-900">Support</p>
+          <p className="text-2xl font-semibold text-primary">Chatbot</p>
+          <Link href="/backoffice/chatbot" className="text-sm text-primary">
+            Conversations
+          </Link>
+        </div>
+
+        <div className="card p-4">
+          <p className="text-sm font-semibold text-slate-900">Support</p>
+          <p className="text-2xl font-semibold text-primary">Contact</p>
+          <Link href="/backoffice/contact-messages" className="text-sm text-primary">
+            Messages de contact
           </Link>
         </div>
       </div>

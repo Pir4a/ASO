@@ -6,8 +6,10 @@ import { Footer } from "@/components/layout/Footer";
 import { getLocaleFromCookie } from "@/lib/i18n.server";
 import { defaultLocale, isRtl } from "@/lib/i18n.shared";
 import { AuthProvider } from "@/context/AuthContext";
+import { I18nProvider } from "@/context/I18nContext";
 import { CartProvider } from "@/hooks/useCart";
 import { ToastProvider } from "@/components/ui/Toast";
+import { ChatbotWidget } from "@/components/chatbot/ChatbotWidget";
 
 const fontHeading = Plus_Jakarta_Sans({
   variable: "--font-heading",
@@ -42,14 +44,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale} dir={dir}>
       <body className={`${fontHeading.variable} ${fontBody.variable} bg-background text-foreground`}>
+        {/* Skip to main content - Accessibility */}
+        <a href="#main-content" className="skip-to-content">
+          Aller au contenu principal
+        </a>
+
         <AuthProvider>
-          <CartProvider>
-            <ToastProvider>
-              <Header locale={locale} />
-              <main className="mx-auto min-h-screen max-w-6xl px-4 py-8">{children}</main>
-              <Footer />
-            </ToastProvider>
-          </CartProvider>
+          <I18nProvider locale={locale}>
+            <CartProvider>
+              <ToastProvider>
+                <Header locale={locale} />
+                <main id="main-content" className="mx-auto min-h-screen max-w-6xl px-4 py-8" role="main">
+                  {children}
+                </main>
+                <Footer />
+                <ChatbotWidget />
+              </ToastProvider>
+            </CartProvider>
+          </I18nProvider>
         </AuthProvider>
       </body>
     </html>

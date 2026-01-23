@@ -1,12 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ProductImageCarousel } from "./ProductImageCarousel";
+import { ProductSpecifications } from "./ProductSpecifications";
+import { SimilarProducts } from "./SimilarProducts";
 import type { Category, Product } from "@bootstrap/types";
-import { ArrowLeft, Check, ShieldCheck, Truck } from "lucide-react";
+import { ArrowLeft, Check, ShieldCheck, Truck, Sparkles } from "lucide-react";
 
 interface ProductDetailClientProps {
     product: Product;
@@ -23,6 +25,9 @@ const stockStatusConfig: Record<string, { label: string; variant: "success" | "w
 export function ProductDetailClient({ product, category }: ProductDetailClientProps) {
     const stockStatus = stockStatusConfig[product.status] || stockStatusConfig.in_stock;
 
+    // Use thumbnail as main image (in future, product.images could be added to the Product type)
+    const productImages = [product.thumbnailUrl].filter(Boolean) as string[];
+
     return (
         <div className="animate-fade-in-up pb-12">
             {/* Breadcrumb / Back Link */}
@@ -34,34 +39,11 @@ export function ProductDetailClient({ product, category }: ProductDetailClientPr
             </div>
 
             <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-                {/* Product Image Stage */}
-                <div className="relative aspect-square w-full overflow-hidden rounded-3xl bg-slate-50 border border-slate-100 shadow-sm group">
-                    {product.thumbnailUrl ? (
-                        <Image
-                            src={product.thumbnailUrl}
-                            alt={product.name}
-                            fill
-                            sizes="(max-width: 768px) 100vw, 50vw"
-                            className="object-cover transition-transform duration-500 group-hover:scale-105"
-                            priority
-                        />
-                    ) : (
-                        <div className="flex h-full w-full items-center justify-center text-slate-400">
-                            <span className="sr-only">Image indisponible</span>
-                            <div className="text-center">
-                                <div className="mb-2 text-4xl">📷</div>
-                                <p className="text-sm font-medium">Image à venir</p>
-                            </div>
-                        </div>
-                    )}
-                    {product.status === "new" && (
-                        <div className="absolute top-4 left-4">
-                            <Badge className="bg-primary text-primary-foreground px-3 py-1 text-xs">
-                                Nouveauté
-                            </Badge>
-                        </div>
-                    )}
-                </div>
+                {/* Product Image Carousel */}
+                <ProductImageCarousel
+                    images={productImages}
+                    productName={product.name}
+                />
 
                 {/* Product Info & Actions */}
                 <div className="flex flex-col justify-center space-y-8">
@@ -87,6 +69,12 @@ export function ProductDetailClient({ product, category }: ProductDetailClientPr
                             <Badge variant={stockStatus.variant} className="text-xs px-2.5 py-0.5 pointer-events-none">
                                 {stockStatus.label}
                             </Badge>
+                            {product.status === "new" && (
+                                <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2.5 py-0.5">
+                                    <Sparkles className="size-3 mr-1" />
+                                    Nouveauté
+                                </Badge>
+                            )}
                         </div>
 
                         <p className="text-base text-slate-600 leading-relaxed max-w-lg">
@@ -138,6 +126,22 @@ export function ProductDetailClient({ product, category }: ProductDetailClientPr
                     </div>
                 </div>
             </div>
+
+            {/* Technical Specifications */}
+            <ProductSpecifications
+                sku={product.sku}
+                description={product.description}
+            />
+
+            {/* Similar Products */}
+            {category && (
+                <SimilarProducts
+                    categoryId={category.id}
+                    currentProductId={product.id}
+                    limit={4}
+                />
+            )}
         </div>
     );
 }
+

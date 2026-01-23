@@ -7,7 +7,16 @@ import Link from "next/link";
 import { ArrowRight, ShieldCheck, Zap, Globe, Activity, Stethoscope, Microscope } from "lucide-react";
 
 export default async function Home() {
-  const { categories, products, slides } = await getHomepageData();
+  const {
+    categories,
+    products,
+    slides,
+    heroContent,
+    featuresContent,
+    ctaContent,
+    featuredProducts,
+    featuredCategories
+  } = await getHomepageData();
 
   return (
     <div className="flex flex-col gap-24 pb-20">
@@ -24,13 +33,23 @@ export default async function Home() {
             </div>
 
             <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900 leading-[1.1]">
-              L'excellence <br />
-              <span className="text-primary">médicale</span> réinventée.
+              {heroContent?.title ? (
+                heroContent.title.split('\n').map((line: string, index: number) => (
+                  <span key={index}>
+                    {line}
+                    {index < heroContent.title.split('\n').length - 1 && <br />}
+                  </span>
+                ))
+              ) : (
+                <>
+                  L'excellence <br />
+                  <span className="text-primary">médicale</span> réinventée.
+                </>
+              )}
             </h1>
 
             <p className="text-lg md:text-xl text-slate-600 max-w-lg leading-relaxed">
-              Equipez votre établissement avec la nouvelle génération de matériel médical.
-              Performance, conformité et design au service du soin.
+              {heroContent?.description || "Equipez votre établissement avec la nouvelle génération de matériel médical. Performance, conformité et design au service du soin."}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
@@ -88,8 +107,12 @@ export default async function Home() {
       {/* Bento Grid Features */}
       <section>
         <div className="mb-10 text-center">
-          <h2 className="text-3xl font-heading font-bold text-slate-900">Pourquoi choisir Althea ?</h2>
-          <p className="text-slate-500 mt-2">Une excellence opérationnelle à chaque étape.</p>
+          <h2 className="text-3xl font-heading font-bold text-slate-900">
+            {featuresContent?.title || "Pourquoi choisir Althea ?"}
+          </h2>
+          <p className="text-slate-500 mt-2">
+            {featuresContent?.subtitle || "Une excellence opérationnelle à chaque étape."}
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -147,8 +170,12 @@ export default async function Home() {
       <section className="space-y-8">
         <div className="flex items-center justify-between px-2">
           <div>
-            <h2 className="text-2xl font-heading font-bold text-slate-900">Sélection Expert</h2>
-            <p className="text-slate-500">Les produits les plus recommandés par nos spécialistes.</p>
+            <h2 className="text-2xl font-heading font-bold text-slate-900">
+              {featuredProducts?.title || "Sélection Expert"}
+            </h2>
+            <p className="text-slate-500">
+              {featuredProducts?.description || "Les produits les plus recommandés par nos spécialistes."}
+            </p>
           </div>
         </div>
         <div className="rounded-3xl overflow-hidden shadow-2xl shadow-slate-200/50 ring-1 ring-slate-900/5">
@@ -160,7 +187,9 @@ export default async function Home() {
       <section className="space-y-8">
         <div className="flex items-center justify-between px-2">
           <div>
-            <h2 className="text-2xl font-heading font-bold text-slate-900">Parcourir par Spécialité</h2>
+            <h2 className="text-2xl font-heading font-bold text-slate-900">
+              {featuredCategories?.title || "Parcourir par Spécialité"}
+            </h2>
           </div>
           <Button variant="ghost" asChild className="hidden md:inline-flex hover:bg-slate-100">
             <Link href="/categories">Toutes les catégories <ArrowRight className="ml-2 size-4" /></Link>
@@ -190,10 +219,10 @@ export default async function Home() {
 
         <div className="relative z-10 max-w-3xl mx-auto space-y-8">
           <h2 className="font-heading text-4xl md:text-5xl font-bold tracking-tight text-white leading-tight">
-            Prêt à moderniser votre équipement ?
+            {ctaContent?.title || "Prêt à moderniser votre équipement ?"}
           </h2>
           <p className="text-slate-300 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-            Rejoignez plus de 2,500 établissements de santé qui font confiance à Althea Systems pour leur approvisionnement critique.
+            {ctaContent?.description || "Rejoignez plus de 2,500 établissements de santé qui font confiance à Althea Systems pour leur approvisionnement critique."}
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
             <Button size="lg" className="rounded-full bg-white text-slate-900 hover:bg-slate-100 h-14 px-8 text-base font-semibold" asChild>

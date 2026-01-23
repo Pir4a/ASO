@@ -95,6 +95,62 @@ export class NodemailerService implements EmailGateway {
         }
     }
 
+    async sendContactConfirmationEmail(to: string, name: string): Promise<void> {
+        const info = await this.transporter.sendMail({
+            from: '"Althea Support" <support@althea.local>',
+            to,
+            subject: 'Confirmation de réception de votre message',
+            html: `
+                <h1>Message reçu !</h1>
+                <p>Cher ${name},</p>
+                <p>Nous avons bien reçu votre message. Notre équipe va l'examiner et vous répondra dans les plus brefs délais.</p>
+
+                <p>Si votre demande est urgente, vous pouvez nous contacter directement au :</p>
+                <ul>
+                    <li>Téléphone: +33 1 23 45 67 89</li>
+                    <li>Email: support@althea.local</li>
+                </ul>
+
+                <p>Nous vous remercions de votre intérêt pour Althea Systems.</p>
+                <p>Cordialement,<br>L'équipe Althea</p>
+            `,
+        });
+
+        console.log(`Contact confirmation email sent to ${to}. Name: ${name}`);
+        if (info.messageId) {
+            console.log('Message ID:', info.messageId);
+        }
+    }
+
+    async sendContactReplyEmail(to: string, name: string, subject: string, reply: string, originalMessage: string): Promise<void> {
+        const info = await this.transporter.sendMail({
+            from: '"Althea Support" <support@althea.local>',
+            to,
+            subject: `Re: ${subject}`,
+            html: `
+                <h1>Réponse à votre message</h1>
+                <p>Cher ${name},</p>
+
+                <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-left: 4px solid #00a8b5;">
+                    <p><strong>Votre message original :</strong></p>
+                    <p>${originalMessage.replace(/\n/g, '<br>')}</p>
+                </div>
+
+                <p><strong>Notre réponse :</strong></p>
+                <p>${reply.replace(/\n/g, '<br>')}</p>
+
+                <p>Si vous avez d'autres questions, n'hésitez pas à nous contacter.</p>
+
+                <p>Cordialement,<br>L'équipe Althea<br>support@althea.local</p>
+            `,
+        });
+
+        console.log(`Contact reply email sent to ${to}. Subject: ${subject}`);
+        if (info.messageId) {
+            console.log('Message ID:', info.messageId);
+        }
+    }
+
     private loadTemplate(fileName: string): string {
         const candidatePaths = [
             path.resolve(process.cwd(), 'src', 'infrastructure', 'services', 'email', 'templates', fileName),

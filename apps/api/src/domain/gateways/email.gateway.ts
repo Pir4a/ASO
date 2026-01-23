@@ -11,6 +11,8 @@ export interface EmailGateway {
             customerName?: string;
         }
     ): Promise<void>;
+    sendContactConfirmationEmail(to: string, name: string): Promise<void>;
+    sendContactReplyEmail(to: string, name: string, subject: string, reply: string, originalMessage: string): Promise<void>;
 }
 
 export const EMAIL_GATEWAY = 'EMAIL_GATEWAY';
