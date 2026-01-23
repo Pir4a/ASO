@@ -6,9 +6,10 @@ import { TypeOrmContactMessageRepository } from '../persistence/typeorm/reposito
 import { CreateContactMessageUseCase } from '../../application/use-cases/contact/create-contact-message.use-case';
 import { ContactController } from '../controllers/contact.controller';
 import { AdminContactMessagesController } from '../controllers/admin/contact-messages.controller';
+import { NotificationModule } from './notification.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ContactMessage])],
+  imports: [TypeOrmModule.forFeature([ContactMessage]), NotificationModule],
   controllers: [ContactController, AdminContactMessagesController],
   providers: [
     {

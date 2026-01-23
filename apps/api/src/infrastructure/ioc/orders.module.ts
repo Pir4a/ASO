@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Order } from '../persistence/typeorm/entities/order.entity';
 import { OrderItem } from '../persistence/typeorm/entities/order-item.entity';
@@ -24,14 +24,15 @@ import { CREDIT_NOTE_REPOSITORY_TOKEN } from '../../domain/repositories/credit-n
 import { TypeOrmInvoiceRepository } from '../persistence/typeorm/repositories/invoice.repository';
 import { TypeOrmCreditNoteRepository } from '../persistence/typeorm/repositories/credit-note.repository';
 import { EMAIL_GATEWAY } from '../../domain/gateways/email.gateway';
-import { NodemailerService } from '../services/email/nodemailer.service';
+import { NotificationModule } from './notification.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Order, OrderItem, Invoice, CreditNote]),
         CartModule,
-        UsersModule,
+        forwardRef(() => UsersModule),
         AddressModule,
+        NotificationModule,
     ],
     controllers: [CheckoutController, OrdersController],
     providers: [
@@ -46,10 +47,6 @@ import { NodemailerService } from '../services/email/nodemailer.service';
         {
             provide: CREDIT_NOTE_REPOSITORY_TOKEN,
             useClass: TypeOrmCreditNoteRepository,
-        },
-        {
-            provide: EMAIL_GATEWAY,
-            useClass: NodemailerService,
         },
         CreateOrderUseCase,
         GetOrdersUseCase,

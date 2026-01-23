@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User as UserEntity } from '../persistence/typeorm/entities/user.entity';
 import { PostgresUserRepository } from '../persistence/typeorm/repositories/postgres-user.repository';
@@ -19,7 +19,7 @@ import { RolesGuard } from '../guards/roles.guard';
 import { OrdersModule } from './orders.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity]), OrdersModule],
+  imports: [TypeOrmModule.forFeature([UserEntity]), forwardRef(() => OrdersModule)],
   controllers: [UsersController, AdminUsersController],
   providers: [
     {
