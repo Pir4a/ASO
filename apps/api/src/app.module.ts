@@ -3,6 +3,12 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+
+// Importations du CRUD Admin
+import { UserAdminController } from './user-admin.controller';
+import { AdminUserActionsUseCase } from './application/use-cases/users/admin-user-actions.use-case';
+
+// Importations des modules d'infrastructure
 import { UsersModule } from './infrastructure/ioc/users.module';
 import { AuthModule } from './infrastructure/ioc/auth.module';
 import { ProductsModule } from './infrastructure/ioc/products.module';
@@ -30,7 +36,13 @@ import { AppDataSource } from './db/data-source';
     ContentModule,
     PaymentModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [
+    AppController,
+    UserAdminController 
+  ],
+  providers: [
+    AppService,
+    AdminUserActionsUseCase 
+  ],
 })
 export class AppModule { }
