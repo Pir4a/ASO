@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 // Importations du CRUD Admin
 import { UserAdminController } from './user-admin.controller';
 import { AdminUserActionsUseCase } from './application/use-cases/users/admin-user-actions.use-case';
+import { GetAdminUsersUseCase } from './application/use-cases/users/get-admin-users.use-case';
 
 // Importations des modules d'infrastructure
 import { UsersModule } from './infrastructure/ioc/users.module';
@@ -42,7 +43,8 @@ import { AppDataSource } from './db/data-source';
   ],
   providers: [
     AppService,
-    AdminUserActionsUseCase 
+    AdminUserActionsUseCase,
+    GetAdminUsersUseCase
   ],
 })
 export class AppModule { }

@@ -1,9 +1,19 @@
-import { Controller, Patch, Delete, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Post, Body, Param, Query } from '@nestjs/common';
 import { AdminUserActionsUseCase } from './application/use-cases/users/admin-user-actions.use-case';
+import { GetAdminUsersUseCase } from './application/use-cases/users/get-admin-users.use-case';
+import { GetUsersFilterDto } from './infrastructure/controllers/users/dto/get-users-filter.dto';
 
 @Controller('admin/users')
 export class UserAdminController {
-  constructor(private readonly adminUseCase: AdminUserActionsUseCase) {}
+  constructor(
+    private readonly adminUseCase: AdminUserActionsUseCase,
+    private readonly getAdminUsersUseCase: GetAdminUsersUseCase
+  ) {}
+
+  @Get()
+  findAll(@Query() filters: GetUsersFilterDto) {
+    return this.getAdminUsersUseCase.execute(filters);
+  }
 
   @Patch(':id/reset-password')
   reset(@Param('id') id: string) {
