@@ -375,3 +375,30 @@ export async function getOrders(): Promise<
   }
 }
 
+export interface DashboardStats {
+  usersCount: number;
+  pendingMessages: number;
+  promoCodesCount: number;
+  faqCount: number;
+}
+
+export async function getAdminDashboardStats(): Promise<DashboardStats> {
+  const defaults: DashboardStats = { usersCount: 0, pendingMessages: 0, promoCodesCount: 0, faqCount: 0 };
+
+  const results = await Promise.allSettled([
+    fetchJson<any[]>("/admin/users"),
+    fetchJson<any[]>("/admin/contact-messages"),
+    fetchJson<any[]>("/admin/promo-codes"),
+    fetchJson<any[]>("/admin/faq"),
+  ]);
+
+  return {
+    usersCount: results[0].status === "fulfilled" ? results[0].value.length : defaults.usersCount,
+    pendingMessages: results[1].status === "fulfilled"
+      ? results[1].value.filter((m: any) => m.status !== "replied").length
+      : defaults.pendingMessages,
+    promoCodesCount: results[2].status === "fulfilled" ? results[2].value.length : defaults.promoCodesCount,
+    faqCount: results[3].status === "fulfilled" ? results[3].value.length : defaults.faqCount,
+  };
+}
+
