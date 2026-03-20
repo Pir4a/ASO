@@ -1,17 +1,25 @@
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import { ValidationPipe } from '@nestjs/common';
+import express from 'express';
+import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: false });
+  const app = await NestFactory.create(AppModule, { cors: false, rawBody: true });
 
   app.setGlobalPrefix('api');
-  app.use(helmet());
+
+  app.use('/uploads', express.static(join(process.cwd(), 'storage', 'uploads')));
+
   app.enableCors({
-    origin: process.env.CORS_ORIGIN?.split(',') ?? ['http://localhost:3000'],
+    origin: ['http://localhost:3000'],
     credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Accept, Authorization, x-guest-cart-id',
   });
+
+  app.use(helmet());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

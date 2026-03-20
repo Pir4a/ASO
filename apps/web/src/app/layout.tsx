@@ -1,19 +1,24 @@
 import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { getLocaleFromCookie } from "@/lib/i18n.server";
 import { defaultLocale, isRtl } from "@/lib/i18n.shared";
+import { AuthProvider } from "@/context/AuthContext";
+import { I18nProvider } from "@/context/I18nContext";
+import { CartProvider } from "@/hooks/useCart";
+import { ToastProvider } from "@/components/ui/Toast";
+import { ChatbotWidget } from "@/components/chatbot/ChatbotWidget";
 
-const poppins = Poppins({
+const fontHeading = Plus_Jakarta_Sans({
   variable: "--font-heading",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["500", "600", "700", "800"],
   display: "swap",
 });
 
-const inter = Inter({
+const fontBody = Inter({
   variable: "--font-body",
   subsets: ["latin"],
   display: "swap",
@@ -38,10 +43,26 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang={locale} dir={dir}>
-      <body className={`${poppins.variable} ${inter.variable} bg-background text-foreground`}>
-        <Header locale={locale} />
-        <main className="mx-auto min-h-screen max-w-6xl px-4 py-8">{children}</main>
-        <Footer />
+      <body className={`${fontHeading.variable} ${fontBody.variable} bg-background text-foreground`}>
+        {/* Skip to main content - Accessibility */}
+        <a href="#main-content" className="skip-to-content">
+          Aller au contenu principal
+        </a>
+
+        <AuthProvider>
+          <I18nProvider locale={locale}>
+            <CartProvider>
+              <ToastProvider>
+                <Header locale={locale} />
+                <main id="main-content" className="mx-auto min-h-screen max-w-6xl px-4 py-8" role="main">
+                  {children}
+                </main>
+                <Footer />
+                <ChatbotWidget />
+              </ToastProvider>
+            </CartProvider>
+          </I18nProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { ProductGrid } from "@/components/home/ProductGrid";
 import { getCategories, getProducts } from "@/lib/api";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default async function CategoryDetail({ params }: { params: { slug: string } }) {
   const [categories, productsList] = await Promise.all([getCategories(), getProducts()]);
@@ -11,20 +13,27 @@ export default async function CategoryDetail({ params }: { params: { slug: strin
 
   return (
     <div className="space-y-6">
-      <div className="card p-6">
-        <p className="text-xs uppercase text-slate-500">Catégorie</p>
-        <h1 className="text-2xl font-semibold text-slate-900">{category.name}</h1>
-        <p className="text-sm text-slate-600">{category.description}</p>
-      </div>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-xs uppercase text-muted-foreground">Catégorie</p>
+              <CardTitle className="text-2xl">{category.name}</CardTitle>
+            </div>
+            <Badge variant="secondary">{products.length} produits</Badge>
+          </div>
+          <CardDescription>{category.description}</CardDescription>
+        </CardHeader>
+      </Card>
 
-      <div className="card space-y-4 p-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">Produits</h2>
-          <p className="text-sm text-slate-600">{products.length} produits</p>
-        </div>
-        <ProductGrid products={products} />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Produits</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ProductGrid products={products} />
+        </CardContent>
+      </Card>
     </div>
   );
 }
-

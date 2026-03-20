@@ -1,38 +1,400 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #d4f4f7;
-  --foreground: #003d5c;
-  --primary: #00a8b5;
-  --primary-hover: #33bfc9;
+  /* Clinical Modernism - Design System */
+
+  /* Primary - Trust & Tech (Royal Blue) */
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
+  --primary-foreground: #ffffff;
+
+  /* Secondary - Soft Backgrounds (Slate 100) */
+  --secondary: #F1F5F9;
+  --secondary-foreground: #0F172A;
+
+  /* Accent - Highlights (Sky 500) */
+  --accent: #0EA5E9;
+  --accent-foreground: #ffffff;
+
+  /* Titles, Navigation */
+  --header: #0F172A;
+  --header-foreground: #ffffff;
+
+  /* Status Colors */
   --success: #10b981;
-  --error: #ef4444;
-  --warning: #f59e0b;
+  --warning: #F59E0B;
+  --destructive: #EF4444;
+  --destructive-foreground: #ffffff;
+
+  /* Base Backgrounds - Clinical White */
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  /* Slate 900 for high contrast text */
+
+  /* Card */
+  --card: #ffffff;
+  --card-foreground: #0F172A;
+
+  /* Radius - Friendly but professional */
+  --radius: 0.75rem;
+
+  /* Popover */
+  --popover: #ffffff;
+  --popover-foreground: #0F172A;
+
+  /* Muted */
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  /* Slate 500 */
+
+  /* Border and Input */
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --ring: #2563EB;
+
+  /* Chart colors */
+  --chart-1: #2563EB;
+  --chart-2: #0EA5E9;
+  --chart-3: #10B981;
+  --chart-4: #F59E0B;
+  --chart-5: #EF4444;
+
+  /* Sidebar */
+  --sidebar: #0F172A;
+  --sidebar-foreground: #F8FAFC;
+  --sidebar-primary: #2563EB;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1E293B;
+  --sidebar-accent-foreground: #F8FAFC;
+  --sidebar-border: #1E293B;
+  --sidebar-ring: #2563EB;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --color-success: var(--success);
-  --color-error: var(--error);
   --color-warning: var(--warning);
   --font-sans: var(--font-body);
   --font-heading: var(--font-heading);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: var(--font-body), system-ui, -apple-system, sans-serif;
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
 }
 
 a {
   color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
 }
 
+/* Clinical Modernism - Card Style */
+/* Clean, subtle shadows, rounded corners */
 .card {
-  border: 1px solid rgb(226, 232, 240);
-  border-radius: 16px;
-  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  border-color: var(--primary-hover);
+}
+
+/* Glassmorphism - Frosted Technical Feel */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  /* Slightly more opaque for clinical feel */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.dark .glass {
+  background: rgba(15, 23, 42, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Typography Enhancements */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.03em;
+  /* Tighter tracking for modern headings */
+  color: var(--header);
+  line-height: 1.2;
+}
+
+/* Animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  /* More natural ease */
+}
+
+.dark {
+  /* Dark Mode - Deep Blue/Slate Adaptation */
+  --background: #020617;
+  /* Slate 950 */
+  --foreground: #F8FAFC;
+
+  --card: #0F172A;
+  /* Slate 900 */
+  --card-foreground: #F8FAFC;
+
+  --popover: #0F172A;
+  --popover-foreground: #F8FAFC;
+
+  --primary: #3B82F6;
+  /* Lighter blue for dark mode */
+  --primary-foreground: #ffffff;
+
+  --secondary: #1E293B;
+  /* Slate 800 */
+  --secondary-foreground: #F8FAFC;
+
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+
+  --accent: #0284C7;
+  --accent-foreground: #ffffff;
+
+  --destructive: #7F1D1D;
+  --destructive-foreground: #F8FAFC;
+
+  --border: #1E293B;
+  --input: #1E293B;
+  --ring: #3B82F6;
+
+  --header: #F8FAFC;
+  --header-foreground: #020617;
+
+  --sidebar: #020617;
+  --sidebar-foreground: #F8FAFC;
+  --sidebar-primary: #3B82F6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1E293B;
+  --sidebar-accent-foreground: #F8FAFC;
+  --sidebar-border: #1E293B;
+  --sidebar-ring: #3B82F6;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* =========================================
+   ACCESSIBILITY (WCAG 2.1 Compliance)
+   ========================================= */
+
+/* Skip to Main Content Link */
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 1rem 2rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+
+.skip-to-content:focus {
+  top: 1rem;
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Enhanced Focus Styles - WCAG 2.1 AA Compliant */
+:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Focus ring for buttons and interactive elements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+}
+
+/* Remove default focus outline when focus-visible is supported */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --border: #0F172A;
+    --muted-foreground: #334155;
+  }
+  
+  button, a, input, select {
+    border-width: 2px;
+  }
+  
+  :focus-visible {
+    outline-width: 4px;
+  }
+}
+
+/* Reduced Motion - Respect user preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  html {
+    scroll-behavior: auto;
+  }
+  
+  .animate-fade-in-up,
+  .animate-pulse,
+  .animate-spin {
+    animation: none !important;
+  }
+}
+
+/* Screen Reader Only - Visually Hidden */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Not SR Only - Show on focus for skip links */
+.not-sr-only {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Focus Within - For form groups */
+.focus-within-ring:focus-within {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Interactive Link Underlines for better visibility */
+a:not([class]):hover,
+a:not([class]):focus {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Minimum Touch Target Size (44x44 for WCAG) */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Error state with accessible colors */
+.error-text {
+  color: #B91C1C; /* Darker red for contrast */
+}
+
+/* Success state with accessible colors */
+.success-text {
+  color: #047857; /* Darker green for contrast */
+}
+
+/* RTL Support for Accessibility */
+[dir="rtl"] .rtl\:space-x-reverse > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
 }

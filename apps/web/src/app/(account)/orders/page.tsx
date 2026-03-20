@@ -18,7 +18,7 @@ export default async function OrdersPage() {
                 <p className="text-xs text-slate-500">{order.createdAt}</p>
               </div>
               <p className="text-sm font-semibold text-primary">
-                {(order.totalCents / 100).toFixed(2)} {order.currency}
+                {Number(order.total).toFixed(2)} {order.currency}
               </p>
             </div>
             <p className="text-sm text-slate-600">Statut : {order.status}</p>
