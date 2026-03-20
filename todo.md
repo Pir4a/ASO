@@ -135,3 +135,6 @@ Scope analyzed:
 ### P2 — Quality / compliance
 - Tests unit + e2e sur parcours critiques (auth, panier, checkout).
 - Checklist a11y/SEO (Lighthouse/WCAG) + correctifs.
+
+
+## diagramme cas dutilisation / archi / sequence
