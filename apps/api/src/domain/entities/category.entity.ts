@@ -4,6 +4,7 @@ export class Category {
     name: string;
     description?: string;
     order: number;
+    isActive: boolean;
 
     constructor(partial: Partial<Category>) {
         Object.assign(this, partial);

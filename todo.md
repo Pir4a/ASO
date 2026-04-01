@@ -80,7 +80,7 @@ Scope analyzed:
 - [ ] Chatbot: FAQ, escalade humain, contexte commande.
 
 ### Backoffice complet (PDF p.24)
-- [ ] **Catégories**: CRUD, statut active/inactive, ordre d'affichage, bulk actions, drag & drop.
+- [~] **Catégories**: CRUD, statut active/inactive, ordre d'affichage, bulk actions (**drag & drop restant**).
 - [x] **Utilisateurs**: tri/recherche, statut (actif/inactif/en attente) + dernière connexion.
 - [x] **Actions admin**: reset mdp (MVP), désactiver/activer, supprimer, changement de rôle.
 - [x] **Accès admin**: RBAC (JWT + roles guard) **sans 2FA**.

@@ -23,4 +23,26 @@ export class TypeOrmCategoryRepository implements CategoryRepository {
         if (!entity) return null;
         return CategoryMapper.toDomain(entity);
     }
+
+    async create(category: DomainCategory): Promise<DomainCategory> {
+        const entity = this.repository.create(CategoryMapper.toPersistence(category));
+        const saved = await this.repository.save(entity);
+        return CategoryMapper.toDomain(saved);
+    }
+
+    async update(category: DomainCategory): Promise<DomainCategory> {
+        const entity = CategoryMapper.toPersistence(category);
+        const saved = await this.repository.save(entity);
+        return CategoryMapper.toDomain(saved);
+    }
+
+    async delete(id: string): Promise<void> {
+        await this.repository.delete(id);
+    }
+
+    async findBySlug(slug: string): Promise<DomainCategory | null> {
+        const entity = await this.repository.findOne({ where: { slug } });
+        if (!entity) return null;
+        return CategoryMapper.toDomain(entity);
+    }
 }

@@ -18,6 +18,9 @@ export class Category {
     @Column({ type: 'int', default: 0 })
     order: number;
 
+    @Column({ default: true })
+    isActive: boolean;
+
     @OneToMany(() => Product, (product) => product.category)
     products: Product[];
 }

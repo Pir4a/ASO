@@ -6,6 +6,8 @@ import { CategoriesController } from '../controllers/categories/categories.contr
 import { GetCategoriesUseCase } from '../../application/use-cases/categories/get-categories.use-case';
 import { FindCategoryByIdUseCase } from '../../application/use-cases/categories/find-category-by-id.use-case';
 import { CATEGORY_REPOSITORY_TOKEN } from '../../domain/repositories/category.repository.interface';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { RolesGuard } from '../guards/roles.guard';
 
 @Module({
   imports: [TypeOrmModule.forFeature([CategoryEntity])],
@@ -17,6 +19,8 @@ import { CATEGORY_REPOSITORY_TOKEN } from '../../domain/repositories/category.re
     },
     GetCategoriesUseCase,
     FindCategoryByIdUseCase,
+    JwtAuthGuard,
+    RolesGuard,
   ],
   exports: [GetCategoriesUseCase, FindCategoryByIdUseCase, CATEGORY_REPOSITORY_TOKEN],
 })

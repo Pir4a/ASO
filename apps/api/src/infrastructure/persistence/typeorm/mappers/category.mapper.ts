@@ -9,6 +9,7 @@ export class CategoryMapper {
             name: entity.name,
             description: entity.description,
             order: entity.order,
+            isActive: entity.isActive,
         });
         return category;
     }
@@ -20,6 +21,7 @@ export class CategoryMapper {
         entity.name = domain.name;
         entity.description = domain.description;
         entity.order = domain.order;
+        entity.isActive = domain.isActive;
         return entity;
     }
 }
