@@ -9,7 +9,8 @@ import { JwtStrategy } from '../auth/jwt.strategy';
 
 import { NodemailerService } from '../services/email/nodemailer.service';
 import { EMAIL_GATEWAY } from '../../domain/gateways/email.gateway';
-import { VerifyEmailUseCase } from '../../application/use-cases/auth/verify-email.use-case';
+import { RolesGuard } from '../guards/roles.guard';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -32,7 +33,8 @@ import { VerifyEmailUseCase } from '../../application/use-cases/auth/verify-emai
       provide: EMAIL_GATEWAY,
       useClass: NodemailerService,
     },
-    VerifyEmailUseCase,
+    RolesGuard,
+    JwtAuthGuard,
   ],
   exports: [AuthService, JwtStrategy, PassportModule],
 })

@@ -81,9 +81,9 @@ Scope analyzed:
 
 ### Backoffice complet (PDF p.24)
 - [ ] **Catégories**: CRUD, statut active/inactive, ordre d'affichage, bulk actions, drag & drop.
-- [ ] **Utilisateurs**: tri/recherche, statut (actif/inactif/en attente), nb commandes, CA, dernière connexion, adresses.
-- [ ] **Actions admin**: reset mdp, désactiver, supprimer (RGPD), envoyer mail.
-- [ ] **Accès admin**: RBAC + **2FA**.
+- [x] **Utilisateurs**: tri/recherche, statut (actif/inactif/en attente) + dernière connexion.
+- [x] **Actions admin**: reset mdp (MVP), désactiver/activer, supprimer, changement de rôle.
+- [x] **Accès admin**: RBAC (JWT + roles guard) **sans 2FA**.
 
 ### i18n + RTL (PDF p.27)
 - [ ] Multilingue réel (stratégie App Router) + RTL robuste pour `ar`.

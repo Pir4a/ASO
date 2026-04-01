@@ -47,12 +47,12 @@ export function ProductForm({ categories }: ProductFormProps) {
     setLoading(true);
 
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // TODO: Ajouter l'en-tête Authorization avec le token JWT une fois que AuthGuard est implémenté sur le backend
-          // 'Authorization': `Bearer ${token}`
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           name,

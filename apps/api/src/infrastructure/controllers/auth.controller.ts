@@ -1,6 +1,9 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Patch, Param, Get, Query } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Patch, Param, Get, Query, UseGuards } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { AuthDto, UpdateUserRoleDto } from '../dto/auth/auth.dto';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { RolesGuard } from '../guards/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -18,6 +21,8 @@ export class AuthController {
   }
 
   @Patch('user/:id/role')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   async updateUserRole(
     @Param('id') userId: string,
     @Body() updateUserRoleDto: UpdateUserRoleDto,

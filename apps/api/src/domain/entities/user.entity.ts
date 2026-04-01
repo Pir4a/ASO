@@ -8,6 +8,8 @@ export class User {
     firstName?: string;
     lastName?: string;
     isVerified: boolean;
+    isActive: boolean;
+    lastLoginAt?: Date;
     verificationToken?: string;
     verificationTokenExpires?: Date;
     stripeCustomerId?: string;

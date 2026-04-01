@@ -18,20 +18,26 @@ export class User {
     role: UserRole;
 
     @Column({ nullable: true })
-    firstName: string;
+    firstName?: string;
 
     @Column({ nullable: true })
-    lastName: string;
+    lastName?: string;
 
     @Column({ default: false })
     isVerified: boolean;
 
-    @Column({ nullable: true })
-    verificationToken: string;
+    @Column({ default: true })
+    isActive: boolean;
 
     @Column({ nullable: true })
-    verificationTokenExpires: Date;
+    lastLoginAt?: Date;
 
     @Column({ nullable: true })
-    stripeCustomerId: string;
+    verificationToken?: string;
+
+    @Column({ nullable: true })
+    verificationTokenExpires?: Date;
+
+    @Column({ nullable: true })
+    stripeCustomerId?: string;
 }

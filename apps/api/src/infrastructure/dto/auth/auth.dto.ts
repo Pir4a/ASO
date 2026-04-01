@@ -17,6 +17,6 @@ export class AuthDto {
 
 export class UpdateUserRoleDto {
   @IsString()
-  @IsIn(['user', 'admin'], { message: 'Le rôle doit être "user" ou "admin".' })
+  @IsIn(['customer', 'admin'], { message: 'Le rôle doit être "customer" ou "admin".' })
   role: string;
 }

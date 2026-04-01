@@ -47,4 +47,8 @@ export class PostgresUserRepository implements UserRepository {
         const savedEntity = await this.repository.save(persistenceEntity);
         return UserMapper.toDomain(savedEntity);
     }
+
+    async delete(id: string): Promise<void> {
+        await this.repository.delete(id);
+    }
 }

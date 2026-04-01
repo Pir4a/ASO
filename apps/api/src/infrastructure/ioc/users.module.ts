@@ -9,7 +9,10 @@ import { FindUserByEmailUseCase } from '../../application/use-cases/users/find-u
 import { FindUserByIdUseCase } from '../../application/use-cases/users/find-user-by-id.use-case';
 import { UpdateUserUseCase } from '../../application/use-cases/users/update-user.use-case';
 import { VerifyEmailUseCase } from '../../application/use-cases/auth/verify-email.use-case';
+import { DeleteUserUseCase } from '../../application/use-cases/users/delete-user.use-case';
 import { USER_REPOSITORY_TOKEN } from '../../domain/repositories/user.repository.interface';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { RolesGuard } from '../guards/roles.guard';
 
 @Module({
   imports: [TypeOrmModule.forFeature([UserEntity])],
@@ -25,14 +28,19 @@ import { USER_REPOSITORY_TOKEN } from '../../domain/repositories/user.repository
     FindUserByIdUseCase,
     UpdateUserUseCase,
     VerifyEmailUseCase,
+    DeleteUserUseCase,
+    JwtAuthGuard,
+    RolesGuard,
   ],
   exports: [
+    USER_REPOSITORY_TOKEN,
     CreateUserUseCase,
     GetUsersUseCase,
     FindUserByEmailUseCase,
     FindUserByIdUseCase,
     UpdateUserUseCase,
     VerifyEmailUseCase,
+    DeleteUserUseCase,
   ],
 })
 export class UsersModule { }
