@@ -75,8 +75,8 @@ Scope analyzed:
 - [x] Affichage sécurisé (pas de détails carte).
 
 ### Contact + chatbot + backoffice support (PDF p.20)
-- [ ] Formulaire contact: **email + sujet + message** + confirmation.
-- [ ] Stockage et consultation des messages **dans le backoffice**.
+- [x] Formulaire contact: **email + sujet + message** + confirmation.
+- [x] Stockage et consultation des messages **dans le backoffice**.
 - [ ] Chatbot: FAQ, escalade humain, contexte commande.
 
 ### Backoffice complet (PDF p.24)

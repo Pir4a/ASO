@@ -23,6 +23,13 @@ type AdminUser = {
   isVerified: boolean;
   lastLoginAt: string | null;
 };
+type ContactMessage = {
+  id: string;
+  subject: string;
+  email: string;
+  message: string;
+  createdAt: string;
+};
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
@@ -30,8 +37,10 @@ export default function BackofficePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
   const [search, setSearch] = useState("");
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [newCategory, setNewCategory] = useState({ name: "", slug: "", description: "" });
@@ -75,6 +84,21 @@ export default function BackofficePage() {
     }
   };
 
+  const loadContactMessages = async () => {
+    setLoadingMessages(true);
+    try {
+      const res = await fetch(`${API_URL}/contact/admin`, {
+        headers: authHeaders,
+      });
+      if (!res.ok) throw new Error();
+      setContactMessages(await res.json());
+    } catch {
+      setFeedback("Chargement des messages contact impossible.");
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -87,7 +111,7 @@ export default function BackofficePage() {
       } catch {
         // Soft fail on dashboard cards.
       }
-      await Promise.all([loadUsers(), loadCategories()]);
+      await Promise.all([loadUsers(), loadCategories(), loadContactMessages()]);
     };
     load();
   }, []);
@@ -344,6 +368,37 @@ export default function BackofficePage() {
                     </button>
                   </div>
                 </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="card p-6 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold text-slate-900">Messages contact</h2>
+          <button
+            onClick={loadContactMessages}
+            className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white"
+          >
+            Rafraichir
+          </button>
+        </div>
+        {loadingMessages ? (
+          <p className="text-sm text-slate-500">Chargement...</p>
+        ) : contactMessages.length === 0 ? (
+          <p className="text-sm text-slate-500">Aucun message pour le moment.</p>
+        ) : (
+          <div className="space-y-2">
+            {contactMessages.map((msg) => (
+              <div key={msg.id} className="rounded-md border border-slate-200 p-3">
+                <p className="text-sm font-medium text-slate-900">
+                  {msg.subject} - {msg.email}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {new Date(msg.createdAt).toLocaleString("fr-FR")}
+                </p>
+                <p className="mt-2 text-sm text-slate-700 whitespace-pre-wrap">{msg.message}</p>
               </div>
             ))}
           </div>

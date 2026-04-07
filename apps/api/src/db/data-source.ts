@@ -10,6 +10,7 @@ import { CartItem } from '../infrastructure/persistence/typeorm/entities/cart-it
 import { Order } from '../infrastructure/persistence/typeorm/entities/order.entity';
 import { OrderItem } from '../infrastructure/persistence/typeorm/entities/order-item.entity';
 import { Promotion } from '../infrastructure/persistence/typeorm/entities/promotion.entity';
+import { ContactMessage } from '../infrastructure/persistence/typeorm/entities/contact-message.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -24,7 +25,8 @@ export const AppDataSource = new DataSource({
     CartItem,
     Order,
     OrderItem,
-    Promotion
+    Promotion,
+    ContactMessage,
   ],
   migrations: ['src/migrations/*.ts'],
   synchronize: true,
