@@ -29,6 +29,32 @@ services:
     depends_on:
       - postgres
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: althea-ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT:-11435}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  ollama-pull:
+    image: ollama/ollama:latest
+    container_name: althea-ollama-pull
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: ["ollama", "pull", "${OLLAMA_MODEL:-llama3.2:3b}"]
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+
   api:
     build:
       context: .
@@ -42,10 +68,14 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
     ports:
       - "3001:3001"
     depends_on:
       postgres:
+        condition: service_healthy
+      ollama:
         condition: service_healthy
 
   web:
@@ -67,3 +97,4 @@ services:
 
 volumes:
   pgdata:
+  ollama_data:

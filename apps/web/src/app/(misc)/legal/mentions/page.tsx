@@ -7,7 +7,7 @@ export default function MentionsPage() {
       </div>
       <div className="card p-6">
         <p className="text-sm text-slate-600">
-          Placeholder. Les données seront injectées depuis le backoffice (API contenue dans NestJS).
+          Legal information and company details for Althea Systems.
         </p>
       </div>
     </div>

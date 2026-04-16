@@ -206,204 +206,204 @@ export default function BackofficePage() {
     <AuthGuard requiredRole="admin">
       <div className="space-y-6">
         <div className="card p-6 space-y-2">
-        <h1 className="text-2xl font-semibold text-slate-900">Backoffice (MVP)</h1>
-        <p className="text-sm text-slate-600">
-          Gestion des contenus : carrousel, catégories, produits. API NestJS sécurisée.
-        </p>
-      </div>
+          <h1 className="text-2xl font-semibold text-slate-900">Admin Dashboard</h1>
+          <p className="text-sm text-slate-600">
+            Manage your catalog, categories, users, and support messages.
+          </p>
+        </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="card p-4">
-          <p className="text-sm font-semibold text-slate-900">Produits</p>
-          <p className="text-2xl font-semibold text-primary">{products.length}</p>
-          <Link href="/products" className="text-sm text-primary">
-            Voir la liste
-          </Link>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="card p-4">
+            <p className="text-sm font-semibold text-slate-900">Produits</p>
+            <p className="text-2xl font-semibold text-primary">{products.length}</p>
+            <Link href="/products" className="text-sm text-primary">
+              Voir la liste
+            </Link>
+          </div>
+          <div className="card p-4">
+            <p className="text-sm font-semibold text-slate-900">Catégories</p>
+            <p className="text-2xl font-semibold text-primary">{categories.length}</p>
+            <Link href="/categories" className="text-sm text-primary">
+              Gérer les catégories
+            </Link>
+          </div>
+          <div className="card p-4">
+            <p className="text-sm font-semibold text-slate-900">Contenus</p>
+            <p className="text-2xl font-semibold text-primary">Carrousel</p>
+            <Link href="/contact" className="text-sm text-primary">
+              Support / chatbot
+            </Link>
+          </div>
         </div>
-        <div className="card p-4">
-          <p className="text-sm font-semibold text-slate-900">Catégories</p>
-          <p className="text-2xl font-semibold text-primary">{categories.length}</p>
-          <Link href="/categories" className="text-sm text-primary">
-            Gérer les catégories
-          </Link>
-        </div>
-        <div className="card p-4">
-          <p className="text-sm font-semibold text-slate-900">Contenus</p>
-          <p className="text-2xl font-semibold text-primary">Carrousel</p>
-          <Link href="/contact" className="text-sm text-primary">
-            Support / chatbot
-          </Link>
-        </div>
-      </div>
 
         {/* Nouvelle section pour l'ajout de matériel */}
         <ProductForm categories={categories} />
 
-      <div className="card p-6 space-y-3">
-        <p className="text-sm font-semibold text-slate-900">Actions rapides</p>
-        <div className="flex flex-wrap gap-2">
-          <button className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-primary hover:text-primary">
-            Import produits (CSV)
-          </button>
-          <button className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-primary hover:text-primary">
-            Mise à jour carrousel
-          </button>
-          <button className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-primary hover:text-primary">
-            Publier texte homepage
-          </button>
-        </div>
-        <p className="text-xs text-slate-500">
-          Ces actions appelleront les endpoints NestJS protégés (auth admin requise).
-        </p>
-      </div>
-
-      <div className="card p-6 space-y-4">
-        <h2 className="text-xl font-semibold text-slate-900">Catégories (Backoffice)</h2>
-        <div className="grid gap-2 md:grid-cols-3">
-          <input
-            value={newCategory.name}
-            onChange={(e) => setNewCategory((p) => ({ ...p, name: e.target.value }))}
-            placeholder="Nom"
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-          />
-          <input
-            value={newCategory.slug}
-            onChange={(e) => setNewCategory((p) => ({ ...p, slug: e.target.value }))}
-            placeholder="Slug"
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-          />
-          <input
-            value={newCategory.description}
-            onChange={(e) => setNewCategory((p) => ({ ...p, description: e.target.value }))}
-            placeholder="Description"
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-          />
-        </div>
-        <button onClick={createCategory} className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white">
-          Créer la catégorie
-        </button>
-        <div className="flex gap-2">
-          <button onClick={() => bulkCategoryAction("activate")} className="rounded border px-2 py-1 text-xs">Bulk activer</button>
-          <button onClick={() => bulkCategoryAction("deactivate")} className="rounded border px-2 py-1 text-xs">Bulk désactiver</button>
-          <button onClick={() => bulkCategoryAction("delete")} className="rounded border border-red-300 px-2 py-1 text-xs text-red-600">Bulk supprimer</button>
-        </div>
-        <div className="space-y-2">
-          {[...categories]
-            .sort((a, b) => a.order - b.order)
-            .map((cat) => (
-              <div key={cat.id} className="rounded-md border border-slate-200 p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <label className="flex items-center gap-2 text-sm text-slate-900">
-                    <input
-                      type="checkbox"
-                      checked={selectedCategoryIds.includes(cat.id)}
-                      onChange={(e) =>
-                        setSelectedCategoryIds((prev) =>
-                          e.target.checked ? [...prev, cat.id] : prev.filter((id) => id !== cat.id),
-                        )
-                      }
-                    />
-                    {cat.name} ({cat.slug}) - {cat.isActive ? "active" : "inactive"} - ordre {cat.order}
-                  </label>
-                  <div className="flex gap-2">
-                    <button onClick={() => moveCategory(cat.id, "up")} className="rounded border px-2 py-1 text-xs">↑</button>
-                    <button onClick={() => moveCategory(cat.id, "down")} className="rounded border px-2 py-1 text-xs">↓</button>
-                    <button onClick={() => updateCategory(cat.id, { isActive: !cat.isActive })} className="rounded border px-2 py-1 text-xs">
-                      {cat.isActive ? "Désactiver" : "Activer"}
-                    </button>
-                    <button onClick={() => updateCategory(cat.id, { name: `${cat.name} (edit)` })} className="rounded border px-2 py-1 text-xs">
-                      Edit rapide
-                    </button>
-                    <button onClick={() => fetch(`${API_URL}/categories/${cat.id}`, { method: "DELETE", headers: authHeaders }).then(loadCategories)} className="rounded border border-red-300 px-2 py-1 text-xs text-red-600">
-                      Supprimer
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-        </div>
-      </div>
-
-      <div className="card p-6 space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold text-slate-900">Utilisateurs</h2>
-          <div className="flex gap-2">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher par email"
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-            />
-            <button
-              onClick={() => loadUsers(search)}
-              className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white"
-            >
-              Rechercher
+        <div className="card p-6 space-y-3">
+          <p className="text-sm font-semibold text-slate-900">Actions rapides</p>
+          <div className="flex flex-wrap gap-2">
+            <button className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-primary hover:text-primary">
+              Import produits (CSV)
+            </button>
+            <button className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-primary hover:text-primary">
+              Mise à jour carrousel
+            </button>
+            <button className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-primary hover:text-primary">
+              Publier texte homepage
             </button>
           </div>
+          <p className="text-xs text-slate-500">
+            Admin actions require authentication and admin privileges.
+          </p>
         </div>
-        {feedback && <p className="text-sm text-slate-600">{feedback}</p>}
-        {loadingUsers ? (
-          <p className="text-sm text-slate-500">Chargement...</p>
-        ) : (
+
+        <div className="card p-6 space-y-4">
+          <h2 className="text-xl font-semibold text-slate-900">Catégories (Backoffice)</h2>
+          <div className="grid gap-2 md:grid-cols-3">
+            <input
+              value={newCategory.name}
+              onChange={(e) => setNewCategory((p) => ({ ...p, name: e.target.value }))}
+              placeholder="Nom"
+              className="rounded-md border border-slate-200 px-3 py-2 text-sm"
+            />
+            <input
+              value={newCategory.slug}
+              onChange={(e) => setNewCategory((p) => ({ ...p, slug: e.target.value }))}
+              placeholder="Slug"
+              className="rounded-md border border-slate-200 px-3 py-2 text-sm"
+            />
+            <input
+              value={newCategory.description}
+              onChange={(e) => setNewCategory((p) => ({ ...p, description: e.target.value }))}
+              placeholder="Description"
+              className="rounded-md border border-slate-200 px-3 py-2 text-sm"
+            />
+          </div>
+          <button onClick={createCategory} className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white">
+            Créer la catégorie
+          </button>
+          <div className="flex gap-2">
+            <button onClick={() => bulkCategoryAction("activate")} className="rounded border px-2 py-1 text-xs">Bulk activer</button>
+            <button onClick={() => bulkCategoryAction("deactivate")} className="rounded border px-2 py-1 text-xs">Bulk désactiver</button>
+            <button onClick={() => bulkCategoryAction("delete")} className="rounded border border-red-300 px-2 py-1 text-xs text-red-600">Bulk supprimer</button>
+          </div>
           <div className="space-y-2">
-            {users.map((u) => (
-              <div key={u.id} className="rounded-md border border-slate-200 p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-medium text-slate-900">
-                    {u.email} - {u.role} - {u.status}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <button onClick={() => runAction(u.id, u.isActive ? "deactivate" : "activate")} className="rounded border px-2 py-1 text-xs">
-                      {u.isActive ? "Désactiver" : "Activer"}
-                    </button>
-                    <button onClick={() => runAction(u.id, u.role === "admin" ? "demote" : "promote")} className="rounded border px-2 py-1 text-xs">
-                      {u.role === "admin" ? "Retirer admin" : "Promouvoir admin"}
-                    </button>
-                    <button onClick={() => runAction(u.id, "reset")} className="rounded border px-2 py-1 text-xs">
-                      Reset mdp
-                    </button>
-                    <button onClick={() => runAction(u.id, "delete")} className="rounded border border-red-300 px-2 py-1 text-xs text-red-600">
-                      Supprimer
-                    </button>
+            {[...categories]
+              .sort((a, b) => a.order - b.order)
+              .map((cat) => (
+                <div key={cat.id} className="rounded-md border border-slate-200 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label className="flex items-center gap-2 text-sm text-slate-900">
+                      <input
+                        type="checkbox"
+                        checked={selectedCategoryIds.includes(cat.id)}
+                        onChange={(e) =>
+                          setSelectedCategoryIds((prev) =>
+                            e.target.checked ? [...prev, cat.id] : prev.filter((id) => id !== cat.id),
+                          )
+                        }
+                      />
+                      {cat.name} ({cat.slug}) - {cat.isActive ? "active" : "inactive"} - ordre {cat.order}
+                    </label>
+                    <div className="flex gap-2">
+                      <button onClick={() => moveCategory(cat.id, "up")} className="rounded border px-2 py-1 text-xs">↑</button>
+                      <button onClick={() => moveCategory(cat.id, "down")} className="rounded border px-2 py-1 text-xs">↓</button>
+                      <button onClick={() => updateCategory(cat.id, { isActive: !cat.isActive })} className="rounded border px-2 py-1 text-xs">
+                        {cat.isActive ? "Désactiver" : "Activer"}
+                      </button>
+                      <button onClick={() => updateCategory(cat.id, { name: `${cat.name} (edit)` })} className="rounded border px-2 py-1 text-xs">
+                        Edit rapide
+                      </button>
+                      <button onClick={() => fetch(`${API_URL}/categories/${cat.id}`, { method: "DELETE", headers: authHeaders }).then(loadCategories)} className="rounded border border-red-300 px-2 py-1 text-xs text-red-600">
+                        Supprimer
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
-        )}
-      </div>
-
-      <div className="card p-6 space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold text-slate-900">Messages contact</h2>
-          <button
-            onClick={loadContactMessages}
-            className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white"
-          >
-            Rafraichir
-          </button>
         </div>
-        {loadingMessages ? (
-          <p className="text-sm text-slate-500">Chargement...</p>
-        ) : contactMessages.length === 0 ? (
-          <p className="text-sm text-slate-500">Aucun message pour le moment.</p>
-        ) : (
-          <div className="space-y-2">
-            {contactMessages.map((msg) => (
-              <div key={msg.id} className="rounded-md border border-slate-200 p-3">
-                <p className="text-sm font-medium text-slate-900">
-                  {msg.subject} - {msg.email}
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {new Date(msg.createdAt).toLocaleString("fr-FR")}
-                </p>
-                <p className="mt-2 text-sm text-slate-700 whitespace-pre-wrap">{msg.message}</p>
-              </div>
-            ))}
+
+        <div className="card p-6 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-xl font-semibold text-slate-900">Utilisateurs</h2>
+            <div className="flex gap-2">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Rechercher par email"
+                className="rounded-md border border-slate-200 px-3 py-2 text-sm"
+              />
+              <button
+                onClick={() => loadUsers(search)}
+                className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white"
+              >
+                Rechercher
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+          {feedback && <p className="text-sm text-slate-600">{feedback}</p>}
+          {loadingUsers ? (
+            <p className="text-sm text-slate-500">Chargement...</p>
+          ) : (
+            <div className="space-y-2">
+              {users.map((u) => (
+                <div key={u.id} className="rounded-md border border-slate-200 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-slate-900">
+                      {u.email} - {u.role} - {u.status}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button onClick={() => runAction(u.id, u.isActive ? "deactivate" : "activate")} className="rounded border px-2 py-1 text-xs">
+                        {u.isActive ? "Désactiver" : "Activer"}
+                      </button>
+                      <button onClick={() => runAction(u.id, u.role === "admin" ? "demote" : "promote")} className="rounded border px-2 py-1 text-xs">
+                        {u.role === "admin" ? "Retirer admin" : "Promouvoir admin"}
+                      </button>
+                      <button onClick={() => runAction(u.id, "reset")} className="rounded border px-2 py-1 text-xs">
+                        Reset mdp
+                      </button>
+                      <button onClick={() => runAction(u.id, "delete")} className="rounded border border-red-300 px-2 py-1 text-xs text-red-600">
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="card p-6 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-xl font-semibold text-slate-900">Messages contact</h2>
+            <button
+              onClick={loadContactMessages}
+              className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white"
+            >
+              Rafraichir
+            </button>
+          </div>
+          {loadingMessages ? (
+            <p className="text-sm text-slate-500">Chargement...</p>
+          ) : contactMessages.length === 0 ? (
+            <p className="text-sm text-slate-500">Aucun message pour le moment.</p>
+          ) : (
+            <div className="space-y-2">
+              {contactMessages.map((msg) => (
+                <div key={msg.id} className="rounded-md border border-slate-200 p-3">
+                  <p className="text-sm font-medium text-slate-900">
+                    {msg.subject} - {msg.email}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {new Date(msg.createdAt).toLocaleString("fr-FR")}
+                  </p>
+                  <p className="mt-2 text-sm text-slate-700 whitespace-pre-wrap">{msg.message}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </AuthGuard>
   );

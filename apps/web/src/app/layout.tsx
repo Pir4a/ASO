@@ -8,6 +8,7 @@ import { defaultLocale, isRtl } from "@/lib/i18n.shared";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/hooks/useCart";
 import { ToastProvider } from "@/components/ui/Toast";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 
 const poppins = Poppins({
   variable: "--font-heading",
@@ -25,11 +26,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Althea Systems – E-commerce médical",
   description:
-    "Plateforme e-commerce mobile-first pour équipements médicaux, optimisée SEO et performance.",
+    "Your trusted source for premium medical equipment and devices. Fast delivery, expert support, competitive pricing across Europe.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   openGraph: {
     title: "Althea Systems – E-commerce médical",
-    description: "Achat d'équipements médicaux haute performance.",
+    description: "Premium medical equipment and devices for healthcare professionals across Europe.",
     url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
     siteName: "Althea Systems",
   },
@@ -48,6 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Header locale={locale} />
               <main className="mx-auto min-h-screen max-w-6xl px-4 py-8">{children}</main>
               <Footer />
+              <ChatWidget />
             </ToastProvider>
           </CartProvider>
         </AuthProvider>
@@ -55,3 +57,4 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     </html>
   );
 }
+

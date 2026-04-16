@@ -6,7 +6,7 @@ export default function AccountPage() {
       <div className="card p-6 space-y-2">
         <h1 className="text-2xl font-semibold text-slate-900">Mon compte</h1>
         <p className="text-sm text-slate-600">
-          Accès aux paramètres, commandes et données personnelles (RGPD).
+          Manage your orders, saved addresses, and account preferences.
         </p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">

@@ -9,7 +9,7 @@ export default async function CategoriesPage() {
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Catégories</h1>
         <p className="text-sm text-slate-600">
-          Navigation par univers produit, éditable depuis le backoffice.
+          Browse our full range of medical equipment by specialty.
         </p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">

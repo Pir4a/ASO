@@ -12,45 +12,46 @@ export default async function Home() {
         <div className="grid gap-8 md:grid-cols-[2fr,1fr] md:items-center">
           <div className="space-y-6">
             <p className="inline-flex rounded-full bg-white px-4 py-1.5 text-sm font-bold text-primary shadow-sm ring-1 ring-slate-200/50">
-              Mobile-first • SEO • <span className="ml-1 text-success">Performances &lt;100ms</span>
+              Trusted by <span className="ml-1 text-success">500+ Healthcare Professionals</span>
             </p>
             <h1 className="text-4xl font-extrabold tracking-tight text-foreground md:text-5xl lg:text-6xl">
-              Plateforme e-commerce médicale, prête pour l&apos;international.
+              Premium Medical Equipment, Delivered with Excellence.
             </h1>
             <p className="text-lg text-slate-600 leading-relaxed max-w-2xl">
-              Refonte Althea Systems : catalogue produits, panier/checkout, backoffice, chatbot
-              contact. Architecture Next.js (SSR/ISR), NestJS API sécurisée, PostgreSQL.
+              Althea Systems is your trusted partner for high-quality medical devices and
+              equipment. From imaging systems to surgical instruments — we help healthcare
+              professionals deliver the best patient care.
             </p>
             <div className="flex flex-wrap gap-3">
               <span className="rounded-full bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm">
-                Temps de chargement &lt;100ms
+                Express Delivery Available
               </span>
               <span className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">
-                SEO &amp; hreflang
+                EU-Certified Devices
               </span>
               <span className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">
-                RGPD + a11y
+                24/7 Expert Support
               </span>
             </div>
           </div>
           <div className="rounded-2xl bg-white p-6 shadow-md ring-1 ring-slate-100">
-            <h3 className="mb-4 font-bold text-foreground">Stack Technique</h3>
+            <h3 className="mb-4 font-bold text-foreground">Why Althea Systems?</h3>
             <ul className="space-y-3 text-sm text-slate-600">
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
-                Next.js 16 (SSR/ISR, i18n)
+                ISO 13485 Certified Equipment
               </li>
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
-                NestJS API modulaire
+                Competitive Pricing Across Europe
               </li>
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
-                PostgreSQL transactions
+                Dedicated Account Managers
               </li>
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-success"></span>
-                Sécurité : XSS/CSRF
+                Free Shipping Over 150€
               </li>
             </ul>
           </div>
@@ -59,24 +60,24 @@ export default async function Home() {
 
       <section className="card space-y-4 p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-foreground">Carrousel éditable</h2>
-          <p className="text-sm text-slate-600">Modifiable depuis le backoffice.</p>
+          <h2 className="text-xl font-bold text-foreground">What&apos;s New</h2>
+          <p className="text-sm text-slate-600">Latest promotions and arrivals.</p>
         </div>
         <Carousel slides={slides} />
       </section>
 
       <section className="card space-y-4 p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-foreground">Catégories mises en avant</h2>
-          <p className="text-sm text-slate-600">Ordre éditable depuis le backoffice.</p>
+          <h2 className="text-xl font-bold text-foreground">Shop by Category</h2>
+          <p className="text-sm text-slate-600">Browse our specialized product ranges.</p>
         </div>
         <CategoryGrid categories={categories} />
       </section>
 
       <section className="card space-y-4 p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-foreground">Top produits du moment</h2>
-          <p className="text-sm text-slate-600">Sélection backoffice, grilles optimisées.</p>
+          <h2 className="text-xl font-bold text-foreground">Best Sellers</h2>
+          <p className="text-sm text-slate-600">Top-rated equipment chosen by professionals.</p>
         </div>
         <ProductGridClient products={products} />
       </section>
@@ -84,9 +85,9 @@ export default async function Home() {
       <section className="card p-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-lg font-bold text-foreground">Prêt pour le checkout sécurisé.</p>
+            <p className="text-lg font-bold text-foreground">Ready to place your order?</p>
             <p className="text-sm text-slate-600">
-              RGPD, paiements extensibles, logs et monitoring activables.
+              Secure checkout, competitive pricing, and fast delivery across Europe.
             </p>
           </div>
           <div className="flex gap-2">
@@ -94,13 +95,13 @@ export default async function Home() {
               href="/checkout"
               className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover"
             >
-              Lancer le checkout
+              Proceed to Checkout
             </a>
             <a
               href="/contact"
               className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-primary hover:text-primary"
             >
-              Contacter l&apos;équipe
+              Talk to an Expert
             </a>
           </div>
         </div>
