@@ -1,12 +1,12 @@
 import { Controller, Get, Post, Put, Delete, Body, UseGuards, Request, Param } from '@nestjs/common';
 import { GetUserAddressesUseCase } from '../../application/use-cases/users/get-user-addresses.use-case';
-// import { JwtAuthGuard } from '../guards/jwt-auth.guard'; 
-
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CreateUserAddressUseCase } from '../../application/use-cases/users/create-user-address.use-case';
 import { UpdateUserAddressUseCase } from '../../application/use-cases/users/update-user-address.use-case';
 import { DeleteUserAddressUseCase } from '../../application/use-cases/users/delete-user-address.use-case';
 
 @Controller('profile')
+@UseGuards(JwtAuthGuard)
 export class ProfileController {
     constructor(
         private readonly getUserAddressesUseCase: GetUserAddressesUseCase,
@@ -15,18 +15,14 @@ export class ProfileController {
         private readonly deleteUserAddressUseCase: DeleteUserAddressUseCase,
     ) { }
 
-    // @UseGuards(JwtAuthGuard)
     @Get('addresses')
     async getAddresses(@Request() req: any) {
-        const userId = req.user?.id || 'guest-user-id'; // Replace with real auth
-        // Note: guests don't really have saved addresses usually, but logical placeholder
-        return this.getUserAddressesUseCase.execute(userId);
+        return this.getUserAddressesUseCase.execute(req.user.sub);
     }
 
     @Post('addresses')
     async createAddress(@Request() req: any, @Body() body: { street: string; city: string; postalCode: string; country: string; phone?: string }) {
-        const userId = req.user?.id || 'guest-user-id';
-        return this.createUserAddressUseCase.execute(userId, body);
+        return this.createUserAddressUseCase.execute(req.user.sub, body);
     }
 
     @Put('addresses/:id')
@@ -35,13 +31,11 @@ export class ProfileController {
         @Param('id') addressId: string,
         @Body() body: { street?: string; city?: string; postalCode?: string; country?: string; phone?: string }
     ) {
-        const userId = req.user?.id || 'guest-user-id';
-        return this.updateUserAddressUseCase.execute(userId, addressId, body);
+        return this.updateUserAddressUseCase.execute(req.user.sub, addressId, body);
     }
 
     @Delete('addresses/:id')
     async deleteAddress(@Request() req: any, @Param('id') addressId: string) {
-        const userId = req.user?.id || 'guest-user-id';
-        return this.deleteUserAddressUseCase.execute(userId, addressId);
+        return this.deleteUserAddressUseCase.execute(req.user.sub, addressId);
     }
 }

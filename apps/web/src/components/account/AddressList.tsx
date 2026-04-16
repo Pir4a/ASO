@@ -13,6 +13,14 @@ interface Address {
     phone?: string;
 }
 
+function getAuthHeaders(): Record<string, string> {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    return {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+}
+
 export function AddressList() {
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [loading, setLoading] = useState(true);
@@ -22,15 +30,8 @@ export function AddressList() {
     const fetchAddresses = async () => {
         try {
             const res = await fetch(`${API_URL}/profile/addresses`, {
-                headers: {
-                    // 'Authorization': `Bearer ${token}` // Handled by cookie/proxy usually or intercepted
-                }
+                headers: getAuthHeaders(),
             });
-            // Note: In a real app we need to handle auth token. Assuming existing setup handles it via cookies or we need to add manual header if strictly JWT. 
-            // Current project seems to use simple flow, will assume fetch wrapper or just fetch for now, focusing on structure.
-            // Wait, earlier files used basic fetch. `AuthContext` might provide token?
-            // For now, I will use direct fetch, but let's check if we need to pass token.
-
             if (res.ok) {
                 setAddresses(await res.json());
             }
@@ -48,12 +49,14 @@ export function AddressList() {
     const handleCreate = async (data: Omit<Address, "id">) => {
         const res = await fetch(`${API_URL}/profile/addresses`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders(),
             body: JSON.stringify(data),
         });
         if (res.ok) {
             setIsCreating(false);
             fetchAddresses();
+        } else {
+            throw new Error("Failed to create address");
         }
     };
 
@@ -61,7 +64,7 @@ export function AddressList() {
         if (!editingAddress) return;
         const res = await fetch(`${API_URL}/profile/addresses/${editingAddress.id}`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders(),
             body: JSON.stringify(data),
         });
         if (res.ok) {
@@ -71,21 +74,22 @@ export function AddressList() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Êtes-vous sûr de vouloir supprimer cette adresse ?")) return;
+        if (!confirm("Are you sure you want to delete this address?")) return;
         const res = await fetch(`${API_URL}/profile/addresses/${id}`, {
             method: "DELETE",
+            headers: getAuthHeaders(),
         });
         if (res.ok) {
             fetchAddresses();
         }
     };
 
-    if (loading) return <div>Chargement...</div>;
+    if (loading) return <div>Loading...</div>;
 
     if (isCreating) {
         return (
             <div className="card p-4">
-                <h3 className="text-lg font-medium mb-4">Nouvelle Adresse</h3>
+                <h3 className="text-lg font-medium mb-4">New Address</h3>
                 <AddressForm onSubmit={handleCreate} onCancel={() => setIsCreating(false)} />
             </div>
         );
@@ -94,7 +98,7 @@ export function AddressList() {
     if (editingAddress) {
         return (
             <div className="card p-4">
-                <h3 className="text-lg font-medium mb-4">Modifier l'adresse</h3>
+                <h3 className="text-lg font-medium mb-4">Edit Address</h3>
                 <AddressForm
                     initialData={editingAddress}
                     onSubmit={handleUpdate}
@@ -107,17 +111,17 @@ export function AddressList() {
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Mes Adresses</h2>
+                <h2 className="text-xl font-semibold">My Addresses</h2>
                 <button
                     onClick={() => setIsCreating(true)}
                     className="px-3 py-1 bg-primary text-white rounded hover:bg-primary-hover text-sm"
                 >
-                    Ajouter
+                    Add
                 </button>
             </div>
 
             {addresses.length === 0 ? (
-                <p className="text-slate-500 text-sm">Aucune adresse enregistrée.</p>
+                <p className="text-slate-500 text-sm">No saved addresses.</p>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {addresses.map((addr) => (
@@ -129,8 +133,8 @@ export function AddressList() {
                                 {addr.phone && <p className="text-slate-500 text-xs mt-1">{addr.phone}</p>}
                             </div>
                             <div className="mt-3 flex space-x-3 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => setEditingAddress(addr)} className="text-blue-600 hover:underline">Modifier</button>
-                                <button onClick={() => handleDelete(addr.id)} className="text-red-600 hover:underline">Supprimer</button>
+                                <button onClick={() => setEditingAddress(addr)} className="text-blue-600 hover:underline">Edit</button>
+                                <button onClick={() => handleDelete(addr.id)} className="text-red-600 hover:underline">Delete</button>
                             </div>
                         </div>
                     ))}
