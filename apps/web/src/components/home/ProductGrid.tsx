@@ -16,9 +16,9 @@ export function ProductGrid({ products }: { products: Product[] }) {
         <Link
           key={product.id}
           href={`/products/${product.slug}`}
-          className="group rounded-xl bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+          className="group rounded-xl bg-background p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
         >
-          <div className="relative mb-3 h-40 w-full overflow-hidden rounded-lg bg-slate-50">
+          <div className="relative mb-3 h-40 w-full overflow-hidden rounded-lg bg-background">
             {product.thumbnailUrl ? (
               <Image
                 src={product.thumbnailUrl}
@@ -28,7 +28,7 @@ export function ProductGrid({ products }: { products: Product[] }) {
                 className="object-cover transition duration-300 group-hover:scale-105"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-xs text-slate-500">
+              <div className="flex h-full w-full items-center justify-center text-xs text-foreground/60">
                 Image à venir
               </div>
             )}
@@ -36,9 +36,9 @@ export function ProductGrid({ products }: { products: Product[] }) {
           <div className="flex items-start justify-between gap-2">
             <div>
               <p className="text-sm font-semibold text-foreground">{product.name}</p>
-              <p className="text-xs text-slate-500">{product.sku}</p>
+              <p className="text-xs text-foreground/60">{product.sku}</p>
             </div>
-            <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700">
+            <span className="rounded-full bg-background px-2 py-1 text-[10px] font-semibold text-foreground/90">
               {statusLabels[product.status]}
             </span>
           </div>

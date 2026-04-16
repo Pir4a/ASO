@@ -15,7 +15,7 @@ export function ProductDetailClient({ product, category }: ProductDetailClientPr
         <div className="space-y-6">
             <div className="card p-6">
                 <div className="grid gap-6 md:grid-cols-[2fr,1fr] md:items-start">
-                    <div className="relative h-64 w-full overflow-hidden rounded-xl bg-slate-100">
+                    <div className="relative h-64 w-full overflow-hidden rounded-xl bg-background">
                         {product.thumbnailUrl ? (
                             <Image
                                 src={product.thumbnailUrl}
@@ -25,16 +25,16 @@ export function ProductDetailClient({ product, category }: ProductDetailClientPr
                                 className="object-cover"
                             />
                         ) : (
-                            <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
+                            <div className="flex h-full w-full items-center justify-center text-sm text-foreground/60">
                                 Image à venir
                             </div>
                         )}
                     </div>
                     <div className="space-y-3">
-                        <p className="text-xs uppercase text-slate-500">Produit</p>
-                        <h1 className="text-2xl font-semibold text-slate-900">{product.name}</h1>
-                        <p className="text-sm text-slate-600">{product.description}</p>
-                        <p className="text-sm text-slate-500">SKU : {product.sku}</p>
+                        <p className="text-xs uppercase text-foreground/60">Produit</p>
+                        <h1 className="text-2xl font-semibold text-foreground">{product.name}</h1>
+                        <p className="text-sm text-foreground/70">{product.description}</p>
+                        <p className="text-sm text-foreground/60">SKU : {product.sku}</p>
                         {category && (
                             <Link href={`/categories/${category.slug}`} className="text-sm text-primary">
                                 {category.name}
@@ -47,15 +47,15 @@ export function ProductDetailClient({ product, category }: ProductDetailClientPr
                         {/* Stock Status */}
                         <div className="flex items-center gap-2">
                             {product.status === "out_of_stock" ? (
-                                <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
+                                <span className="rounded-full bg-error/15 px-3 py-1 text-xs font-semibold text-error">
                                     Rupture de stock
                                 </span>
                             ) : product.status === "low_stock" ? (
-                                <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700">
+                                <span className="rounded-full bg-warning/20 px-3 py-1 text-xs font-semibold text-warning">
                                     Stock faible
                                 </span>
                             ) : (
-                                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                                <span className="rounded-full bg-success/15 px-3 py-1 text-xs font-semibold text-success">
                                     En stock
                                 </span>
                             )}
@@ -71,12 +71,12 @@ export function ProductDetailClient({ product, category }: ProductDetailClientPr
                             ) : (
                                 <button
                                     disabled
-                                    className="rounded-md bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-500 cursor-not-allowed"
+                                    className="rounded-md bg-foreground/30 px-4 py-2 text-sm font-semibold text-foreground/60 cursor-not-allowed"
                                 >
                                     Indisponible
                                 </button>
                             )}
-                            <button className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-primary hover:text-primary">
+                            <button className="rounded-md border border-primary/25 px-4 py-2 text-sm font-semibold text-foreground hover:border-primary hover:text-primary">
                                 Demander un devis
                             </button>
                         </div>

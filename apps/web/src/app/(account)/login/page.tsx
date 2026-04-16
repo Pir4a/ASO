@@ -54,11 +54,11 @@ function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="card space-y-3 p-6">
-      {successMessage && <p className="text-sm text-green-600 bg-green-100 p-3 rounded-md">{successMessage}</p>}
+      {successMessage && <p className="text-sm text-success bg-success/15 p-3 rounded-md">{successMessage}</p>}
       <input
         type="email"
         placeholder="Email"
-        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+        className="w-full rounded-md border border-primary/25 bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
@@ -66,12 +66,12 @@ function LoginForm() {
       <input
         type="password"
         placeholder="Mot de passe"
-        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+        className="w-full rounded-md border border-primary/25 bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
       />
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-error">{error}</p>}
       <button
         type="submit"
         className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover disabled:opacity-50"
@@ -90,8 +90,8 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-md space-y-4">
       <div className="card p-6 space-y-2">
-        <h1 className="text-2xl font-semibold text-slate-900">Connexion</h1>
-        <p className="text-sm text-slate-600">Connectez-vous pour accéder à votre compte.</p>
+        <h1 className="text-2xl font-semibold text-foreground">Connexion</h1>
+        <p className="text-sm text-foreground/70">Connectez-vous pour accéder à votre compte.</p>
       </div>
       <Suspense fallback={<div className="card p-6">Chargement...</div>}>
         <LoginForm />

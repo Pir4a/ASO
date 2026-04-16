@@ -116,20 +116,20 @@ export function AddressList() {
             </div>
 
             {addresses.length === 0 ? (
-                <p className="text-slate-500 text-sm">Aucune adresse enregistrée.</p>
+                <p className="text-foreground/60 text-sm">Aucune adresse enregistrée.</p>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {addresses.map((addr) => (
-                        <div key={addr.id} className="border p-4 rounded-lg relative group bg-white shadow-sm">
+                        <div key={addr.id} className="border p-4 rounded-lg relative group bg-background shadow-sm">
                             <div className="text-sm">
                                 <p className="font-medium">{addr.street}</p>
                                 <p>{addr.city}, {addr.postalCode}</p>
                                 <p>{addr.country}</p>
-                                {addr.phone && <p className="text-slate-500 text-xs mt-1">{addr.phone}</p>}
+                                {addr.phone && <p className="text-foreground/60 text-xs mt-1">{addr.phone}</p>}
                             </div>
                             <div className="mt-3 flex space-x-3 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => setEditingAddress(addr)} className="text-blue-600 hover:underline">Modifier</button>
-                                <button onClick={() => handleDelete(addr.id)} className="text-red-600 hover:underline">Supprimer</button>
+                                <button onClick={() => setEditingAddress(addr)} className="text-primary hover:underline">Modifier</button>
+                                <button onClick={() => handleDelete(addr.id)} className="text-error hover:underline">Supprimer</button>
                             </div>
                         </div>
                     ))}

@@ -13,10 +13,10 @@ const statusLabels: Record<Product["status"], string> = {
 };
 
 const statusColors: Record<Product["status"], string> = {
-    in_stock: "bg-green-100 text-green-700",
-    low_stock: "bg-yellow-100 text-yellow-700",
-    out_of_stock: "bg-red-100 text-red-700",
-    new: "bg-blue-100 text-blue-700",
+    in_stock: "bg-success/15 text-success",
+    low_stock: "bg-warning/20 text-warning",
+    out_of_stock: "bg-error/15 text-error",
+    new: "bg-primary/15 text-primary",
 };
 
 export function ProductGridClient({ products }: { products: Product[] }) {
@@ -25,10 +25,10 @@ export function ProductGridClient({ products }: { products: Product[] }) {
             {products.map((product) => (
                 <div
                     key={product.id}
-                    className="group relative rounded-xl bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                    className="group relative rounded-xl bg-background p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
                 >
                     <Link href={`/products/${product.slug}`}>
-                        <div className="relative mb-3 h-40 w-full overflow-hidden rounded-lg bg-slate-50">
+                        <div className="relative mb-3 h-40 w-full overflow-hidden rounded-lg bg-background">
                             {product.thumbnailUrl ? (
                                 <Image
                                     src={product.thumbnailUrl}
@@ -38,7 +38,7 @@ export function ProductGridClient({ products }: { products: Product[] }) {
                                     className="object-cover transition duration-300 group-hover:scale-105"
                                 />
                             ) : (
-                                <div className="flex h-full w-full items-center justify-center text-xs text-slate-500">
+                                <div className="flex h-full w-full items-center justify-center text-xs text-foreground/60">
                                     Image à venir
                                 </div>
                             )}
@@ -46,7 +46,7 @@ export function ProductGridClient({ products }: { products: Product[] }) {
                         <div className="flex items-start justify-between gap-2">
                             <div>
                                 <p className="text-sm font-semibold text-foreground">{product.name}</p>
-                                <p className="text-xs text-slate-500">{product.sku}</p>
+                                <p className="text-xs text-foreground/60">{product.sku}</p>
                             </div>
                             <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${statusColors[product.status]}`}>
                                 {statusLabels[product.status]}

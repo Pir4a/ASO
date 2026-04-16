@@ -88,36 +88,36 @@ export function ProductForm({ categories }: ProductFormProps) {
 
   return (
     <div className="card p-6 space-y-4">
-      <h2 className="text-xl font-semibold text-slate-900">Ajouter un nouveau matériel</h2>
+      <h2 className="text-xl font-semibold text-foreground">Ajouter un nouveau matériel</h2>
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-slate-700">Nom du produit</label>
+          <label htmlFor="name" className="block text-sm font-medium text-foreground/90">Nom du produit</label>
           <input
             type="text"
             id="name"
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+            className="w-full rounded-md border border-primary/25 bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
             value={name}
             onChange={handleNameChange}
             required
           />
         </div>
         <div>
-          <label htmlFor="slug" className="block text-sm font-medium text-slate-700">Slug (URL)</label>
+          <label htmlFor="slug" className="block text-sm font-medium text-foreground/90">Slug (URL)</label>
           <input
             type="text"
             id="slug"
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+            className="w-full rounded-md border border-primary/25 bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             required
           />
         </div>
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-slate-700">Description</label>
+          <label htmlFor="description" className="block text-sm font-medium text-foreground/90">Description</label>
           <textarea
             id="description"
             rows={4}
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+            className="w-full rounded-md border border-primary/25 bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             required
@@ -125,17 +125,17 @@ export function ProductForm({ categories }: ProductFormProps) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label htmlFor="price" className="block text-sm font-medium text-slate-700">Prix</label>
-            <input type="number" id="price" step="0.01" className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none" value={price} onChange={(e) => setPrice(e.target.value)} required />
+            <label htmlFor="price" className="block text-sm font-medium text-foreground/90">Prix</label>
+            <input type="number" id="price" step="0.01" className="w-full rounded-md border border-primary/25 bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none" value={price} onChange={(e) => setPrice(e.target.value)} required />
           </div>
           <div>
-            <label htmlFor="stock" className="block text-sm font-medium text-slate-700">Stock</label>
-            <input type="number" id="stock" className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none" value={stock} onChange={(e) => setStock(e.target.value)} required />
+            <label htmlFor="stock" className="block text-sm font-medium text-foreground/90">Stock</label>
+            <input type="number" id="stock" className="w-full rounded-md border border-primary/25 bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none" value={stock} onChange={(e) => setStock(e.target.value)} required />
           </div>
         </div>
         <div>
-          <label htmlFor="category" className="block text-sm font-medium text-slate-700">Catégorie</label>
-          <select id="category" className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
+          <label htmlFor="category" className="block text-sm font-medium text-foreground/90">Catégorie</label>
+          <select id="category" className="w-full rounded-md border border-primary/25 bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
             <option value="">Sélectionner une catégorie</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
@@ -144,8 +144,8 @@ export function ProductForm({ categories }: ProductFormProps) {
             ))}
           </select>
         </div>
-        {error && <p className="text-sm text-red-500">{error}</p>}
-        {success && <p className="text-sm text-green-500">{success}</p>}
+        {error && <p className="text-sm text-error">{error}</p>}
+        {success && <p className="text-sm text-success">{success}</p>}
         <button
           type="submit"
           className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover disabled:opacity-50"

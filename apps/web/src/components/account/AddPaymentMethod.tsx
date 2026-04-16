@@ -43,9 +43,9 @@ function SetupForm({ onSuccess, onCancel }: { onSuccess: () => void, onCancel: (
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <PaymentElement />
-            {errorMessage && <div className="text-red-500 text-sm">{errorMessage}</div>}
+            {errorMessage && <div className="text-error text-sm">{errorMessage}</div>}
             <div className="flex justify-end space-x-3">
-                <button type="button" onClick={onCancel} disabled={loading} className="text-sm text-slate-600 hover:text-slate-800">
+                <button type="button" onClick={onCancel} disabled={loading} className="text-sm text-foreground/70 hover:text-foreground">
                     Annuler
                 </button>
                 <button disabled={!stripe || loading} className="px-4 py-2 bg-primary text-white rounded text-sm hover:bg-primary-hover disabled:opacity-50">
@@ -82,7 +82,7 @@ export function AddPaymentMethod({ onAdded }: { onAdded: () => void }) {
     }
 
     return (
-        <div className="border p-4 rounded bg-slate-50 mt-4">
+        <div className="border p-4 rounded bg-background mt-4">
             <h3 className="text-sm font-semibold mb-3">Nouvelle Carte</h3>
             {clientSecret ? (
                 <Elements stripe={stripePromise} options={{ clientSecret }}>

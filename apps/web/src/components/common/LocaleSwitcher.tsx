@@ -18,7 +18,7 @@ export function LocaleSwitcher({ value }: { value: Locale }) {
   return (
     <select
       aria-label="Sélecteur de langue"
-      className="rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+      className="rounded-md border border-primary/25 bg-background px-2 py-1 text-sm text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
       defaultValue={value}
       disabled={isPending}
       onChange={(e) => onChange(e.target.value as Locale)}

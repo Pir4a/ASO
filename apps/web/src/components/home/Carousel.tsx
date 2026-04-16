@@ -9,7 +9,7 @@ export function Carousel({ slides }: { slides: CarouselSlide[] }) {
         <Link
           key={slide.id}
           href={slide.href ?? "#"}
-          className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+          className="group relative overflow-hidden rounded-2xl border border-primary/25 bg-background shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
         >
           <div className="relative h-40 w-full">
             <Image
@@ -21,8 +21,8 @@ export function Carousel({ slides }: { slides: CarouselSlide[] }) {
             />
           </div>
           <div className="p-4">
-            <p className="text-sm font-semibold text-slate-900">{slide.title}</p>
-            {slide.subtitle && <p className="text-xs text-slate-600">{slide.subtitle}</p>}
+            <p className="text-sm font-semibold text-foreground">{slide.title}</p>
+            {slide.subtitle && <p className="text-xs text-foreground/70">{slide.subtitle}</p>}
           </div>
         </Link>
       ))}

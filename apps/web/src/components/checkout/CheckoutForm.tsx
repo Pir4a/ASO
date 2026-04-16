@@ -49,7 +49,7 @@ export function CheckoutForm({ amount, currency, onSuccess }: CheckoutFormProps)
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             <PaymentElement />
-            {message && <div className="text-red-500 text-sm">{message}</div>}
+            {message && <div className="text-error text-sm">{message}</div>}
             <button
                 disabled={isLoading || !stripe || !elements}
                 id="submit"
