@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AddPaymentMethod } from "./AddPaymentMethod";
+import { API_URL } from "@/lib/api";
 
 interface PaymentMethod {
     id: string;
@@ -17,7 +18,7 @@ export function PaymentMethodList() {
 
     const fetchMethods = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment/methods`);
+            const res = await fetch(`${API_URL}/payment/methods`);
             if (res.ok) {
                 setMethods(await res.json());
             }
@@ -34,7 +35,7 @@ export function PaymentMethodList() {
 
     const handleDelete = async (id: string) => {
         if (!confirm("Supprimer ce moyen de paiement ?")) return;
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment/methods/${id}`, {
+        const res = await fetch(`${API_URL}/payment/methods/${id}`, {
             method: "DELETE"
         });
         if (res.ok) {

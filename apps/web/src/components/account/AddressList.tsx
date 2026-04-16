@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AddressForm } from "./AddressForm";
+import { API_URL } from "@/lib/api";
 
 interface Address {
     id: string;
@@ -20,7 +21,7 @@ export function AddressList() {
 
     const fetchAddresses = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile/addresses`, {
+            const res = await fetch(`${API_URL}/profile/addresses`, {
                 headers: {
                     // 'Authorization': `Bearer ${token}` // Handled by cookie/proxy usually or intercepted
                 }
@@ -45,7 +46,7 @@ export function AddressList() {
     }, []);
 
     const handleCreate = async (data: Omit<Address, "id">) => {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile/addresses`, {
+        const res = await fetch(`${API_URL}/profile/addresses`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),
@@ -58,7 +59,7 @@ export function AddressList() {
 
     const handleUpdate = async (data: any) => {
         if (!editingAddress) return;
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile/addresses/${editingAddress.id}`, {
+        const res = await fetch(`${API_URL}/profile/addresses/${editingAddress.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),
@@ -71,7 +72,7 @@ export function AddressList() {
 
     const handleDelete = async (id: string) => {
         if (!confirm("Êtes-vous sûr de vouloir supprimer cette adresse ?")) return;
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile/addresses/${id}`, {
+        const res = await fetch(`${API_URL}/profile/addresses/${id}`, {
             method: "DELETE",
         });
         if (res.ok) {

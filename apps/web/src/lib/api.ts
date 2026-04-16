@@ -1,7 +1,7 @@
 import { categories as mockCategories, slides as mockSlides, topProducts as mockProducts } from "@/data/mock";
 import type { Category, Product, CarouselSlide } from "@bootstrap/types";
 
-const API_URL = typeof window === 'undefined'
+export const API_URL = typeof window === 'undefined'
   ? (process.env.INTERNAL_API_URL || "http://api:3001/api")
   : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api");
 

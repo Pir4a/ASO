@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { API_URL } from "@/lib/api";
 
 if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
     console.error("Missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY");
@@ -63,7 +64,7 @@ export function AddPaymentMethod({ onAdded }: { onAdded: () => void }) {
     const startSetup = async () => {
         setIsOpen(true);
         // Create Setup Intent
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment/intent/setup`, { method: 'POST' });
+        const res = await fetch(`${API_URL}/payment/intent/setup`, { method: 'POST' });
         if (res.ok) {
             const data = await res.json();
             setClientSecret(data.clientSecret);

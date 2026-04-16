@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { API_URL } from "@/lib/api";
 
 function VerifyContent() {
     const searchParams = useSearchParams();
@@ -18,7 +19,7 @@ function VerifyContent() {
 
         const verify = async () => {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify?token=${token}`);
+                const res = await fetch(`${API_URL}/auth/verify?token=${token}`);
                 if (!res.ok) throw new Error("Verification failed");
                 setStatus("success");
                 // Redirect to login after 3 seconds

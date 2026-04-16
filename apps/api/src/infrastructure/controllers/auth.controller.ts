@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, Patch, Param, Get, Query, UseGuards } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
-import { AuthDto, UpdateUserRoleDto } from '../dto/auth/auth.dto';
+import { RegisterDto, LoginDto, UpdateUserRoleDto } from '../dto/auth/auth.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -10,14 +10,14 @@ export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
   @Post('register')
-  register(@Body() authDto: AuthDto) {
-    return this.authService.register(authDto);
+  register(@Body() registerDto: RegisterDto) {
+    return this.authService.register(registerDto);
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  login(@Body() authDto: AuthDto) {
-    return this.authService.login(authDto);
+  login(@Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto);
   }
 
   @Patch('user/:id/role')

@@ -2,9 +2,10 @@ import { notFound } from "next/navigation";
 import { ProductGrid } from "@/components/home/ProductGrid";
 import { getCategories, getProducts } from "@/lib/api";
 
-export default async function CategoryDetail({ params }: { params: { slug: string } }) {
+export default async function CategoryDetail({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const [categories, productsList] = await Promise.all([getCategories(), getProducts()]);
-  const category = categories.find((c) => c.slug === params.slug);
+  const category = categories.find((c) => c.slug === slug);
   if (!category) return notFound();
 
   const products = productsList.filter((p) => p.categoryId === category.id);

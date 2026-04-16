@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
-import { AuthDto } from '../dto/auth/auth.dto';
+import { RegisterDto, LoginDto } from '../dto/auth/auth.dto';
 import { FindUserByEmailUseCase } from '../../application/use-cases/users/find-user-by-email.use-case';
 import { CreateUserUseCase } from '../../application/use-cases/users/create-user.use-case';
 import { FindUserByIdUseCase } from '../../application/use-cases/users/find-user-by-id.use-case';
@@ -31,8 +31,8 @@ export class AuthService {
     private readonly verifyEmailUseCase: VerifyEmailUseCase,
   ) { }
 
-  async register(authDto: AuthDto) {
-    const { email, password, firstName, lastName } = authDto;
+  async register(registerDto: RegisterDto) {
+    const { email, password, firstName, lastName } = registerDto;
 
     const existingUser = await this.findUserByEmailUseCase.execute(email);
     if (existingUser) {
@@ -54,11 +54,8 @@ export class AuthService {
       await this.emailGateway.sendVerificationEmail(email, verificationToken);
     } catch (e) {
       console.error('Failed to send verification email:', e);
-      // We might want to rollback or just warn the user. 
-      // For now, logging logic is sufficient for "soft" verification requirement.
     }
 
-    // On ne retourne pas le hash du mot de passe
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash: _, ...userResult } = user;
     return userResult;
@@ -68,8 +65,8 @@ export class AuthService {
     return this.verifyEmailUseCase.execute(token);
   }
 
-  async login(authDto: AuthDto) {
-    const { email, password } = authDto;
+  async login(loginDto: LoginDto) {
+    const { email, password } = loginDto;
     const user = await this.findUserByEmailUseCase.execute(email);
 
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
