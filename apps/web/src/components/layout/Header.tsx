@@ -21,68 +21,84 @@ export function Header({ locale }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-30 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75 shadow-sm">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white font-semibold">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        {/* Logo — clickable to homepage */}
+        <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white font-semibold text-sm">
             AS
           </div>
           <div>
-            <p className="text-lg font-bold text-foreground">Althea Systems</p>
-            <p className="text-xs text-foreground/70">Matériel médical de pointe</p>
+            <p className="text-base font-bold leading-tight text-foreground">Althea Systems</p>
+            <p className="text-[11px] leading-tight text-foreground/60">Premium Medical Equipment</p>
           </div>
-        </div>
-        {/* La navigation principale est retirée pour simplifier le header comme demandé */}
-        {/* Si tu souhaites la remettre, il faudra la réintégrer ici */}
+        </Link>
 
-        <div className="flex items-center gap-3">
-          {/* Liens de navigation basiques pour l'exemple */}
-          <Link href="/categories" className="text-sm font-medium text-slate-700 hover:text-primary">
-            Catégories
+        {/* Navigation */}
+        <nav className="hidden md:flex items-center gap-6">
+          <Link href="/categories" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors">
+            Categories
           </Link>
-          <Link href="/products" className="text-sm font-medium text-slate-700 hover:text-primary">
-            Produits
+          <Link href="/products" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors">
+            Products
           </Link>
-          <Link href="/search" className="text-sm font-medium text-slate-700 hover:text-primary">
-            Recherche
+          <Link href="/search" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors">
+            Search
           </Link>
-          <Link href="/contact" className="text-sm font-medium text-slate-700 hover:text-primary">
+          <Link href="/contact" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors">
             Contact
           </Link>
+        </nav>
 
+        {/* Actions */}
+        <div className="flex items-center gap-3">
           <Link
             href="/cart"
-            className="relative rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-800 hover:border-primary hover:text-primary transition-colors"
+            className="relative rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-primary hover:text-primary transition-colors"
           >
-            Panier
+            Cart
             <span className="absolute -right-1 -top-1 inline-flex h-2 w-2 rounded-full bg-primary" />
           </Link>
+
           <LocaleSwitcher value={locale} />
+
           {isAuthenticated ? (
-            <>
-              <span className="text-sm text-slate-700">Bonjour, {user?.email}</span>
-              <Link href="/profile" className="rounded-md bg-blue-500 px-3 py-1 text-sm font-semibold text-white shadow-sm hover:bg-blue-600">
-                Mon Profil
+            <div className="flex items-center gap-2">
+              <Link
+                href="/profile"
+                className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors"
+              >
+                {user?.email?.split("@")[0]}
               </Link>
               {user?.role === "admin" && (
-                <Link href="/backoffice" className="rounded-md bg-purple-500 px-3 py-1 text-sm font-semibold text-white shadow-sm hover:bg-purple-600">
-                  Backoffice
-                </Link>)}
+                <Link
+                  href="/backoffice"
+                  className="rounded-lg bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-700 hover:bg-purple-100 transition-colors"
+                >
+                  Admin
+                </Link>
+              )}
               <button
                 onClick={handleLogout}
-                className="rounded-md bg-red-500 px-3 py-1 text-sm font-semibold text-white shadow-sm hover:bg-red-600"
+                className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors"
               >
-                Déconnexion
+                Log out
               </button>
-            </>
+            </div>
           ) : (
-            <>
-              <Link href="/login" className="text-sm font-medium text-slate-700 hover:text-primary">
-                Connexion
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                Log in
               </Link>
-              <Link href="/signup" className="rounded-md bg-primary px-3 py-1 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover">
-                S'inscrire
+              <Link
+                href="/signup"
+                className="rounded-lg bg-primary px-4 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover transition-colors"
+              >
+                Sign up
               </Link>
-            </>
+            </div>
           )}
         </div>
       </div>
