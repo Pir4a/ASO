@@ -1,0 +1,280 @@
+import type { Locale } from "./i18n.shared";
+
+const translations = {
+    en: {
+        // Header
+        "header.tagline": "Premium Medical Equipment",
+        "header.categories": "Categories",
+        "header.products": "Products",
+        "header.search": "Search",
+        "header.contact": "Contact",
+        "header.cart": "Cart",
+        "header.login": "Log in",
+        "header.signup": "Sign up",
+        "header.admin": "Admin",
+        "header.logout": "Log out",
+        "header.langLabel": "Language",
+
+        // Homepage
+        "home.badge": "Trusted by 500+ Healthcare Professionals",
+        "home.headline": "Premium Medical Equipment, Delivered with Excellence.",
+        "home.description": "Althea Systems is your trusted partner for high-quality medical devices and equipment. From imaging systems to surgical instruments — we help healthcare professionals deliver the best patient care.",
+        "home.tag1": "Express Delivery Available",
+        "home.tag2": "EU-Certified Devices",
+        "home.tag3": "24/7 Expert Support",
+        "home.whyUs": "Why Althea Systems?",
+        "home.reason1": "ISO 13485 Certified Equipment",
+        "home.reason2": "Competitive Pricing Across Europe",
+        "home.reason3": "Dedicated Account Managers",
+        "home.reason4": "Free Shipping Over 150€",
+        "home.carousel": "What's New",
+        "home.carouselSub": "Latest promotions and arrivals.",
+        "home.shopBy": "Shop by Category",
+        "home.shopBySub": "Browse our specialized product ranges.",
+        "home.bestSellers": "Best Sellers",
+        "home.bestSellersSub": "Top-rated equipment chosen by professionals.",
+        "home.readyOrder": "Ready to place your order?",
+        "home.readyOrderSub": "Secure checkout, competitive pricing, and fast delivery across Europe.",
+        "home.checkout": "Proceed to Checkout",
+        "home.talkExpert": "Talk to an Expert",
+
+        // Contact
+        "contact.title": "Contact & Support",
+        "contact.subtitle": "Chat with our AI assistant or send us a message",
+        "contact.tabChat": "💬 AI Chat",
+        "contact.tabForm": "✉️ Contact Form",
+        "contact.chatWelcome": "Hello! 👋 I'm the Althea Systems assistant. Ask me anything about our products, orders, or shipping!",
+        "contact.chatPlaceholder": "Ask me anything...",
+        "contact.chatError": "Sorry, I'm having trouble right now. Try the contact form instead.",
+        "contact.formSubject": "Subject",
+        "contact.formEmail": "Email",
+        "contact.formMessage": "Your message",
+        "contact.formSend": "Send message",
+        "contact.formSending": "Sending...",
+        "contact.formSuccess": "Message sent. Our support team will get back to you shortly.",
+
+        // Chat widget
+        "chat.welcome": "Hi! 👋 I'm the Althea Systems assistant. Ask me anything about our products, orders, or shipping!",
+        "chat.placeholder": "Ask me anything...",
+        "chat.title": "Althea Assistant",
+        "chat.subtitle": "Powered by Llama AI",
+        "chat.error": "Sorry, I'm having trouble connecting. Please try again or reach out via our contact form.",
+        "chat.suggestion1": "What products do you sell?",
+        "chat.suggestion2": "How does shipping work?",
+        "chat.suggestion3": "What's your return policy?",
+        "chat.suggestion4": "How do I track my order?",
+
+        // Categories
+        "categories.title": "Categories",
+        "categories.subtitle": "Browse our full range of medical equipment by specialty.",
+
+        // Account
+        "account.title": "My Account",
+        "account.subtitle": "Manage your orders, saved addresses, and account preferences.",
+
+        // Footer
+        "footer.rights": "All rights reserved.",
+        "footer.cgu": "Terms of Use",
+        "footer.legal": "Legal Notice",
+        "footer.contact": "Contact",
+        "footer.support": "Responsive Support",
+
+        // Legal
+        "legal.cgu.title": "Terms of Use",
+        "legal.cgu.subtitle": "Terms governing the use of our platform and services.",
+        "legal.mentions.title": "Legal Notice",
+        "legal.mentions.subtitle": "Legal information and company details for Althea Systems.",
+
+        // Backoffice
+        "backoffice.title": "Admin Dashboard",
+        "backoffice.subtitle": "Manage your catalog, categories, users, and support messages.",
+    },
+
+    fr: {
+        // Header
+        "header.tagline": "Équipement Médical Premium",
+        "header.categories": "Catégories",
+        "header.products": "Produits",
+        "header.search": "Recherche",
+        "header.contact": "Contact",
+        "header.cart": "Panier",
+        "header.login": "Connexion",
+        "header.signup": "S'inscrire",
+        "header.admin": "Admin",
+        "header.logout": "Déconnexion",
+        "header.langLabel": "Langue",
+
+        // Homepage
+        "home.badge": "Plus de 500 professionnels de santé nous font confiance",
+        "home.headline": "Équipement médical premium, livré avec excellence.",
+        "home.description": "Althea Systems est votre partenaire de confiance pour les dispositifs et équipements médicaux de haute qualité. De l'imagerie aux instruments chirurgicaux — nous aidons les professionnels de santé à offrir les meilleurs soins.",
+        "home.tag1": "Livraison express disponible",
+        "home.tag2": "Dispositifs certifiés UE",
+        "home.tag3": "Support expert 24/7",
+        "home.whyUs": "Pourquoi Althea Systems ?",
+        "home.reason1": "Équipement certifié ISO 13485",
+        "home.reason2": "Prix compétitifs en Europe",
+        "home.reason3": "Gestionnaires de compte dédiés",
+        "home.reason4": "Livraison gratuite dès 150€",
+        "home.carousel": "Nouveautés",
+        "home.carouselSub": "Dernières promotions et nouveaux arrivages.",
+        "home.shopBy": "Acheter par catégorie",
+        "home.shopBySub": "Parcourez nos gammes de produits spécialisés.",
+        "home.bestSellers": "Meilleures ventes",
+        "home.bestSellersSub": "Équipements plébiscités par les professionnels.",
+        "home.readyOrder": "Prêt à passer commande ?",
+        "home.readyOrderSub": "Paiement sécurisé, prix compétitifs et livraison rapide en Europe.",
+        "home.checkout": "Passer au paiement",
+        "home.talkExpert": "Parler à un expert",
+
+        // Contact
+        "contact.title": "Contact & Support",
+        "contact.subtitle": "Discutez avec notre assistant IA ou envoyez-nous un message",
+        "contact.tabChat": "💬 Chat IA",
+        "contact.tabForm": "✉️ Formulaire",
+        "contact.chatWelcome": "Bonjour ! 👋 Je suis l'assistant Althea Systems. Posez-moi vos questions sur nos produits, commandes ou livraisons !",
+        "contact.chatPlaceholder": "Posez votre question...",
+        "contact.chatError": "Désolé, je rencontre un problème. Essayez le formulaire de contact.",
+        "contact.formSubject": "Sujet",
+        "contact.formEmail": "Email",
+        "contact.formMessage": "Votre message",
+        "contact.formSend": "Envoyer",
+        "contact.formSending": "Envoi...",
+        "contact.formSuccess": "Message envoyé. Notre équipe vous répondra rapidement.",
+
+        // Chat widget
+        "chat.welcome": "Bonjour ! 👋 Je suis l'assistant Althea Systems. Posez-moi vos questions !",
+        "chat.placeholder": "Posez votre question...",
+        "chat.title": "Assistant Althea",
+        "chat.subtitle": "Propulsé par Llama IA",
+        "chat.error": "Désolé, je rencontre un problème. Réessayez ou utilisez notre formulaire de contact.",
+        "chat.suggestion1": "Quels produits vendez-vous ?",
+        "chat.suggestion2": "Comment fonctionne la livraison ?",
+        "chat.suggestion3": "Quelle est votre politique de retour ?",
+        "chat.suggestion4": "Comment suivre ma commande ?",
+
+        // Categories
+        "categories.title": "Catégories",
+        "categories.subtitle": "Parcourez notre gamme complète d'équipements médicaux par spécialité.",
+
+        // Account
+        "account.title": "Mon compte",
+        "account.subtitle": "Gérez vos commandes, adresses et préférences de compte.",
+
+        // Footer
+        "footer.rights": "Tous droits réservés.",
+        "footer.cgu": "CGU",
+        "footer.legal": "Mentions légales",
+        "footer.contact": "Contact",
+        "footer.support": "Support réactif",
+
+        // Legal
+        "legal.cgu.title": "Conditions Générales d'Utilisation",
+        "legal.cgu.subtitle": "Conditions régissant l'utilisation de notre plateforme et de nos services.",
+        "legal.mentions.title": "Mentions légales",
+        "legal.mentions.subtitle": "Informations légales et coordonnées d'Althea Systems.",
+
+        // Backoffice
+        "backoffice.title": "Tableau de bord admin",
+        "backoffice.subtitle": "Gérez votre catalogue, catégories, utilisateurs et messages.",
+    },
+
+    ar: {
+        // Header
+        "header.tagline": "معدات طبية متميزة",
+        "header.categories": "الفئات",
+        "header.products": "المنتجات",
+        "header.search": "بحث",
+        "header.contact": "اتصل بنا",
+        "header.cart": "السلة",
+        "header.login": "تسجيل الدخول",
+        "header.signup": "إنشاء حساب",
+        "header.admin": "الإدارة",
+        "header.logout": "تسجيل الخروج",
+        "header.langLabel": "اللغة",
+
+        // Homepage
+        "home.badge": "أكثر من 500 متخصص في الرعاية الصحية يثقون بنا",
+        "home.headline": "معدات طبية متميزة، تُسلّم بامتياز.",
+        "home.description": "ألثيا سيستمز هي شريكك الموثوق للأجهزة والمعدات الطبية عالية الجودة. من أنظمة التصوير إلى الأدوات الجراحية — نساعد المتخصصين في الرعاية الصحية على تقديم أفضل رعاية للمرضى.",
+        "home.tag1": "توصيل سريع متاح",
+        "home.tag2": "أجهزة معتمدة من الاتحاد الأوروبي",
+        "home.tag3": "دعم خبراء على مدار الساعة",
+        "home.whyUs": "لماذا ألثيا سيستمز؟",
+        "home.reason1": "معدات معتمدة ISO 13485",
+        "home.reason2": "أسعار تنافسية في أوروبا",
+        "home.reason3": "مديرو حسابات مخصصون",
+        "home.reason4": "شحن مجاني فوق 150€",
+        "home.carousel": "الجديد",
+        "home.carouselSub": "أحدث العروض والمنتجات الجديدة.",
+        "home.shopBy": "تسوق حسب الفئة",
+        "home.shopBySub": "تصفح مجموعاتنا المتخصصة من المنتجات.",
+        "home.bestSellers": "الأكثر مبيعاً",
+        "home.bestSellersSub": "معدات مختارة من قبل المتخصصين.",
+        "home.readyOrder": "جاهز لتقديم طلبك؟",
+        "home.readyOrderSub": "دفع آمن، أسعار تنافسية وتوصيل سريع عبر أوروبا.",
+        "home.checkout": "المتابعة إلى الدفع",
+        "home.talkExpert": "تحدث مع خبير",
+
+        // Contact
+        "contact.title": "الاتصال والدعم",
+        "contact.subtitle": "تحدث مع مساعدنا الذكي أو أرسل لنا رسالة",
+        "contact.tabChat": "💬 دردشة ذكية",
+        "contact.tabForm": "✉️ نموذج اتصال",
+        "contact.chatWelcome": "مرحباً! 👋 أنا مساعد ألثيا سيستمز. اسألني عن منتجاتنا أو طلباتك أو الشحن!",
+        "contact.chatPlaceholder": "اسأل أي سؤال...",
+        "contact.chatError": "عذراً، أواجه مشكلة الآن. جرب نموذج الاتصال بدلاً من ذلك.",
+        "contact.formSubject": "الموضوع",
+        "contact.formEmail": "البريد الإلكتروني",
+        "contact.formMessage": "رسالتك",
+        "contact.formSend": "إرسال الرسالة",
+        "contact.formSending": "جارِ الإرسال...",
+        "contact.formSuccess": "تم إرسال الرسالة. سيتواصل فريق الدعم معك قريباً.",
+
+        // Chat widget
+        "chat.welcome": "مرحباً! 👋 أنا مساعد ألثيا سيستمز. اسألني أي سؤال!",
+        "chat.placeholder": "اسأل أي سؤال...",
+        "chat.title": "مساعد ألثيا",
+        "chat.subtitle": "مدعوم بالذكاء الاصطناعي Llama",
+        "chat.error": "عذراً، أواجه مشكلة في الاتصال. يرجى المحاولة مرة أخرى أو استخدام نموذج الاتصال.",
+        "chat.suggestion1": "ما المنتجات التي تبيعونها؟",
+        "chat.suggestion2": "كيف يعمل الشحن؟",
+        "chat.suggestion3": "ما هي سياسة الإرجاع؟",
+        "chat.suggestion4": "كيف أتتبع طلبي؟",
+
+        // Categories
+        "categories.title": "الفئات",
+        "categories.subtitle": "تصفح مجموعتنا الكاملة من المعدات الطبية حسب التخصص.",
+
+        // Account
+        "account.title": "حسابي",
+        "account.subtitle": "إدارة طلباتك وعناوينك وتفضيلات حسابك.",
+
+        // Footer
+        "footer.rights": "جميع الحقوق محفوظة.",
+        "footer.cgu": "شروط الاستخدام",
+        "footer.legal": "إشعار قانوني",
+        "footer.contact": "اتصل بنا",
+        "footer.support": "دعم سريع الاستجابة",
+
+        // Legal
+        "legal.cgu.title": "شروط الاستخدام",
+        "legal.cgu.subtitle": "الشروط المنظمة لاستخدام منصتنا وخدماتنا.",
+        "legal.mentions.title": "إشعار قانوني",
+        "legal.mentions.subtitle": "المعلومات القانونية وتفاصيل شركة ألثيا سيستمز.",
+
+        // Backoffice
+        "backoffice.title": "لوحة تحكم المسؤول",
+        "backoffice.subtitle": "إدارة الكتالوج والفئات والمستخدمين والرسائل.",
+    },
+} as const;
+
+export type TranslationKey = keyof typeof translations.en;
+
+export function t(locale: Locale, key: TranslationKey): string {
+    return translations[locale]?.[key] ?? translations.en[key] ?? key;
+}
+
+export function getTranslations(locale: Locale) {
+    return (key: TranslationKey) => t(locale, key);
+}

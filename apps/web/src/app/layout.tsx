@@ -9,6 +9,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/hooks/useCart";
 import { ToastProvider } from "@/components/ui/Toast";
 import { ChatWidget } from "@/components/chat/ChatWidget";
+import { LocaleProvider } from "@/context/LocaleContext";
 
 const poppins = Poppins({
   variable: "--font-heading",
@@ -43,16 +44,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale} dir={dir}>
       <body className={`${poppins.variable} ${inter.variable} bg-background text-foreground`}>
-        <AuthProvider>
-          <CartProvider>
-            <ToastProvider>
-              <Header locale={locale} />
-              <main className="mx-auto min-h-screen max-w-6xl px-4 py-8">{children}</main>
-              <Footer />
-              <ChatWidget />
-            </ToastProvider>
-          </CartProvider>
-        </AuthProvider>
+        <LocaleProvider locale={locale}>
+          <AuthProvider>
+            <CartProvider>
+              <ToastProvider>
+                <Header locale={locale} />
+                <main className="mx-auto min-h-screen max-w-6xl px-4 py-8">{children}</main>
+                <Footer />
+                <ChatWidget />
+              </ToastProvider>
+            </CartProvider>
+          </AuthProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

@@ -2,6 +2,7 @@
 
 import { FormEvent, useState, useRef, useEffect } from "react";
 import { sendChatMessage } from "@/lib/api";
+import { useT } from "@/context/LocaleContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
@@ -12,16 +13,10 @@ interface ChatMsg {
   content: string;
 }
 
-const SUGGESTIONS = [
-  "What products do you sell?",
-  "How does shipping work?",
-  "What's your return policy?",
-  "How do I track my order?",
-];
-
 /* ── Page ─────────────────────────────────────────────────────── */
 export default function ContactPage() {
   const [tab, setTab] = useState<"chat" | "form">("chat");
+  const t = useT();
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -35,10 +30,10 @@ export default function ContactPage() {
         }}
       >
         <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.2, margin: 0 }}>
-          Contact &amp; Support
+          {t("contact.title")}
         </h1>
         <p style={{ fontSize: 14, opacity: 0.75, margin: "6px 0 0" }}>
-          Chat with our AI assistant or send us a message
+          {t("contact.subtitle")}
         </p>
       </div>
 
@@ -48,37 +43,25 @@ export default function ContactPage() {
           id="tab-chat"
           onClick={() => setTab("chat")}
           style={{
-            flex: 1,
-            padding: "10px 0",
-            borderRadius: 10,
-            border: "none",
-            cursor: "pointer",
-            fontSize: 14,
-            fontWeight: 600,
+            flex: 1, padding: "10px 0", borderRadius: 10, border: "none", cursor: "pointer",
+            fontSize: 14, fontWeight: 600, transition: "all 0.2s",
             background: tab === "chat" ? "linear-gradient(135deg, #00a8b5, #33bfc9)" : "transparent",
             color: tab === "chat" ? "white" : "#64748b",
-            transition: "all 0.2s",
           }}
         >
-          💬 AI Chat
+          {t("contact.tabChat")}
         </button>
         <button
           id="tab-form"
           onClick={() => setTab("form")}
           style={{
-            flex: 1,
-            padding: "10px 0",
-            borderRadius: 10,
-            border: "none",
-            cursor: "pointer",
-            fontSize: 14,
-            fontWeight: 600,
+            flex: 1, padding: "10px 0", borderRadius: 10, border: "none", cursor: "pointer",
+            fontSize: 14, fontWeight: 600, transition: "all 0.2s",
             background: tab === "form" ? "linear-gradient(135deg, #00a8b5, #33bfc9)" : "transparent",
             color: tab === "form" ? "white" : "#64748b",
-            transition: "all 0.2s",
           }}
         >
-          ✉️ Contact Form
+          {t("contact.tabForm")}
         </button>
       </div>
 
@@ -90,17 +73,13 @@ export default function ContactPage() {
 
 /* ── Chat Panel ───────────────────────────────────────────────── */
 function ChatPanel() {
+  const t = useT();
   const [messages, setMessages] = useState<ChatMsg[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "Hello! 👋 I'm the Althea Systems assistant. Ask me anything about our products, orders, or shipping!",
-    },
+    { id: "welcome", role: "assistant", content: t("contact.chatWelcome") },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
@@ -115,12 +94,15 @@ function ChatPanel() {
       const { reply } = await sendChatMessage(msg, history);
       setMessages((p) => [...p, { id: `a-${Date.now()}`, role: "assistant", content: reply }]);
     } catch {
-      setMessages((p) => [...p, { id: `e-${Date.now()}`, role: "assistant", content: "Sorry, I'm having trouble right now. Try the contact form instead." }]);
+      setMessages((p) => [...p, { id: `e-${Date.now()}`, role: "assistant", content: t("contact.chatError") }]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const suggestions = [
+    t("chat.suggestion1"), t("chat.suggestion2"), t("chat.suggestion3"), t("chat.suggestion4"),
+  ];
   const showSuggestions = messages.length <= 1 && !isLoading;
 
   return (
@@ -153,7 +135,7 @@ function ChatPanel() {
       {/* Suggestions */}
       {showSuggestions && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 20px", background: "#f8fafb" }}>
-          {SUGGESTIONS.map((s) => (
+          {suggestions.map((s) => (
             <button key={s} onClick={() => send(s)} style={{
               padding: "6px 14px", borderRadius: 20, border: "1.5px solid #d4f4f7", background: "white",
               color: "#00a8b5", fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap",
@@ -168,13 +150,12 @@ function ChatPanel() {
       {/* Input */}
       <div style={{ padding: "14px 20px", borderTop: "1px solid #e5e7eb", background: "white", display: "flex", gap: 10, alignItems: "center" }}>
         <input
-          ref={inputRef}
           id="contact-chat-input"
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send()}
-          placeholder="Ask me anything..."
+          placeholder={t("contact.chatPlaceholder")}
           disabled={isLoading}
           style={{ flex: 1, padding: "10px 18px", borderRadius: 24, border: "1.5px solid #e5e7eb", outline: "none", fontSize: 14, color: "#1f2937", background: "#f9fafb", transition: "border-color 0.15s" }}
           onFocus={(e) => (e.currentTarget.style.borderColor = "#00a8b5")}
@@ -205,6 +186,7 @@ function ChatPanel() {
 
 /* ── Contact Form ─────────────────────────────────────────────── */
 function ContactForm() {
+  const t = useT();
   const [subject, setSubject] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -225,7 +207,7 @@ function ContactForm() {
       setSubject("");
       setEmail("");
       setMessage("");
-      setFeedback("Message sent. Our support team will get back to you shortly.");
+      setFeedback(t("contact.formSuccess"));
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : "Unexpected error.");
     } finally {
@@ -236,33 +218,29 @@ function ContactForm() {
   return (
     <form className="card space-y-4 p-6" style={{ borderRadius: 20 }} onSubmit={onSubmit}>
       <input
-        id="contact-subject"
-        required minLength={3} maxLength={120}
+        id="contact-subject" required minLength={3} maxLength={120}
         value={subject} onChange={(e) => setSubject(e.target.value)}
-        placeholder="Subject"
+        placeholder={t("contact.formSubject")}
         className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
       />
       <input
-        id="contact-email"
-        type="email" required
+        id="contact-email" type="email" required
         value={email} onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
+        placeholder={t("contact.formEmail")}
         className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
       />
       <textarea
-        id="contact-message"
-        required minLength={10} maxLength={2000}
+        id="contact-message" required minLength={10} maxLength={2000}
         value={message} onChange={(e) => setMessage(e.target.value)}
-        placeholder="Your message"
+        placeholder={t("contact.formMessage")}
         className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
         rows={5}
       />
       <button
-        id="contact-submit"
-        type="submit" disabled={loading}
+        id="contact-submit" type="submit" disabled={loading}
         className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover disabled:opacity-70"
       >
-        {loading ? "Sending..." : "Send message"}
+        {loading ? t("contact.formSending") : t("contact.formSend")}
       </button>
       {feedback && <p className="text-sm text-slate-600">{feedback}</p>}
     </form>

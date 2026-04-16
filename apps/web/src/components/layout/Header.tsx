@@ -4,6 +4,7 @@ import Link from "next/link";
 import { LocaleSwitcher } from "@/components/common/LocaleSwitcher";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { useT } from "@/context/LocaleContext";
 import type { Locale } from "@/lib/i18n.shared";
 
 interface HeaderProps {
@@ -13,6 +14,7 @@ interface HeaderProps {
 export function Header({ locale }: HeaderProps) {
   const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
+  const t = useT();
 
   const handleLogout = () => {
     logout();
@@ -29,23 +31,23 @@ export function Header({ locale }: HeaderProps) {
           </div>
           <div>
             <p className="text-base font-bold leading-tight text-foreground">Althea Systems</p>
-            <p className="text-[11px] leading-tight text-foreground/60">Premium Medical Equipment</p>
+            <p className="text-[11px] leading-tight text-foreground/60">{t("header.tagline")}</p>
           </div>
         </Link>
 
         {/* Navigation */}
         <nav className="hidden md:flex items-center gap-6">
           <Link href="/categories" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors">
-            Categories
+            {t("header.categories")}
           </Link>
           <Link href="/products" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors">
-            Products
+            {t("header.products")}
           </Link>
           <Link href="/search" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors">
-            Search
+            {t("header.search")}
           </Link>
           <Link href="/contact" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors">
-            Contact
+            {t("header.contact")}
           </Link>
         </nav>
 
@@ -55,7 +57,7 @@ export function Header({ locale }: HeaderProps) {
             href="/cart"
             className="relative rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-primary hover:text-primary transition-colors"
           >
-            Cart
+            {t("header.cart")}
             <span className="absolute -right-1 -top-1 inline-flex h-2 w-2 rounded-full bg-primary" />
           </Link>
 
@@ -74,14 +76,14 @@ export function Header({ locale }: HeaderProps) {
                   href="/backoffice"
                   className="rounded-lg bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-700 hover:bg-purple-100 transition-colors"
                 >
-                  Admin
+                  {t("header.admin")}
                 </Link>
               )}
               <button
                 onClick={handleLogout}
                 className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors"
               >
-                Log out
+                {t("header.logout")}
               </button>
             </div>
           ) : (
@@ -90,13 +92,13 @@ export function Header({ locale }: HeaderProps) {
                 href="/login"
                 className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
               >
-                Log in
+                {t("header.login")}
               </Link>
               <Link
                 href="/signup"
                 className="rounded-lg bg-primary px-4 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover transition-colors"
               >
-                Sign up
+                {t("header.signup")}
               </Link>
             </div>
           )}

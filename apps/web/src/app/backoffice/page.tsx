@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AuthGuard } from "@/components/guards/AuthGuard";
 import { ProductForm } from "@/components/backoffice/ProductForm";
+import { useT } from "@/context/LocaleContext";
 
 type Category = {
   id: string;
@@ -34,6 +35,7 @@ type ContactMessage = {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 export default function BackofficePage() {
+  const t = useT();
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -206,9 +208,9 @@ export default function BackofficePage() {
     <AuthGuard requiredRole="admin">
       <div className="space-y-6">
         <div className="card p-6 space-y-2">
-          <h1 className="text-2xl font-semibold text-slate-900">Admin Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">{t("backoffice.title")}</h1>
           <p className="text-sm text-slate-600">
-            Manage your catalog, categories, users, and support messages.
+            {t("backoffice.subtitle")}
           </p>
         </div>
 
