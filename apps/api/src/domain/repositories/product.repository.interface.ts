@@ -5,6 +5,9 @@ export interface ProductRepository {
     findById(id: string): Promise<Product | null>;
     findOneBySlug(slug: string): Promise<Product | null>;
     create(product: Product): Promise<Product>;
+    update(product: Product): Promise<Product>;
+    delete(id: string): Promise<void>;
+    findFeatured(limit: number): Promise<Product[]>;
 }
 
 export const PRODUCT_REPOSITORY_TOKEN = 'ProductRepository';

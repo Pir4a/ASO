@@ -44,6 +44,12 @@ export class Product {
     @Column({ nullable: true })
     thumbnailUrl?: string;
 
+    @Column({ type: 'boolean', default: false, nullable: false })
+    featured!: boolean;
+
+    @Column({ type: 'int', default: 0, nullable: false })
+    featuredOrder!: number;
+
     @Column({ type: 'uuid' })
     categoryId!: string;
 

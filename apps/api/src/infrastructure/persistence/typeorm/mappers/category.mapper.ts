@@ -8,6 +8,7 @@ export class CategoryMapper {
             slug: entity.slug,
             name: entity.name,
             description: entity.description,
+            imageUrl: entity.imageUrl,
             order: entity.order,
             isActive: entity.isActive,
         });
@@ -20,6 +21,7 @@ export class CategoryMapper {
         entity.slug = domain.slug;
         entity.name = domain.name;
         entity.description = domain.description;
+        entity.imageUrl = domain.imageUrl;
         entity.order = domain.order;
         entity.isActive = domain.isActive;
         return entity;

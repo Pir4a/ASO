@@ -13,6 +13,8 @@ export class Product {
     stock: number;
     status: ProductStatus;
     thumbnailUrl?: string;
+    featured: boolean;
+    featuredOrder: number;
     categoryId: string;
     category?: Category;
 

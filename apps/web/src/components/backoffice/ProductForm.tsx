@@ -22,6 +22,8 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [featured, setFeatured] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -62,6 +64,9 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
           price: parseFloat(price),
           stock: parseInt(stock, 10),
           categoryId,
+          thumbnailUrl: thumbnailUrl.trim() || undefined,
+          featured,
+          featuredOrder: 0,
         }),
       });
 
@@ -75,6 +80,8 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
       setPrice("");
       setStock("");
       setCategoryId("");
+      setThumbnailUrl("");
+      setFeatured(false);
       onCreated?.();
       router.refresh();
     } catch (err: unknown) {
@@ -123,6 +130,31 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
               <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
           </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div>
+          <label htmlFor="thumbnailUrl" className={labelCls}>URL miniature</label>
+          <input
+            id="thumbnailUrl"
+            type="url"
+            className={inputCls}
+            value={thumbnailUrl}
+            onChange={(e) => setThumbnailUrl(e.target.value)}
+            placeholder="https://…"
+          />
+        </div>
+        <div className="flex items-end">
+          <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
+            <input
+              type="checkbox"
+              checked={featured}
+              onChange={(e) => setFeatured(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-[#00a8b5] focus:ring-[#00a8b5]"
+            />
+            Mettre en vedette (sélection homepage)
+          </label>
         </div>
       </div>
 

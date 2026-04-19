@@ -8,11 +8,15 @@ import { FindProductBySlugUseCase } from '../../application/use-cases/products/f
 import { CreateProductUseCase } from '../../application/use-cases/products/create-product.use-case';
 import { PRODUCT_REPOSITORY_TOKEN } from '../../domain/repositories/product.repository.interface';
 import { CategoriesModule } from './categories.module';
+import { AuthModule } from './auth.module';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { RolesGuard } from '../guards/roles.guard';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([ProductEntity]),
     CategoriesModule,
+    AuthModule,
   ],
   controllers: [ProductsController],
   providers: [
@@ -23,6 +27,8 @@ import { CategoriesModule } from './categories.module';
     GetProductsUseCase,
     FindProductBySlugUseCase,
     CreateProductUseCase,
+    JwtAuthGuard,
+    RolesGuard,
   ],
   exports: [PRODUCT_REPOSITORY_TOKEN, GetProductsUseCase, FindProductBySlugUseCase],
 })

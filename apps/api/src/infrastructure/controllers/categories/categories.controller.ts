@@ -38,6 +38,7 @@ export class CategoriesController {
           name: body.name,
           slug: body.slug,
           description: body.description,
+          imageUrl: body.imageUrl,
           order: body.order ?? 0,
           isActive: true,
         }),

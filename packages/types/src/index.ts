@@ -20,6 +20,8 @@ export interface Product {
   currency: string;
   status: 'in_stock' | 'low_stock' | 'out_of_stock' | 'new';
   thumbnailUrl?: string;
+  featured?: boolean;
+  featuredOrder?: number;
 }
 
 export interface CartItem {
@@ -34,5 +36,12 @@ export interface CarouselSlide {
   imageUrl: string;
   order: number;
   href?: string;
+  ctaLabel?: string;
+}
+
+export interface HomepageText {
+  id?: string;
+  headline: string;
+  body: string;
 }
 

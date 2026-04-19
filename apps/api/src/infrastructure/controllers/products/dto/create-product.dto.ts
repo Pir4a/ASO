@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, IsPositive, IsInt, Min, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsPositive, IsInt, Min, MaxLength, IsOptional, IsBoolean } from 'class-validator';
 
 export class CreateProductDto {
   @IsString()
@@ -27,4 +27,17 @@ export class CreateProductDto {
   @IsString()
   @IsNotEmpty({ message: 'La catégorie est requise.' })
   categoryId: string; // L'ID de la catégorie à laquelle le produit appartient
+
+  @IsOptional()
+  @IsBoolean()
+  featured?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  featuredOrder?: number;
+
+  @IsOptional()
+  @IsString()
+  thumbnailUrl?: string;
 }

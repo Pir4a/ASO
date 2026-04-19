@@ -6,9 +6,11 @@ import { getLocaleFromCookie } from "@/lib/i18n.server";
 import { getTranslations } from "@/lib/translations";
 
 export default async function Home() {
-  const { categories, products, slides } = await getHomepageData();
+  const { categories, products, featuredProducts, slides, homepageText } = await getHomepageData();
   const locale = await getLocaleFromCookie();
   const t = getTranslations(locale);
+
+  const bestSellers = featuredProducts.length > 0 ? featuredProducts : products.slice(0, 8);
 
   return (
     <div className="space-y-10">
@@ -66,6 +68,17 @@ export default async function Home() {
           <p className="text-sm text-slate-600">{t("home.carouselSub")}</p>
         </div>
         <Carousel slides={slides} />
+
+        {homepageText && (homepageText.headline || homepageText.body) && (
+          <div className="mt-4 rounded-2xl bg-linear-to-br from-primary/5 to-transparent p-5 ring-1 ring-primary/10">
+            {homepageText.headline && (
+              <p className="text-base font-semibold text-foreground">{homepageText.headline}</p>
+            )}
+            {homepageText.body && (
+              <p className="mt-1 text-sm text-slate-600">{homepageText.body}</p>
+            )}
+          </div>
+        )}
       </section>
 
       <section className="card space-y-4 p-6">
@@ -81,7 +94,7 @@ export default async function Home() {
           <h2 className="text-xl font-bold text-foreground">{t("home.bestSellers")}</h2>
           <p className="text-sm text-slate-600">{t("home.bestSellersSub")}</p>
         </div>
-        <ProductGridClient products={products} />
+        <ProductGridClient products={bestSellers} />
       </section>
 
       <section className="card p-6">

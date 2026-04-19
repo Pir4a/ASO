@@ -22,30 +22,35 @@ async function seed() {
       slug: 'imagerie',
       name: 'Imaging & Diagnostics',
       description: 'MRI systems, CT scanners, ultrasound machines, and X-ray equipment for precise medical imaging.',
+      imageUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80',
       order: 1,
     },
     {
       slug: 'bloc',
       name: 'Surgical & Operating Room',
       description: 'Surgical instruments, anesthesia stations, operating lights, and sterile field equipment.',
+      imageUrl: 'https://images.unsplash.com/photo-1582719478248-5f3c0a1e01d8?auto=format&fit=crop&w=800&q=80',
       order: 2,
     },
     {
       slug: 'soins',
       name: 'Patient Monitoring',
       description: 'Vital sign monitors, pulse oximeters, ECG machines, and connected care devices.',
+      imageUrl: 'https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=800&q=80',
       order: 3,
     },
     {
       slug: 'protection',
       name: 'Protective Equipment',
       description: 'Medical-grade gloves, masks, gowns, face shields, and isolation gear.',
+      imageUrl: 'https://images.unsplash.com/photo-1584516150909-c43483ee7932?auto=format&fit=crop&w=800&q=80',
       order: 4,
     },
     {
       slug: 'mobilite',
       name: 'Mobility & Rehabilitation',
       description: 'Wheelchairs, walkers, orthopedic braces, and physiotherapy equipment.',
+      imageUrl: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=800&q=80',
       order: 5,
     },
   ];
@@ -70,6 +75,8 @@ async function seed() {
       stock: 3,
       status: 'in_stock' as const,
       thumbnailUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80',
+      featured: true,
+      featuredOrder: 0,
     },
     {
       sku: 'ALT-US-300',
@@ -82,6 +89,8 @@ async function seed() {
       stock: 12,
       status: 'in_stock' as const,
       thumbnailUrl: 'https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=800&q=80',
+      featured: true,
+      featuredOrder: 1,
     },
     {
       sku: 'ALT-XR-100',
@@ -107,6 +116,8 @@ async function seed() {
       stock: 2,
       status: 'in_stock' as const,
       thumbnailUrl: 'https://images.unsplash.com/photo-1582719478248-5f3c0a1e01d8?auto=format&fit=crop&w=800&q=80',
+      featured: true,
+      featuredOrder: 2,
     },
     {
       sku: 'ALT-ANES-400',
@@ -144,6 +155,8 @@ async function seed() {
       stock: 18,
       status: 'in_stock' as const,
       thumbnailUrl: 'https://images.unsplash.com/photo-1582719478248-5f3c0a1e01d8?auto=format&fit=crop&w=800&q=80',
+      featured: true,
+      featuredOrder: 3,
     },
     {
       sku: 'ALT-ECG-12',
@@ -228,6 +241,8 @@ async function seed() {
         title: 'New: Digital X-Ray System 100',
         subtitle: 'Ceiling-mounted digital radiography with instant image preview',
         imageUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80',
+        href: '/products/digital-xray-100',
+        ctaLabel: 'Discover',
         order: 1,
       },
       order: 1,
@@ -238,6 +253,8 @@ async function seed() {
         title: 'Operating Station 900',
         subtitle: 'Connected operating room with real-time traceability',
         imageUrl: 'https://images.unsplash.com/photo-1582719478248-5f3c0a1e01d8?auto=format&fit=crop&w=800&q=80',
+        href: '/products/bloc-900-station',
+        ctaLabel: 'See product',
         order: 2,
       },
       order: 2,
@@ -248,6 +265,8 @@ async function seed() {
         title: 'Expert Support & Maintenance',
         subtitle: 'Dedicated account managers and 24/7 technical assistance',
         imageUrl: 'https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=800&q=80',
+        href: '/contact',
+        ctaLabel: 'Contact us',
         order: 3,
       },
       order: 3,
@@ -310,7 +329,7 @@ async function seed() {
     isVerified: true,
     isActive: true,
   });
-  console.log('✓ Demo customer created (demo@althea.local / customer123)');
+  console.log('✓ Demo customer created (<demo@althea.local> / customer123)');
 
   console.log('\n🌱 Seed complete!');
   await AppDataSource.destroy();

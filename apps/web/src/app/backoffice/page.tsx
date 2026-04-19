@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/guards/AuthGuard";
 import { ProductForm } from "@/components/backoffice/ProductForm";
+import { ContentManager } from "@/components/backoffice/ContentManager";
 import { Badge, Icon, IconButton, Panel, StatCard } from "@/components/backoffice/DashboardUI";
 import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/auth";
@@ -12,6 +13,7 @@ type Category = {
   name: string;
   slug: string;
   description?: string;
+  imageUrl?: string;
   order: number;
   isActive: boolean;
 };
@@ -24,6 +26,8 @@ type Product = {
   stock?: number;
   status?: "in_stock" | "low_stock" | "out_of_stock" | "new";
   thumbnailUrl?: string;
+  featured?: boolean;
+  featuredOrder?: number;
   category?: { id: string; name: string };
   categoryId?: string;
 };
@@ -46,7 +50,7 @@ type ContactMessage = {
   createdAt: string;
 };
 
-type Section = "overview" | "products" | "categories" | "users" | "messages";
+type Section = "overview" | "products" | "categories" | "content" | "users" | "messages";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
@@ -54,6 +58,7 @@ const SECTION_META: Record<Section, { label: string; hint: string; icon: React.R
   overview: { label: "Overview", hint: "Indicateurs globaux", icon: <Icon.Overview /> },
   products: { label: "Produits", hint: "Catalogue & matériel", icon: <Icon.Products /> },
   categories: { label: "Catégories", hint: "Arborescence & ordre", icon: <Icon.Categories /> },
+  content: { label: "Contenu", hint: "Carrousel & homepage", icon: <Icon.Overview /> },
   users: { label: "Utilisateurs", hint: "Clients & admins", icon: <Icon.Users /> },
   messages: { label: "Messages", hint: "Contacts & support", icon: <Icon.Messages /> },
 };
@@ -77,7 +82,7 @@ function BackofficeDashboard() {
   const [feedback, setFeedback] = useState<{ kind: "success" | "error"; text: string } | null>(null);
 
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
-  const [newCategory, setNewCategory] = useState({ name: "", slug: "", description: "" });
+  const [newCategory, setNewCategory] = useState({ name: "", slug: "", description: "", imageUrl: "" });
   const [showProductForm, setShowProductForm] = useState(false);
 
   const flash = (kind: "success" | "error", text: string) => {
@@ -183,11 +188,40 @@ function BackofficeDashboard() {
         body: JSON.stringify({ ...newCategory, order: categories.length }),
       });
       if (!res.ok) throw new Error();
-      setNewCategory({ name: "", slug: "", description: "" });
+      setNewCategory({ name: "", slug: "", description: "", imageUrl: "" });
       await loadCategories();
       flash("success", "Catégorie créée.");
     } catch {
       flash("error", "Erreur création catégorie.");
+    }
+  };
+
+  const toggleFeatured = async (p: Product) => {
+    try {
+      const res = await authFetch(`${API_URL}/products/${p.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          featured: !p.featured,
+          featuredOrder: p.featured ? 0 : products.filter((x) => x.featured).length,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      await loadProducts();
+      flash("success", p.featured ? "Retiré des vedettes." : "Ajouté aux vedettes.");
+    } catch {
+      flash("error", "Action échouée.");
+    }
+  };
+
+  const deleteProduct = async (id: string) => {
+    if (!confirm("Supprimer ce produit ?")) return;
+    try {
+      const res = await authFetch(`${API_URL}/products/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      await loadProducts();
+      flash("success", "Produit supprimé.");
+    } catch {
+      flash("error", "Suppression impossible.");
     }
   };
 
@@ -639,6 +673,8 @@ function BackofficeDashboard() {
                             <th className="py-2 pr-4 font-semibold">Prix</th>
                             <th className="py-2 pr-4 font-semibold">Stock</th>
                             <th className="py-2 pr-4 font-semibold">Statut</th>
+                            <th className="py-2 pr-4 font-semibold">Vedette</th>
+                            <th className="py-2 pr-4 text-right font-semibold">Actions</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -664,6 +700,29 @@ function BackofficeDashboard() {
                               </td>
                               <td className="py-3 pr-4 text-slate-700">{p.stock ?? 0}</td>
                               <td className="py-3 pr-4">{productStatusBadge(p)}</td>
+                              <td className="py-3 pr-4">
+                                <label className="inline-flex cursor-pointer items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={!!p.featured}
+                                    onChange={() => toggleFeatured(p)}
+                                    className="h-4 w-4 rounded border-slate-300 text-[#00a8b5] focus:ring-[#00a8b5]"
+                                    aria-label={p.featured ? "Retirer des vedettes" : "Mettre en vedette"}
+                                  />
+                                  {p.featured ? (
+                                    <Badge tone="violet">★ #{(p.featuredOrder ?? 0) + 1}</Badge>
+                                  ) : (
+                                    <span className="text-xs text-slate-400">—</span>
+                                  )}
+                                </label>
+                              </td>
+                              <td className="py-3 pr-4">
+                                <div className="flex justify-end gap-1">
+                                  <IconButton tone="rose" onClick={() => deleteProduct(p.id)} title="Supprimer">
+                                    <Icon.Trash />
+                                  </IconButton>
+                                </div>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -678,7 +737,7 @@ function BackofficeDashboard() {
             {section === "categories" && (
               <>
                 <Panel title="Créer une catégorie" subtitle="Ajouter à l'arborescence">
-                  <div className="grid gap-3 md:grid-cols-3">
+                  <div className="grid gap-3 md:grid-cols-2">
                     <input
                       value={newCategory.name}
                       onChange={(e) => setNewCategory((p) => ({ ...p, name: e.target.value }))}
@@ -695,6 +754,12 @@ function BackofficeDashboard() {
                       value={newCategory.description}
                       onChange={(e) => setNewCategory((p) => ({ ...p, description: e.target.value }))}
                       placeholder="Description"
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#00a8b5] focus:ring-2 focus:ring-[#00a8b5]/15"
+                    />
+                    <input
+                      value={newCategory.imageUrl}
+                      onChange={(e) => setNewCategory((p) => ({ ...p, imageUrl: e.target.value }))}
+                      placeholder="URL de l'image (bannière)"
                       className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#00a8b5] focus:ring-2 focus:ring-[#00a8b5]/15"
                     />
                   </div>
@@ -772,7 +837,23 @@ function BackofficeDashboard() {
                                 />
                               </td>
                               <td className="py-3 pr-4 text-xs font-mono text-slate-500">#{cat.order}</td>
-                              <td className="py-3 pr-4 font-medium text-slate-800">{cat.name}</td>
+                              <td className="py-3 pr-4">
+                                <div className="flex items-center gap-3">
+                                  {cat.imageUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={cat.imageUrl}
+                                      alt=""
+                                      className="h-10 w-14 shrink-0 rounded-md object-cover"
+                                    />
+                                  ) : (
+                                    <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-semibold text-slate-400">
+                                      —
+                                    </div>
+                                  )}
+                                  <span className="font-medium text-slate-800">{cat.name}</span>
+                                </div>
+                              </td>
                               <td className="py-3 pr-4 font-mono text-[11px] text-slate-500">{cat.slug}</td>
                               <td className="py-3 pr-4">
                                 {cat.isActive ? <Badge tone="emerald">Active</Badge> : <Badge tone="slate">Inactive</Badge>}
@@ -791,8 +872,15 @@ function BackofficeDashboard() {
                                   >
                                     {cat.isActive ? "Désactiver" : "Activer"}
                                   </IconButton>
-                                  <IconButton onClick={() => updateCategory(cat.id, { name: `${cat.name} (edit)` })} title="Éditer">
-                                    <Icon.Edit />
+                                  <IconButton
+                                    onClick={() => {
+                                      const next = prompt("URL de l'image (vide pour retirer)", cat.imageUrl ?? "");
+                                      if (next === null) return;
+                                      void updateCategory(cat.id, { imageUrl: next.trim() || undefined });
+                                    }}
+                                    title="Changer l'image"
+                                  >
+                                    <Icon.Edit /> Image
                                   </IconButton>
                                   <IconButton tone="rose" onClick={() => deleteCategory(cat.id)} title="Supprimer">
                                     <Icon.Trash />
@@ -808,6 +896,9 @@ function BackofficeDashboard() {
                 </Panel>
               </>
             )}
+
+            {/* CONTENT */}
+            {section === "content" && <ContentManager flash={flash} />}
 
             {/* USERS */}
             {section === "users" && (

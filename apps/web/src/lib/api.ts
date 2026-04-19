@@ -1,5 +1,7 @@
 import { categories as mockCategories, slides as mockSlides, topProducts as mockProducts } from "@/data/mock";
-import type { Category, Product, CarouselSlide } from "@bootstrap/types";
+import type { Category, Product, CarouselSlide, HomepageText } from "@bootstrap/types";
+
+export const MAX_CAROUSEL_SLIDES = 3;
 
 export const API_URL = typeof window === 'undefined'
   ? (process.env.INTERNAL_API_URL || "http://api:3001/api")
@@ -28,35 +30,62 @@ function mapProduct(p: any): Product {
 export async function getHomepageData(): Promise<{
   categories: Category[];
   products: Product[];
+  featuredProducts: Product[];
   slides: CarouselSlide[];
+  homepageText: HomepageText | null;
 }> {
   try {
-    const [categories, productsRaw, content] = await Promise.all([
+    const [categories, productsRaw, featuredRaw, content] = await Promise.all([
       fetchJson<Category[]>("/categories"),
       fetchJson<any[]>("/products"),
-      fetchJson<{ type: string; payload?: Record<string, unknown> }[]>("/content"),
+      fetchJson<any[]>("/products/featured?limit=8").catch(() => [] as any[]),
+      fetchJson<{ id?: string; type: string; payload?: Record<string, unknown>; order?: number }[]>("/content"),
     ]);
 
     const products = productsRaw.map(mapProduct);
+    const featuredProducts = (featuredRaw ?? []).map(mapProduct);
 
-    const slides =
-      (content
-        .filter((c) => c.type === "carousel")
-        .map((c, index) => ({
-          id: `slide-${index}`,
-          title: (c.payload?.title as string) || "Slide",
-          subtitle: (c.payload?.subtitle as string) || "",
-          imageUrl: (c.payload?.imageUrl as string) || mockSlides[0].imageUrl,
-          order: c.payload?.order ? Number(c.payload.order) : index,
-        })) as CarouselSlide[]) || mockSlides;
+    const slides = content
+      .filter((c) => c.type === "carousel")
+      .slice(0, MAX_CAROUSEL_SLIDES)
+      .map((c, index) => ({
+        id: (c.id as string) || `slide-${index}`,
+        title: (c.payload?.title as string) || "Slide",
+        subtitle: (c.payload?.subtitle as string) || "",
+        imageUrl: (c.payload?.imageUrl as string) || mockSlides[0].imageUrl,
+        order: c.payload?.order !== undefined ? Number(c.payload.order) : (c.order ?? index),
+        href:
+          (c.payload?.href as string) ||
+          (c.payload?.linkUrl as string) ||
+          (c.payload?.url as string) ||
+          undefined,
+        ctaLabel: (c.payload?.ctaLabel as string) || undefined,
+      })) as CarouselSlide[];
+
+    const textBlock = content.find((c) => c.type === "homepage_text");
+    const homepageText: HomepageText | null = textBlock
+      ? {
+        id: textBlock.id,
+        headline: (textBlock.payload?.headline as string) || "",
+        body: (textBlock.payload?.body as string) || "",
+      }
+      : null;
 
     return {
       categories: categories.length ? categories : mockCategories,
       products: products.length ? products : mockProducts,
+      featuredProducts,
       slides: slides.length ? slides : mockSlides,
+      homepageText,
     };
   } catch {
-    return { categories: mockCategories, products: mockProducts, slides: mockSlides };
+    return {
+      categories: mockCategories,
+      products: mockProducts,
+      featuredProducts: [],
+      slides: mockSlides,
+      homepageText: null,
+    };
   }
 }
 

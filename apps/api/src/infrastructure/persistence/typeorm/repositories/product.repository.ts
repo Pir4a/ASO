@@ -35,4 +35,25 @@ export class TypeOrmProductRepository implements ProductRepository {
         const newEntity = await this.repository.save(persistenceEntity);
         return ProductMapper.toDomain(newEntity);
     }
+
+    async update(product: DomainProduct): Promise<DomainProduct> {
+        const persistenceEntity = ProductMapper.toPersistence(product);
+        const saved = await this.repository.save(persistenceEntity);
+        const reloaded = await this.repository.findOne({ where: { id: saved.id }, relations: ['category'] });
+        return ProductMapper.toDomain(reloaded ?? saved);
+    }
+
+    async delete(id: string): Promise<void> {
+        await this.repository.delete(id);
+    }
+
+    async findFeatured(limit: number): Promise<DomainProduct[]> {
+        const entities = await this.repository.find({
+            where: { featured: true },
+            order: { featuredOrder: 'ASC' },
+            take: limit,
+            relations: ['category'],
+        });
+        return entities.map(ProductMapper.toDomain);
+    }
 }

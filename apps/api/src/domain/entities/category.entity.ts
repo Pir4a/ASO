@@ -3,6 +3,7 @@ export class Category {
     slug: string;
     name: string;
     description?: string;
+    imageUrl?: string;
     order: number;
     isActive: boolean;
 
