@@ -12,9 +12,10 @@ interface Category {
 
 interface ProductFormProps {
   categories: Category[];
+  onCreated?: () => void;
 }
 
-export function ProductForm({ categories }: ProductFormProps) {
+export function ProductForm({ categories, onCreated }: ProductFormProps) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
@@ -26,19 +27,18 @@ export function ProductForm({ categories }: ProductFormProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const generateSlug = (productName: string) => {
-    return productName
+  const generateSlug = (productName: string) =>
+    productName
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "") // Supprime les caractères non alphanumériques sauf espaces et tirets
+      .replace(/[^a-z0-9\s-]/g, "")
       .trim()
-      .replace(/\s+/g, "-") // Remplace les espaces par des tirets
-      .replace(/-+/g, "-"); // Remplace les tirets multiples par un seul
-  };
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newName = e.target.value;
-    setName(newName);
-    setSlug(generateSlug(newName)); // Génère automatiquement le slug
+    const next = e.target.value;
+    setName(next);
+    setSlug(generateSlug(next));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,95 +66,86 @@ export function ProductForm({ categories }: ProductFormProps) {
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Erreur lors de l'ajout du produit.");
-      }
+      if (!response.ok) throw new Error(data.message || "Erreur lors de l'ajout du produit.");
 
       setSuccess("Produit ajouté avec succès !");
-      // Optionnellement, vider le formulaire ou rediriger
       setName("");
       setSlug("");
       setDescription("");
       setPrice("");
       setStock("");
       setCategoryId("");
-      router.refresh(); // Rafraîchir la page actuelle pour mettre à jour la liste des produits si affichée
-    } catch (err: any) {
-      setError(err.message || "Une erreur inattendue est survenue.");
+      onCreated?.();
+      router.refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Une erreur inattendue est survenue.");
     } finally {
       setLoading(false);
     }
   };
 
+  const inputCls =
+    "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-[#00a8b5] focus:ring-2 focus:ring-[#00a8b5]/15";
+  const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500";
+
   return (
-    <div className="card p-6 space-y-4">
-      <h2 className="text-xl font-semibold text-slate-900">Ajouter un nouveau matériel</h2>
-      <form onSubmit={handleSubmit} className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-slate-700">Nom du produit</label>
-          <input
-            type="text"
-            id="name"
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
-            value={name}
-            onChange={handleNameChange}
-            required
-          />
+          <label htmlFor="name" className={labelCls}>Nom du produit</label>
+          <input id="name" type="text" className={inputCls} value={name} onChange={handleNameChange} required />
         </div>
         <div>
-          <label htmlFor="slug" className="block text-sm font-medium text-slate-700">Slug (URL)</label>
-          <input
-            type="text"
-            id="slug"
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            required
-          />
+          <label htmlFor="slug" className={labelCls}>Slug (URL)</label>
+          <input id="slug" type="text" className={inputCls} value={slug} onChange={(e) => setSlug(e.target.value)} required />
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="description" className={labelCls}>Description</label>
+        <textarea id="description" rows={3} className={inputCls} value={description} onChange={(e) => setDescription(e.target.value)} required />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div>
+          <label htmlFor="price" className={labelCls}>Prix (€)</label>
+          <input id="price" type="number" step="0.01" className={inputCls} value={price} onChange={(e) => setPrice(e.target.value)} required />
         </div>
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-slate-700">Description</label>
-          <textarea
-            id="description"
-            rows={4}
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-          ></textarea>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="price" className="block text-sm font-medium text-slate-700">Prix</label>
-            <input type="number" id="price" step="0.01" className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none" value={price} onChange={(e) => setPrice(e.target.value)} required />
-          </div>
-          <div>
-            <label htmlFor="stock" className="block text-sm font-medium text-slate-700">Stock</label>
-            <input type="number" id="stock" className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none" value={stock} onChange={(e) => setStock(e.target.value)} required />
-          </div>
+          <label htmlFor="stock" className={labelCls}>Stock</label>
+          <input id="stock" type="number" className={inputCls} value={stock} onChange={(e) => setStock(e.target.value)} required />
         </div>
         <div>
-          <label htmlFor="category" className="block text-sm font-medium text-slate-700">Catégorie</label>
-          <select id="category" className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
-            <option value="">Sélectionner une catégorie</option>
+          <label htmlFor="category" className={labelCls}>Catégorie</label>
+          <select id="category" className={inputCls} value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
+            <option value="">Sélectionner</option>
             {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
           </select>
         </div>
-        {error && <p className="text-sm text-red-500">{error}</p>}
-        {success && <p className="text-sm text-green-500">{success}</p>}
+      </div>
+
+      {error && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {success}
+        </div>
+      )}
+
+      <div className="flex items-center justify-end gap-2 pt-2">
         <button
           type="submit"
-          className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover disabled:opacity-50"
           disabled={loading}
+          className="inline-flex items-center gap-2 rounded-lg bg-[#00a8b5] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#33bfc9] disabled:opacity-50"
         >
-          {loading ? "Ajout en cours..." : "Ajouter le matériel"}
+          {loading ? "Ajout…" : "Ajouter le produit"}
         </button>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 }
