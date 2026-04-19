@@ -2,11 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { LocaleSwitcher } from "@/components/common/LocaleSwitcher";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useT } from "@/context/LocaleContext";
+import { useCart } from "@/hooks/useCart";
 import type { Locale } from "@/lib/i18n.shared";
+import { HeaderSearchBar } from "./HeaderSearchBar";
+import { MobileMenu } from "./MobileMenu";
 
 interface HeaderProps {
   locale: Locale;
@@ -16,6 +20,10 @@ export function Header({ locale }: HeaderProps) {
   const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
   const t = useT();
+  const { items } = useCart();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   const handleLogout = () => {
     logout();
@@ -23,95 +31,165 @@ export function Header({ locale }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75 shadow-sm">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        {/* Logo — clickable to homepage */}
-        <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80" aria-label="Althea Systems">
-          <Image
-            src="/logo-mark.png"
-            alt=""
-            width={48}
-            height={48}
-            priority
-            className="h-10 w-auto"
-          />
-          <span
-            className="font-heading text-xl font-semibold leading-none tracking-tight text-foreground"
+    <>
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75 shadow-sm">
+        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
+          {/* Burger (mobile only) */}
+          <button
+            type="button"
+            aria-label={t("a11y.openMenu")}
+            aria-controls="mobile-menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(true)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:border-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary md:hidden"
           >
-            Althea Systems
-          </span>
-          <span className="sr-only">{t("header.tagline")}</span>
-        </Link>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-5 w-5"
+              aria-hidden="true"
+            >
+              <path d="M4 6h16" />
+              <path d="M4 12h16" />
+              <path d="M4 18h16" />
+            </svg>
+          </button>
 
-        {/* Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
-          <Link href="/categories" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors">
-            {t("header.categories")}
-          </Link>
-          <Link href="/products" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors">
-            {t("header.products")}
-          </Link>
-          <Link href="/search" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors">
-            {t("header.search")}
-          </Link>
-          <Link href="/contact" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors">
-            {t("header.contact")}
-          </Link>
-        </nav>
-
-        {/* Actions */}
-        <div className="flex items-center gap-3">
+          {/* Logo — clickable to homepage */}
           <Link
-            href="/cart"
-            className="relative rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-primary hover:text-primary transition-colors"
+            href="/"
+            className="flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary rounded"
+            aria-label="Althea Systems"
           >
-            {t("header.cart")}
-            <span className="absolute -right-1 -top-1 inline-flex h-2 w-2 rounded-full bg-primary" />
+            <Image
+              src="/logo-mark.png"
+              alt=""
+              width={48}
+              height={48}
+              priority
+              className="h-10 w-auto"
+            />
+            <span className="hidden font-heading text-xl font-semibold leading-none tracking-tight text-foreground sm:inline">
+              Althea Systems
+            </span>
+            <span className="sr-only">{t("header.tagline")}</span>
           </Link>
 
-          <LocaleSwitcher value={locale} />
+          {/* Search bar — hidden on small screens, shown in burger menu instead */}
+          <div className="mx-4 hidden flex-1 md:block">
+            <HeaderSearchBar />
+          </div>
 
-          {isAuthenticated ? (
-            <div className="flex items-center gap-2">
-              <Link
-                href="/profile"
-                className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors"
+          {/* Navigation */}
+          <nav
+            aria-label={t("header.primaryNav")}
+            className="hidden items-center gap-5 md:flex"
+          >
+            <Link href="/categories" className="text-sm font-medium text-slate-600 hover:text-primary focus:outline-none focus:text-primary transition-colors">
+              {t("header.categories")}
+            </Link>
+            <Link href="/products" className="text-sm font-medium text-slate-600 hover:text-primary focus:outline-none focus:text-primary transition-colors">
+              {t("header.products")}
+            </Link>
+            <Link href="/contact" className="text-sm font-medium text-slate-600 hover:text-primary focus:outline-none focus:text-primary transition-colors">
+              {t("header.contact")}
+            </Link>
+          </nav>
+
+          {/* Actions */}
+          <div className="ml-auto flex items-center gap-2 md:gap-3">
+            <Link
+              href="/cart"
+              className="relative inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              aria-label={
+                itemCount > 0
+                  ? `${t("header.cart")}, ${itemCount} ${t("a11y.cartItems")}`
+                  : `${t("header.cart")}, ${t("a11y.cartEmpty")}`
+              }
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+                aria-hidden="true"
               >
-                {user?.email?.split("@")[0]}
-              </Link>
-              {user?.role === "admin" && (
-                <Link
-                  href="/backoffice"
-                  className="rounded-lg bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-700 hover:bg-purple-100 transition-colors"
+                <circle cx="8" cy="21" r="1" />
+                <circle cx="19" cy="21" r="1" />
+                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+              </svg>
+              <span className="hidden sm:inline">{t("header.cart")}</span>
+              {itemCount > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-white shadow-sm"
                 >
-                  {t("header.admin")}
-                </Link>
+                  {itemCount > 99 ? "99+" : itemCount}
+                </span>
               )}
-              <button
-                onClick={handleLogout}
-                className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-              >
-                {t("header.logout")}
-              </button>
+            </Link>
+
+            <div className="hidden md:block">
+              <LocaleSwitcher value={locale} />
             </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Link
-                href="/login"
-                className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
-              >
-                {t("header.login")}
-              </Link>
-              <Link
-                href="/signup"
-                className="rounded-lg bg-primary px-4 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover transition-colors"
-              >
-                {t("header.signup")}
-              </Link>
+
+            <div className="hidden md:flex md:items-center md:gap-2">
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    href="/profile"
+                    className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                  >
+                    {user?.email?.split("@")[0]}
+                  </Link>
+                  {user?.role === "admin" && (
+                    <Link
+                      href="/backoffice"
+                      className="rounded-lg bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-700 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                    >
+                      {t("header.admin")}
+                    </Link>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                  >
+                    {t("header.logout")}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                  >
+                    {t("header.login")}
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="rounded-lg bg-primary px-4 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                  >
+                    {t("header.signup")}
+                  </Link>
+                </>
+              )}
             </div>
-          )}
+          </div>
         </div>
+      </header>
+
+      <div id="mobile-menu">
+        <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} locale={locale} />
       </div>
-    </header>
+    </>
   );
 }

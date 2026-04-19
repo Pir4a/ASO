@@ -3,6 +3,7 @@ import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { SkipLink } from "@/components/layout/SkipLink";
 import { getLocaleFromCookie } from "@/lib/i18n.server";
 import { defaultLocale, isRtl } from "@/lib/i18n.shared";
 import { AuthProvider } from "@/context/AuthContext";
@@ -48,8 +49,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <AuthProvider>
             <CartProvider>
               <ToastProvider>
+                <SkipLink />
                 <Header locale={locale} />
-                <main className="mx-auto min-h-screen max-w-6xl px-4 py-8">{children}</main>
+                <main
+                  id="main"
+                  tabIndex={-1}
+                  className="mx-auto min-h-screen max-w-6xl px-4 py-8 focus:outline-none"
+                >
+                  {children}
+                </main>
                 <Footer />
                 <ChatWidget />
               </ToastProvider>

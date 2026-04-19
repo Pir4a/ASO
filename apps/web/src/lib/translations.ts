@@ -2,11 +2,20 @@ import type { Locale } from "./i18n.shared";
 
 const translations = {
     en: {
+        // A11y
+        "a11y.skipToContent": "Skip to main content",
+        "a11y.openMenu": "Open menu",
+        "a11y.closeMenu": "Close menu",
+        "a11y.cartItems": "items in cart",
+        "a11y.cartEmpty": "Your cart is empty",
+        "a11y.searchSubmit": "Submit search",
+
         // Header
         "header.tagline": "Premium Medical Equipment",
         "header.categories": "Categories",
         "header.products": "Products",
         "header.search": "Search",
+        "header.searchPlaceholder": "Search for a product, category, SKU…",
         "header.contact": "Contact",
         "header.cart": "Cart",
         "header.login": "Log in",
@@ -14,6 +23,15 @@ const translations = {
         "header.admin": "Admin",
         "header.logout": "Log out",
         "header.langLabel": "Language",
+        "header.primaryNav": "Primary navigation",
+
+        // Social
+        "social.followUs": "Follow us",
+        "social.linkedin": "LinkedIn",
+        "social.twitter": "X (Twitter)",
+        "social.facebook": "Facebook",
+        "social.instagram": "Instagram",
+        "social.youtube": "YouTube",
 
         // Homepage
         "home.badge": "Trusted by 500+ Healthcare Professionals",
@@ -91,11 +109,20 @@ const translations = {
     },
 
     fr: {
+        // A11y
+        "a11y.skipToContent": "Aller au contenu principal",
+        "a11y.openMenu": "Ouvrir le menu",
+        "a11y.closeMenu": "Fermer le menu",
+        "a11y.cartItems": "articles dans le panier",
+        "a11y.cartEmpty": "Votre panier est vide",
+        "a11y.searchSubmit": "Lancer la recherche",
+
         // Header
         "header.tagline": "Équipement Médical Premium",
         "header.categories": "Catégories",
         "header.products": "Produits",
         "header.search": "Recherche",
+        "header.searchPlaceholder": "Rechercher un produit, une catégorie, une référence…",
         "header.contact": "Contact",
         "header.cart": "Panier",
         "header.login": "Connexion",
@@ -103,6 +130,15 @@ const translations = {
         "header.admin": "Admin",
         "header.logout": "Déconnexion",
         "header.langLabel": "Langue",
+        "header.primaryNav": "Navigation principale",
+
+        // Social
+        "social.followUs": "Suivez-nous",
+        "social.linkedin": "LinkedIn",
+        "social.twitter": "X (Twitter)",
+        "social.facebook": "Facebook",
+        "social.instagram": "Instagram",
+        "social.youtube": "YouTube",
 
         // Homepage
         "home.badge": "Plus de 500 professionnels de santé nous font confiance",
@@ -180,11 +216,20 @@ const translations = {
     },
 
     ar: {
+        // A11y
+        "a11y.skipToContent": "تخطَّ إلى المحتوى الرئيسي",
+        "a11y.openMenu": "افتح القائمة",
+        "a11y.closeMenu": "أغلق القائمة",
+        "a11y.cartItems": "عناصر في السلة",
+        "a11y.cartEmpty": "سلتك فارغة",
+        "a11y.searchSubmit": "تنفيذ البحث",
+
         // Header
         "header.tagline": "معدات طبية متميزة",
         "header.categories": "الفئات",
         "header.products": "المنتجات",
         "header.search": "بحث",
+        "header.searchPlaceholder": "ابحث عن منتج أو فئة أو رقم SKU…",
         "header.contact": "اتصل بنا",
         "header.cart": "السلة",
         "header.login": "تسجيل الدخول",
@@ -192,6 +237,15 @@ const translations = {
         "header.admin": "الإدارة",
         "header.logout": "تسجيل الخروج",
         "header.langLabel": "اللغة",
+        "header.primaryNav": "التنقل الرئيسي",
+
+        // Social
+        "social.followUs": "تابعنا",
+        "social.linkedin": "LinkedIn",
+        "social.twitter": "X (تويتر)",
+        "social.facebook": "فيسبوك",
+        "social.instagram": "إنستغرام",
+        "social.youtube": "يوتيوب",
 
         // Homepage
         "home.badge": "أكثر من 500 متخصص في الرعاية الصحية يثقون بنا",
@@ -266,6 +320,113 @@ const translations = {
         // Backoffice
         "backoffice.title": "لوحة تحكم المسؤول",
         "backoffice.subtitle": "إدارة الكتالوج والفئات والمستخدمين والرسائل.",
+    },
+
+    he: {
+        // A11y
+        "a11y.skipToContent": "דלג לתוכן הראשי",
+        "a11y.openMenu": "פתח תפריט",
+        "a11y.closeMenu": "סגור תפריט",
+        "a11y.cartItems": "פריטים בעגלה",
+        "a11y.cartEmpty": "העגלה שלך ריקה",
+        "a11y.searchSubmit": "בצע חיפוש",
+
+        // Header
+        "header.tagline": "ציוד רפואי איכותי",
+        "header.categories": "קטגוריות",
+        "header.products": "מוצרים",
+        "header.search": "חיפוש",
+        "header.searchPlaceholder": "חפש מוצר, קטגוריה או מק״ט…",
+        "header.contact": "צור קשר",
+        "header.cart": "עגלה",
+        "header.login": "התחברות",
+        "header.signup": "הרשמה",
+        "header.admin": "ניהול",
+        "header.logout": "התנתקות",
+        "header.langLabel": "שפה",
+        "header.primaryNav": "ניווט ראשי",
+
+        // Social
+        "social.followUs": "עקבו אחרינו",
+        "social.linkedin": "LinkedIn",
+        "social.twitter": "X (טוויטר)",
+        "social.facebook": "פייסבוק",
+        "social.instagram": "אינסטגרם",
+        "social.youtube": "יוטיוב",
+
+        // Homepage
+        "home.badge": "למעלה מ-500 אנשי מקצוע רפואי סומכים עלינו",
+        "home.headline": "ציוד רפואי מוביל, מסופק במצוינות.",
+        "home.description": "Althea Systems היא השותפה המהימנה שלך לציוד ומכשור רפואי איכותי. ממערכות הדמיה ועד כלים כירורגיים — אנו מסייעים לאנשי מקצוע רפואיים להעניק את הטיפול הטוב ביותר.",
+        "home.tag1": "משלוח מהיר זמין",
+        "home.tag2": "מכשירים בתקן האיחוד האירופי",
+        "home.tag3": "תמיכת מומחים 24/7",
+        "home.whyUs": "למה Althea Systems?",
+        "home.reason1": "ציוד בתקן ISO 13485",
+        "home.reason2": "מחירים תחרותיים בכל אירופה",
+        "home.reason3": "מנהלי לקוחות ייעודיים",
+        "home.reason4": "משלוח חינם מעל 150€",
+        "home.carousel": "מה חדש",
+        "home.carouselSub": "מבצעים ומוצרים חדשים.",
+        "home.shopBy": "קנה לפי קטגוריה",
+        "home.shopBySub": "עיין בסדרות המוצרים המתמחות שלנו.",
+        "home.bestSellers": "הנמכרים ביותר",
+        "home.bestSellersSub": "ציוד מוערך שנבחר על ידי אנשי מקצוע.",
+        "home.readyOrder": "מוכנים להזמין?",
+        "home.readyOrderSub": "תשלום מאובטח, מחירים תחרותיים ומשלוח מהיר ברחבי אירופה.",
+        "home.checkout": "המשך לתשלום",
+        "home.talkExpert": "שוחח עם מומחה",
+
+        // Contact
+        "contact.title": "יצירת קשר ותמיכה",
+        "contact.subtitle": "שוחחו עם עוזר ה-AI שלנו או שלחו לנו הודעה",
+        "contact.tabChat": "💬 צ'אט AI",
+        "contact.tabForm": "✉️ טופס יצירת קשר",
+        "contact.chatWelcome": "שלום! 👋 אני העוזר של Althea Systems. שאלו אותי על המוצרים, ההזמנות או המשלוחים שלנו!",
+        "contact.chatPlaceholder": "שאלו אותי כל שאלה...",
+        "contact.chatError": "סליחה, אני מתקשה כרגע. נסו את טופס יצירת הקשר במקום.",
+        "contact.formSubject": "נושא",
+        "contact.formEmail": "דוא״ל",
+        "contact.formMessage": "ההודעה שלך",
+        "contact.formSend": "שלח הודעה",
+        "contact.formSending": "שולח...",
+        "contact.formSuccess": "ההודעה נשלחה. צוות התמיכה שלנו יחזור אליך בקרוב.",
+
+        // Chat widget
+        "chat.welcome": "שלום! 👋 אני העוזר של Althea Systems. שאלו אותי כל שאלה!",
+        "chat.placeholder": "שאלו אותי כל שאלה...",
+        "chat.title": "עוזר Althea",
+        "chat.subtitle": "מופעל על ידי Llama AI",
+        "chat.error": "סליחה, יש בעיית חיבור. נסו שוב או צרו קשר דרך הטופס.",
+        "chat.suggestion1": "אילו מוצרים אתם מוכרים?",
+        "chat.suggestion2": "איך עובד המשלוח?",
+        "chat.suggestion3": "מה מדיניות ההחזרות שלכם?",
+        "chat.suggestion4": "איך אעקוב אחר ההזמנה שלי?",
+
+        // Categories
+        "categories.title": "קטגוריות",
+        "categories.subtitle": "עיינו במגוון המלא של ציוד רפואי לפי התמחות.",
+
+        // Account
+        "account.title": "החשבון שלי",
+        "account.subtitle": "נהל את ההזמנות, הכתובות והעדפות החשבון שלך.",
+
+        // Footer
+        "footer.rights": "כל הזכויות שמורות.",
+        "footer.cgu": "תנאי שימוש",
+        "footer.legal": "הודעה משפטית",
+        "footer.contact": "צור קשר",
+        "footer.support": "תמיכה מהירה",
+
+        // Legal
+        "legal.cgu.title": "תנאי שימוש",
+        "legal.cgu.subtitle": "התנאים המסדירים את השימוש בפלטפורמה ובשירותים שלנו.",
+        "legal.mentions.title": "הודעה משפטית",
+        "legal.mentions.subtitle": "מידע משפטי ופרטי החברה של Althea Systems.",
+
+        // Backoffice
+        "backoffice.title": "לוח בקרה למנהל",
+        "backoffice.subtitle": "ניהול הקטלוג, הקטגוריות, המשתמשים וההודעות.",
     },
 } as const;
 

@@ -8,6 +8,7 @@ const localeLabels: Record<Locale, { flag: string; label: string }> = {
   en: { flag: "🇬🇧", label: "English" },
   fr: { flag: "🇫🇷", label: "Français" },
   ar: { flag: "🇸🇦", label: "العربية" },
+  he: { flag: "🇮🇱", label: "עברית" },
 };
 
 export function LocaleSwitcher({ value }: { value: Locale }) {

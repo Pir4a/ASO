@@ -42,40 +42,68 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast: (id: string) => void }) {
-    if (toasts.length === 0) return null;
+    // We keep the container mounted so the aria-live region is stable and screen
+    // readers reliably announce changes. Two regions: polite for info/success,
+    // assertive for errors.
+    const polite = toasts.filter((t) => t.type !== "error");
+    const assertive = toasts.filter((t) => t.type === "error");
 
-    return (
-        <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-            {toasts.map((toast) => (
-                <div
-                    key={toast.id}
-                    className={`
+    const renderToast = (toast: Toast) => (
+        <div
+            key={toast.id}
+            role={toast.type === "error" ? "alert" : "status"}
+            className={`
             animate-slide-in flex items-center gap-3 rounded-lg px-4 py-3 shadow-lg
             ${toast.type === "success" ? "bg-green-600 text-white" : ""}
             ${toast.type === "error" ? "bg-red-600 text-white" : ""}
             ${toast.type === "info" ? "bg-blue-600 text-white" : ""}
           `}
-                >
-                    {toast.type === "success" && (
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                    )}
-                    {toast.type === "error" && (
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    )}
-                    <span className="text-sm font-medium">{toast.message}</span>
-                    <button
-                        onClick={() => removeToast(toast.id)}
-                        className="ml-2 hover:opacity-70"
-                    >
-                        ✕
-                    </button>
-                </div>
-            ))}
+        >
+            {toast.type === "success" && (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+            )}
+            {toast.type === "error" && (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            )}
+            <span className="text-sm font-medium">{toast.message}</span>
+            <button
+                type="button"
+                onClick={() => removeToast(toast.id)}
+                aria-label="Dismiss notification"
+                className="ml-2 rounded hover:opacity-70 focus:outline-none focus:ring-2 focus:ring-white"
+            >
+                <span aria-hidden="true">✕</span>
+            </button>
         </div>
+    );
+
+    return (
+        <>
+            <div
+                aria-live="polite"
+                aria-atomic="true"
+                className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2 rtl:left-4 rtl:right-auto"
+            >
+                <div className="pointer-events-auto flex flex-col gap-2">
+                    {polite.map(renderToast)}
+                </div>
+            </div>
+            <div
+                aria-live="assertive"
+                aria-atomic="true"
+                role="region"
+                aria-label="Errors"
+                className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2 rtl:left-4 rtl:right-auto"
+            >
+                <div className="pointer-events-auto flex flex-col gap-2">
+                    {assertive.map(renderToast)}
+                </div>
+            </div>
+        </>
     );
 }
 

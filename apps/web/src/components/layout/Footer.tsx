@@ -2,30 +2,52 @@
 
 import Link from "next/link";
 import { useT } from "@/context/LocaleContext";
+import { SocialLinks } from "./SocialLinks";
 
 export function Footer() {
   const t = useT();
 
   return (
     <footer className="bg-foreground text-slate-100 mt-16">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-12 md:flex-row md:items-center md:justify-between">
-        <p className="text-sm text-slate-300">
-          © {new Date().getFullYear()} Althea Systems. {t("footer.rights")}
-        </p>
-        <div className="flex flex-wrap items-center gap-6 text-sm text-slate-300">
-          <Link href="/legal/cgu" className="hover:text-primary-hover transition-colors">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-3 md:items-start">
+        <div className="space-y-3">
+          <p className="font-heading text-lg font-semibold text-white">Althea Systems</p>
+          <p className="text-sm text-slate-300">
+            © {new Date().getFullYear()} Althea Systems. {t("footer.rights")}
+          </p>
+          <div className="flex items-center gap-2 text-sm text-slate-300">
+            <span
+              aria-hidden="true"
+              className="h-2 w-2 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+            />
+            <span>{t("footer.support")}</span>
+          </div>
+        </div>
+
+        {/* Legal links — visible on desktop, hidden on mobile (already in burger menu) */}
+        <nav
+          aria-label={t("footer.legal")}
+          className="hidden flex-col gap-2 text-sm text-slate-300 md:flex"
+        >
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            {t("footer.legal")}
+          </span>
+          <Link href="/legal/cgu" className="hover:text-primary-hover focus:outline-none focus:text-primary-hover transition-colors">
             {t("footer.cgu")}
           </Link>
-          <Link href="/legal/mentions" className="hover:text-primary-hover transition-colors">
+          <Link href="/legal/mentions" className="hover:text-primary-hover focus:outline-none focus:text-primary-hover transition-colors">
             {t("footer.legal")}
           </Link>
-          <Link href="/contact" className="hover:text-primary-hover transition-colors">
+          <Link href="/contact" className="hover:text-primary-hover focus:outline-none focus:text-primary-hover transition-colors">
             {t("footer.contact")}
           </Link>
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-            <span className="text-slate-100">{t("footer.support")}</span>
-          </div>
+        </nav>
+
+        <div className="space-y-3">
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            {t("social.followUs")}
+          </span>
+          <SocialLinks variant="dark" />
         </div>
       </div>
     </footer>
