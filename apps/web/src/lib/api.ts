@@ -16,15 +16,124 @@ async function fetchJson<T>(path: string): Promise<T> {
 }
 
 function mapProduct(p: any): Product {
+  const listPriority = p.listPriority !== undefined ? Number(p.listPriority) : 0;
+  const galleryUrls = Array.isArray(p.galleryUrls)
+    ? (p.galleryUrls as string[]).filter((u) => typeof u === "string" && u.trim().length > 0)
+    : undefined;
+  const specs =
+    p.specs && typeof p.specs === "object" && !Array.isArray(p.specs)
+      ? (p.specs as Record<string, string>)
+      : undefined;
+  const stock = p.stock !== undefined ? Number(p.stock) : undefined;
+
   // Backend returns 'price' (decimal/number in major unit), Frontend expects 'priceCents'
   if (p.price !== undefined && p.priceCents === undefined) {
     return {
       ...p,
       priceCents: Math.round(Number(p.price) * 100),
       currency: p.currency || "EUR",
+      listPriority,
+      galleryUrls,
+      specs,
+      stock,
     };
   }
-  return p;
+  return { ...p, listPriority, galleryUrls, specs, stock };
+}
+
+export type ProductBrowseMeta = {
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+function sortProductsForCategoryListing(products: Product[]): Product[] {
+  return [...products].sort((a, b) => {
+    const pr = (b.listPriority ?? 0) - (a.listPriority ?? 0);
+    if (pr !== 0) return pr;
+    const aAvail = (a.stock ?? 0) > 0 ? 0 : 1;
+    const bAvail = (b.stock ?? 0) > 0 ? 0 : 1;
+    if (aAvail !== bAvail) return aAvail - bAvail;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+export async function getProductsByCategorySlug(
+  categorySlug: string,
+  options?: { page?: number; limit?: number },
+): Promise<{ products: Product[]; meta: ProductBrowseMeta }> {
+  const page = Math.max(1, options?.page ?? 1);
+  const limit = Math.min(48, Math.max(1, options?.limit ?? 12));
+  const qs = new URLSearchParams({
+    categorySlug,
+    page: String(page),
+    limit: String(limit),
+  });
+  try {
+    const raw = await fetchJson<{ data: any[]; meta: ProductBrowseMeta }>(`/products?${qs.toString()}`);
+    return {
+      products: (raw.data ?? []).map(mapProduct),
+      meta: raw.meta,
+    };
+  } catch {
+    const [categories, allProducts] = await Promise.all([getCategories(), getProducts()]);
+    const cat = categories.find((c) => c.slug === categorySlug);
+    if (!cat) {
+      return {
+        products: [],
+        meta: { total: 0, page: 1, pageSize: limit, totalPages: 1 },
+      };
+    }
+    const filtered = sortProductsForCategoryListing(
+      allProducts.filter((p) => p.categoryId === cat.id),
+    );
+    const total = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const slice = filtered.slice((page - 1) * limit, page * limit);
+    return {
+      products: slice,
+      meta: { total, page, pageSize: limit, totalPages },
+    };
+  }
+}
+
+export async function getRelatedProducts(productSlug: string, limit = 6): Promise<Product[]> {
+  try {
+    const list = await fetchJson<any[]>(`/products/${encodeURIComponent(productSlug)}/related?limit=${limit}`);
+    return (list ?? []).map(mapProduct);
+  } catch {
+    return [];
+  }
+}
+
+/** Paginated full catalog (`GET /products?page=&limit=`) with same sort as category browse. */
+export async function getProductsCatalog(
+  options?: { page?: number; limit?: number },
+): Promise<{ products: Product[]; meta: ProductBrowseMeta }> {
+  const page = Math.max(1, options?.page ?? 1);
+  const limit = Math.min(48, Math.max(1, options?.limit ?? 12));
+  const qs = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+  try {
+    const raw = await fetchJson<{ data: any[]; meta: ProductBrowseMeta }>(`/products?${qs.toString()}`);
+    return {
+      products: (raw.data ?? []).map(mapProduct),
+      meta: raw.meta,
+    };
+  } catch {
+    const allProducts = await getProducts();
+    const sorted = sortProductsForCategoryListing(allProducts);
+    const total = sorted.length;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const slice = sorted.slice((page - 1) * limit, page * limit);
+    return {
+      products: slice,
+      meta: { total, page, pageSize: limit, totalPages },
+    };
+  }
 }
 
 export async function getHomepageData(): Promise<{

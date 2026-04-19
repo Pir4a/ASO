@@ -1,9 +1,11 @@
 import {
   IsBoolean,
+  IsArray,
   IsInt,
   IsNumber,
   IsOptional,
   IsPositive,
+  IsObject,
   IsString,
   MaxLength,
   Min,
@@ -50,4 +52,18 @@ export class UpdateProductDto {
   @IsInt()
   @Min(0)
   featuredOrder?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  listPriority?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  galleryUrls?: string[];
+
+  @IsOptional()
+  @IsObject()
+  specs?: Record<string, string>;
 }

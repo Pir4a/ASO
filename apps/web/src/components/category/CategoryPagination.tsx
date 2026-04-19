@@ -1,0 +1,53 @@
+import Link from "next/link";
+
+type CategoryPaginationProps = {
+  basePath: string;
+  page: number;
+  totalPages: number;
+};
+
+export function CategoryPagination({ basePath, page, totalPages }: CategoryPaginationProps) {
+  if (totalPages <= 1) return null;
+
+  const prev = page > 1 ? page - 1 : null;
+  const next = page < totalPages ? page + 1 : null;
+  const href = (p: number) => (p === 1 ? basePath : `${basePath}?page=${p}`);
+
+  return (
+    <nav
+      className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4"
+      aria-label="Pagination des produits"
+    >
+      <div className="text-sm text-slate-600">
+        Page <span className="font-semibold text-slate-900">{page}</span> sur{" "}
+        <span className="font-semibold text-slate-900">{totalPages}</span>
+      </div>
+      <div className="flex gap-2">
+        {prev ? (
+          <Link
+            href={href(prev)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-primary hover:text-primary"
+          >
+            Précédent
+          </Link>
+        ) : (
+          <span className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-400">
+            Précédent
+          </span>
+        )}
+        {next ? (
+          <Link
+            href={href(next)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-primary hover:text-primary"
+          >
+            Suivant
+          </Link>
+        ) : (
+          <span className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-400">
+            Suivant
+          </span>
+        )}
+      </div>
+    </nav>
+  );
+}

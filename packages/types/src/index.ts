@@ -19,9 +19,18 @@ export interface Product {
   priceCents: number;
   currency: string;
   status: 'in_stock' | 'low_stock' | 'out_of_stock' | 'new';
+  stock?: number;
   thumbnailUrl?: string;
   featured?: boolean;
   featuredOrder?: number;
+  /** BO listing priority on category pages (higher first). */
+  listPriority?: number;
+  /** Extra images for product gallery (thumbnailUrl is primary). */
+  galleryUrls?: string[];
+  /** Technical specifications (label → value). */
+  specs?: Record<string, string>;
+  /** Present when API loads product with category relation. */
+  category?: { id: string; name: string; slug?: string };
 }
 
 export interface CartItem {

@@ -77,6 +77,18 @@ async function seed() {
       thumbnailUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80',
       featured: true,
       featuredOrder: 0,
+      listPriority: 100,
+      galleryUrls: [
+        'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1582719478248-5f3c0a1e01d8?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=800&q=80',
+      ],
+      specs: {
+        'Coupe': '128',
+        'Alimentation': '380V triphasé',
+        'Dimensions (L×l×H)': '2,4 × 1,9 × 1,7 m',
+        'Certification': 'CE, FDA (classe II)',
+      },
     },
     {
       sku: 'ALT-US-300',
@@ -91,6 +103,17 @@ async function seed() {
       thumbnailUrl: 'https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=800&q=80',
       featured: true,
       featuredOrder: 1,
+      listPriority: 80,
+      galleryUrls: [
+        'https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80',
+      ],
+      specs: {
+        'Écran': '15" tactile HD',
+        'Modes': '3D / 4D',
+        'Autonomie batterie': 'Jusqu\'à 4 h',
+        'Poids': '6,2 kg',
+      },
     },
     {
       sku: 'ALT-XR-100',
@@ -103,6 +126,7 @@ async function seed() {
       stock: 5,
       status: 'new' as const,
       thumbnailUrl: 'https://images.unsplash.com/photo-1582719478248-5f3c0a1e01d8?auto=format&fit=crop&w=800&q=80',
+      listPriority: 60,
     },
     // Surgical & Operating Room
     {
@@ -118,6 +142,7 @@ async function seed() {
       thumbnailUrl: 'https://images.unsplash.com/photo-1582719478248-5f3c0a1e01d8?auto=format&fit=crop&w=800&q=80',
       featured: true,
       featuredOrder: 2,
+      listPriority: 40,
     },
     {
       sku: 'ALT-ANES-400',

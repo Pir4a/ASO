@@ -17,6 +17,9 @@ export interface CreateProductCommand {
     featured?: boolean;
     featuredOrder?: number;
     thumbnailUrl?: string;
+    listPriority?: number;
+    galleryUrls?: string[];
+    specs?: Record<string, string>;
 }
 
 @Injectable()
@@ -29,7 +32,20 @@ export class CreateProductUseCase {
     ) { }
 
     async execute(command: CreateProductCommand): Promise<Product> {
-        const { name, slug, categoryId, price, stock, description, featured, featuredOrder, thumbnailUrl } = command;
+        const {
+            name,
+            slug,
+            categoryId,
+            price,
+            stock,
+            description,
+            featured,
+            featuredOrder,
+            thumbnailUrl,
+            listPriority,
+            galleryUrls,
+            specs,
+        } = command;
 
         const category = await this.categoryRepository.findById(categoryId);
         if (!category) {
@@ -56,6 +72,9 @@ export class CreateProductUseCase {
             status: 'new',
             featured: featured ?? false,
             featuredOrder: featuredOrder ?? 0,
+            listPriority: listPriority ?? 0,
+            galleryUrls,
+            specs,
             thumbnailUrl,
             categoryId,
             category,

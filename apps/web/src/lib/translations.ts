@@ -86,6 +86,22 @@ const translations = {
         "categories.title": "Categories",
         "categories.subtitle": "Browse our full range of medical equipment by specialty.",
 
+        // Products catalog (/products)
+        "products.heroEyebrow": "Shop",
+        "products.catalogTitle": "Product catalog",
+        "products.catalogSubtitle":
+            "Our full medical equipment offering, ordered by editorial priority and availability.",
+        "products.sortHint": "Sort: back-office priority, then in-stock items, then out of stock.",
+        "products.countSingle": "product",
+        "products.countPlural": "products",
+        "products.empty": "No products to display.",
+        "products.viewDetail": "View product →",
+        "products.noImage": "No image",
+        "products.status.in_stock": "In stock",
+        "products.status.low_stock": "Low stock",
+        "products.status.out_of_stock": "Out of stock",
+        "products.status.new": "New",
+
         // Account
         "account.title": "My Account",
         "account.subtitle": "Manage your orders, saved addresses, and account preferences.",
@@ -192,6 +208,22 @@ const translations = {
         // Categories
         "categories.title": "Catégories",
         "categories.subtitle": "Parcourez notre gamme complète d'équipements médicaux par spécialité.",
+
+        // Products catalog (/products)
+        "products.heroEyebrow": "Boutique",
+        "products.catalogTitle": "Catalogue produits",
+        "products.catalogSubtitle":
+            "Tout notre matériel médical, trié par priorité vitrine et disponibilité.",
+        "products.sortHint": "Tri : priorité backoffice, puis en stock, puis rupture.",
+        "products.countSingle": "produit",
+        "products.countPlural": "produits",
+        "products.empty": "Aucun produit à afficher.",
+        "products.viewDetail": "Voir la fiche →",
+        "products.noImage": "Pas d'image",
+        "products.status.in_stock": "En stock",
+        "products.status.low_stock": "Stock faible",
+        "products.status.out_of_stock": "Rupture",
+        "products.status.new": "Nouveau",
 
         // Account
         "account.title": "Mon compte",
@@ -300,6 +332,21 @@ const translations = {
         "categories.title": "الفئات",
         "categories.subtitle": "تصفح مجموعتنا الكاملة من المعدات الطبية حسب التخصص.",
 
+        // Products catalog (/products)
+        "products.heroEyebrow": "المتجر",
+        "products.catalogTitle": "كتالوج المنتجات",
+        "products.catalogSubtitle": "مجموعتنا الكاملة من المعدات الطبية، مرتبة حسب الأولوية والتوافر.",
+        "products.sortHint": "الترتيب: أولوية المشرف، ثم المتوفر، ثم نفاد المخزون.",
+        "products.countSingle": "منتج",
+        "products.countPlural": "منتجات",
+        "products.empty": "لا توجد منتجات للعرض.",
+        "products.viewDetail": "عرض المنتج ←",
+        "products.noImage": "لا صورة",
+        "products.status.in_stock": "متوفر",
+        "products.status.low_stock": "مخزون منخفض",
+        "products.status.out_of_stock": "نفد",
+        "products.status.new": "جديد",
+
         // Account
         "account.title": "حسابي",
         "account.subtitle": "إدارة طلباتك وعناوينك وتفضيلات حسابك.",
@@ -406,6 +453,21 @@ const translations = {
         // Categories
         "categories.title": "קטגוריות",
         "categories.subtitle": "עיינו במגוון המלא של ציוד רפואי לפי התמחות.",
+
+        // Products catalog (/products)
+        "products.heroEyebrow": "חנות",
+        "products.catalogTitle": "קטלוג מוצרים",
+        "products.catalogSubtitle": "כל ציוד הרפואה שלנו, ממוין לפי עדיפות וזמינות.",
+        "products.sortHint": "מיון: עדיפות מערכת, אחר כך במלאי, ואז אזל מהמלאי.",
+        "products.countSingle": "מוצר",
+        "products.countPlural": "מוצרים",
+        "products.empty": "אין מוצרים להצגה.",
+        "products.viewDetail": "לצפייה במוצר ←",
+        "products.noImage": "אין תמונה",
+        "products.status.in_stock": "במלאי",
+        "products.status.low_stock": "מלאי נמוך",
+        "products.status.out_of_stock": "אזל מהמלאי",
+        "products.status.new": "חדש",
 
         // Account
         "account.title": "החשבון שלי",

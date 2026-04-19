@@ -36,8 +36,38 @@ export class ProductsController {
         private readonly productRepository: ProductRepository,
     ) { }
 
+    /**
+     * Plain `GET /products`: full list (backward compatible for BO / homepage).
+     * With `categorySlug`, `categoryId`, `page`, or `limit`: paginated browse — all products or filtered —
+     * sorted by BO `listPriority` DESC, then in stock before out of stock, then name.
+     */
     @Get()
-    findAll() {
+    async findAll(
+        @Query('categorySlug') categorySlug?: string,
+        @Query('categoryId') categoryId?: string,
+        @Query('page') pageStr?: string,
+        @Query('limit') limitStr?: string,
+    ) {
+        const paginate =
+            !!(categorySlug || categoryId || pageStr !== undefined || limitStr !== undefined);
+        if (paginate) {
+            const page = Math.max(1, Number.parseInt(pageStr ?? '1', 10) || 1);
+            const pageSize = Math.min(
+                48,
+                Math.max(1, Number.parseInt(limitStr ?? '12', 10) || 12),
+            );
+            const { items, total } = await this.productRepository.browse({
+                categorySlug: categorySlug ?? undefined,
+                categoryId: categoryId ?? undefined,
+                page,
+                pageSize,
+            });
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            return {
+                data: items,
+                meta: { total, page, pageSize, totalPages },
+            };
+        }
         return this.getProductsUseCase.execute();
     }
 
@@ -48,6 +78,15 @@ export class ProductsController {
             Math.min(20, Number.parseInt(limit ?? '8', 10) || 8),
         );
         return this.productRepository.findFeatured(parsedLimit);
+    }
+
+    @Get(':slug/related')
+    async related(
+        @Param('slug') slug: string,
+        @Query('limit') limit?: string,
+    ) {
+        const lim = Math.min(12, Math.max(1, Number.parseInt(limit ?? '6', 10) || 6));
+        return this.productRepository.findRelatedBySlug(slug, lim);
     }
 
     @Get(':slug')

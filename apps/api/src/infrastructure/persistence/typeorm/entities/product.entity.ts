@@ -50,6 +50,18 @@ export class Product {
     @Column({ type: 'int', default: 0, nullable: false })
     featuredOrder!: number;
 
+    /** Listing order on category pages (BO); higher = first. */
+    @Column({ type: 'int', default: 0, nullable: false })
+    listPriority!: number;
+
+    /** Extra product images for gallery (main visual may stay in thumbnailUrl). */
+    @Column({ type: 'jsonb', nullable: true })
+    galleryUrls?: string[];
+
+    /** Structured technical specs (key → value). */
+    @Column({ type: 'jsonb', nullable: true })
+    specs?: Record<string, string>;
+
     @Column({ type: 'uuid' })
     categoryId!: string;
 

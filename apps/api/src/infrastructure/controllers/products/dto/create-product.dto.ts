@@ -1,4 +1,16 @@
-import { IsString, IsNotEmpty, IsNumber, IsPositive, IsInt, Min, MaxLength, IsOptional, IsBoolean } from 'class-validator';
+import {
+    IsString,
+    IsNotEmpty,
+    IsNumber,
+    IsPositive,
+    IsInt,
+    Min,
+    MaxLength,
+    IsOptional,
+    IsBoolean,
+    IsArray,
+    IsObject,
+} from 'class-validator';
 
 export class CreateProductDto {
   @IsString()
@@ -40,4 +52,18 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   thumbnailUrl?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  listPriority?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  galleryUrls?: string[];
+
+  @IsOptional()
+  @IsObject()
+  specs?: Record<string, string>;
 }

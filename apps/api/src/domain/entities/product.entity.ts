@@ -15,6 +15,9 @@ export class Product {
     thumbnailUrl?: string;
     featured: boolean;
     featuredOrder: number;
+    listPriority: number;
+    galleryUrls?: string[];
+    specs?: Record<string, string>;
     categoryId: string;
     category?: Category;
 

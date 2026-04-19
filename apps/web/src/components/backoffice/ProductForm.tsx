@@ -23,6 +23,9 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
   const [stock, setStock] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [listPriority, setListPriority] = useState("");
+  const [galleryUrlsText, setGalleryUrlsText] = useState("");
+  const [specsJson, setSpecsJson] = useState("");
   const [featured, setFeatured] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -50,6 +53,27 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
     setLoading(true);
 
     try {
+      let specs: Record<string, string> | undefined;
+      if (specsJson.trim()) {
+        try {
+          const parsed = JSON.parse(specsJson) as unknown;
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+            specs = Object.fromEntries(
+              Object.entries(parsed as Record<string, unknown>).map(([k, v]) => [k, String(v)]),
+            );
+          } else {
+            throw new Error("Le JSON des specs doit être un objet { \"clé\": \"valeur\" }.");
+          }
+        } catch {
+          throw new Error("Specs invalides : JSON objet attendu (ex. {\"Puissance\":\"400W\"}).");
+        }
+      }
+
+      const galleryUrls = galleryUrlsText
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
       const token = localStorage.getItem("token");
       const response = await fetch(`${API_URL}/products`, {
         method: "POST",
@@ -65,6 +89,9 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
           stock: parseInt(stock, 10),
           categoryId,
           thumbnailUrl: thumbnailUrl.trim() || undefined,
+          listPriority: listPriority.trim() === "" ? undefined : Math.max(0, parseInt(listPriority, 10) || 0),
+          galleryUrls: galleryUrls.length ? galleryUrls : undefined,
+          specs,
           featured,
           featuredOrder: 0,
         }),
@@ -81,6 +108,9 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
       setStock("");
       setCategoryId("");
       setThumbnailUrl("");
+      setListPriority("");
+      setGalleryUrlsText("");
+      setSpecsJson("");
       setFeatured(false);
       onCreated?.();
       router.refresh();
@@ -145,17 +175,54 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
             placeholder="https://…"
           />
         </div>
-        <div className="flex items-end">
-          <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
-            <input
-              type="checkbox"
-              checked={featured}
-              onChange={(e) => setFeatured(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-[#00a8b5] focus:ring-[#00a8b5]"
-            />
-            Mettre en vedette (sélection homepage)
-          </label>
+        <div>
+          <label htmlFor="listPriority" className={labelCls}>Priorité liste catégorie (0–9999)</label>
+          <input
+            id="listPriority"
+            type="number"
+            min={0}
+            className={inputCls}
+            value={listPriority}
+            onChange={(e) => setListPriority(e.target.value)}
+            placeholder="0 = défaut, plus haut = affiché avant"
+          />
         </div>
+      </div>
+
+      <div>
+        <label htmlFor="galleryUrls" className={labelCls}>Galerie — une URL par ligne (optionnel)</label>
+        <textarea
+          id="galleryUrls"
+          rows={3}
+          className={inputCls}
+          value={galleryUrlsText}
+          onChange={(e) => setGalleryUrlsText(e.target.value)}
+          placeholder={"https://…\nhttps://…"}
+        />
+      </div>
+
+      <div>
+        <label htmlFor="specsJson" className={labelCls}>Specs techniques (JSON objet)</label>
+        <textarea
+          id="specsJson"
+          rows={4}
+          className={`${inputCls} font-mono text-xs`}
+          value={specsJson}
+          onChange={(e) => setSpecsJson(e.target.value)}
+          placeholder='{"Puissance":"400W","Norme":"CE"}'
+        />
+      </div>
+
+      <div className="flex items-end">
+        <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
+          <input
+            type="checkbox"
+            checked={featured}
+            onChange={(e) => setFeatured(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 text-[#00a8b5] focus:ring-[#00a8b5]"
+          />
+          Mettre en vedette (sélection homepage)
+        </label>
       </div>
 
       {error && (

@@ -17,6 +17,9 @@ export class ProductMapper {
             thumbnailUrl: entity.thumbnailUrl,
             featured: entity.featured ?? false,
             featuredOrder: entity.featuredOrder ?? 0,
+            listPriority: entity.listPriority ?? 0,
+            galleryUrls: entity.galleryUrls ?? undefined,
+            specs: entity.specs ?? undefined,
             categoryId: entity.categoryId,
             category: entity.category ? CategoryMapper.toDomain(entity.category) : undefined,
         });
@@ -37,6 +40,9 @@ export class ProductMapper {
         entity.thumbnailUrl = domain.thumbnailUrl;
         entity.featured = domain.featured ?? false;
         entity.featuredOrder = domain.featuredOrder ?? 0;
+        entity.listPriority = domain.listPriority ?? 0;
+        entity.galleryUrls = domain.galleryUrls;
+        entity.specs = domain.specs;
         entity.categoryId = domain.categoryId;
         // Category relation is usually handled by ID, but if full object needed:
         // entity.category = ...
