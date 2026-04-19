@@ -12,6 +12,8 @@ export interface CreateProductCommand {
     slug?: string;
     categoryId: string;
     price: number;
+    /** VAT % — 0, 5.5, 10 ou 20 (défaut 20). */
+    vatRate?: number;
     stock: number;
     description: string;
     featured?: boolean;
@@ -37,6 +39,7 @@ export class CreateProductUseCase {
             slug,
             categoryId,
             price,
+            vatRate: rawVat,
             stock,
             description,
             featured,
@@ -46,6 +49,8 @@ export class CreateProductUseCase {
             galleryUrls,
             specs,
         } = command;
+        const vatAllowed = new Set([0, 5.5, 10, 20]);
+        const vatRate = vatAllowed.has(Number(rawVat)) ? (Number(rawVat) as Product['vatRate']) : 20;
 
         const category = await this.categoryRepository.findById(categoryId);
         if (!category) {
@@ -66,6 +71,7 @@ export class CreateProductUseCase {
             slug: productSlug,
             description,
             price,
+            vatRate,
             stock,
             sku: generatedSku,
             currency: 'EUR',

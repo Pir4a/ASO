@@ -11,6 +11,9 @@ export class ProductMapper {
             name: entity.name,
             description: entity.description,
             price: Number(entity.price), // Ensure number
+            vatRate: (entity.vatRate !== undefined && entity.vatRate !== null
+                ? Number(entity.vatRate)
+                : 20) as DomainProduct['vatRate'],
             currency: entity.currency,
             stock: entity.stock,
             status: entity.status,
@@ -34,6 +37,7 @@ export class ProductMapper {
         entity.name = domain.name;
         entity.description = domain.description;
         entity.price = domain.price;
+        entity.vatRate = domain.vatRate ?? 20;
         entity.currency = domain.currency;
         entity.stock = domain.stock;
         entity.status = domain.status;

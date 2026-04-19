@@ -194,9 +194,17 @@ export class ProductsController {
             }
         }
 
+        const { vatRate: bodyVat, ...bodyRest } = body;
         const updated = new Product({
             ...existing,
-            ...body,
+            ...bodyRest,
+            ...(bodyVat !== undefined
+                ? {
+                    vatRate: ([0, 5.5, 10, 20] as const).includes(bodyVat as 0 | 5.5 | 10 | 20)
+                        ? (bodyVat as 0 | 5.5 | 10 | 20)
+                        : existing.vatRate,
+                }
+                : {}),
         });
 
         return this.productRepository.update(updated);

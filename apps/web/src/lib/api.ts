@@ -25,6 +25,7 @@ function mapProduct(p: any): Product {
       ? (p.specs as Record<string, string>)
       : undefined;
   const stock = p.stock !== undefined ? Number(p.stock) : undefined;
+  const vatRate = p.vatRate !== undefined && p.vatRate !== null ? Number(p.vatRate) : 20;
 
   // Backend returns 'price' (decimal/number in major unit), Frontend expects 'priceCents'
   if (p.price !== undefined && p.priceCents === undefined) {
@@ -32,13 +33,14 @@ function mapProduct(p: any): Product {
       ...p,
       priceCents: Math.round(Number(p.price) * 100),
       currency: p.currency || "EUR",
+      vatRate,
       listPriority,
       galleryUrls,
       specs,
       stock,
     };
   }
-  return { ...p, listPriority, galleryUrls, specs, stock };
+  return { ...p, vatRate, listPriority, galleryUrls, specs, stock };
 }
 
 export type ProductBrowseMeta = {

@@ -39,6 +39,9 @@ export class Order {
     @Column({ default: 'unpaid' })
     paymentStatus: string;
 
+    @Column({ type: 'jsonb', nullable: true })
+    statusHistory?: { status: OrderStatus; at: string }[];
+
     @OneToMany(() => OrderItem, (item) => item.order, { cascade: true, eager: true })
     items: OrderItem[];
 

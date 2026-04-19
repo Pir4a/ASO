@@ -10,6 +10,7 @@ import {
     IsBoolean,
     IsArray,
     IsObject,
+  IsIn,
 } from 'class-validator';
 
 export class CreateProductDto {
@@ -31,6 +32,11 @@ export class CreateProductDto {
   @IsNumber({}, { message: 'Le prix doit être un nombre.' })
   @IsPositive({ message: 'Le prix doit être un nombre positif.' })
   price: number;
+
+  @IsOptional()
+  @IsNumber({}, { message: 'La TVA doit être un nombre.' })
+  @IsIn([0, 5.5, 10, 20], { message: 'TVA autorisée : 0, 5.5, 10 ou 20 %.' })
+  vatRate?: number;
 
   @IsInt({ message: 'Le stock doit être un entier.' })
   @Min(0, { message: 'Le stock ne peut pas être négatif.' })

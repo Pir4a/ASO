@@ -39,12 +39,14 @@ export class CreateOrderUseCase {
             return sum + (item.priceAtAdd || 0) * item.quantity;
         }, 0);
 
+        const at = new Date().toISOString();
         const order = new Order({
             userId,
             status: 'pending',
             total,
             currency: 'EUR',
             shippingAddress: address,
+            statusHistory: [{ status: 'pending', at }],
             items: cart.items.map(item => new OrderItem({
                 productId: item.productId,
                 quantity: item.quantity,

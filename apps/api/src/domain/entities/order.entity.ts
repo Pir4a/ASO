@@ -2,6 +2,11 @@ import { Address } from './address.entity';
 
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
+export type OrderStatusEvent = {
+    status: OrderStatus;
+    at: string;
+};
+
 export class OrderItem {
     id: string;
     orderId: string;
@@ -26,6 +31,10 @@ export class Order {
     shippingAddress: Address;
     billingAddress?: Address;
     paymentMethod?: string; // e.g., 'stripe', 'paypal'
+    paymentId?: string;
+    paymentStatus?: string;
+    /** Append-only status timeline for admin / support. */
+    statusHistory?: OrderStatusEvent[];
     createdAt: Date;
     updatedAt: Date;
     items: OrderItem[];

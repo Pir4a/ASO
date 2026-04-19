@@ -32,6 +32,10 @@ export class Product {
     @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false, default: 0 })
     price!: number;
 
+    /** French VAT % (20, 10, 5.5, 0). */
+    @Column({ type: 'decimal', precision: 4, scale: 1, default: 20 })
+    vatRate!: number;
+
     @Column({ length: 3, default: 'EUR' })
     currency!: string;
 

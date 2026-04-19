@@ -17,6 +17,8 @@ export interface Product {
   description: string;
   categoryId: string;
   priceCents: number;
+  /** VAT % (FR: 0, 5.5, 10, 20). */
+  vatRate?: number;
   currency: string;
   status: 'in_stock' | 'low_stock' | 'out_of_stock' | 'new';
   stock?: number;

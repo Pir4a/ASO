@@ -12,11 +12,13 @@ import { GenerateInvoicePdfUseCase } from '../../application/use-cases/orders/ge
 import { CartModule } from './cart.module';
 import { CheckoutController } from '../controllers/checkout.controller';
 import { OrdersController } from '../controllers/orders/orders.controller';
+import { AdminController } from '../controllers/admin/admin.controller';
 import { AddressModule } from './address.module';
 import { UsersModule } from './users.module';
 import { AuthModule } from './auth.module';
 import { PdfService } from '../services/pdf.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { RolesGuard } from '../guards/roles.guard';
 
 @Module({
     imports: [
@@ -26,7 +28,7 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
         AddressModule,
         AuthModule,
     ],
-    controllers: [CheckoutController, OrdersController],
+    controllers: [CheckoutController, OrdersController, AdminController],
     providers: [
         {
             provide: ORDER_REPOSITORY_TOKEN,
@@ -39,6 +41,7 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
         GenerateInvoicePdfUseCase,
         PdfService,
         JwtAuthGuard,
+        RolesGuard,
     ],
     exports: [ORDER_REPOSITORY_TOKEN],
 })

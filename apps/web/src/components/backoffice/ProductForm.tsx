@@ -22,6 +22,7 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [vatRate, setVatRate] = useState("20");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [listPriority, setListPriority] = useState("");
   const [galleryUrlsText, setGalleryUrlsText] = useState("");
@@ -88,6 +89,7 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
           price: parseFloat(price),
           stock: parseInt(stock, 10),
           categoryId,
+          vatRate: Number.parseFloat(vatRate),
           thumbnailUrl: thumbnailUrl.trim() || undefined,
           listPriority: listPriority.trim() === "" ? undefined : Math.max(0, parseInt(listPriority, 10) || 0),
           galleryUrls: galleryUrls.length ? galleryUrls : undefined,
@@ -107,6 +109,7 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
       setPrice("");
       setStock("");
       setCategoryId("");
+      setVatRate("20");
       setThumbnailUrl("");
       setListPriority("");
       setGalleryUrlsText("");
@@ -143,7 +146,7 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
         <textarea id="description" rows={3} className={inputCls} value={description} onChange={(e) => setDescription(e.target.value)} required />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div>
           <label htmlFor="price" className={labelCls}>Prix (€)</label>
           <input id="price" type="number" step="0.01" className={inputCls} value={price} onChange={(e) => setPrice(e.target.value)} required />
@@ -159,6 +162,15 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="vatRate" className={labelCls}>TVA (%)</label>
+          <select id="vatRate" className={inputCls} value={vatRate} onChange={(e) => setVatRate(e.target.value)}>
+            <option value="20">20 % (normal)</option>
+            <option value="10">10 % (intermédiaire)</option>
+            <option value="5.5">5,5 % (réduit)</option>
+            <option value="0">0 % (exonéré)</option>
           </select>
         </div>
       </div>

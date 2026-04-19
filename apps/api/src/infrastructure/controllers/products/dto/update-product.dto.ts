@@ -9,6 +9,7 @@ import {
   IsString,
   MaxLength,
   Min,
+  IsIn,
 } from 'class-validator';
 
 export class UpdateProductDto {
@@ -30,6 +31,11 @@ export class UpdateProductDto {
   @IsNumber()
   @IsPositive()
   price?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @IsIn([0, 5.5, 10, 20], { message: 'TVA autorisée : 0, 5.5, 10 ou 20 %.' })
+  vatRate?: number;
 
   @IsOptional()
   @IsInt()
