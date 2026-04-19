@@ -237,6 +237,19 @@ export async function createOrder(addressId: string): Promise<any> {
   return res.json();
 }
 
+export async function confirmOrderPayment(orderId: string, paymentIntentId?: string): Promise<{ ok: true }> {
+  const { authFetch } = await import("./auth");
+  const res = await authFetch(`/checkout/${orderId}/confirm`, {
+    method: "POST",
+    body: JSON.stringify({ paymentIntentId }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || `Failed to confirm order (${res.status})`);
+  }
+  return res.json();
+}
+
 export async function createPaymentIntent(orderId: string): Promise<{ clientSecret: string }> {
   const res = await fetch(`${API_URL}/payment/intent`, {
     method: "POST",

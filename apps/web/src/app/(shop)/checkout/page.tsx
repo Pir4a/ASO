@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getUserAddresses, createUserAddress, createOrder, getCart, createPaymentIntent } from "@/lib/api";
+import { getUserAddresses, createUserAddress, createOrder, getCart, createPaymentIntent, confirmOrderPayment } from "@/lib/api";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
+import { useCart } from "@/hooks/useCart";
 
 // Initialize Stripe outside component
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -22,6 +23,7 @@ type Address = {
 type Step = "address" | "payment" | "confirmation";
 
 export default function CheckoutPage() {
+  const { refreshCart } = useCart();
   const [step, setStep] = useState<Step>("address");
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -81,16 +83,24 @@ export default function CheckoutPage() {
       setClientSecret(intent.clientSecret);
 
       setStep("payment");
-    } catch (error) {
-      // alert("Erreur lors de la préparation de la commande");
+    } catch (error: unknown) {
       console.error(error);
-      alert("Erreur technique: Impossible d'initialiser le paiement.");
+      const message = error instanceof Error ? error.message : "Impossible d'initialiser le paiement.";
+      alert(`Erreur technique: ${message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handlePaymentSuccess = (paymentId: string) => {
+  const handlePaymentSuccess = async (paymentId: string) => {
+    if (orderResult) {
+      try {
+        await confirmOrderPayment(orderResult.id, paymentId);
+      } catch (err) {
+        console.error("Failed to finalize order:", err);
+      }
+    }
+    await refreshCart();
     setStep("confirmation");
   };
 

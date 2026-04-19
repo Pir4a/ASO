@@ -56,12 +56,9 @@ export class CreateOrderUseCase {
             }))
         });
 
-        const createdOrder = await this.orderRepository.create(order);
-
-        // Clear cart
-        cart.status = 'ordered';
-        await this.cartRepository.update(cart);
-
-        return createdOrder;
+        // Note: the cart is NOT marked as 'ordered' here. It is only cleared once the payment is
+        // confirmed (see ConfirmPaymentUseCase). This protects the user from losing their cart if
+        // payment fails or is abandoned after order creation.
+        return this.orderRepository.create(order);
     }
 }

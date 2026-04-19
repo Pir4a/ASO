@@ -43,7 +43,7 @@ function LoginForm() {
         throw new Error(data.message || "Erreur de connexion");
       }
 
-      login(data.access_token, data.user);
+      await login(data.access_token, data.user);
       const redirect = searchParams.get("redirect");
       router.push(redirect && redirect.startsWith("/") ? redirect : "/");
     } catch (err: unknown) {

@@ -14,7 +14,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (token: string, user: User) => void;
+  login: (token: string, user: User) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
@@ -49,11 +49,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  const login = (newToken: string, newUser: User) => {
+  const login = async (newToken: string, newUser: User) => {
     setToken(newToken);
     setUser(newUser);
     localStorage.setItem("token", newToken);
     localStorage.setItem("user", JSON.stringify(newUser));
+
+    // Merge any guest cart into the freshly-authenticated user's cart, if one exists.
+    const guestCartId = localStorage.getItem("guestCartId");
+    if (guestCartId) {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+      try {
+        await fetch(`${API_URL}/cart/merge`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${newToken}`,
+          },
+          body: JSON.stringify({ guestCartId }),
+        });
+      } catch (err) {
+        console.warn("Failed to merge guest cart:", err);
+      } finally {
+        localStorage.removeItem("guestCartId");
+      }
+    }
   };
 
   const logout = () => {

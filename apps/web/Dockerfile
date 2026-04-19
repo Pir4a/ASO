@@ -16,6 +16,13 @@ RUN npm ci --workspace web
 # Copy source code
 COPY apps/web ./apps/web
 
+# Next.js NEXT_PUBLIC_* variables are inlined at build time, so they must be
+# available as ARGs during the builder stage.
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+
 # Clean any stale Next.js cache and build
 RUN rm -rf apps/web/.next && npm run build --workspace web
 

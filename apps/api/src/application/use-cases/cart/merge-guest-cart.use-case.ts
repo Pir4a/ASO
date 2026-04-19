@@ -11,9 +11,18 @@ export class MergeGuestCartUseCase {
     ) { }
 
     async execute(userId: string, guestCartId: string): Promise<Cart> {
-        const guestCart = await this.cartRepository.findById(guestCartId);
+        // The front-end stores the guest cart owner as a UUID in localStorage and sends it via
+        // the x-guest-cart-id header. That value is used as the cart's userId column, so we
+        // look up the guest cart by userId first, and fall back to id for legacy cases.
+        let guestCart = await this.cartRepository.findByUserId(guestCartId);
+        if (!guestCart) {
+            guestCart = await this.cartRepository.findById(guestCartId);
+        }
         if (!guestCart || guestCart.status !== 'active') {
-            throw new NotFoundException('Guest cart not found or already merged');
+            // Nothing to merge; return (or create) the user's own cart unchanged.
+            const existing = await this.cartRepository.findByUserId(userId);
+            if (existing) return existing;
+            return this.cartRepository.create(new Cart({ userId, items: [] }));
         }
 
         let userCart = await this.cartRepository.findByUserId(userId);

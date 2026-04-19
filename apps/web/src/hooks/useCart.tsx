@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import { getCart, addToCart, updateCartItem, removeCartItem, applyPromoCode } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 // Generate or retrieve guest cart ID from localStorage
 // Generate or retrieve guest cart ID from localStorage
@@ -72,7 +73,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         error: null,
     });
 
-    const guestCartId = typeof window !== "undefined" ? getGuestCartId() : "";
+    const { token, user } = useAuth();
+    // For authenticated users we rely solely on the JWT; we only generate/attach a guest uuid when logged out.
+    const guestCartId = typeof window !== "undefined" && !user ? getGuestCartId() : "";
 
     const refreshCart = useCallback(async () => {
         try {
@@ -94,7 +97,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         refreshCart();
-    }, [refreshCart]);
+    }, [refreshCart, token]);
 
     const addItem = async (productId: string, quantity = 1) => {
         try {
