@@ -44,7 +44,8 @@ function LoginForm() {
       }
 
       login(data.access_token, data.user);
-      router.push("/");
+      const redirect = searchParams.get("redirect");
+      router.push(redirect && redirect.startsWith("/") ? redirect : "/");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Une erreur inattendue est survenue.";
       setError(message);

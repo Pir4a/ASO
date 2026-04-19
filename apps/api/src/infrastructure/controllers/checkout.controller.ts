@@ -1,14 +1,19 @@
-import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { CreateOrderUseCase } from '../../application/use-cases/orders/create-order.use-case';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
 @Controller('checkout')
+@UseGuards(JwtAuthGuard)
 export class CheckoutController {
     constructor(
         private readonly createOrderUseCase: CreateOrderUseCase,
     ) { }
 
     @Post()
-    async createOrder(@Body() body: { userId: string; addressId: string }) {
-        return this.createOrderUseCase.execute(body.userId, body.addressId);
+    async createOrder(@Body() body: { addressId: string }, @Request() req: any) {
+        const userId = req.user?.sub as string | undefined;
+        if (!userId) throw new BadRequestException('Authenticated user required.');
+        if (!body.addressId) throw new BadRequestException('addressId is required.');
+        return this.createOrderUseCase.execute(userId, body.addressId);
     }
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/guards/AuthGuard";
 import { ProductForm } from "@/components/backoffice/ProductForm";
 import { Badge, Icon, IconButton, Panel, StatCard } from "@/components/backoffice/DashboardUI";
 import { useAuth } from "@/context/AuthContext";
+import { authFetch } from "@/lib/auth";
 
 type Category = {
   id: string;
@@ -79,16 +80,6 @@ function BackofficeDashboard() {
   const [newCategory, setNewCategory] = useState({ name: "", slug: "", description: "" });
   const [showProductForm, setShowProductForm] = useState(false);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
-  const authHeaders = useMemo(
-    () => ({
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    }),
-    [token],
-  );
-
   const flash = (kind: "success" | "error", text: string) => {
     setFeedback({ kind, text });
     setTimeout(() => setFeedback(null), 3500);
@@ -101,7 +92,7 @@ function BackofficeDashboard() {
     try {
       const params = new URLSearchParams();
       if (q) params.set("q", q);
-      const res = await fetch(`${API_URL}/users?${params.toString()}`, { headers: authHeaders });
+      const res = await authFetch(`${API_URL}/users?${params.toString()}`);
       if (!res.ok) throw new Error("Impossible de charger les utilisateurs.");
       setUsers(await res.json());
     } catch (e) {
@@ -113,7 +104,7 @@ function BackofficeDashboard() {
 
   const loadCategories = async () => {
     try {
-      const res = await fetch(`${API_URL}/categories?includeInactive=true`, { headers: authHeaders });
+      const res = await authFetch(`${API_URL}/categories?includeInactive=true`);
       if (!res.ok) throw new Error();
       setCategories(await res.json());
     } catch {
@@ -137,7 +128,7 @@ function BackofficeDashboard() {
   const loadContactMessages = async () => {
     setLoadingMessages(true);
     try {
-      const res = await fetch(`${API_URL}/contact/admin`, { headers: authHeaders });
+      const res = await authFetch(`${API_URL}/contact/admin`);
       if (!res.ok) throw new Error();
       setContactMessages(await res.json());
     } catch {
@@ -160,21 +151,19 @@ function BackofficeDashboard() {
   ) => {
     try {
       if (action === "activate" || action === "deactivate") {
-        await fetch(`${API_URL}/users/${userId}/status`, {
+        await authFetch(`${API_URL}/users/${userId}/status`, {
           method: "PATCH",
-          headers: authHeaders,
           body: JSON.stringify({ status: action === "activate" ? "active" : "inactive" }),
         });
       } else if (action === "delete") {
-        await fetch(`${API_URL}/users/${userId}`, { method: "DELETE", headers: authHeaders });
+        await authFetch(`${API_URL}/users/${userId}`, { method: "DELETE" });
       } else if (action === "promote" || action === "demote") {
-        await fetch(`${API_URL}/users/${userId}/role`, {
+        await authFetch(`${API_URL}/users/${userId}/role`, {
           method: "PATCH",
-          headers: authHeaders,
           body: JSON.stringify({ role: action === "promote" ? "admin" : "customer" }),
         });
       } else {
-        await fetch(`${API_URL}/users/${userId}/reset-password`, { method: "POST", headers: authHeaders });
+        await authFetch(`${API_URL}/users/${userId}/reset-password`, { method: "POST" });
       }
       await loadUsers(search);
       flash("success", "Action effectuée.");
@@ -189,9 +178,8 @@ function BackofficeDashboard() {
       return;
     }
     try {
-      const res = await fetch(`${API_URL}/categories`, {
+      const res = await authFetch(`${API_URL}/categories`, {
         method: "POST",
-        headers: authHeaders,
         body: JSON.stringify({ ...newCategory, order: categories.length }),
       });
       if (!res.ok) throw new Error();
@@ -204,16 +192,15 @@ function BackofficeDashboard() {
   };
 
   const updateCategory = async (id: string, patch: Partial<Category>) => {
-    await fetch(`${API_URL}/categories/${id}`, {
+    await authFetch(`${API_URL}/categories/${id}`, {
       method: "PATCH",
-      headers: authHeaders,
       body: JSON.stringify(patch),
     });
     await loadCategories();
   };
 
   const deleteCategory = async (id: string) => {
-    await fetch(`${API_URL}/categories/${id}`, { method: "DELETE", headers: authHeaders });
+    await authFetch(`${API_URL}/categories/${id}`, { method: "DELETE" });
     await loadCategories();
     flash("success", "Catégorie supprimée.");
   };
@@ -227,9 +214,8 @@ function BackofficeDashboard() {
     const temp = sorted[idx].order;
     sorted[idx].order = sorted[targetIdx].order;
     sorted[targetIdx].order = temp;
-    await fetch(`${API_URL}/categories/reorder/list`, {
+    await authFetch(`${API_URL}/categories/reorder/list`, {
       method: "PATCH",
-      headers: authHeaders,
       body: JSON.stringify({ items: sorted.map((c, i) => ({ id: c.id, order: i })) }),
     });
     await loadCategories();
@@ -237,9 +223,8 @@ function BackofficeDashboard() {
 
   const bulkCategoryAction = async (action: "activate" | "deactivate" | "delete") => {
     if (!selectedCategoryIds.length) return;
-    await fetch(`${API_URL}/categories/bulk`, {
+    await authFetch(`${API_URL}/categories/bulk`, {
       method: "POST",
-      headers: authHeaders,
       body: JSON.stringify({ ids: selectedCategoryIds, action }),
     });
     setSelectedCategoryIds([]);

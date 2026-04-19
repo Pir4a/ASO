@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { isTokenExpired } from "@/lib/auth";
 
 interface User {
   id: string;
@@ -32,11 +33,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedUser = localStorage.getItem("user");
     if (storedToken && storedUser) {
       try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        if (isTokenExpired(storedToken)) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        } else {
+          setToken(storedToken);
+          setUser(JSON.parse(storedUser));
+        }
       } catch (error) {
         console.error("Erreur lors de la lecture des données utilisateur du localStorage", error);
-        // Nettoyer les données invalides
         localStorage.removeItem("token");
         localStorage.removeItem("user");
       }

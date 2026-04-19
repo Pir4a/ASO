@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AddressForm } from "./AddressForm";
-import { API_URL } from "@/lib/api";
+import { authFetch } from "@/lib/auth";
 
 interface Address {
     id: string;
@@ -13,25 +13,16 @@ interface Address {
     phone?: string;
 }
 
-function getAuthHeaders(): Record<string, string> {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    return {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-}
-
 export function AddressList() {
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingAddress, setEditingAddress] = useState<Address | null>(null);
     const [isCreating, setIsCreating] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const fetchAddresses = async () => {
         try {
-            const res = await fetch(`${API_URL}/profile/addresses`, {
-                headers: getAuthHeaders(),
-            });
+            const res = await authFetch("/profile/addresses");
             if (res.ok) {
                 setAddresses(await res.json());
             }
@@ -47,24 +38,26 @@ export function AddressList() {
     }, []);
 
     const handleCreate = async (data: Omit<Address, "id">) => {
-        const res = await fetch(`${API_URL}/profile/addresses`, {
+        setError(null);
+        const res = await authFetch("/profile/addresses", {
             method: "POST",
-            headers: getAuthHeaders(),
             body: JSON.stringify(data),
         });
         if (res.ok) {
             setIsCreating(false);
             fetchAddresses();
         } else {
-            throw new Error("Failed to create address");
+            const body = await res.json().catch(() => ({}));
+            const msg = body.message || `Failed to create address (${res.status})`;
+            setError(msg);
+            throw new Error(msg);
         }
     };
 
-    const handleUpdate = async (data: any) => {
+    const handleUpdate = async (data: Partial<Address>) => {
         if (!editingAddress) return;
-        const res = await fetch(`${API_URL}/profile/addresses/${editingAddress.id}`, {
+        const res = await authFetch(`/profile/addresses/${editingAddress.id}`, {
             method: "PUT",
-            headers: getAuthHeaders(),
             body: JSON.stringify(data),
         });
         if (res.ok) {
@@ -75,10 +68,7 @@ export function AddressList() {
 
     const handleDelete = async (id: string) => {
         if (!confirm("Are you sure you want to delete this address?")) return;
-        const res = await fetch(`${API_URL}/profile/addresses/${id}`, {
-            method: "DELETE",
-            headers: getAuthHeaders(),
-        });
+        const res = await authFetch(`/profile/addresses/${id}`, { method: "DELETE" });
         if (res.ok) {
             fetchAddresses();
         }
@@ -90,7 +80,12 @@ export function AddressList() {
         return (
             <div className="card p-4">
                 <h3 className="text-lg font-medium mb-4">New Address</h3>
-                <AddressForm onSubmit={handleCreate} onCancel={() => setIsCreating(false)} />
+                {error && (
+                    <p className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                        {error}
+                    </p>
+                )}
+                <AddressForm onSubmit={handleCreate} onCancel={() => { setError(null); setIsCreating(false); }} />
             </div>
         );
     }

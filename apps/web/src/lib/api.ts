@@ -86,6 +86,16 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
   }
 }
 
+function cartAuthHeaders(guestCartId?: string): Record<string, string> {
+  const headers: Record<string, string> = {};
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("token");
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+  }
+  if (guestCartId) headers["x-guest-cart-id"] = guestCartId;
+  return headers;
+}
+
 export async function getCart(guestCartId?: string): Promise<{
   id?: string;
   items: { productId: string; quantity: number; priceCents: number; currency: string; name?: string; stock?: number }[];
@@ -95,13 +105,8 @@ export async function getCart(guestCartId?: string): Promise<{
   currency: string;
 }> {
   try {
-    const headers: Record<string, string> = {};
-    if (guestCartId) {
-      headers['x-guest-cart-id'] = guestCartId;
-    }
-
     const res = await fetch(`${API_URL}/cart`, {
-      headers,
+      headers: cartAuthHeaders(guestCartId),
       cache: 'no-store'
     });
 
@@ -135,10 +140,7 @@ export async function getCart(guestCartId?: string): Promise<{
 }
 
 export async function addToCart(productId: string, quantity: number, guestCartId?: string): Promise<any> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (guestCartId) {
-    headers['x-guest-cart-id'] = guestCartId;
-  }
+  const headers: Record<string, string> = { "Content-Type": "application/json", ...cartAuthHeaders(guestCartId) };
 
   const res = await fetch(`${API_URL}/cart/items`, {
     method: "POST",
@@ -154,10 +156,7 @@ export async function addToCart(productId: string, quantity: number, guestCartId
 }
 
 export async function updateCartItem(productId: string, quantity: number, guestCartId?: string): Promise<any> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (guestCartId) {
-    headers['x-guest-cart-id'] = guestCartId;
-  }
+  const headers: Record<string, string> = { "Content-Type": "application/json", ...cartAuthHeaders(guestCartId) };
 
   const res = await fetch(`${API_URL}/cart/items/${productId}`, {
     method: "PUT",
@@ -173,14 +172,9 @@ export async function updateCartItem(productId: string, quantity: number, guestC
 }
 
 export async function removeCartItem(productId: string, guestCartId?: string): Promise<any> {
-  const headers: Record<string, string> = {};
-  if (guestCartId) {
-    headers['x-guest-cart-id'] = guestCartId;
-  }
-
   const res = await fetch(`${API_URL}/cart/items/${productId}`, {
     method: "DELETE",
-    headers,
+    headers: cartAuthHeaders(guestCartId),
   });
 
   if (!res.ok) {
@@ -206,42 +200,41 @@ export async function applyPromoCode(code: string, orderTotal: number): Promise<
 // ... existing imports
 
 export async function getUserAddresses(): Promise<any[]> {
+  if (typeof window === "undefined") return [];
+  const { authFetch } = await import("./auth");
   try {
-    return await fetchJson("/profile/addresses");
+    const res = await authFetch("/profile/addresses");
+    if (!res.ok) return [];
+    return res.json();
   } catch {
     return [];
   }
 }
 
 export async function createUserAddress(address: any): Promise<any> {
-  try {
-    const res = await fetch(`${API_URL}/profile/addresses`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(address),
-    });
-    if (!res.ok) throw new Error("Failed to create address");
-    return res.json();
-  } catch (e) {
-    console.error(e);
-    throw e;
+  const { authFetch } = await import("./auth");
+  const res = await authFetch("/profile/addresses", {
+    method: "POST",
+    body: JSON.stringify(address),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Failed to create address (${res.status})`);
   }
+  return res.json();
 }
 
 export async function createOrder(addressId: string): Promise<any> {
-  try {
-    // Mock user ID for guest flow as handled in backend controller placeholder
-    const res = await fetch(`${API_URL}/checkout`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: "guest-user-id", addressId }),
-    });
-    if (!res.ok) throw new Error("Failed to create order");
-    return res.json();
-  } catch (e) {
-    console.error(e);
-    throw e;
+  const { authFetch } = await import("./auth");
+  const res = await authFetch("/checkout", {
+    method: "POST",
+    body: JSON.stringify({ addressId }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || `Failed to create order (${res.status})`);
   }
+  return res.json();
 }
 
 export async function createPaymentIntent(orderId: string): Promise<{ clientSecret: string }> {
@@ -262,7 +255,10 @@ export async function getOrders(): Promise<
   { id: string; total: number; currency: string; status: string; createdAt: string }[]
 > {
   try {
-    const orders = await fetchJson<any[]>("/orders");
+    const { authFetch } = await import("./auth");
+    const res = await authFetch("/orders");
+    if (!res.ok) throw new Error(`API error ${res.status}`);
+    const orders = (await res.json()) as any[];
     return orders.map(o => ({
       id: o.id,
       total: o.total, // Backend sends decimal

@@ -13,7 +13,9 @@ import { CheckoutController } from '../controllers/checkout.controller';
 import { OrdersController } from '../controllers/orders/orders.controller';
 import { AddressModule } from './address.module';
 import { UsersModule } from './users.module';
+import { AuthModule } from './auth.module';
 import { PdfService } from '../services/pdf.service';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
 @Module({
     imports: [
@@ -21,6 +23,7 @@ import { PdfService } from '../services/pdf.service';
         CartModule,
         UsersModule,
         AddressModule,
+        AuthModule,
     ],
     controllers: [CheckoutController, OrdersController],
     providers: [
@@ -33,6 +36,7 @@ import { PdfService } from '../services/pdf.service';
         GetOrderDetailsUseCase,
         GenerateInvoicePdfUseCase,
         PdfService,
+        JwtAuthGuard,
     ],
     exports: [ORDER_REPOSITORY_TOKEN],
 })

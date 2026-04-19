@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { LocaleSwitcher } from "@/components/common/LocaleSwitcher";
 import { useAuth } from "@/context/AuthContext";
@@ -25,14 +26,21 @@ export function Header({ locale }: HeaderProps) {
     <header className="sticky top-0 z-30 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75 shadow-sm">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         {/* Logo — clickable to homepage */}
-        <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white font-semibold text-sm">
-            AS
-          </div>
-          <div>
-            <p className="text-base font-bold leading-tight text-foreground">Althea Systems</p>
-            <p className="text-[11px] leading-tight text-foreground/60">{t("header.tagline")}</p>
-          </div>
+        <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80" aria-label="Althea Systems">
+          <Image
+            src="/logo-mark.png"
+            alt=""
+            width={48}
+            height={48}
+            priority
+            className="h-10 w-auto"
+          />
+          <span
+            className="font-heading text-xl font-semibold leading-none tracking-tight text-foreground"
+          >
+            Althea Systems
+          </span>
+          <span className="sr-only">{t("header.tagline")}</span>
         </Link>
 
         {/* Navigation */}

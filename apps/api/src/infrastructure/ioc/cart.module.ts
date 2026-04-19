@@ -12,13 +12,17 @@ import { MergeGuestCartUseCase } from '../../application/use-cases/cart/merge-gu
 import { ApplyPromotionUseCase } from '../../application/use-cases/cart/apply-promotion.use-case';
 import { ProductsModule } from './products.module';
 import { PromotionModule } from './promotion.module';
+import { AuthModule } from './auth.module';
 import { CartController } from '../controllers/cart.controller';
+import { OptionalJwtAuthGuard } from '../guards/optional-jwt-auth.guard';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Cart, CartItem]),
         ProductsModule,
         PromotionModule,
+        AuthModule,
     ],
     controllers: [CartController],
     providers: [
@@ -32,6 +36,8 @@ import { CartController } from '../controllers/cart.controller';
         RemoveFromCartUseCase,
         MergeGuestCartUseCase,
         ApplyPromotionUseCase,
+        OptionalJwtAuthGuard,
+        JwtAuthGuard,
     ],
     exports: [CART_REPOSITORY_TOKEN],
 })
