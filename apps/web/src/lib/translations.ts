@@ -101,6 +101,7 @@ const translations = {
         "products.status.low_stock": "Low stock",
         "products.status.out_of_stock": "Out of stock",
         "products.status.new": "New",
+        "products.searchFiltersLink": "Filters & search",
 
         // Search (/search)
         "search.title": "Product search",
@@ -252,6 +253,7 @@ const translations = {
         "products.status.low_stock": "Stock faible",
         "products.status.out_of_stock": "Rupture",
         "products.status.new": "Nouveau",
+        "products.searchFiltersLink": "Filtres et recherche",
 
         // Search (/search)
         "search.title": "Recherche produits",
@@ -402,6 +404,7 @@ const translations = {
         "products.status.low_stock": "مخزون منخفض",
         "products.status.out_of_stock": "نفد",
         "products.status.new": "جديد",
+        "products.searchFiltersLink": "المرشحات والبحث",
 
         // Search (/search)
         "search.title": "بحث عن المنتجات",
@@ -552,6 +555,7 @@ const translations = {
         "products.status.low_stock": "מלאי נמוך",
         "products.status.out_of_stock": "אזל מהמלאי",
         "products.status.new": "חדש",
+        "products.searchFiltersLink": "מסננים וחיפוש",
 
         // Search (/search)
         "search.title": "חיפוש מוצרים",
