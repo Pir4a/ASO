@@ -23,8 +23,10 @@ import { Roles } from '../../auth/roles.decorator';
 import {
     PRODUCT_REPOSITORY_TOKEN,
     type ProductRepository,
+    type ProductSearchSort,
 } from '../../../domain/repositories/product.repository.interface';
 import { Product } from '../../../domain/entities/product.entity';
+import { SearchProductsUseCase } from '../../../application/use-cases/products/search-products.use-case';
 
 @Controller('products')
 export class ProductsController {
@@ -32,9 +34,86 @@ export class ProductsController {
         private readonly getProductsUseCase: GetProductsUseCase,
         private readonly findProductBySlugUseCase: FindProductBySlugUseCase,
         private readonly createProductUseCase: CreateProductUseCase,
+        private readonly searchProductsUseCase: SearchProductsUseCase,
         @Inject(PRODUCT_REPOSITORY_TOKEN)
         private readonly productRepository: ProductRepository,
     ) { }
+
+    private static readonly SEARCH_SORT_WHITELIST: ProductSearchSort[] = [
+        'relevance',
+        'price_asc',
+        'price_desc',
+        'novelty_desc',
+        'novelty_asc',
+        'availability_asc',
+        'availability_desc',
+    ];
+
+    /**
+     * Faceted product search (title, description, specs JSON, SKU; price range; category; in-stock).
+     * Relevance: exact / near-exact (Levenshtein ≤ 1 on small catalogs) / prefix / contains (SQL + optional JS refine).
+     * Large result sets use SQL-only relevance tiers. Reads live DB rows (same as BO) — no dedicated search engine or latency SLA.
+     */
+    @Get('search')
+    async search(
+        @Query('q') q?: string,
+        @Query('categorySlug') categorySlug?: string,
+        @Query('categoryId') categoryId?: string,
+        @Query('minPrice') minPriceStr?: string,
+        @Query('maxPrice') maxPriceStr?: string,
+        @Query('inStockOnly') inStockOnlyStr?: string,
+        @Query('sort') sortStr?: string,
+        @Query('page') pageStr?: string,
+        @Query('limit') limitStr?: string,
+    ) {
+        const page = Math.max(1, Number.parseInt(pageStr ?? '1', 10) || 1);
+        const pageSize = Math.min(
+            48,
+            Math.max(1, Number.parseInt(limitStr ?? '12', 10) || 12),
+        );
+        const minPrice =
+            minPriceStr !== undefined && minPriceStr !== ''
+                ? Number.parseFloat(minPriceStr)
+                : undefined;
+        const maxPrice =
+            maxPriceStr !== undefined && maxPriceStr !== ''
+                ? Number.parseFloat(maxPriceStr)
+                : undefined;
+        const inStockOnly = ['1', 'true', 'yes', 'on'].includes(
+            (inStockOnlyStr ?? '').toLowerCase(),
+        );
+        const sort = ProductsController.SEARCH_SORT_WHITELIST.includes(
+            sortStr as ProductSearchSort,
+        )
+            ? (sortStr as ProductSearchSort)
+            : 'relevance';
+
+        const result = await this.searchProductsUseCase.execute({
+            q,
+            categorySlug: categorySlug || undefined,
+            categoryId: categoryId || undefined,
+            minPrice: minPrice !== undefined && !Number.isNaN(minPrice) ? minPrice : undefined,
+            maxPrice: maxPrice !== undefined && !Number.isNaN(maxPrice) ? maxPrice : undefined,
+            inStockOnly,
+            sort,
+            page,
+            pageSize,
+        });
+
+        const totalPages = Math.max(1, Math.ceil(result.total / pageSize));
+        return {
+            data: result.items,
+            meta: {
+                total: result.total,
+                page,
+                pageSize,
+                totalPages,
+                tookMs: result.tookMs,
+                relevanceRefined: result.relevanceRefined,
+            },
+            facets: result.facets,
+        };
+    }
 
     /**
      * Plain `GET /products`: full list (backward compatible for BO / homepage).

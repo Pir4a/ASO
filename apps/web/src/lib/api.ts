@@ -48,6 +48,78 @@ export type ProductBrowseMeta = {
   totalPages: number;
 };
 
+export type ProductSearchMeta = ProductBrowseMeta & {
+  tookMs?: number;
+  relevanceRefined?: boolean;
+};
+
+export type ProductSearchFacets = {
+  categories: { id: string; name: string; slug: string; count: number }[];
+};
+
+export const PRODUCT_SEARCH_SORT = [
+  "relevance",
+  "price_asc",
+  "price_desc",
+  "novelty_desc",
+  "novelty_asc",
+  "availability_asc",
+  "availability_desc",
+] as const;
+
+export type ProductSearchSortParam = (typeof PRODUCT_SEARCH_SORT)[number];
+
+export async function getProductsSearch(filters: {
+  q?: string;
+  categorySlug?: string;
+  categoryId?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  inStockOnly?: boolean;
+  sort?: string;
+  page?: number;
+  limit?: number;
+}): Promise<{ products: Product[]; meta: ProductSearchMeta; facets: ProductSearchFacets }> {
+  const page = Math.max(1, filters.page ?? 1);
+  const limit = Math.min(48, Math.max(1, filters.limit ?? 12));
+  const sort = PRODUCT_SEARCH_SORT.includes(filters.sort as ProductSearchSortParam)
+    ? (filters.sort as ProductSearchSortParam)
+    : "relevance";
+
+  const sp = new URLSearchParams();
+  if (filters.q?.trim()) sp.set("q", filters.q.trim());
+  if (filters.categorySlug?.trim()) sp.set("categorySlug", filters.categorySlug.trim());
+  if (filters.categoryId?.trim()) sp.set("categoryId", filters.categoryId.trim());
+  if (filters.minPrice?.trim()) sp.set("minPrice", filters.minPrice.trim());
+  if (filters.maxPrice?.trim()) sp.set("maxPrice", filters.maxPrice.trim());
+  if (filters.inStockOnly) sp.set("inStockOnly", "1");
+  sp.set("sort", sort);
+  sp.set("page", String(page));
+  sp.set("limit", String(limit));
+
+  const res = await fetch(`${API_URL}/products/search?${sp.toString()}`, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`API error ${res.status}`);
+  }
+  const body = (await res.json()) as {
+    data?: unknown[];
+    meta?: ProductSearchMeta;
+    facets?: ProductSearchFacets;
+  };
+  return {
+    products: (body.data ?? []).map(mapProduct),
+    meta: {
+      total: body.meta?.total ?? 0,
+      page: body.meta?.page ?? page,
+      pageSize: body.meta?.pageSize ?? limit,
+      totalPages: body.meta?.totalPages ?? 1,
+      tookMs: body.meta?.tookMs,
+      relevanceRefined: body.meta?.relevanceRefined,
+    },
+    facets: body.facets ?? { categories: [] },
+  };
+}
+
 function sortProductsForCategoryListing(products: Product[]): Product[] {
   return [...products].sort((a, b) => {
     const pr = (b.listPriority ?? 0) - (a.listPriority ?? 0);

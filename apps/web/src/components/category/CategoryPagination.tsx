@@ -4,14 +4,31 @@ type CategoryPaginationProps = {
   basePath: string;
   page: number;
   totalPages: number;
+  /** Preserve filters (omit `page` here; it is set per link). */
+  preservedQuery?: string;
 };
 
-export function CategoryPagination({ basePath, page, totalPages }: CategoryPaginationProps) {
+export function CategoryPagination({
+  basePath,
+  page,
+  totalPages,
+  preservedQuery,
+}: CategoryPaginationProps) {
   if (totalPages <= 1) return null;
 
   const prev = page > 1 ? page - 1 : null;
   const next = page < totalPages ? page + 1 : null;
-  const href = (p: number) => (p === 1 ? basePath : `${basePath}?page=${p}`);
+
+  const href = (p: number) => {
+    if (!preservedQuery) {
+      return p === 1 ? basePath : `${basePath}?page=${p}`;
+    }
+    const qs = new URLSearchParams(preservedQuery);
+    if (p <= 1) qs.delete("page");
+    else qs.set("page", String(p));
+    const s = qs.toString();
+    return s ? `${basePath}?${s}` : basePath;
+  };
 
   return (
     <nav
