@@ -9,6 +9,7 @@ const translations = {
         "a11y.cartItems": "items in cart",
         "a11y.cartEmpty": "Your cart is empty",
         "a11y.searchSubmit": "Submit search",
+        "a11y.clearSearch": "Clear search",
 
         // Header
         "header.tagline": "Premium Medical Equipment",
@@ -168,6 +169,7 @@ const translations = {
         "a11y.cartItems": "articles dans le panier",
         "a11y.cartEmpty": "Votre panier est vide",
         "a11y.searchSubmit": "Lancer la recherche",
+        "a11y.clearSearch": "Effacer la recherche",
 
         // Header
         "header.tagline": "Équipement Médical Premium",
@@ -327,6 +329,7 @@ const translations = {
         "a11y.cartItems": "عناصر في السلة",
         "a11y.cartEmpty": "سلتك فارغة",
         "a11y.searchSubmit": "تنفيذ البحث",
+        "a11y.clearSearch": "مسح البحث",
 
         // Header
         "header.tagline": "معدات طبية متميزة",
@@ -485,6 +488,7 @@ const translations = {
         "a11y.cartItems": "פריטים בעגלה",
         "a11y.cartEmpty": "העגלה שלך ריקה",
         "a11y.searchSubmit": "בצע חיפוש",
+        "a11y.clearSearch": "נקה חיפוש",
 
         // Header
         "header.tagline": "ציוד רפואי איכותי",

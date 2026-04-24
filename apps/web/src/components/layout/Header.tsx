@@ -33,7 +33,7 @@ export function Header({ locale }: HeaderProps) {
   return (
     <>
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75 shadow-sm">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3.5 sm:px-6 lg:gap-6 lg:px-8">
           {/* Burger (mobile only) */}
           <button
             type="button"
@@ -63,7 +63,7 @@ export function Header({ locale }: HeaderProps) {
           {/* Logo — clickable to homepage */}
           <Link
             href="/"
-            className="flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary rounded"
+            className="flex shrink-0 items-center gap-2 rounded transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary lg:mr-2"
             aria-label="Althea Systems"
           >
             <Image
@@ -81,7 +81,7 @@ export function Header({ locale }: HeaderProps) {
           </Link>
 
           {/* Search bar — hidden on small screens, shown in burger menu instead */}
-          <div className="mx-4 hidden flex-1 md:block">
+          <div className="hidden max-w-xl flex-1 md:block">
             <HeaderSearchBar />
           </div>
 
@@ -102,7 +102,7 @@ export function Header({ locale }: HeaderProps) {
           </nav>
 
           {/* Actions */}
-          <div className="ml-auto flex items-center gap-2 md:gap-3">
+          <div className="ml-auto flex items-center gap-3 md:gap-4">
             <Link
               href="/cart"
               className="relative inline-flex items-center gap-1.5 rounded-lg border border-foreground/10 px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:border-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
@@ -142,7 +142,7 @@ export function Header({ locale }: HeaderProps) {
               <LocaleSwitcher value={locale} />
             </div>
 
-            <div className="hidden md:flex md:items-center md:gap-2">
+            <div className="hidden md:flex md:items-center md:gap-2 md:border-l md:border-foreground/10 md:pl-3 lg:pl-4">
               {isAuthenticated ? (
                 <>
                   <Link
