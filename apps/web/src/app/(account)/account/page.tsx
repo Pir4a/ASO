@@ -16,12 +16,16 @@ export default async function AccountPage() {
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         <Link href="/orders" className="card p-4 hover:border-primary">
-          <p className="text-sm font-semibold text-foreground">{t("header.cart")}</p>
-          <p className="text-sm text-foreground/70">{t("account.subtitle")}</p>
+          <p className="text-sm font-semibold text-foreground">{t("account.orders")}</p>
+          <p className="text-sm text-foreground/70">{t("account.ordersSubtitle")}</p>
+        </Link>
+        <Link href="/profile" className="card p-4 hover:border-primary">
+          <p className="text-sm font-semibold text-foreground">{t("account.profile")}</p>
+          <p className="text-sm text-foreground/70">{t("account.profileSubtitle")}</p>
         </Link>
         <Link href="/settings" className="card p-4 hover:border-primary">
-          <p className="text-sm font-semibold text-foreground">{t("header.langLabel")}</p>
-          <p className="text-sm text-foreground/70">{t("account.subtitle")}</p>
+          <p className="text-sm font-semibold text-foreground">{t("account.settings")}</p>
+          <p className="text-sm text-foreground/70">{t("account.settingsSubtitle")}</p>
         </Link>
       </div>
     </div>

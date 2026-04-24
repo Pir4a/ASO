@@ -116,8 +116,23 @@ export default function CheckoutPage() {
         <p className="text-foreground/70">
           Merci pour votre achat. Votre numéro de commande est <span className="font-mono font-bold text-foreground">{orderResult.id}</span>.
         </p>
-        <div className="pt-4">
-          <Link href="/products" className="inline-flex justify-center rounded-md bg-primary px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover">
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
+          <Link
+            href={`/orders/${encodeURIComponent(orderResult.id)}`}
+            className="inline-flex justify-center rounded-md bg-primary px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover"
+          >
+            Voir ma commande
+          </Link>
+          <Link
+            href="/orders"
+            className="inline-flex justify-center rounded-md border border-primary px-6 py-2 text-sm font-semibold text-primary hover:bg-primary/10"
+          >
+            Mes commandes
+          </Link>
+          <Link
+            href="/products"
+            className="inline-flex justify-center rounded-md px-6 py-2 text-sm font-semibold text-foreground/80 hover:text-primary"
+          >
             Retour à la boutique
           </Link>
         </div>

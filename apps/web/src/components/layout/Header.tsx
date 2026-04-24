@@ -146,6 +146,12 @@ export function Header({ locale }: HeaderProps) {
               {isAuthenticated ? (
                 <>
                   <Link
+                    href="/orders"
+                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/80 hover:bg-background hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                  >
+                    {t("header.orders")}
+                  </Link>
+                  <Link
                     href="/profile"
                     className="rounded-lg bg-background px-3 py-1.5 text-sm font-medium text-foreground/80 hover:bg-foreground/10 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
                   >

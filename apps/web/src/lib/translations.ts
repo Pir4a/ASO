@@ -18,6 +18,7 @@ const translations = {
         "header.searchPlaceholder": "Search for a product, category, SKU…",
         "header.contact": "Contact",
         "header.cart": "Cart",
+        "header.orders": "My orders",
         "header.login": "Log in",
         "header.signup": "Sign up",
         "header.admin": "Admin",
@@ -134,6 +135,12 @@ const translations = {
         // Account
         "account.title": "My Account",
         "account.subtitle": "Manage your orders, saved addresses, and account preferences.",
+        "account.orders": "My orders",
+        "account.ordersSubtitle": "History, invoices and order tracking.",
+        "account.profile": "Profile",
+        "account.profileSubtitle": "Personal information and addresses.",
+        "account.settings": "Settings",
+        "account.settingsSubtitle": "Language and account preferences.",
 
         // Footer
         "footer.rights": "All rights reserved.",
@@ -170,6 +177,7 @@ const translations = {
         "header.searchPlaceholder": "Rechercher un produit, une catégorie, une référence…",
         "header.contact": "Contact",
         "header.cart": "Panier",
+        "header.orders": "Mes commandes",
         "header.login": "Connexion",
         "header.signup": "S'inscrire",
         "header.admin": "Admin",
@@ -286,6 +294,12 @@ const translations = {
         // Account
         "account.title": "Mon compte",
         "account.subtitle": "Gérez vos commandes, adresses et préférences de compte.",
+        "account.orders": "Mes commandes",
+        "account.ordersSubtitle": "Historique, factures et suivi des commandes.",
+        "account.profile": "Profil",
+        "account.profileSubtitle": "Informations personnelles et adresses.",
+        "account.settings": "Paramètres",
+        "account.settingsSubtitle": "Langue et préférences du compte.",
 
         // Footer
         "footer.rights": "Tous droits réservés.",
@@ -322,6 +336,7 @@ const translations = {
         "header.searchPlaceholder": "ابحث عن منتج أو فئة أو رقم SKU…",
         "header.contact": "اتصل بنا",
         "header.cart": "السلة",
+        "header.orders": "طلباتي",
         "header.login": "تسجيل الدخول",
         "header.signup": "إنشاء حساب",
         "header.admin": "الإدارة",
@@ -437,6 +452,12 @@ const translations = {
         // Account
         "account.title": "حسابي",
         "account.subtitle": "إدارة طلباتك وعناوينك وتفضيلات حسابك.",
+        "account.orders": "طلباتي",
+        "account.ordersSubtitle": "السجل والفواتير ومتابعة الطلبات.",
+        "account.profile": "الملف الشخصي",
+        "account.profileSubtitle": "المعلومات الشخصية والعناوين.",
+        "account.settings": "الإعدادات",
+        "account.settingsSubtitle": "اللغة وتفضيلات الحساب.",
 
         // Footer
         "footer.rights": "جميع الحقوق محفوظة.",
@@ -473,6 +494,7 @@ const translations = {
         "header.searchPlaceholder": "חפש מוצר, קטגוריה או מק״ט…",
         "header.contact": "צור קשר",
         "header.cart": "עגלה",
+        "header.orders": "ההזמנות שלי",
         "header.login": "התחברות",
         "header.signup": "הרשמה",
         "header.admin": "ניהול",
@@ -588,6 +610,12 @@ const translations = {
         // Account
         "account.title": "החשבון שלי",
         "account.subtitle": "נהל את ההזמנות, הכתובות והעדפות החשבון שלך.",
+        "account.orders": "ההזמנות שלי",
+        "account.ordersSubtitle": "היסטוריה, חשבוניות ומעקב אחר הזמנות.",
+        "account.profile": "פרופיל",
+        "account.profileSubtitle": "מידע אישי וכתובות.",
+        "account.settings": "הגדרות",
+        "account.settingsSubtitle": "שפה והעדפות חשבון.",
 
         // Footer
         "footer.rights": "כל הזכויות שמורות.",

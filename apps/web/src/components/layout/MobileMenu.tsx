@@ -150,6 +150,13 @@ export function MobileMenu({ open, onClose, locale }: MobileMenuProps) {
           {isAuthenticated ? (
             <>
               <Link
+                href="/orders"
+                onClick={onClose}
+                className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-background hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                {t("header.orders")}
+              </Link>
+              <Link
                 href="/profile"
                 onClick={onClose}
                 className="rounded-lg bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-foreground/10 focus:outline-none focus:ring-2 focus:ring-primary"

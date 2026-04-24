@@ -476,32 +476,87 @@ export async function createPaymentIntent(orderId: string): Promise<{ clientSecr
   return res.json();
 }
 
-export async function getOrders(): Promise<
-  { id: string; total: number; currency: string; status: string; createdAt: string }[]
-> {
-  try {
-    const { authFetch } = await import("./auth");
-    const res = await authFetch("/orders");
-    if (!res.ok) throw new Error(`API error ${res.status}`);
-    const orders = (await res.json()) as any[];
-    return orders.map(o => ({
-      id: o.id,
-      total: o.total, // Backend sends decimal
-      currency: o.currency,
-      status: o.status,
-      createdAt: o.createdAt
-    }));
-  } catch {
-    return [
-      {
-        id: "CMD-2025-001",
-        total: 152.00,
-        currency: "EUR",
-        status: "processing",
-        createdAt: new Date().toISOString(),
-      },
-    ];
-  }
+export type OrderStatus =
+  | "pending"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "cancelled";
+
+export interface OrderItemDTO {
+  id: string;
+  productId: string;
+  productName: string;
+  productSku?: string;
+  quantity: number;
+  price: number;
+  currency: string;
+}
+
+export interface OrderAddressDTO {
+  street?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
+  phone?: string;
+}
+
+export interface OrderDTO {
+  id: string;
+  status: OrderStatus;
+  total: number;
+  currency: string;
+  items: OrderItemDTO[];
+  shippingAddress?: OrderAddressDTO;
+  billingAddress?: OrderAddressDTO;
+  paymentMethod?: string;
+  paymentLast4?: string;
+  paymentStatus?: string;
+  statusHistory?: { status: OrderStatus; at: string }[];
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export type OrdersByYear = Record<string, OrderDTO[]>;
+
+export interface OrderFilters {
+  year?: number;
+  status?: string;
+  search?: string;
+}
+
+export async function getOrders(filters: OrderFilters = {}): Promise<OrdersByYear> {
+  const { authFetch } = await import("./auth");
+  const qs = new URLSearchParams();
+  if (filters.year) qs.set("year", String(filters.year));
+  if (filters.status) qs.set("status", filters.status);
+  if (filters.search) qs.set("search", filters.search);
+  const query = qs.toString();
+  const res = await authFetch(`/orders${query ? `?${query}` : ""}`);
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  return (await res.json()) as OrdersByYear;
+}
+
+export async function getOrder(id: string): Promise<OrderDTO> {
+  const { authFetch } = await import("./auth");
+  const res = await authFetch(`/orders/${encodeURIComponent(id)}`);
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  return (await res.json()) as OrderDTO;
+}
+
+export async function downloadOrderInvoice(id: string): Promise<void> {
+  const { authFetch } = await import("./auth");
+  const res = await authFetch(`/orders/${encodeURIComponent(id)}/invoice`);
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `facture-${id}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 // ── Chat (Llama) ───────────────────────────────────────────────────
