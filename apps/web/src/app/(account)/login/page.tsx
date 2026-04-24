@@ -74,6 +74,11 @@ function LoginForm() {
         required
       />
       {error && <p className="text-sm text-error">{error}</p>}
+      <div className="flex justify-end">
+        <Link href="/forgot-password" className="text-sm text-primary hover:text-primary-hover">
+          Mot de passe oublié&nbsp;?
+        </Link>
+      </div>
       <button
         type="submit"
         className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover disabled:opacity-50"
