@@ -72,8 +72,8 @@ export function ChatWidget() {
                 style={{
                     position: "fixed", bottom: 24, right: 24, zIndex: 50,
                     width: 56, height: 56, borderRadius: "50%", border: "none",
-                    background: "linear-gradient(135deg,#00a8b5,#003d5c)",
-                    boxShadow: "0 4px 14px rgba(0,61,92,0.35)",
+                    background: "var(--primary)",
+                    boxShadow: "0 4px 14px color-mix(in srgb, var(--foreground) 35%, transparent)",
                     cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
                     transition: "transform 0.2s",
                 }}
@@ -100,21 +100,21 @@ export function ChatWidget() {
                     }}
                 >
                     {/* Header */}
-                    <div style={{ padding: "16px 20px", background: "linear-gradient(135deg,#00a8b5,#003d5c)", color: "white" }}>
+                    <div style={{ padding: "16px 20px", background: "var(--foreground)", color: "white" }}>
                         <p style={{ fontSize: 15, fontWeight: 700 }}>{t("chat.title")}</p>
                         <p style={{ fontSize: 11, opacity: 0.7 }}>{t("chat.subtitle")}</p>
                     </div>
 
                     {/* Messages */}
-                    <div style={{ flex: 1, overflowY: "auto", padding: "14px 14px 6px", display: "flex", flexDirection: "column", gap: 10, background: "#f8fafb", maxHeight: 320 }}>
+                    <div style={{ flex: 1, overflowY: "auto", padding: "14px 14px 6px", display: "flex", flexDirection: "column", gap: 10, background: "var(--background)", maxHeight: 320 }}>
                         {messages.map((m) => (
                             <div key={m.id} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
                                 <div style={{
                                     maxWidth: "80%", padding: "8px 14px", fontSize: 13, lineHeight: 1.5,
                                     whiteSpace: "pre-wrap", wordBreak: "break-word",
                                     borderRadius: m.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                                    background: m.role === "user" ? "linear-gradient(135deg,#00a8b5,#33bfc9)" : "white",
-                                    color: m.role === "user" ? "white" : "#1f2937",
+                                    background: m.role === "user" ? "var(--primary)" : "white",
+                                    color: m.role === "user" ? "white" : "var(--foreground)",
                                     boxShadow: m.role === "user" ? "none" : "0 1px 4px rgba(0,0,0,0.06)",
                                 }}>{m.content}</div>
                             </div>
@@ -133,18 +133,18 @@ export function ChatWidget() {
 
                     {/* Suggestions */}
                     {showSuggestions && (
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, padding: "8px 14px", background: "#f8fafb" }}>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, padding: "8px 14px", background: "var(--background)" }}>
                             {suggestions.map((s) => (
                                 <button key={s} onClick={() => send(s)} style={{
-                                    padding: "4px 10px", borderRadius: 16, border: "1px solid #d4f4f7", background: "white",
-                                    color: "#00a8b5", fontSize: 11, fontWeight: 500, cursor: "pointer",
+                                    padding: "4px 10px", borderRadius: 16, border: "1px solid var(--background)", background: "white",
+                                    color: "var(--primary)", fontSize: 11, fontWeight: 500, cursor: "pointer",
                                 }}>{s}</button>
                             ))}
                         </div>
                     )}
 
                     {/* Input */}
-                    <div style={{ padding: "10px 14px", borderTop: "1px solid #e5e7eb", background: "white", display: "flex", gap: 8, alignItems: "center" }}>
+                    <div style={{ padding: "10px 14px", borderTop: "1px solid color-mix(in srgb, var(--foreground) 10%, transparent)", background: "white", display: "flex", gap: 8, alignItems: "center" }}>
                         <input
                             id="chat-widget-input"
                             type="text"
@@ -153,9 +153,9 @@ export function ChatWidget() {
                             onKeyDown={(e) => e.key === "Enter" && send()}
                             placeholder={t("chat.placeholder")}
                             disabled={isLoading}
-                            style={{ flex: 1, padding: "8px 14px", borderRadius: 20, border: "1px solid #e5e7eb", outline: "none", fontSize: 13, color: "#1f2937", background: "#f9fafb" }}
-                            onFocus={(e) => (e.currentTarget.style.borderColor = "#00a8b5")}
-                            onBlur={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
+                            style={{ flex: 1, padding: "8px 14px", borderRadius: 20, border: "1px solid color-mix(in srgb, var(--foreground) 10%, transparent)", outline: "none", fontSize: 13, color: "var(--foreground)", background: "var(--background)" }}
+                            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--primary)")}
+                            onBlur={(e) => (e.currentTarget.style.borderColor = "color-mix(in srgb, var(--foreground) 10%, transparent)")}
                         />
                         <button
                             id="chat-widget-send"
@@ -163,7 +163,7 @@ export function ChatWidget() {
                             disabled={!input.trim() || isLoading}
                             style={{
                                 width: 36, height: 36, borderRadius: "50%", border: "none", flexShrink: 0,
-                                background: input.trim() && !isLoading ? "linear-gradient(135deg,#00a8b5,#003d5c)" : "#e5e7eb",
+                                background: input.trim() && !isLoading ? "var(--primary)" : "color-mix(in srgb, var(--foreground) 10%, transparent)",
                                 cursor: input.trim() && !isLoading ? "pointer" : "default",
                                 display: "flex", alignItems: "center", justifyContent: "center",
                             }}
@@ -175,7 +175,7 @@ export function ChatWidget() {
             )}
 
             <style>{`
-        .chat-dot { width:7px;height:7px;border-radius:50%;background:#00a8b5;animation:chatBounce .6s infinite alternate; }
+        .chat-dot { width:7px;height:7px;border-radius:50%;background:var(--primary);animation:chatBounce .6s infinite alternate; }
         @keyframes chatBounce { from{opacity:.3;transform:translateY(0)} to{opacity:1;transform:translateY(-4px)} }
         @keyframes chatSlideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
       `}</style>

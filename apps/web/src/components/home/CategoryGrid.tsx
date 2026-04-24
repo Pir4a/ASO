@@ -13,7 +13,7 @@ export function CategoryGrid({ categories }: { categories: Category[] }) {
         >
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-semibold text-foreground">{cat.name}</p>
-            <span className="text-xs text-slate-500">#{cat.order}</span>
+            <span className="text-xs text-foreground/60">#{cat.order}</span>
           </div>
           {cat.imageUrl ? (
             <div className="relative h-28 w-full">
@@ -26,7 +26,7 @@ export function CategoryGrid({ categories }: { categories: Category[] }) {
               />
             </div>
           ) : (
-            <div className="flex h-28 items-center justify-center rounded-lg bg-slate-100 text-xs text-slate-500">
+            <div className="flex h-28 items-center justify-center rounded-lg bg-background text-xs text-foreground/60">
               Visuel à venir
             </div>
           )}

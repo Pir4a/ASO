@@ -122,12 +122,12 @@ export const Icon = {
 type Tone = "primary" | "emerald" | "amber" | "violet" | "rose" | "sky";
 
 const toneMap: Record<Tone, { bg: string; ring: string; text: string; iconBg: string; iconText: string }> = {
-  primary: { bg: "from-[#00a8b5] to-[#33bfc9]", ring: "ring-[#00a8b5]/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
-  emerald: { bg: "from-emerald-500 to-emerald-400", ring: "ring-emerald-500/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
-  amber: { bg: "from-amber-500 to-amber-400", ring: "ring-amber-500/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
-  violet: { bg: "from-violet-600 to-fuchsia-500", ring: "ring-violet-500/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
-  rose: { bg: "from-rose-500 to-pink-500", ring: "ring-rose-500/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
-  sky: { bg: "from-sky-600 to-blue-500", ring: "ring-sky-500/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
+  primary: { bg: "from-primary to-primary-hover", ring: "ring-primary/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
+  emerald: { bg: "from-success to-success/30", ring: "ring-success/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
+  amber: { bg: "from-warning to-warning/30", ring: "ring-warning/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
+  violet: { bg: "from-primary to-primary", ring: "ring-primary/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
+  rose: { bg: "from-error to-primary", ring: "ring-error/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
+  sky: { bg: "from-primary to-primary", ring: "ring-primary/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
 };
 
 export function StatCard({
@@ -190,10 +190,10 @@ export function Panel({
   return (
     <section className={`rounded-2xl bg-white shadow-[0_4px_6px_-1px_rgb(0,0,0,0.08),0_2px_4px_-2px_rgb(0,0,0,0.05)] ${className}`}>
       {(title || actions) && (
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-6 py-4">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-foreground/10 px-6 py-4">
           <div>
-            {title && <h3 className="text-base font-semibold text-slate-900">{title}</h3>}
-            {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
+            {title && <h3 className="text-base font-semibold text-foreground">{title}</h3>}
+            {subtitle && <p className="mt-0.5 text-xs text-foreground/60">{subtitle}</p>}
           </div>
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </header>
@@ -215,12 +215,12 @@ export function Badge({
   tone?: "slate" | "emerald" | "amber" | "rose" | "sky" | "violet";
 }) {
   const map = {
-    slate: "bg-slate-100 text-slate-700 ring-slate-200",
-    emerald: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-    amber: "bg-amber-50 text-amber-700 ring-amber-200",
-    rose: "bg-rose-50 text-rose-700 ring-rose-200",
-    sky: "bg-sky-50 text-sky-700 ring-sky-200",
-    violet: "bg-violet-50 text-violet-700 ring-violet-200",
+    slate: "bg-background text-foreground/80 ring-foreground/10",
+    emerald: "bg-success/10 text-success ring-success/30",
+    amber: "bg-warning/10 text-warning ring-warning/30",
+    rose: "bg-error/10 text-error ring-error/30",
+    sky: "bg-primary/10 text-primary ring-primary/30",
+    violet: "bg-primary/10 text-primary ring-primary/30",
   } as const;
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${map[tone]}`}>
@@ -247,10 +247,10 @@ export function IconButton({
   type?: "button" | "submit";
 }) {
   const map = {
-    slate: "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50",
-    rose: "border-rose-200 text-rose-600 hover:border-rose-300 hover:bg-rose-50",
-    emerald: "border-emerald-200 text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50",
-    primary: "border-[#00a8b5]/30 text-[#00a8b5] hover:border-[#00a8b5] hover:bg-[#00a8b5]/5",
+    slate: "border-foreground/10 text-foreground/70 hover:border-foreground/20 hover:bg-background",
+    rose: "border-error/30 text-error hover:border-error/30 hover:bg-error/10",
+    emerald: "border-success/30 text-success hover:border-success/30 hover:bg-success/10",
+    primary: "border-primary/30 text-primary hover:border-primary hover:bg-primary/5",
   } as const;
   return (
     <button

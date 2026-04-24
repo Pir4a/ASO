@@ -36,7 +36,7 @@ export function BuyNowButton({ productId, productName, disabled }: BuyNowButtonP
       type="button"
       onClick={handleClick}
       disabled={disabled || loading}
-      className="rounded-md border-2 border-primary bg-white px-4 py-2 text-sm font-semibold text-primary shadow-sm transition hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 disabled:hover:bg-white"
+      className="rounded-md border-2 border-primary bg-white px-4 py-2 text-sm font-semibold text-primary shadow-sm transition hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:border-foreground/10 disabled:text-foreground/50 disabled:hover:bg-white"
     >
       {loading ? "Redirection…" : "Acheter maintenant"}
     </button>

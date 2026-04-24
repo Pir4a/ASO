@@ -32,35 +32,35 @@ export function CategoryPagination({
 
   return (
     <nav
-      className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4"
+      className="flex flex-wrap items-center justify-between gap-3 border-t border-foreground/10 pt-4"
       aria-label="Pagination des produits"
     >
-      <div className="text-sm text-slate-600">
-        Page <span className="font-semibold text-slate-900">{page}</span> sur{" "}
-        <span className="font-semibold text-slate-900">{totalPages}</span>
+      <div className="text-sm text-foreground/70">
+        Page <span className="font-semibold text-foreground">{page}</span> sur{" "}
+        <span className="font-semibold text-foreground">{totalPages}</span>
       </div>
       <div className="flex gap-2">
         {prev ? (
           <Link
             href={href(prev)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-primary hover:text-primary"
+            className="rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:border-primary hover:text-primary"
           >
             Précédent
           </Link>
         ) : (
-          <span className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-400">
+          <span className="rounded-lg border border-foreground/10 bg-background px-3 py-2 text-sm font-semibold text-foreground/50">
             Précédent
           </span>
         )}
         {next ? (
           <Link
             href={href(next)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-primary hover:text-primary"
+            className="rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:border-primary hover:text-primary"
           >
             Suivant
           </Link>
         ) : (
-          <span className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-400">
+          <span className="rounded-lg border border-foreground/10 bg-background px-3 py-2 text-sm font-semibold text-foreground/50">
             Suivant
           </span>
         )}

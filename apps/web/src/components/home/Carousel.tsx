@@ -5,7 +5,7 @@ import { CarouselSlide } from "@bootstrap/types";
 export function Carousel({ slides }: { slides: CarouselSlide[] }) {
   if (!slides || slides.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 py-10 text-center text-sm text-slate-400">
+      <p className="rounded-xl border border-dashed border-foreground/10 bg-background py-10 text-center text-sm text-foreground/50">
         Aucune diapositive pour le moment.
       </p>
     );
@@ -22,7 +22,7 @@ export function Carousel({ slides }: { slides: CarouselSlide[] }) {
           <Wrapper
             key={slide.id}
             {...wrapperProps}
-            className={`group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition ${
+            className={`group relative flex flex-col overflow-hidden rounded-2xl border border-foreground/10 bg-white shadow-sm transition ${
               href ? "hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary" : ""
             }`}
           >
@@ -36,9 +36,9 @@ export function Carousel({ slides }: { slides: CarouselSlide[] }) {
               />
             </div>
             <div className="flex flex-1 flex-col gap-1 p-4">
-              <p className="text-sm font-semibold text-slate-900">{slide.title}</p>
+              <p className="text-sm font-semibold text-foreground">{slide.title}</p>
               {slide.subtitle && (
-                <p className="text-xs text-slate-600">{slide.subtitle}</p>
+                <p className="text-xs text-foreground/70">{slide.subtitle}</p>
               )}
               {href && (
                 <span className="mt-2 inline-flex w-max items-center gap-1 text-xs font-semibold text-primary group-hover:underline">

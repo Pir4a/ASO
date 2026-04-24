@@ -25,14 +25,14 @@ export function CategoryProductListing({ products }: { products: Product[] }) {
               <Link
                 href={`/products/${product.slug}`}
                 aria-disabled={oos}
-                className={`flex gap-4 rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition ${
+                className={`flex gap-4 rounded-xl border border-foreground/10 bg-white p-3 shadow-sm transition ${
                   oos
                     ? "pointer-events-none cursor-not-allowed opacity-55 grayscale"
                     : "hover:border-primary/40 hover:shadow-md"
                 }`}
                 tabIndex={oos ? -1 : 0}
               >
-                <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-lg bg-background">
                   {product.thumbnailUrl ? (
                     <Image
                       src={product.thumbnailUrl}
@@ -42,18 +42,18 @@ export function CategoryProductListing({ products }: { products: Product[] }) {
                       className="object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[10px] text-slate-400">
+                    <div className="flex h-full w-full items-center justify-center text-[10px] text-foreground/50">
                       —
                     </div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
-                  <p className="truncate text-xs text-slate-500">{product.sku}</p>
+                  <p className="truncate text-sm font-semibold text-foreground">{product.name}</p>
+                  <p className="truncate text-xs text-foreground/60">{product.sku}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                        oos ? "bg-slate-200 text-slate-600" : "bg-emerald-50 text-emerald-800"
+                        oos ? "bg-foreground/10 text-foreground/70" : "bg-success/10 text-success"
                       }`}
                     >
                       {statusLabels[product.status]}
@@ -78,14 +78,14 @@ export function CategoryProductListing({ products }: { products: Product[] }) {
               <Link
                 href={`/products/${product.slug}`}
                 aria-disabled={oos}
-                className={`group block rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition ${
+                className={`group block rounded-xl border border-foreground/10 bg-white p-4 shadow-sm transition ${
                   oos
                     ? "pointer-events-none cursor-not-allowed opacity-55 grayscale"
                     : "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
                 }`}
                 tabIndex={oos ? -1 : 0}
               >
-                <div className="relative mb-3 h-40 w-full overflow-hidden rounded-lg bg-slate-50">
+                <div className="relative mb-3 h-40 w-full overflow-hidden rounded-lg bg-background">
                   {product.thumbnailUrl ? (
                     <Image
                       src={product.thumbnailUrl}
@@ -95,19 +95,19 @@ export function CategoryProductListing({ products }: { products: Product[] }) {
                       className="object-cover transition duration-300 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-slate-500">
+                    <div className="flex h-full w-full items-center justify-center text-xs text-foreground/60">
                       Image à venir
                     </div>
                   )}
                 </div>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
-                    <p className="truncate text-xs text-slate-500">{product.sku}</p>
+                    <p className="truncate text-sm font-semibold text-foreground">{product.name}</p>
+                    <p className="truncate text-xs text-foreground/60">{product.sku}</p>
                   </div>
                   <span
                     className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${
-                      oos ? "bg-slate-200 text-slate-600" : "bg-slate-100 text-slate-700"
+                      oos ? "bg-foreground/10 text-foreground/70" : "bg-background text-foreground/80"
                     }`}
                   >
                     {statusLabels[product.status]}

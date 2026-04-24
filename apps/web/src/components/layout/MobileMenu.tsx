@@ -81,7 +81,7 @@ export function MobileMenu({ open, onClose, locale }: MobileMenuProps) {
         type="button"
         aria-label={t("a11y.closeMenu")}
         onClick={onClose}
-        className="absolute inset-0 cursor-default bg-slate-900/50 backdrop-blur-sm"
+        className="absolute inset-0 cursor-default bg-foreground/50 backdrop-blur-sm"
       />
       <div
         ref={panelRef}
@@ -96,7 +96,7 @@ export function MobileMenu({ open, onClose, locale }: MobileMenuProps) {
             type="button"
             onClick={onClose}
             aria-label={t("a11y.closeMenu")}
-            className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="rounded-lg p-2 text-foreground/70 hover:bg-background focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -117,7 +117,7 @@ export function MobileMenu({ open, onClose, locale }: MobileMenuProps) {
 
         <HeaderSearchBar onSubmitted={onClose} />
 
-        <nav aria-label={t("header.primaryNav")} className="flex flex-col divide-y divide-slate-100">
+        <nav aria-label={t("header.primaryNav")} className="flex flex-col divide-y divide-foreground/10">
           {[
             { href: "/categories", key: "header.categories" as const },
             { href: "/products", key: "header.products" as const },
@@ -128,18 +128,18 @@ export function MobileMenu({ open, onClose, locale }: MobileMenuProps) {
               key={item.href}
               href={item.href}
               onClick={onClose}
-              className="py-3 text-base font-medium text-slate-800 hover:text-primary focus:outline-none focus:text-primary"
+              className="py-3 text-base font-medium text-foreground hover:text-primary focus:outline-none focus:text-primary"
             >
               {t(item.key)}
             </Link>
           ))}
         </nav>
 
-        <div className="rounded-lg bg-slate-50 p-3">
+        <div className="rounded-lg bg-background p-3">
           <Link
             href="/cart"
             onClick={onClose}
-            className="flex items-center justify-between rounded-md bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="flex items-center justify-between rounded-md bg-white px-3 py-2 text-sm font-medium text-foreground shadow-sm hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <span>{t("header.cart")}</span>
             <span aria-hidden="true">›</span>
@@ -152,7 +152,7 @@ export function MobileMenu({ open, onClose, locale }: MobileMenuProps) {
               <Link
                 href="/profile"
                 onClick={onClose}
-                className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="rounded-lg bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-foreground/10 focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {user?.email?.split("@")[0]}
               </Link>
@@ -160,7 +160,7 @@ export function MobileMenu({ open, onClose, locale }: MobileMenuProps) {
                 <Link
                   href="/backoffice"
                   onClick={onClose}
-                  className="rounded-lg bg-purple-50 px-3 py-2 text-sm font-medium text-purple-700 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="rounded-lg bg-primary/10 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   {t("header.admin")}
                 </Link>
@@ -168,7 +168,7 @@ export function MobileMenu({ open, onClose, locale }: MobileMenuProps) {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="rounded-lg px-3 py-2 text-left text-sm font-medium text-error hover:bg-error/10 focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {t("header.logout")}
               </button>
@@ -178,7 +178,7 @@ export function MobileMenu({ open, onClose, locale }: MobileMenuProps) {
               <Link
                 href="/login"
                 onClick={onClose}
-                className="flex-1 rounded-lg px-3 py-2 text-center text-sm font-medium text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="flex-1 rounded-lg px-3 py-2 text-center text-sm font-medium text-foreground/80 hover:bg-background focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {t("header.login")}
               </Link>
@@ -195,31 +195,31 @@ export function MobileMenu({ open, onClose, locale }: MobileMenuProps) {
 
         <div className="mt-auto space-y-4 pt-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <span className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
               {t("header.langLabel")}
             </span>
             <LocaleSwitcher value={locale} />
           </div>
 
-          <div className="space-y-2 border-t border-slate-100 pt-4">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="space-y-2 border-t border-foreground/10 pt-4">
+            <span className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
               {t("footer.legal")}
             </span>
             <div className="flex flex-col gap-2 text-sm">
-              <Link href="/legal/cgu" onClick={onClose} className="text-slate-700 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary">
+              <Link href="/legal/cgu" onClick={onClose} className="text-foreground/80 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary">
                 {t("footer.cgu")}
               </Link>
-              <Link href="/legal/mentions" onClick={onClose} className="text-slate-700 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary">
+              <Link href="/legal/mentions" onClick={onClose} className="text-foreground/80 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary">
                 {t("footer.legal")}
               </Link>
-              <Link href="/contact" onClick={onClose} className="text-slate-700 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary">
+              <Link href="/contact" onClick={onClose} className="text-foreground/80 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary">
                 {t("footer.contact")}
               </Link>
             </div>
           </div>
 
-          <div className="border-t border-slate-100 pt-4">
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="border-t border-foreground/10 pt-4">
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-foreground/60">
               {t("social.followUs")}
             </span>
             <SocialLinks variant="light" />

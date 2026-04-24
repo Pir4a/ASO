@@ -34,7 +34,7 @@ export function HeaderSearchBar({ className, autoFocus, onSubmitted }: HeaderSea
       </label>
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 rtl:left-auto rtl:right-0 rtl:pl-0 rtl:pr-3"
+        className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-foreground/50 rtl:left-auto rtl:right-0 rtl:pl-0 rtl:pr-3"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -58,7 +58,7 @@ export function HeaderSearchBar({ className, autoFocus, onSubmitted }: HeaderSea
         autoFocus={autoFocus}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={t("header.searchPlaceholder")}
-        className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 shadow-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30 rtl:pl-3 rtl:pr-9"
+        className="w-full rounded-lg border border-foreground/10 bg-white py-2 pl-9 pr-3 text-sm text-foreground shadow-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30 rtl:pl-3 rtl:pr-9"
       />
       <button
         type="submit"

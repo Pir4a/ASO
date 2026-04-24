@@ -28,18 +28,18 @@ export default async function CategoryDetail({
       <section className="card space-y-4 p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Produits</h2>
-            <p className="text-sm text-slate-600">
+            <h2 className="text-lg font-semibold text-foreground">Produits</h2>
+            <p className="text-sm text-foreground/70">
               Tri : priorité catalogue (backoffice), puis disponibles, puis rupture.
             </p>
           </div>
-          <p className="text-sm font-medium text-slate-600">
+          <p className="text-sm font-medium text-foreground/70">
             {meta.total} produit{meta.total !== 1 ? "s" : ""}
           </p>
         </div>
 
         {products.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 py-10 text-center text-sm text-slate-500">
+          <p className="rounded-xl border border-dashed border-foreground/10 bg-background py-10 text-center text-sm text-foreground/60">
             Aucun produit dans cette catégorie.
           </p>
         ) : (

@@ -30,8 +30,8 @@ interface ContentManagerProps {
 }
 
 const inputCls =
-  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-[#00a8b5] focus:ring-2 focus:ring-[#00a8b5]/15";
-const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500";
+  "w-full rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
+const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-foreground/60";
 
 export function ContentManager({ flash }: ContentManagerProps) {
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
@@ -201,16 +201,16 @@ export function ContentManager({ flash }: ContentManagerProps) {
           <button
             type="button"
             onClick={load}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-[#00a8b5] hover:text-[#00a8b5]"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-foreground/10 bg-white px-3 py-1.5 text-xs font-semibold text-foreground/80 transition hover:border-primary hover:text-primary"
           >
             <Icon.Refresh /> Rafraîchir
           </button>
         }
       >
         {loading ? (
-          <p className="py-6 text-center text-sm text-slate-400">Chargement…</p>
+          <p className="py-6 text-center text-sm text-foreground/50">Chargement…</p>
         ) : carouselBlocks.length === 0 ? (
-          <p className="py-6 text-center text-sm text-slate-400">Aucune diapositive.</p>
+          <p className="py-6 text-center text-sm text-foreground/50">Aucune diapositive.</p>
         ) : (
           <ul className="space-y-3">
             {carouselBlocks.map((block) => {
@@ -219,7 +219,7 @@ export function ContentManager({ flash }: ContentManagerProps) {
               return (
                 <li
                   key={block.id}
-                  className="rounded-xl border border-slate-200 bg-white p-3"
+                  className="rounded-xl border border-foreground/10 bg-white p-3"
                 >
                   {!isEditing ? (
                     <div className="flex items-start gap-3">
@@ -231,20 +231,20 @@ export function ContentManager({ flash }: ContentManagerProps) {
                           className="h-16 w-24 shrink-0 rounded-lg object-cover"
                         />
                       ) : (
-                        <div className="h-16 w-24 shrink-0 rounded-lg bg-slate-100" />
+                        <div className="h-16 w-24 shrink-0 rounded-lg bg-background" />
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <Badge tone="violet">#{block.order + 1}</Badge>
-                          <p className="truncate text-sm font-semibold text-slate-900">
+                          <p className="truncate text-sm font-semibold text-foreground">
                             {p.title || "(sans titre)"}
                           </p>
                         </div>
                         {p.subtitle && (
-                          <p className="mt-0.5 truncate text-xs text-slate-500">{p.subtitle}</p>
+                          <p className="mt-0.5 truncate text-xs text-foreground/60">{p.subtitle}</p>
                         )}
                         {p.href && (
-                          <p className="mt-1 truncate font-mono text-[11px] text-[#00a8b5]">
+                          <p className="mt-1 truncate font-mono text-[11px] text-primary">
                             → {p.href}
                           </p>
                         )}
@@ -327,14 +327,14 @@ export function ContentManager({ flash }: ContentManagerProps) {
                         <button
                           type="button"
                           onClick={() => setEditing(null)}
-                          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300"
+                          className="rounded-lg border border-foreground/10 bg-white px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:border-foreground/20"
                         >
                           Annuler
                         </button>
                         <button
                           type="button"
                           onClick={saveEditing}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a8b5] px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#33bfc9]"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-primary-hover"
                         >
                           <Icon.Check /> Enregistrer
                         </button>
@@ -348,8 +348,8 @@ export function ContentManager({ flash }: ContentManagerProps) {
         )}
 
         {carouselBlocks.length < MAX_CAROUSEL_SLIDES && (
-          <div className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-4">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="mt-6 rounded-xl border border-dashed border-foreground/10 bg-background/50 p-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-foreground/60">
               Ajouter une diapositive
             </p>
             <div className="grid gap-3 md:grid-cols-2">
@@ -409,7 +409,7 @@ export function ContentManager({ flash }: ContentManagerProps) {
               <button
                 type="button"
                 onClick={createCarousel}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a8b5] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#33bfc9]"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover"
               >
                 <Icon.Plus /> Créer la diapositive
               </button>
@@ -444,7 +444,7 @@ export function ContentManager({ flash }: ContentManagerProps) {
             <button
               type="button"
               onClick={saveHomepageText}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a8b5] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#33bfc9]"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover"
             >
               <Icon.Check /> Enregistrer
             </button>

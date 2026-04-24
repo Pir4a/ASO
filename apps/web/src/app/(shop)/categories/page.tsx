@@ -14,7 +14,7 @@ export default async function CategoriesPage() {
       <CategoryIndexHero title={t("categories.title")} subtitle={t("categories.subtitle")} />
 
       {categories.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-slate-200 bg-white/80 py-12 text-center text-sm text-slate-500">
+        <p className="rounded-2xl border border-dashed border-foreground/10 bg-white/80 py-12 text-center text-sm text-foreground/60">
           Aucune catégorie pour le moment.
         </p>
       ) : (

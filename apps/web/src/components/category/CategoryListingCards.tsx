@@ -12,9 +12,9 @@ export function CategoryListingCards({ categories }: { categories: Category[] })
         <Link
           key={cat.id}
           href={`/categories/${cat.slug}`}
-          className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-slate-200/80 transition hover:-translate-y-1 hover:shadow-xl hover:ring-primary/25"
+          className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-foreground/80 transition hover:-translate-y-1 hover:shadow-xl hover:ring-primary/25"
         >
-          <div className="relative aspect-16/10 w-full shrink-0 bg-slate-900">
+          <div className="relative aspect-16/10 w-full shrink-0 bg-foreground">
             {cat.imageUrl ? (
               <Image
                 src={cat.imageUrl}
@@ -24,7 +24,7 @@ export function CategoryListingCards({ categories }: { categories: Category[] })
                 className="object-cover opacity-95 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
               />
             ) : (
-              <div className="absolute inset-0 bg-linear-to-br from-slate-700 to-slate-900" />
+              <div className="absolute inset-0 bg-linear-to-br from-foreground/60 to-foreground" />
             )}
             <div
               className="absolute inset-0 bg-linear-to-t from-black/85 via-black/35 to-transparent"
@@ -40,9 +40,9 @@ export function CategoryListingCards({ categories }: { categories: Category[] })
             </div>
           </div>
           {cat.description ? (
-            <p className="line-clamp-3 flex-1 p-4 text-sm leading-relaxed text-slate-600 md:p-5">{cat.description}</p>
+            <p className="line-clamp-3 flex-1 p-4 text-sm leading-relaxed text-foreground/70 md:p-5">{cat.description}</p>
           ) : (
-            <p className="flex-1 p-4 text-sm text-slate-400 md:p-5">Découvrir les produits →</p>
+            <p className="flex-1 p-4 text-sm text-foreground/50 md:p-5">Découvrir les produits →</p>
           )}
         </Link>
       ))}

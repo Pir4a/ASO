@@ -41,7 +41,7 @@ export function Header({ locale }: HeaderProps) {
             aria-controls="mobile-menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen(true)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:border-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-foreground/10 text-foreground/80 hover:border-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary md:hidden"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -90,13 +90,13 @@ export function Header({ locale }: HeaderProps) {
             aria-label={t("header.primaryNav")}
             className="hidden items-center gap-5 md:flex"
           >
-            <Link href="/categories" className="text-sm font-medium text-slate-600 hover:text-primary focus:outline-none focus:text-primary transition-colors">
+            <Link href="/categories" className="text-sm font-medium text-foreground/70 hover:text-primary focus:outline-none focus:text-primary transition-colors">
               {t("header.categories")}
             </Link>
-            <Link href="/products" className="text-sm font-medium text-slate-600 hover:text-primary focus:outline-none focus:text-primary transition-colors">
+            <Link href="/products" className="text-sm font-medium text-foreground/70 hover:text-primary focus:outline-none focus:text-primary transition-colors">
               {t("header.products")}
             </Link>
-            <Link href="/contact" className="text-sm font-medium text-slate-600 hover:text-primary focus:outline-none focus:text-primary transition-colors">
+            <Link href="/contact" className="text-sm font-medium text-foreground/70 hover:text-primary focus:outline-none focus:text-primary transition-colors">
               {t("header.contact")}
             </Link>
           </nav>
@@ -105,7 +105,7 @@ export function Header({ locale }: HeaderProps) {
           <div className="ml-auto flex items-center gap-2 md:gap-3">
             <Link
               href="/cart"
-              className="relative inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="relative inline-flex items-center gap-1.5 rounded-lg border border-foreground/10 px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:border-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               aria-label={
                 itemCount > 0
                   ? `${t("header.cart")}, ${itemCount} ${t("a11y.cartItems")}`
@@ -147,21 +147,21 @@ export function Header({ locale }: HeaderProps) {
                 <>
                   <Link
                     href="/profile"
-                    className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                    className="rounded-lg bg-background px-3 py-1.5 text-sm font-medium text-foreground/80 hover:bg-foreground/10 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
                   >
                     {user?.email?.split("@")[0]}
                   </Link>
                   {user?.role === "admin" && (
                     <Link
                       href="/backoffice"
-                      className="rounded-lg bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-700 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                      className="rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
                     >
                       {t("header.admin")}
                     </Link>
                   )}
                   <button
                     onClick={handleLogout}
-                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/60 hover:bg-error/10 hover:text-error focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
                   >
                     {t("header.logout")}
                   </button>
@@ -170,7 +170,7 @@ export function Header({ locale }: HeaderProps) {
                 <>
                   <Link
                     href="/login"
-                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/70 hover:bg-background focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
                   >
                     {t("header.login")}
                   </Link>

@@ -54,9 +54,9 @@ function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast:
             role={toast.type === "error" ? "alert" : "status"}
             className={`
             animate-slide-in flex items-center gap-3 rounded-lg px-4 py-3 shadow-lg
-            ${toast.type === "success" ? "bg-green-600 text-white" : ""}
-            ${toast.type === "error" ? "bg-red-600 text-white" : ""}
-            ${toast.type === "info" ? "bg-blue-600 text-white" : ""}
+            ${toast.type === "success" ? "bg-success text-white" : ""}
+            ${toast.type === "error" ? "bg-error text-white" : ""}
+            ${toast.type === "info" ? "bg-primary text-white" : ""}
           `}
         >
             {toast.type === "success" && (

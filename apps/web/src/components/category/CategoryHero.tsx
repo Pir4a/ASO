@@ -8,8 +8,8 @@ type CategoryHeroProps = {
 
 export function CategoryHero({ name, description, imageUrl }: CategoryHeroProps) {
   return (
-    <section className="relative isolate overflow-hidden rounded-2xl ring-1 ring-slate-200/80">
-      <div className="relative aspect-[21/9] min-h-[200px] w-full bg-slate-900 md:min-h-[260px]">
+    <section className="relative isolate overflow-hidden rounded-2xl ring-1 ring-foreground/80">
+      <div className="relative aspect-[21/9] min-h-[200px] w-full bg-foreground md:min-h-[260px]">
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -20,7 +20,7 @@ export function CategoryHero({ name, description, imageUrl }: CategoryHeroProps)
             className="object-cover opacity-90"
           />
         ) : (
-          <div className="absolute inset-0 bg-linear-to-br from-slate-800 via-slate-900 to-primary/30" />
+          <div className="absolute inset-0 bg-linear-to-br from-foreground via-foreground to-primary/30" />
         )}
         <div
           className="absolute inset-0 bg-linear-to-t from-black/75 via-black/35 to-transparent"

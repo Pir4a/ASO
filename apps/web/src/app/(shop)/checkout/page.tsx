@@ -107,14 +107,14 @@ export default function CheckoutPage() {
   if (step === "confirmation" && orderResult) {
     return (
       <div className="card p-8 text-center space-y-4">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-          <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+          <svg className="h-8 w-8 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-slate-900">Commande Confirmée !</h2>
-        <p className="text-slate-600">
-          Merci pour votre achat. Votre numéro de commande est <span className="font-mono font-bold text-slate-900">{orderResult.id}</span>.
+        <h2 className="text-2xl font-bold text-foreground">Commande Confirmée !</h2>
+        <p className="text-foreground/70">
+          Merci pour votre achat. Votre numéro de commande est <span className="font-mono font-bold text-foreground">{orderResult.id}</span>.
         </p>
         <div className="pt-4">
           <Link href="/products" className="inline-flex justify-center rounded-md bg-primary px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover">
@@ -131,8 +131,8 @@ export default function CheckoutPage() {
         {/* Steps Indicator */}
         <div className="flex items-center space-x-4 mb-8">
           {["address", "payment", "confirmation"].map((s, idx) => (
-            <div key={s} className={`flex items-center ${step === s ? "text-primary font-bold" : "text-slate-500"}`}>
-              <span className={`flex h-8 w-8 items-center justify-center rounded-full border-2 mr-2 ${step === s ? "border-primary bg-primary/10" : "border-slate-300"}`}>
+            <div key={s} className={`flex items-center ${step === s ? "text-primary font-bold" : "text-foreground/60"}`}>
+              <span className={`flex h-8 w-8 items-center justify-center rounded-full border-2 mr-2 ${step === s ? "border-primary bg-primary/10" : "border-foreground/20"}`}>
                 {idx + 1}
               </span>
               <span className="capitalize">{s === "address" ? "Adresse" : s === "payment" ? "Paiement" : "Confirmation"}</span>
@@ -143,7 +143,7 @@ export default function CheckoutPage() {
         {step === "address" && (
           <div className="space-y-6">
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-slate-900">Adresse de livraison</h2>
+              <h2 className="text-xl font-semibold text-foreground">Adresse de livraison</h2>
 
               {/* Saved Addresses List */}
               <div className="grid gap-4 sm:grid-cols-2">
@@ -151,17 +151,17 @@ export default function CheckoutPage() {
                   <div
                     key={addr.id}
                     onClick={() => setSelectedAddressId(addr.id)}
-                    className={`cursor-pointer rounded-lg border p-4 shadow-sm transition-all ${selectedAddressId === addr.id ? "border-primary ring-1 ring-primary bg-primary/5" : "border-slate-200 hover:border-primary/50"}`}
+                    className={`cursor-pointer rounded-lg border p-4 shadow-sm transition-all ${selectedAddressId === addr.id ? "border-primary ring-1 ring-primary bg-primary/5" : "border-foreground/10 hover:border-primary/50"}`}
                   >
-                    <p className="font-semibold text-slate-900">{addr.street}</p>
-                    <p className="text-sm text-slate-600">{addr.postalCode} {addr.city}</p>
-                    <p className="text-sm text-slate-600 uppercase">{addr.country}</p>
+                    <p className="font-semibold text-foreground">{addr.street}</p>
+                    <p className="text-sm text-foreground/70">{addr.postalCode} {addr.city}</p>
+                    <p className="text-sm text-foreground/70 uppercase">{addr.country}</p>
                   </div>
                 ))}
 
                 <button
                   onClick={() => setShowNewAddressForm(!showNewAddressForm)}
-                  className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 p-4 text-slate-500 hover:border-primary hover:text-primary transition-colors"
+                  className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-foreground/20 p-4 text-foreground/60 hover:border-primary hover:text-primary transition-colors"
                 >
                   <span className="text-2xl mb-1">+</span>
                   <span className="text-sm font-medium">Nouvelle adresse</span>
@@ -171,38 +171,38 @@ export default function CheckoutPage() {
 
             {/* New Address Form */}
             {showNewAddressForm && (
-              <form onSubmit={handleCreateAddress} className="card p-6 space-y-4 bg-slate-50 border-slate-200">
-                <h3 className="font-semibold text-slate-900">Ajouter une nouvelle adresse</h3>
+              <form onSubmit={handleCreateAddress} className="card p-6 space-y-4 bg-background border-foreground/10">
+                <h3 className="font-semibold text-foreground">Ajouter une nouvelle adresse</h3>
                 <div className="grid gap-4 md:grid-cols-2">
                   <input
                     required placeholder="Rue" value={newAddress.street}
                     onChange={e => setNewAddress({ ...newAddress, street: e.target.value })}
-                    className="col-span-2 rounded-md border-slate-200 px-3 py-2 text-sm"
+                    className="col-span-2 rounded-md border-foreground/10 px-3 py-2 text-sm"
                   />
                   <input
                     required placeholder="Code Postal" value={newAddress.postalCode}
                     onChange={e => setNewAddress({ ...newAddress, postalCode: e.target.value })}
-                    className="rounded-md border-slate-200 px-3 py-2 text-sm"
+                    className="rounded-md border-foreground/10 px-3 py-2 text-sm"
                   />
                   <input
                     required placeholder="Ville" value={newAddress.city}
                     onChange={e => setNewAddress({ ...newAddress, city: e.target.value })}
-                    className="rounded-md border-slate-200 px-3 py-2 text-sm"
+                    className="rounded-md border-foreground/10 px-3 py-2 text-sm"
                   />
                   <input
                     required placeholder="Pays" value={newAddress.country}
                     onChange={e => setNewAddress({ ...newAddress, country: e.target.value })}
-                    className="rounded-md border-slate-200 px-3 py-2 text-sm"
+                    className="rounded-md border-foreground/10 px-3 py-2 text-sm"
                   />
                   <input
                     placeholder="Téléphone" value={newAddress.phone}
                     onChange={e => setNewAddress({ ...newAddress, phone: e.target.value })}
-                    className="rounded-md border-slate-200 px-3 py-2 text-sm"
+                    className="rounded-md border-foreground/10 px-3 py-2 text-sm"
                   />
                 </div>
                 <div className="flex justify-end space-x-3">
-                  <button type="button" onClick={() => setShowNewAddressForm(false)} className="text-sm text-slate-600 hover:text-slate-900">Annuler</button>
-                  <button type="submit" disabled={isLoading} className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
+                  <button type="button" onClick={() => setShowNewAddressForm(false)} className="text-sm text-foreground/70 hover:text-foreground">Annuler</button>
+                  <button type="submit" disabled={isLoading} className="rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-white hover:bg-foreground disabled:opacity-50">
                     {isLoading ? "Enregistrement..." : "Enregistrer l'adresse"}
                   </button>
                 </div>
@@ -224,7 +224,7 @@ export default function CheckoutPage() {
         {step === "payment" && clientSecret && (
           <div className="space-y-6">
             <div className="card p-6 space-y-4">
-              <h2 className="text-xl font-semibold text-slate-900">Paiement sécurisé</h2>
+              <h2 className="text-xl font-semibold text-foreground">Paiement sécurisé</h2>
               <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
                 <CheckoutForm
                   amount={cartTotal}
@@ -235,7 +235,7 @@ export default function CheckoutPage() {
             </div>
 
             <div className="flex justify-between pt-4">
-              <button onClick={() => setStep("address")} className="text-slate-600 font-medium hover:text-slate-900">
+              <button onClick={() => setStep("address")} className="text-foreground/70 font-medium hover:text-foreground">
                 ← Retour
               </button>
             </div>
@@ -246,12 +246,12 @@ export default function CheckoutPage() {
       {/* Sidebar Summary */}
       <div className="lg:col-span-1">
         <div className="card p-6 sticky top-24 space-y-4">
-          <h3 className="text-lg font-semibold text-slate-900">Récapitulatif</h3>
-          <div className="flex justify-between text-sm text-slate-600">
+          <h3 className="text-lg font-semibold text-foreground">Récapitulatif</h3>
+          <div className="flex justify-between text-sm text-foreground/70">
             <span>Sous-total</span>
             <span>{(cartTotal / 100).toFixed(2)} {currency}</span>
           </div>
-          <div className="flex justify-between text-base font-bold text-slate-900 pt-4 border-t border-slate-100">
+          <div className="flex justify-between text-base font-bold text-foreground pt-4 border-t border-foreground/10">
             <span>Total à payer</span>
             <span>{(cartTotal / 100).toFixed(2)} {currency}</span>
           </div>

@@ -16,10 +16,10 @@ export function CategoryIndexHero({
 }: CategoryIndexHeroProps) {
   return (
     <section
-      className="relative isolate overflow-hidden rounded-2xl ring-1 ring-slate-200/80"
+      className="relative isolate overflow-hidden rounded-2xl ring-1 ring-foreground/80"
       aria-labelledby={headingId}
     >
-      <div className="absolute inset-0 bg-linear-to-br from-slate-900 via-[#0d5c63] to-slate-800" />
+      <div className="absolute inset-0 bg-foreground" />
       <div
         className="absolute inset-0 opacity-30 mix-blend-overlay"
         style={{

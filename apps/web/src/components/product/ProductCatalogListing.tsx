@@ -31,14 +31,14 @@ export async function ProductCatalogListing({ products }: { products: Product[] 
               <Link
                 href={`/products/${product.slug}`}
                 aria-disabled={oos}
-                className={`flex gap-4 rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition ${
+                className={`flex gap-4 rounded-xl border border-foreground/10 bg-white p-3 shadow-sm transition ${
                   oos
                     ? "cursor-not-allowed opacity-55 grayscale"
                     : "hover:border-primary/40 hover:shadow-md"
                 }`}
                 tabIndex={oos ? -1 : 0}
               >
-                <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-lg bg-background">
                   {product.thumbnailUrl ? (
                     <Image
                       src={product.thumbnailUrl}
@@ -48,21 +48,21 @@ export async function ProductCatalogListing({ products }: { products: Product[] 
                       className="object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-slate-400">
+                    <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-foreground/50">
                       —
                     </div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
-                  <p className="truncate text-xs text-slate-500">{product.sku}</p>
+                  <p className="truncate text-sm font-semibold text-foreground">{product.name}</p>
+                  <p className="truncate text-xs text-foreground/60">{product.sku}</p>
                   {product.category?.name && (
                     <p className="truncate text-[11px] font-medium text-primary/90">{product.category.name}</p>
                   )}
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                        oos ? "bg-slate-200 text-slate-600" : "bg-emerald-50 text-emerald-800"
+                        oos ? "bg-foreground/10 text-foreground/70" : "bg-success/10 text-success"
                       }`}
                     >
                       {statusLabels[product.status]}
@@ -71,7 +71,7 @@ export async function ProductCatalogListing({ products }: { products: Product[] 
                       {(product.priceCents / 100).toFixed(2)} {product.currency}
                     </span>
                   </div>
-                  <p className="mt-1 line-clamp-2 text-xs text-slate-600">{product.description}</p>
+                  <p className="mt-1 line-clamp-2 text-xs text-foreground/70">{product.description}</p>
                 </div>
               </Link>
             </li>
@@ -88,14 +88,14 @@ export async function ProductCatalogListing({ products }: { products: Product[] 
               <Link
                 href={`/products/${product.slug}`}
                 aria-disabled={oos}
-                className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition ${
+                className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-foreground/10 bg-white shadow-sm transition ${
                   oos
                     ? "cursor-not-allowed opacity-55 grayscale"
                     : "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg"
                 }`}
                 tabIndex={oos ? -1 : 0}
               >
-                <div className="relative aspect-16/10 w-full shrink-0 bg-slate-100">
+                <div className="relative aspect-16/10 w-full shrink-0 bg-background">
                   {product.thumbnailUrl ? (
                     <Image
                       src={product.thumbnailUrl}
@@ -105,7 +105,7 @@ export async function ProductCatalogListing({ products }: { products: Product[] 
                       className="object-cover transition duration-300 group-hover:scale-[1.02]"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">{noImage}</div>
+                    <div className="flex h-full w-full items-center justify-center text-xs text-foreground/50">{noImage}</div>
                   )}
                   {product.category?.name && (
                     <span className="absolute left-3 top-3 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
@@ -115,13 +115,13 @@ export async function ProductCatalogListing({ products }: { products: Product[] 
                 </div>
                 <div className="flex flex-1 flex-col gap-2 p-4">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="font-semibold leading-snug text-slate-900 group-hover:text-primary">{product.name}</p>
-                    <span className="shrink-0 text-[10px] font-mono text-slate-400">{product.sku}</span>
+                    <p className="font-semibold leading-snug text-foreground group-hover:text-primary">{product.name}</p>
+                    <span className="shrink-0 text-[10px] font-mono text-foreground/50">{product.sku}</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                        oos ? "bg-slate-200 text-slate-600" : "bg-slate-100 text-slate-700"
+                        oos ? "bg-foreground/10 text-foreground/70" : "bg-background text-foreground/80"
                       }`}
                     >
                       {statusLabels[product.status]}
@@ -130,7 +130,7 @@ export async function ProductCatalogListing({ products }: { products: Product[] 
                       {(product.priceCents / 100).toFixed(2)} {product.currency}
                     </span>
                   </div>
-                  <p className="line-clamp-3 text-sm text-slate-600">{product.description}</p>
+                  <p className="line-clamp-3 text-sm text-foreground/70">{product.description}</p>
                   <span className="mt-auto pt-1 text-xs font-semibold text-primary group-hover:underline">
                     {viewDetail}
                   </span>

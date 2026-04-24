@@ -37,7 +37,7 @@ export function ProductImageGallery({ productName, images }: ProductImageGallery
 
   if (!current) {
     return (
-      <div className="flex aspect-[4/3] w-full items-center justify-center rounded-xl bg-slate-100 text-sm text-slate-500">
+      <div className="flex aspect-[4/3] w-full items-center justify-center rounded-xl bg-background text-sm text-foreground/60">
         Image à venir
       </div>
     );
@@ -45,7 +45,7 @@ export function ProductImageGallery({ productName, images }: ProductImageGallery
 
   return (
     <div className="space-y-3">
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/80">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-background ring-1 ring-foreground/80">
         <Image
           src={current}
           alt={`${productName} — visuel ${index + 1} sur ${safe.length}`}
@@ -96,7 +96,7 @@ export function ProductImageGallery({ productName, images }: ProductImageGallery
                 type="button"
                 onClick={() => setIndex(i)}
                 className={`relative h-16 w-20 overflow-hidden rounded-lg ring-2 transition ${
-                  i === index ? "ring-primary" : "ring-transparent hover:ring-slate-300"
+                  i === index ? "ring-primary" : "ring-transparent hover:ring-foreground/20"
                 }`}
                 aria-label={`Miniature ${i + 1}`}
               >

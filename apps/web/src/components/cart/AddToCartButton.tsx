@@ -47,7 +47,7 @@ export function AddToCartButton({
         <button
             onClick={handleClick}
             disabled={isAdding || isLoading}
-            className={`${baseStyles} ${className} ${showSuccess ? "animate-pulse-success bg-green-600" : ""} transition-all`}
+            className={`${baseStyles} ${className} ${showSuccess ? "animate-pulse-success bg-success" : ""} transition-all`}
         >
             {isAdding ? (
                 <span className="flex items-center justify-center gap-2">

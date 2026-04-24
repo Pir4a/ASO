@@ -32,10 +32,10 @@ export function ProductDetailClient({ product, category, relatedProducts }: Prod
           <ProductImageGallery productName={product.name} images={images} />
 
           <div className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Produit</p>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">{product.name}</h1>
-            <p className="text-sm leading-relaxed text-slate-600">{product.description}</p>
-            <p className="text-sm text-slate-500">SKU : {product.sku}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-foreground/60">Produit</p>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">{product.name}</h1>
+            <p className="text-sm leading-relaxed text-foreground/70">{product.description}</p>
+            <p className="text-sm text-foreground/60">SKU : {product.sku}</p>
             {category && (
               <Link href={`/categories/${category.slug}`} className="inline-flex text-sm font-semibold text-primary hover:underline">
                 {category.name}
@@ -47,11 +47,11 @@ export function ProductDetailClient({ product, category, relatedProducts }: Prod
 
             <div className="flex flex-wrap items-center gap-2">
               {outOfStock ? (
-                <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">Rupture de stock</span>
+                <span className="rounded-full bg-error/10 px-3 py-1 text-xs font-semibold text-error">Rupture de stock</span>
               ) : product.status === "low_stock" ? (
-                <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700">Stock faible</span>
+                <span className="rounded-full bg-warning/10 px-3 py-1 text-xs font-semibold text-warning">Stock faible</span>
               ) : (
-                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">En stock</span>
+                <span className="rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">En stock</span>
               )}
             </div>
 
@@ -62,13 +62,13 @@ export function ProductDetailClient({ product, category, relatedProducts }: Prod
                   <BuyNowButton productId={product.id} productName={product.name} />
                 </>
               ) : (
-                <button type="button" disabled className="rounded-md bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-500">
+                <button type="button" disabled className="rounded-md bg-foreground/10 px-4 py-2 text-sm font-semibold text-foreground/60">
                   Indisponible
                 </button>
               )}
               <Link
                 href="/contact"
-                className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:border-primary hover:text-primary"
+                className="rounded-md border border-foreground/10 px-4 py-2 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary"
               >
                 Demander un devis
               </Link>

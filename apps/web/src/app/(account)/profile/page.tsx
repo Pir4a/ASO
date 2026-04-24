@@ -12,19 +12,19 @@ export default function ProfilePage() {
     <AuthGuard>
       <div className="mx-auto max-w-4xl space-y-6">
         <div className="card p-6 space-y-2">
-          <h1 className="text-2xl font-semibold text-slate-900">Mon Profil</h1>
-          <p className="text-sm text-slate-600">
+          <h1 className="text-2xl font-semibold text-foreground">Mon Profil</h1>
+          <p className="text-sm text-foreground/70">
             Bienvenue sur votre page de profil.
           </p>
         </div>
         <div className="card p-6 space-y-3">
           {user ? (
             <div className="space-y-1">
-              <p className="text-slate-900 font-medium">{user.firstName} {user.lastName}</p>
-              <p className="text-slate-500 text-sm">{user.email}</p>
+              <p className="text-foreground font-medium">{user.firstName} {user.lastName}</p>
+              <p className="text-foreground/60 text-sm">{user.email}</p>
             </div>
           ) : (
-            <p className="text-slate-700">Chargement des informations...</p>
+            <p className="text-foreground/80">Chargement des informations...</p>
           )}
         </div>
 

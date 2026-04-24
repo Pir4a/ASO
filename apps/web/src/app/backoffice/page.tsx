@@ -432,16 +432,16 @@ function BackofficeDashboard() {
         onClick={() => setSection(key)}
         className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
           active
-            ? "bg-linear-to-r from-[#00a8b5] to-[#33bfc9] text-white shadow-md shadow-[#00a8b5]/20"
-            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+            ? "bg-linear-to-r from-primary to-primary-hover text-white shadow-md shadow-primary/20"
+            : "text-foreground/70 hover:bg-background hover:text-foreground"
         }`}
       >
-        <span className={active ? "text-white" : "text-slate-400 group-hover:text-[#00a8b5]"}>{meta.icon}</span>
+        <span className={active ? "text-white" : "text-foreground/50 group-hover:text-primary"}>{meta.icon}</span>
         <span className="flex-1 text-left">{meta.label}</span>
         {key === "messages" && contactMessages.length > 0 && (
           <span
             className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
-              active ? "bg-white/25 text-white" : "bg-rose-100 text-rose-700"
+              active ? "bg-white/25 text-white" : "bg-error/10 text-error"
             }`}
           >
             {contactMessages.length}
@@ -481,29 +481,29 @@ function BackofficeDashboard() {
   return (
     <div className="-mt-8 min-h-screen">
       {/* Page background tint */}
-      <div className="bg-linear-to-br from-slate-50 via-slate-50 to-[#d4f4f7]/30 py-6">
+      <div className="bg-linear-to-br from-background via-background to-background/30 py-6">
         <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
           {/* Sidebar */}
           <aside className="lg:sticky lg:top-20 lg:self-start">
             <div className="rounded-2xl bg-white p-4 shadow-[0_4px_6px_-1px_rgb(0,0,0,0.08),0_2px_4px_-2px_rgb(0,0,0,0.05)]">
-              <div className="mb-4 flex items-center gap-3 border-b border-slate-100 pb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-[#00a8b5] to-[#33bfc9] text-white shadow-md">
+              <div className="mb-4 flex items-center gap-3 border-b border-foreground/10 pb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-primary-hover text-white shadow-md">
                   <Icon.Shield className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-slate-900">Admin Panel</p>
-                  <p className="truncate text-[11px] text-slate-500">{user?.email ?? "admin"}</p>
+                  <p className="truncate text-sm font-semibold text-foreground">Admin Panel</p>
+                  <p className="truncate text-[11px] text-foreground/60">{user?.email ?? "admin"}</p>
                 </div>
               </div>
               <nav className="space-y-1">
                 {(Object.keys(SECTION_META) as Section[]).map((k) => navItem(k))}
               </nav>
-              <div className="mt-4 rounded-xl bg-linear-to-br from-[#00a8b5]/10 to-[#33bfc9]/5 p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#00a8b5]">Statut système</p>
-                <p className="mt-1 flex items-center gap-2 text-xs font-medium text-slate-700">
+              <div className="mt-4 rounded-xl bg-linear-to-br from-primary/10 to-primary-hover/5 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">Statut système</p>
+                <p className="mt-1 flex items-center gap-2 text-xs font-medium text-foreground/80">
                   <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/40 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
                   </span>
                   Tous les services actifs
                 </p>
@@ -516,15 +516,15 @@ function BackofficeDashboard() {
             {/* Top bar */}
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white px-5 py-4 shadow-[0_4px_6px_-1px_rgb(0,0,0,0.08),0_2px_4px_-2px_rgb(0,0,0,0.05)]">
               <div>
-                <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                <div className="flex items-center gap-2 text-xs font-medium text-foreground/60">
                   <span>Dashboard</span>
-                  <span className="text-slate-300">/</span>
-                  <span className="text-[#00a8b5]">{SECTION_META[section].label}</span>
+                  <span className="text-foreground/40">/</span>
+                  <span className="text-primary">{SECTION_META[section].label}</span>
                 </div>
-                <h1 className="text-xl font-bold text-slate-900">
+                <h1 className="text-xl font-bold text-foreground">
                   {section === "overview" ? `Bonjour ${user?.email?.split("@")[0] ?? "Admin"} 👋` : SECTION_META[section].label}
                 </h1>
-                <p className="text-xs text-slate-500 first-letter:capitalize">{today}</p>
+                <p className="text-xs text-foreground/60 first-letter:capitalize">{today}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -538,16 +538,16 @@ function BackofficeDashboard() {
                       section === "orders" ? loadAdminOrders(ordersPage, ordersStatusFilter) : Promise.resolve(),
                     ])
                   }
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-[#00a8b5] hover:text-[#00a8b5]"
+                  className="inline-flex items-center gap-2 rounded-lg border border-foreground/10 bg-white px-3 py-2 text-xs font-semibold text-foreground/80 transition hover:border-primary hover:text-primary"
                 >
                   <Icon.Refresh />
                   Rafraîchir
                 </button>
                 <div className="relative">
-                  <button className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-[#00a8b5] hover:text-[#00a8b5]">
+                  <button className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg border border-foreground/10 bg-white text-foreground/70 transition hover:border-primary hover:text-primary">
                     <Icon.Bell />
                     {contactMessages.length > 0 && (
-                      <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                      <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold text-white">
                         {contactMessages.length}
                       </span>
                     )}
@@ -561,8 +561,8 @@ function BackofficeDashboard() {
               <div
                 className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm shadow-sm ${
                   feedback.kind === "success"
-                    ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
-                    : "border border-rose-200 bg-rose-50 text-rose-800"
+                    ? "border border-success/30 bg-success/10 text-success"
+                    : "border border-error/30 bg-error/10 text-error"
                 }`}
               >
                 {feedback.kind === "success" ? <Icon.Check /> : <Icon.X />}
@@ -607,7 +607,7 @@ function BackofficeDashboard() {
                 </div>
 
                 {loadingDashboard ? (
-                  <p className="text-center text-sm text-slate-400">Chargement des indicateurs vente…</p>
+                  <p className="text-center text-sm text-foreground/50">Chargement des indicateurs vente…</p>
                 ) : dashboard ? (
                   <div className="grid gap-4 sm:grid-cols-2">
                     <StatCard
@@ -632,18 +632,18 @@ function BackofficeDashboard() {
                 <div className="grid gap-6 lg:grid-cols-3">
                   <Panel title="Répartition du catalogue" subtitle="Produits par catégorie" className="lg:col-span-2">
                     {categoryDist.length === 0 ? (
-                      <p className="py-8 text-center text-sm text-slate-400">Pas encore de données.</p>
+                      <p className="py-8 text-center text-sm text-foreground/50">Pas encore de données.</p>
                     ) : (
                       <div className="space-y-3">
                         {categoryDist.map((d) => (
                           <div key={d.name}>
                             <div className="mb-1 flex items-center justify-between text-xs">
-                              <span className="font-medium text-slate-700">{d.name}</span>
-                              <span className="font-semibold text-slate-500">{d.count}</span>
+                              <span className="font-medium text-foreground/80">{d.name}</span>
+                              <span className="font-semibold text-foreground/60">{d.count}</span>
                             </div>
-                            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                            <div className="h-2 overflow-hidden rounded-full bg-background">
                               <div
-                                className="h-full rounded-full bg-linear-to-r from-[#00a8b5] to-[#33bfc9]"
+                                className="h-full rounded-full bg-linear-to-r from-primary to-primary-hover"
                                 style={{ width: `${(d.count / maxDist) * 100}%` }}
                               />
                             </div>
@@ -655,27 +655,27 @@ function BackofficeDashboard() {
 
                   <Panel title="Alertes stock" subtitle="Produits à surveiller">
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between rounded-xl bg-rose-50 p-3">
+                      <div className="flex items-center justify-between rounded-xl bg-error/10 p-3">
                         <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Rupture</p>
-                          <p className="text-2xl font-bold text-rose-700">{outOfStockCount}</p>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-error">Rupture</p>
+                          <p className="text-2xl font-bold text-error">{outOfStockCount}</p>
                         </div>
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-error/10 text-error">
                           <Icon.X className="h-5 w-5" />
                         </div>
                       </div>
-                      <div className="flex items-center justify-between rounded-xl bg-amber-50 p-3">
+                      <div className="flex items-center justify-between rounded-xl bg-warning/10 p-3">
                         <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">Stock faible</p>
-                          <p className="text-2xl font-bold text-amber-700">{lowStockCount}</p>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-warning">Stock faible</p>
+                          <p className="text-2xl font-bold text-warning">{lowStockCount}</p>
                         </div>
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/10 text-warning">
                           <Icon.TrendUp className="h-5 w-5" />
                         </div>
                       </div>
                       <button
                         onClick={() => setSection("products")}
-                        className="w-full rounded-lg border border-slate-200 bg-white py-2 text-xs font-semibold text-slate-600 transition hover:border-[#00a8b5] hover:text-[#00a8b5]"
+                        className="w-full rounded-lg border border-foreground/10 bg-white py-2 text-xs font-semibold text-foreground/70 transition hover:border-primary hover:text-primary"
                       >
                         Voir les produits →
                       </button>
@@ -696,30 +696,30 @@ function BackofficeDashboard() {
                     actions={
                       <button
                         onClick={() => setSection("messages")}
-                        className="text-xs font-semibold text-[#00a8b5] hover:underline"
+                        className="text-xs font-semibold text-primary hover:underline"
                       >
                         Voir tout
                       </button>
                     }
                   >
                     {recentMessages.length === 0 ? (
-                      <p className="py-8 text-center text-sm text-slate-400">Aucun message pour le moment.</p>
+                      <p className="py-8 text-center text-sm text-foreground/50">Aucun message pour le moment.</p>
                     ) : (
-                      <ul className="-my-2 divide-y divide-slate-100">
+                      <ul className="-my-2 divide-y divide-foreground/10">
                         {recentMessages.map((m) => (
                           <li key={m.id} className="flex items-start gap-3 py-3">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#00a8b5]/10 text-[11px] font-bold uppercase text-[#00a8b5]">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold uppercase text-primary">
                               {m.email.slice(0, 2)}
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-2">
-                                <p className="truncate text-sm font-semibold text-slate-900">{m.subject}</p>
-                                <span className="shrink-0 text-[10px] text-slate-400">
+                                <p className="truncate text-sm font-semibold text-foreground">{m.subject}</p>
+                                <span className="shrink-0 text-[10px] text-foreground/50">
                                   {new Date(m.createdAt).toLocaleDateString("fr-FR")}
                                 </span>
                               </div>
-                              <p className="truncate text-xs text-slate-500">{m.email}</p>
-                              <p className="mt-1 line-clamp-1 text-xs text-slate-600">{m.message}</p>
+                              <p className="truncate text-xs text-foreground/60">{m.email}</p>
+                              <p className="mt-1 line-clamp-1 text-xs text-foreground/70">{m.message}</p>
                             </div>
                           </li>
                         ))}
@@ -734,43 +734,43 @@ function BackofficeDashboard() {
                           setSection("products");
                           setShowProductForm(true);
                         }}
-                        className="group flex flex-col items-start gap-2 rounded-xl border border-slate-200 bg-white p-4 text-left transition hover:border-[#00a8b5] hover:shadow-md"
+                        className="group flex flex-col items-start gap-2 rounded-xl border border-foreground/10 bg-white p-4 text-left transition hover:border-primary hover:shadow-md"
                       >
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#00a8b5]/10 text-[#00a8b5] transition group-hover:bg-[#00a8b5] group-hover:text-white">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
                           <Icon.Plus />
                         </div>
-                        <p className="text-sm font-semibold text-slate-900">Nouveau produit</p>
-                        <p className="text-xs text-slate-500">Ajouter au catalogue</p>
+                        <p className="text-sm font-semibold text-foreground">Nouveau produit</p>
+                        <p className="text-xs text-foreground/60">Ajouter au catalogue</p>
                       </button>
                       <button
                         onClick={() => setSection("categories")}
-                        className="group flex flex-col items-start gap-2 rounded-xl border border-slate-200 bg-white p-4 text-left transition hover:border-violet-500 hover:shadow-md"
+                        className="group flex flex-col items-start gap-2 rounded-xl border border-foreground/10 bg-white p-4 text-left transition hover:border-primary hover:shadow-md"
                       >
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-100 text-violet-600 transition group-hover:bg-violet-600 group-hover:text-white">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
                           <Icon.Categories />
                         </div>
-                        <p className="text-sm font-semibold text-slate-900">Catégories</p>
-                        <p className="text-xs text-slate-500">Organiser l'arborescence</p>
+                        <p className="text-sm font-semibold text-foreground">Catégories</p>
+                        <p className="text-xs text-foreground/60">Organiser l'arborescence</p>
                       </button>
                       <button
                         onClick={() => setSection("users")}
-                        className="group flex flex-col items-start gap-2 rounded-xl border border-slate-200 bg-white p-4 text-left transition hover:border-emerald-500 hover:shadow-md"
+                        className="group flex flex-col items-start gap-2 rounded-xl border border-foreground/10 bg-white p-4 text-left transition hover:border-success hover:shadow-md"
                       >
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 transition group-hover:bg-emerald-600 group-hover:text-white">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-success/10 text-success transition group-hover:bg-success group-hover:text-white">
                           <Icon.Users />
                         </div>
-                        <p className="text-sm font-semibold text-slate-900">Utilisateurs</p>
-                        <p className="text-xs text-slate-500">Gérer les comptes</p>
+                        <p className="text-sm font-semibold text-foreground">Utilisateurs</p>
+                        <p className="text-xs text-foreground/60">Gérer les comptes</p>
                       </button>
                       <button
                         onClick={() => setSection("messages")}
-                        className="group flex flex-col items-start gap-2 rounded-xl border border-slate-200 bg-white p-4 text-left transition hover:border-amber-500 hover:shadow-md"
+                        className="group flex flex-col items-start gap-2 rounded-xl border border-foreground/10 bg-white p-4 text-left transition hover:border-warning hover:shadow-md"
                       >
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-600 transition group-hover:bg-amber-600 group-hover:text-white">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-warning/10 text-warning transition group-hover:bg-warning group-hover:text-white">
                           <Icon.Messages />
                         </div>
-                        <p className="text-sm font-semibold text-slate-900">Messages</p>
-                        <p className="text-xs text-slate-500">Boîte de réception</p>
+                        <p className="text-sm font-semibold text-foreground">Messages</p>
+                        <p className="text-xs text-foreground/60">Boîte de réception</p>
                       </button>
                     </div>
                   </Panel>
@@ -814,17 +814,17 @@ function BackofficeDashboard() {
                   actions={
                     <>
                       <div className="relative">
-                        <Icon.Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Icon.Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/50" />
                         <input
                           value={productSearch}
                           onChange={(e) => setProductSearch(e.target.value)}
                           placeholder="Rechercher…"
-                          className="w-48 rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-3 text-xs text-slate-700 outline-none focus:border-[#00a8b5] focus:ring-2 focus:ring-[#00a8b5]/15"
+                          className="w-48 rounded-lg border border-foreground/10 bg-white py-1.5 pl-8 pr-3 text-xs text-foreground/80 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
                         />
                       </div>
                       <button
                         onClick={() => setShowProductForm((v) => !v)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a8b5] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#33bfc9]"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-primary-hover"
                       >
                         <Icon.Plus /> Ajouter
                       </button>
@@ -832,14 +832,14 @@ function BackofficeDashboard() {
                   }
                 >
                   {loadingProducts ? (
-                    <p className="py-8 text-center text-sm text-slate-400">Chargement…</p>
+                    <p className="py-8 text-center text-sm text-foreground/50">Chargement…</p>
                   ) : filteredProducts.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-slate-400">Aucun produit trouvé.</p>
+                    <p className="py-8 text-center text-sm text-foreground/50">Aucun produit trouvé.</p>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-sm">
                         <thead>
-                          <tr className="border-b border-slate-100 text-[11px] uppercase tracking-wider text-slate-500">
+                          <tr className="border-b border-foreground/10 text-[11px] uppercase tracking-wider text-foreground/60">
                             <th className="py-2 pr-4 font-semibold">Produit</th>
                             <th className="py-2 pr-4 font-semibold">SKU</th>
                             <th className="py-2 pr-4 font-semibold">Catégorie</th>
@@ -851,12 +851,12 @@ function BackofficeDashboard() {
                             <th className="py-2 pr-4 text-right font-semibold">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-foreground/10">
                           {filteredProducts.map((p) => (
-                            <tr key={p.id} className="transition hover:bg-slate-50">
+                            <tr key={p.id} className="transition hover:bg-background">
                               <td className="py-3 pr-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[10px] font-bold uppercase text-slate-500">
+                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-background text-[10px] font-bold uppercase text-foreground/60">
                                     {p.thumbnailUrl ? (
                                       // eslint-disable-next-line @next/next/no-img-element
                                       <img src={p.thumbnailUrl} alt={p.name ?? ""} className="h-full w-full rounded-lg object-cover" />
@@ -864,18 +864,18 @@ function BackofficeDashboard() {
                                       (p.name ?? "?").slice(0, 2)
                                     )}
                                   </div>
-                                  <span className="font-medium text-slate-800">{p.name ?? "—"}</span>
+                                  <span className="font-medium text-foreground">{p.name ?? "—"}</span>
                                 </div>
                               </td>
-                              <td className="py-3 pr-4 font-mono text-[11px] text-slate-500">{p.sku ?? "—"}</td>
-                              <td className="py-3 pr-4 text-slate-600">{p.category?.name ?? "—"}</td>
-                              <td className="py-3 pr-4 font-semibold text-slate-800">
+                              <td className="py-3 pr-4 font-mono text-[11px] text-foreground/60">{p.sku ?? "—"}</td>
+                              <td className="py-3 pr-4 text-foreground/70">{p.category?.name ?? "—"}</td>
+                              <td className="py-3 pr-4 font-semibold text-foreground">
                                 {typeof p.price === "number" ? `${p.price.toFixed(2)} €` : "—"}
                               </td>
-                              <td className="py-3 pr-4 text-xs text-slate-600">
+                              <td className="py-3 pr-4 text-xs text-foreground/70">
                                 {p.vatRate !== undefined && p.vatRate !== null ? `${p.vatRate} %` : "20 %"}
                               </td>
-                              <td className="py-3 pr-4 text-slate-700">{p.stock ?? 0}</td>
+                              <td className="py-3 pr-4 text-foreground/80">{p.stock ?? 0}</td>
                               <td className="py-3 pr-4">{productStatusBadge(p)}</td>
                               <td className="py-3 pr-4">
                                 <label className="inline-flex cursor-pointer items-center gap-2">
@@ -883,13 +883,13 @@ function BackofficeDashboard() {
                                     type="checkbox"
                                     checked={!!p.featured}
                                     onChange={() => toggleFeatured(p)}
-                                    className="h-4 w-4 rounded border-slate-300 text-[#00a8b5] focus:ring-[#00a8b5]"
+                                    className="h-4 w-4 rounded border-foreground/20 text-primary focus:ring-primary"
                                     aria-label={p.featured ? "Retirer des vedettes" : "Mettre en vedette"}
                                   />
                                   {p.featured ? (
                                     <Badge tone="violet">★ #{(p.featuredOrder ?? 0) + 1}</Badge>
                                   ) : (
-                                    <span className="text-xs text-slate-400">—</span>
+                                    <span className="text-xs text-foreground/50">—</span>
                                   )}
                                 </label>
                               </td>
@@ -919,31 +919,31 @@ function BackofficeDashboard() {
                       value={newCategory.name}
                       onChange={(e) => setNewCategory((p) => ({ ...p, name: e.target.value }))}
                       placeholder="Nom"
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#00a8b5] focus:ring-2 focus:ring-[#00a8b5]/15"
+                      className="rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
                     />
                     <input
                       value={newCategory.slug}
                       onChange={(e) => setNewCategory((p) => ({ ...p, slug: e.target.value }))}
                       placeholder="slug-url"
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-mono outline-none focus:border-[#00a8b5] focus:ring-2 focus:ring-[#00a8b5]/15"
+                      className="rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm font-mono outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
                     />
                     <input
                       value={newCategory.description}
                       onChange={(e) => setNewCategory((p) => ({ ...p, description: e.target.value }))}
                       placeholder="Description"
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#00a8b5] focus:ring-2 focus:ring-[#00a8b5]/15"
+                      className="rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
                     />
                     <input
                       value={newCategory.imageUrl}
                       onChange={(e) => setNewCategory((p) => ({ ...p, imageUrl: e.target.value }))}
                       placeholder="URL de l'image (bannière)"
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#00a8b5] focus:ring-2 focus:ring-[#00a8b5]/15"
+                      className="rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
                     />
                   </div>
                   <div className="mt-4 flex justify-end">
                     <button
                       onClick={createCategory}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a8b5] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#33bfc9]"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover"
                     >
                       <Icon.Plus /> Créer
                     </button>
@@ -956,17 +956,17 @@ function BackofficeDashboard() {
                   actions={
                     <>
                       <div className="relative">
-                        <Icon.Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Icon.Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/50" />
                         <input
                           value={categorySearch}
                           onChange={(e) => setCategorySearch(e.target.value)}
                           placeholder="Filtrer…"
-                          className="w-44 rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-3 text-xs outline-none focus:border-[#00a8b5] focus:ring-2 focus:ring-[#00a8b5]/15"
+                          className="w-44 rounded-lg border border-foreground/10 bg-white py-1.5 pl-8 pr-3 text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
                         />
                       </div>
                       {selectedCategoryIds.length > 0 && (
                         <>
-                          <span className="text-xs font-medium text-slate-500">
+                          <span className="text-xs font-medium text-foreground/60">
                             {selectedCategoryIds.length} sélectionnée{selectedCategoryIds.length > 1 ? "s" : ""}
                           </span>
                           <IconButton tone="emerald" onClick={() => bulkCategoryAction("activate")}>
@@ -984,12 +984,12 @@ function BackofficeDashboard() {
                   }
                 >
                   {filteredCategories.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-slate-400">Aucune catégorie.</p>
+                    <p className="py-8 text-center text-sm text-foreground/50">Aucune catégorie.</p>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-sm">
                         <thead>
-                          <tr className="border-b border-slate-100 text-[11px] uppercase tracking-wider text-slate-500">
+                          <tr className="border-b border-foreground/10 text-[11px] uppercase tracking-wider text-foreground/60">
                             <th className="w-10 py-2"></th>
                             <th className="py-2 pr-4 font-semibold">Ordre</th>
                             <th className="py-2 pr-4 font-semibold">Nom</th>
@@ -998,9 +998,9 @@ function BackofficeDashboard() {
                             <th className="py-2 pr-4 text-right font-semibold">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-foreground/10">
                           {filteredCategories.map((cat) => (
-                            <tr key={cat.id} className="transition hover:bg-slate-50">
+                            <tr key={cat.id} className="transition hover:bg-background">
                               <td className="py-3">
                                 <input
                                   type="checkbox"
@@ -1010,10 +1010,10 @@ function BackofficeDashboard() {
                                       e.target.checked ? [...prev, cat.id] : prev.filter((id) => id !== cat.id),
                                     )
                                   }
-                                  className="h-4 w-4 rounded border-slate-300 text-[#00a8b5] focus:ring-[#00a8b5]"
+                                  className="h-4 w-4 rounded border-foreground/20 text-primary focus:ring-primary"
                                 />
                               </td>
-                              <td className="py-3 pr-4 text-xs font-mono text-slate-500">#{cat.order}</td>
+                              <td className="py-3 pr-4 text-xs font-mono text-foreground/60">#{cat.order}</td>
                               <td className="py-3 pr-4">
                                 <div className="flex items-center gap-3">
                                   {cat.imageUrl ? (
@@ -1024,14 +1024,14 @@ function BackofficeDashboard() {
                                       className="h-10 w-14 shrink-0 rounded-md object-cover"
                                     />
                                   ) : (
-                                    <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-semibold text-slate-400">
+                                    <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded-md bg-background text-[10px] font-semibold text-foreground/50">
                                       —
                                     </div>
                                   )}
-                                  <span className="font-medium text-slate-800">{cat.name}</span>
+                                  <span className="font-medium text-foreground">{cat.name}</span>
                                 </div>
                               </td>
-                              <td className="py-3 pr-4 font-mono text-[11px] text-slate-500">{cat.slug}</td>
+                              <td className="py-3 pr-4 font-mono text-[11px] text-foreground/60">{cat.slug}</td>
                               <td className="py-3 pr-4">
                                 {cat.isActive ? <Badge tone="emerald">Active</Badge> : <Badge tone="slate">Inactive</Badge>}
                               </td>
@@ -1090,7 +1090,7 @@ function BackofficeDashboard() {
                           setOrdersStatusFilter(e.target.value);
                           setOrdersPage(1);
                         }}
-                        className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none focus:border-[#00a8b5]"
+                        className="rounded-lg border border-foreground/10 bg-white px-2 py-1.5 text-xs outline-none focus:border-primary"
                       >
                         <option value="">Tous statuts</option>
                         <option value="pending">En attente</option>
@@ -1103,14 +1103,14 @@ function BackofficeDashboard() {
                   }
                 >
                   {loadingOrders ? (
-                    <p className="py-8 text-center text-sm text-slate-400">Chargement…</p>
+                    <p className="py-8 text-center text-sm text-foreground/50">Chargement…</p>
                   ) : adminOrders.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-slate-400">Aucune commande.</p>
+                    <p className="py-8 text-center text-sm text-foreground/50">Aucune commande.</p>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-sm">
                         <thead>
-                          <tr className="border-b border-slate-100 text-[11px] uppercase tracking-wider text-slate-500">
+                          <tr className="border-b border-foreground/10 text-[11px] uppercase tracking-wider text-foreground/60">
                             <th className="py-2 pr-3 font-semibold">Date</th>
                             <th className="py-2 pr-3 font-semibold">Client</th>
                             <th className="py-2 pr-3 font-semibold">Statut</th>
@@ -1119,25 +1119,25 @@ function BackofficeDashboard() {
                             <th className="py-2 text-right font-semibold">Voir</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-foreground/10">
                           {adminOrders.map((o) => (
-                            <tr key={o.id} className="transition hover:bg-slate-50">
-                              <td className="py-2.5 pr-3 text-xs text-slate-600">
+                            <tr key={o.id} className="transition hover:bg-background">
+                              <td className="py-2.5 pr-3 text-xs text-foreground/70">
                                 {new Date(o.createdAt).toLocaleString("fr-FR")}
                               </td>
-                              <td className="max-w-[10rem] truncate py-2.5 pr-3 text-xs text-slate-800">
+                              <td className="max-w-[10rem] truncate py-2.5 pr-3 text-xs text-foreground">
                                 {o.customerEmail ?? o.userId.slice(0, 8) + "…"}
                               </td>
                               <td className="py-2.5 pr-3">{orderStatusBadge(o.status)}</td>
-                              <td className="py-2.5 pr-3 font-semibold text-slate-900">
+                              <td className="py-2.5 pr-3 font-semibold text-foreground">
                                 {o.total.toFixed(2)} {o.currency}
                               </td>
-                              <td className="py-2.5 pr-3 text-xs text-slate-500">{o.lineCount}</td>
+                              <td className="py-2.5 pr-3 text-xs text-foreground/60">{o.lineCount}</td>
                               <td className="py-2.5 text-right">
                                 <button
                                   type="button"
                                   onClick={() => void openOrderDetail(o.id)}
-                                  className="text-xs font-semibold text-[#00a8b5] hover:underline"
+                                  className="text-xs font-semibold text-primary hover:underline"
                                 >
                                   Détail
                                 </button>
@@ -1149,8 +1149,8 @@ function BackofficeDashboard() {
                     </div>
                   )}
                   {ordersMeta && ordersMeta.totalPages > 1 ? (
-                    <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
-                      <span className="text-slate-500">
+                    <div className="mt-4 flex items-center justify-between border-t border-foreground/10 pt-3 text-xs">
+                      <span className="text-foreground/60">
                         Page {ordersMeta.page} / {ordersMeta.totalPages}
                       </span>
                       <div className="flex gap-2">
@@ -1158,7 +1158,7 @@ function BackofficeDashboard() {
                           type="button"
                           disabled={ordersPage <= 1}
                           onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
-                          className="rounded-lg border border-slate-200 px-3 py-1 font-semibold text-slate-700 disabled:opacity-40"
+                          className="rounded-lg border border-foreground/10 px-3 py-1 font-semibold text-foreground/80 disabled:opacity-40"
                         >
                           Précédent
                         </button>
@@ -1166,7 +1166,7 @@ function BackofficeDashboard() {
                           type="button"
                           disabled={ordersPage >= ordersMeta.totalPages}
                           onClick={() => setOrdersPage((p) => p + 1)}
-                          className="rounded-lg border border-slate-200 px-3 py-1 font-semibold text-slate-700 disabled:opacity-40"
+                          className="rounded-lg border border-foreground/10 px-3 py-1 font-semibold text-foreground/80 disabled:opacity-40"
                         >
                           Suivant
                         </button>
@@ -1178,22 +1178,22 @@ function BackofficeDashboard() {
                 <div className="space-y-4">
                   <Panel title="Détail commande" subtitle="Lignes, historique de statut">
                     {loadingOrderDetail ? (
-                      <p className="text-center text-sm text-slate-400">Chargement…</p>
+                      <p className="text-center text-sm text-foreground/50">Chargement…</p>
                     ) : !orderDetail ? (
-                      <p className="text-center text-sm text-slate-400">
+                      <p className="text-center text-sm text-foreground/50">
                         Sélectionnez une commande pour afficher le détail.
                       </p>
                     ) : (
                       <div className="space-y-4 text-sm">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="font-mono text-xs text-slate-500">{orderDetail.id}</p>
+                          <p className="font-mono text-xs text-foreground/60">{orderDetail.id}</p>
                           {orderStatusBadge(orderDetail.status)}
                         </div>
-                        <p className="text-lg font-bold text-slate-900">
+                        <p className="text-lg font-bold text-foreground">
                           {orderDetail.total.toFixed(2)} {orderDetail.currency}
                         </p>
                         <div>
-                          <p className="mb-1 text-xs font-semibold uppercase text-slate-500">Changer le statut</p>
+                          <p className="mb-1 text-xs font-semibold uppercase text-foreground/60">Changer le statut</p>
                           <div className="flex flex-wrap gap-2">
                             {(["pending", "processing", "shipped", "delivered", "cancelled"] as const).map((st) => (
                               <button
@@ -1201,7 +1201,7 @@ function BackofficeDashboard() {
                                 type="button"
                                 disabled={orderDetail.status === st}
                                 onClick={() => void patchOrderStatus(orderDetail.id, st)}
-                                className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-700 transition hover:border-[#00a8b5] hover:text-[#00a8b5] disabled:cursor-not-allowed disabled:opacity-40"
+                                className="rounded-lg border border-foreground/10 px-2 py-1 text-xs font-semibold text-foreground/80 transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
                               >
                                 {st}
                               </button>
@@ -1209,12 +1209,12 @@ function BackofficeDashboard() {
                           </div>
                         </div>
                         <div>
-                          <p className="mb-1 text-xs font-semibold uppercase text-slate-500">Historique</p>
-                          <ul className="max-h-40 space-y-1 overflow-y-auto text-xs text-slate-600">
+                          <p className="mb-1 text-xs font-semibold uppercase text-foreground/60">Historique</p>
+                          <ul className="max-h-40 space-y-1 overflow-y-auto text-xs text-foreground/70">
                             {(orderDetail.statusHistory ?? []).map((h, i) => (
-                              <li key={`${h.at}-${i}`} className="flex justify-between gap-2 border-b border-slate-50 py-1">
+                              <li key={`${h.at}-${i}`} className="flex justify-between gap-2 border-b border-foreground/10 py-1">
                                 <span>{orderStatusBadge(h.status)}</span>
-                                <span className="shrink-0 text-slate-400">
+                                <span className="shrink-0 text-foreground/50">
                                   {new Date(h.at).toLocaleString("fr-FR")}
                                 </span>
                               </li>
@@ -1222,12 +1222,12 @@ function BackofficeDashboard() {
                           </ul>
                         </div>
                         <div>
-                          <p className="mb-1 text-xs font-semibold uppercase text-slate-500">Lignes</p>
+                          <p className="mb-1 text-xs font-semibold uppercase text-foreground/60">Lignes</p>
                           <ul className="space-y-2 text-xs">
                             {orderDetail.items.map((it) => (
-                              <li key={it.id} className="flex justify-between gap-2 rounded-lg bg-slate-50 px-2 py-2">
-                                <span className="min-w-0 truncate font-medium text-slate-800">{it.productName}</span>
-                                <span className="shrink-0 font-mono text-slate-500">
+                              <li key={it.id} className="flex justify-between gap-2 rounded-lg bg-background px-2 py-2">
+                                <span className="min-w-0 truncate font-medium text-foreground">{it.productName}</span>
+                                <span className="shrink-0 font-mono text-foreground/60">
                                   ×{it.quantity} · {(it.price * it.quantity).toFixed(2)} €
                                 </span>
                               </li>
@@ -1256,18 +1256,18 @@ function BackofficeDashboard() {
                   actions={
                     <>
                       <div className="relative">
-                        <Icon.Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Icon.Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/50" />
                         <input
                           value={search}
                           onChange={(e) => setSearch(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && loadUsers(search)}
                           placeholder="Rechercher un email…"
-                          className="w-60 rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-3 text-xs outline-none focus:border-[#00a8b5] focus:ring-2 focus:ring-[#00a8b5]/15"
+                          className="w-60 rounded-lg border border-foreground/10 bg-white py-1.5 pl-8 pr-3 text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
                         />
                       </div>
                       <button
                         onClick={() => loadUsers(search)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a8b5] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#33bfc9]"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-primary-hover"
                       >
                         Rechercher
                       </button>
@@ -1275,14 +1275,14 @@ function BackofficeDashboard() {
                   }
                 >
                   {loadingUsers ? (
-                    <p className="py-8 text-center text-sm text-slate-400">Chargement…</p>
+                    <p className="py-8 text-center text-sm text-foreground/50">Chargement…</p>
                   ) : users.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-slate-400">Aucun utilisateur.</p>
+                    <p className="py-8 text-center text-sm text-foreground/50">Aucun utilisateur.</p>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-sm">
                         <thead>
-                          <tr className="border-b border-slate-100 text-[11px] uppercase tracking-wider text-slate-500">
+                          <tr className="border-b border-foreground/10 text-[11px] uppercase tracking-wider text-foreground/60">
                             <th className="py-2 pr-4 font-semibold">Utilisateur</th>
                             <th className="py-2 pr-4 font-semibold">Rôle</th>
                             <th className="py-2 pr-4 font-semibold">Statut</th>
@@ -1290,15 +1290,15 @@ function BackofficeDashboard() {
                             <th className="py-2 pr-4 text-right font-semibold">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-foreground/10">
                           {users.map((u) => (
-                            <tr key={u.id} className="transition hover:bg-slate-50">
+                            <tr key={u.id} className="transition hover:bg-background">
                               <td className="py-3 pr-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-[#00a8b5]/20 to-[#33bfc9]/10 text-[11px] font-bold uppercase text-[#00a8b5]">
+                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-primary-hover/10 text-[11px] font-bold uppercase text-primary">
                                     {u.email.slice(0, 2)}
                                   </div>
-                                  <span className="font-medium text-slate-800">{u.email}</span>
+                                  <span className="font-medium text-foreground">{u.email}</span>
                                 </div>
                               </td>
                               <td className="py-3 pr-4">
@@ -1319,7 +1319,7 @@ function BackofficeDashboard() {
                                   <Badge tone="rose">Inactif</Badge>
                                 )}
                               </td>
-                              <td className="py-3 pr-4 text-xs text-slate-500">
+                              <td className="py-3 pr-4 text-xs text-foreground/60">
                                 {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString("fr-FR") : "Jamais"}
                               </td>
                               <td className="py-3 pr-4">
@@ -1363,45 +1363,45 @@ function BackofficeDashboard() {
                 actions={
                   <button
                     onClick={loadContactMessages}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#00a8b5] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#33bfc9]"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-primary-hover"
                   >
                     <Icon.Refresh /> Rafraîchir
                   </button>
                 }
               >
                 {loadingMessages ? (
-                  <p className="py-8 text-center text-sm text-slate-400">Chargement…</p>
+                  <p className="py-8 text-center text-sm text-foreground/50">Chargement…</p>
                 ) : contactMessages.length === 0 ? (
                   <div className="py-12 text-center">
-                    <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                    <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-background text-foreground/50">
                       <Icon.Messages className="h-7 w-7" />
                     </div>
-                    <p className="text-sm text-slate-500">Aucun message pour le moment.</p>
+                    <p className="text-sm text-foreground/60">Aucun message pour le moment.</p>
                   </div>
                 ) : (
-                  <ul className="-my-3 divide-y divide-slate-100">
+                  <ul className="-my-3 divide-y divide-foreground/10">
                     {contactMessages
                       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                       .map((msg) => (
                         <li key={msg.id} className="py-4">
                           <div className="flex items-start gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#00a8b5]/10 text-xs font-bold uppercase text-[#00a8b5]">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold uppercase text-primary">
                               {msg.email.slice(0, 2)}
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center justify-between gap-2">
-                                <p className="text-sm font-semibold text-slate-900">{msg.subject}</p>
-                                <span className="text-[11px] text-slate-400">
+                                <p className="text-sm font-semibold text-foreground">{msg.subject}</p>
+                                <span className="text-[11px] text-foreground/50">
                                   {new Date(msg.createdAt).toLocaleString("fr-FR")}
                                 </span>
                               </div>
                               <a
                                 href={`mailto:${msg.email}`}
-                                className="text-xs font-medium text-[#00a8b5] hover:underline"
+                                className="text-xs font-medium text-primary hover:underline"
                               >
                                 {msg.email}
                               </a>
-                              <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{msg.message}</p>
+                              <p className="mt-2 whitespace-pre-wrap text-sm text-foreground/80">{msg.message}</p>
                             </div>
                           </div>
                         </li>

@@ -125,8 +125,8 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
   };
 
   const inputCls =
-    "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-[#00a8b5] focus:ring-2 focus:ring-[#00a8b5]/15";
-  const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500";
+    "w-full rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
+  const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-foreground/60";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -226,24 +226,24 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
       </div>
 
       <div className="flex items-end">
-        <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
+        <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground/80">
           <input
             type="checkbox"
             checked={featured}
             onChange={(e) => setFeatured(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-[#00a8b5] focus:ring-[#00a8b5]"
+            className="h-4 w-4 rounded border-foreground/20 text-primary focus:ring-primary"
           />
           Mettre en vedette (sélection homepage)
         </label>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <div className="rounded-lg border border-error/30 bg-error/10 px-3 py-2 text-sm text-error">
           {error}
         </div>
       )}
       {success && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        <div className="rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-sm text-success">
           {success}
         </div>
       )}
@@ -252,7 +252,7 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#00a8b5] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#33bfc9] disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover disabled:opacity-50"
         >
           {loading ? "Ajout…" : "Ajouter le produit"}
         </button>

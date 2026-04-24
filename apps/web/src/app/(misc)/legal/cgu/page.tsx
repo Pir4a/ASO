@@ -8,11 +8,11 @@ export default async function CguPage() {
   return (
     <div className="space-y-4">
       <div className="card p-6 space-y-2">
-        <h1 className="text-2xl font-semibold text-slate-900">{t("legal.cgu.title")}</h1>
-        <p className="text-sm text-slate-600">{t("legal.cgu.subtitle")}</p>
+        <h1 className="text-2xl font-semibold text-foreground">{t("legal.cgu.title")}</h1>
+        <p className="text-sm text-foreground/70">{t("legal.cgu.subtitle")}</p>
       </div>
       <div className="card p-6">
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-foreground/70">
           {t("legal.cgu.subtitle")}
         </p>
       </div>

@@ -8,11 +8,11 @@ export default async function MentionsPage() {
   return (
     <div className="space-y-4">
       <div className="card p-6 space-y-2">
-        <h1 className="text-2xl font-semibold text-slate-900">{t("legal.mentions.title")}</h1>
-        <p className="text-sm text-slate-600">{t("legal.mentions.subtitle")}</p>
+        <h1 className="text-2xl font-semibold text-foreground">{t("legal.mentions.title")}</h1>
+        <p className="text-sm text-foreground/70">{t("legal.mentions.subtitle")}</p>
       </div>
       <div className="card p-6">
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-foreground/70">
           {t("legal.mentions.subtitle")}
         </p>
       </div>

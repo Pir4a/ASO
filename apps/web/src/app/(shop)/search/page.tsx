@@ -112,33 +112,33 @@ export default async function SearchPage({
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,17rem)_1fr] lg:items-start">
         <aside className="card space-y-4 p-5 lg:sticky lg:top-24">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-foreground/60">
             {t("search.filtersTitle")}
           </h2>
           <form method="get" action="/search" className="space-y-4">
             <div>
-              <label htmlFor="search-q" className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="search-q" className="block text-xs font-semibold text-foreground/80">
                 {t("search.queryLabel")}
               </label>
-              <p className="mb-1 text-[11px] text-slate-500">{t("search.queryHint")}</p>
+              <p className="mb-1 text-[11px] text-foreground/60">{t("search.queryHint")}</p>
               <input
                 id="search-q"
                 name="q"
                 defaultValue={qDefault}
                 placeholder={t("header.searchPlaceholder")}
-                className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-primary focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
               />
             </div>
 
             <div>
-              <label htmlFor="search-cat" className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="search-cat" className="block text-xs font-semibold text-foreground/80">
                 {t("search.category")}
               </label>
               <select
                 id="search-cat"
                 name="categorySlug"
                 defaultValue={categoryDefault}
-                className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-primary focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
               >
                 <option value="">{t("search.categoryAll")}</option>
                 {categories.map((c) => {
@@ -155,7 +155,7 @@ export default async function SearchPage({
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label htmlFor="search-min" className="block text-xs font-semibold text-slate-700">
+                <label htmlFor="search-min" className="block text-xs font-semibold text-foreground/80">
                   {t("search.minPrice")}
                 </label>
                 <input
@@ -165,11 +165,11 @@ export default async function SearchPage({
                   min={0}
                   step="0.01"
                   defaultValue={minDefault}
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm text-slate-900 shadow-sm focus:border-primary focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-foreground/10 bg-white px-2 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
                 />
               </div>
               <div>
-                <label htmlFor="search-max" className="block text-xs font-semibold text-slate-700">
+                <label htmlFor="search-max" className="block text-xs font-semibold text-foreground/80">
                   {t("search.maxPrice")}
                 </label>
                 <input
@@ -179,25 +179,25 @@ export default async function SearchPage({
                   min={0}
                   step="0.01"
                   defaultValue={maxDefault}
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm text-slate-900 shadow-sm focus:border-primary focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-foreground/10 bg-white px-2 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
                 />
               </div>
             </div>
 
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-800">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
               <input type="checkbox" name="inStockOnly" value="1" defaultChecked={inStockOnly} />
               {t("search.inStockOnly")}
             </label>
 
             <div>
-              <label htmlFor="search-sort" className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="search-sort" className="block text-xs font-semibold text-foreground/80">
                 {t("search.sortLabel")}
               </label>
               <select
                 id="search-sort"
                 name="sort"
                 defaultValue={sort}
-                className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-primary focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
               >
                 {PRODUCT_SEARCH_SORT.map((v) => (
                   <option key={v} value={v}>
@@ -217,7 +217,7 @@ export default async function SearchPage({
               </button>
               <Link
                 href="/search"
-                className="rounded-lg border border-slate-200 bg-white py-2 text-center text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary hover:text-primary"
+                className="rounded-lg border border-foreground/10 bg-white py-2 text-center text-sm font-semibold text-foreground/80 shadow-sm transition hover:border-primary hover:text-primary"
               >
                 {t("search.reset")}
               </Link>
@@ -226,11 +226,11 @@ export default async function SearchPage({
         </aside>
 
         <section className="card space-y-4 p-6">
-          <div className="flex flex-col gap-1 border-b border-slate-100 pb-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-            <p className="text-sm font-medium text-slate-800">
+          <div className="flex flex-col gap-1 border-b border-foreground/10 pb-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+            <p className="text-sm font-medium text-foreground">
               {t("search.resultsLine").replace("{total}", String(meta.total))}
             </p>
-            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-foreground/60">
               {meta.tookMs !== undefined ? (
                 <span>{t("search.tookMs").replace("{ms}", String(meta.tookMs))}</span>
               ) : null}
@@ -239,11 +239,11 @@ export default async function SearchPage({
           </div>
 
           {!apiOk ? (
-            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <p className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
               {t("search.apiUnavailable")}
             </p>
           ) : products.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 py-12 text-center text-sm text-slate-500">
+            <p className="rounded-xl border border-dashed border-foreground/10 bg-background py-12 text-center text-sm text-foreground/60">
               {t("search.empty")}
             </p>
           ) : (

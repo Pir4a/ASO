@@ -8,14 +8,14 @@ export function Footer() {
   const t = useT();
 
   return (
-    <footer className="bg-foreground text-slate-100 mt-16">
+    <footer className="bg-foreground text-foreground/20 mt-16">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-3 md:items-start">
         <div className="space-y-3">
           <p className="font-heading text-lg font-semibold text-white">Althea Systems</p>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-foreground/40">
             © {new Date().getFullYear()} Althea Systems. {t("footer.rights")}
           </p>
-          <div className="flex items-center gap-2 text-sm text-slate-300">
+          <div className="flex items-center gap-2 text-sm text-foreground/40">
             <span
               aria-hidden="true"
               className="h-2 w-2 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.5)]"
@@ -27,9 +27,9 @@ export function Footer() {
         {/* Legal links — visible on desktop, hidden on mobile (already in burger menu) */}
         <nav
           aria-label={t("footer.legal")}
-          className="hidden flex-col gap-2 text-sm text-slate-300 md:flex"
+          className="hidden flex-col gap-2 text-sm text-foreground/40 md:flex"
         >
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <span className="text-xs font-semibold uppercase tracking-wide text-foreground/50">
             {t("footer.legal")}
           </span>
           <Link href="/legal/cgu" className="hover:text-primary-hover focus:outline-none focus:text-primary-hover transition-colors">
@@ -44,7 +44,7 @@ export function Footer() {
         </nav>
 
         <div className="space-y-3">
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <span className="text-xs font-semibold uppercase tracking-wide text-foreground/50">
             {t("social.followUs")}
           </span>
           <SocialLinks variant="dark" />

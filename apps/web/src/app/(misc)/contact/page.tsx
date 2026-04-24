@@ -24,7 +24,7 @@ export default function ContactPage() {
       <div
         style={{
           borderRadius: 20,
-          background: "linear-gradient(135deg, #00a8b5, #003d5c)",
+          background: "var(--foreground)",
           padding: "28px 32px",
           color: "white",
         }}
@@ -45,8 +45,8 @@ export default function ContactPage() {
           style={{
             flex: 1, padding: "10px 0", borderRadius: 10, border: "none", cursor: "pointer",
             fontSize: 14, fontWeight: 600, transition: "all 0.2s",
-            background: tab === "chat" ? "linear-gradient(135deg, #00a8b5, #33bfc9)" : "transparent",
-            color: tab === "chat" ? "white" : "#64748b",
+            background: tab === "chat" ? "var(--primary)" : "transparent",
+            color: tab === "chat" ? "white" : "color-mix(in srgb, var(--foreground) 70%, transparent)",
           }}
         >
           {t("contact.tabChat")}
@@ -57,8 +57,8 @@ export default function ContactPage() {
           style={{
             flex: 1, padding: "10px 0", borderRadius: 10, border: "none", cursor: "pointer",
             fontSize: 14, fontWeight: 600, transition: "all 0.2s",
-            background: tab === "form" ? "linear-gradient(135deg, #00a8b5, #33bfc9)" : "transparent",
-            color: tab === "form" ? "white" : "#64748b",
+            background: tab === "form" ? "var(--primary)" : "transparent",
+            color: tab === "form" ? "white" : "color-mix(in srgb, var(--foreground) 70%, transparent)",
           }}
         >
           {t("contact.tabForm")}
@@ -108,14 +108,14 @@ function ChatPanel() {
   return (
     <div className="card" style={{ borderRadius: 20, overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 420 }}>
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 8px", display: "flex", flexDirection: "column", gap: 12, background: "#f8fafb" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 8px", display: "flex", flexDirection: "column", gap: 12, background: "var(--background)" }}>
         {messages.map((m) => (
           <div key={m.id} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
             <div style={{
               maxWidth: "78%", padding: "10px 16px", fontSize: 14, lineHeight: 1.55, whiteSpace: "pre-wrap", wordBreak: "break-word",
               borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-              background: m.role === "user" ? "linear-gradient(135deg,#00a8b5,#33bfc9)" : "white",
-              color: m.role === "user" ? "white" : "#1f2937",
+              background: m.role === "user" ? "var(--primary)" : "white",
+              color: m.role === "user" ? "white" : "var(--foreground)",
               boxShadow: m.role === "user" ? "none" : "0 1px 4px rgba(0,0,0,0.06)",
             }}>{m.content}</div>
           </div>
@@ -134,21 +134,21 @@ function ChatPanel() {
 
       {/* Suggestions */}
       {showSuggestions && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 20px", background: "#f8fafb" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 20px", background: "var(--background)" }}>
           {suggestions.map((s) => (
             <button key={s} onClick={() => send(s)} style={{
-              padding: "6px 14px", borderRadius: 20, border: "1.5px solid #d4f4f7", background: "white",
-              color: "#00a8b5", fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap",
+              padding: "6px 14px", borderRadius: 20, border: "1.5px solid var(--background)", background: "white",
+              color: "var(--primary)", fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap",
             }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#d4f4f7"; e.currentTarget.style.borderColor = "#00a8b5"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "white"; e.currentTarget.style.borderColor = "#d4f4f7"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--background)"; e.currentTarget.style.borderColor = "var(--primary-hover)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "white"; e.currentTarget.style.borderColor = "var(--background)"; }}
             >{s}</button>
           ))}
         </div>
       )}
 
       {/* Input */}
-      <div style={{ padding: "14px 20px", borderTop: "1px solid #e5e7eb", background: "white", display: "flex", gap: 10, alignItems: "center" }}>
+      <div style={{ padding: "14px 20px", borderTop: "1px solid color-mix(in srgb, var(--foreground) 10%, transparent)", background: "white", display: "flex", gap: 10, alignItems: "center" }}>
         <input
           id="contact-chat-input"
           type="text"
@@ -157,9 +157,9 @@ function ChatPanel() {
           onKeyDown={(e) => e.key === "Enter" && send()}
           placeholder={t("contact.chatPlaceholder")}
           disabled={isLoading}
-          style={{ flex: 1, padding: "10px 18px", borderRadius: 24, border: "1.5px solid #e5e7eb", outline: "none", fontSize: 14, color: "#1f2937", background: "#f9fafb", transition: "border-color 0.15s" }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = "#00a8b5")}
-          onBlur={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
+          style={{ flex: 1, padding: "10px 18px", borderRadius: 24, border: "1.5px solid color-mix(in srgb, var(--foreground) 10%, transparent)", outline: "none", fontSize: 14, color: "var(--foreground)", background: "var(--background)", transition: "border-color 0.15s" }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = "var(--primary)")}
+          onBlur={(e) => (e.currentTarget.style.borderColor = "color-mix(in srgb, var(--foreground) 10%, transparent)")}
         />
         <button
           id="contact-chat-send"
@@ -167,7 +167,7 @@ function ChatPanel() {
           disabled={!input.trim() || isLoading}
           style={{
             width: 42, height: 42, borderRadius: "50%", border: "none", flexShrink: 0,
-            background: input.trim() && !isLoading ? "linear-gradient(135deg,#00a8b5,#003d5c)" : "#e5e7eb",
+            background: input.trim() && !isLoading ? "var(--primary)" : "color-mix(in srgb, var(--foreground) 10%, transparent)",
             cursor: input.trim() && !isLoading ? "pointer" : "default",
             display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.15s",
           }}
@@ -177,7 +177,7 @@ function ChatPanel() {
       </div>
 
       <style>{`
-        .chat-dot { width:8px;height:8px;border-radius:50%;background:#00a8b5;animation:chatBounce .6s infinite alternate; }
+        .chat-dot { width:8px;height:8px;border-radius:50%;background:var(--primary);animation:chatBounce .6s infinite alternate; }
         @keyframes chatBounce { from{opacity:.3;transform:translateY(0)} to{opacity:1;transform:translateY(-4px)} }
       `}</style>
     </div>
@@ -221,19 +221,19 @@ function ContactForm() {
         id="contact-subject" required minLength={3} maxLength={120}
         value={subject} onChange={(e) => setSubject(e.target.value)}
         placeholder={t("contact.formSubject")}
-        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+        className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
       />
       <input
         id="contact-email" type="email" required
         value={email} onChange={(e) => setEmail(e.target.value)}
         placeholder={t("contact.formEmail")}
-        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+        className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
       />
       <textarea
         id="contact-message" required minLength={10} maxLength={2000}
         value={message} onChange={(e) => setMessage(e.target.value)}
         placeholder={t("contact.formMessage")}
-        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+        className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
         rows={5}
       />
       <button
@@ -242,7 +242,7 @@ function ContactForm() {
       >
         {loading ? t("contact.formSending") : t("contact.formSend")}
       </button>
-      {feedback && <p className="text-sm text-slate-600">{feedback}</p>}
+      {feedback && <p className="text-sm text-foreground/70">{feedback}</p>}
     </form>
   );
 }

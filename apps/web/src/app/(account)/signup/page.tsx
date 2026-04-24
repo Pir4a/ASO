@@ -52,8 +52,8 @@ export default function SignupPage() {
   return (
     <div className="mx-auto max-w-md space-y-4">
       <div className="card p-6 space-y-2">
-        <h1 className="text-2xl font-semibold text-slate-900">Inscription</h1>
-        <p className="text-sm text-slate-600">
+        <h1 className="text-2xl font-semibold text-foreground">Inscription</h1>
+        <p className="text-sm text-foreground/70">
           Créez votre compte en quelques secondes.
         </p>
       </div>
@@ -62,7 +62,7 @@ export default function SignupPage() {
           <input
             type="text"
             placeholder="Prénom"
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+            className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             required
@@ -70,7 +70,7 @@ export default function SignupPage() {
           <input
             type="text"
             placeholder="Nom"
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+            className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             required
@@ -79,7 +79,7 @@ export default function SignupPage() {
         <input
           type="email"
           placeholder="Email"
-          className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+          className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -88,17 +88,17 @@ export default function SignupPage() {
           <input
             type="password"
             placeholder="Mot de passe"
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none"
+            className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={8}
           />
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-foreground/60 mt-1">
             Au moins 8 caractères.
           </p>
         </div>
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-sm text-error">{error}</p>}
         <button
           type="submit"
           className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover disabled:opacity-50"

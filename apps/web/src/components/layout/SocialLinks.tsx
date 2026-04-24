@@ -49,8 +49,8 @@ export function SocialLinks({ variant = "dark" }: SocialLinksProps) {
 
   const baseClass =
     variant === "dark"
-      ? "text-slate-300 hover:text-white focus:text-white"
-      : "text-slate-500 hover:text-primary focus:text-primary";
+      ? "text-foreground/40 hover:text-white focus:text-white"
+      : "text-foreground/60 hover:text-primary focus:text-primary";
 
   return (
     <ul className="flex items-center gap-3" aria-label={t("social.followUs")}>

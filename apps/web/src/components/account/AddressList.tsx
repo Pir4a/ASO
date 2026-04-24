@@ -81,7 +81,7 @@ export function AddressList() {
             <div className="card p-4">
                 <h3 className="text-lg font-medium mb-4">New Address</h3>
                 {error && (
-                    <p className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    <p className="mb-3 rounded-md border border-error/30 bg-error/10 px-3 py-2 text-sm text-error">
                         {error}
                     </p>
                 )}
@@ -116,7 +116,7 @@ export function AddressList() {
             </div>
 
             {addresses.length === 0 ? (
-                <p className="text-slate-500 text-sm">No saved addresses.</p>
+                <p className="text-foreground/60 text-sm">No saved addresses.</p>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {addresses.map((addr) => (
@@ -125,11 +125,11 @@ export function AddressList() {
                                 <p className="font-medium">{addr.street}</p>
                                 <p>{addr.city}, {addr.postalCode}</p>
                                 <p>{addr.country}</p>
-                                {addr.phone && <p className="text-slate-500 text-xs mt-1">{addr.phone}</p>}
+                                {addr.phone && <p className="text-foreground/60 text-xs mt-1">{addr.phone}</p>}
                             </div>
                             <div className="mt-3 flex space-x-3 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => setEditingAddress(addr)} className="text-blue-600 hover:underline">Edit</button>
-                                <button onClick={() => handleDelete(addr.id)} className="text-red-600 hover:underline">Delete</button>
+                                <button onClick={() => setEditingAddress(addr)} className="text-primary hover:underline">Edit</button>
+                                <button onClick={() => handleDelete(addr.id)} className="text-error hover:underline">Delete</button>
                             </div>
                         </div>
                     ))}
