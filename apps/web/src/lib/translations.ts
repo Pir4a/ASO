@@ -10,6 +10,10 @@ const translations = {
         "a11y.cartEmpty": "Your cart is empty",
         "a11y.searchSubmit": "Submit search",
         "a11y.clearSearch": "Clear search",
+        "a11y.carouselRegion": "Highlights carousel",
+        "a11y.carouselPrev": "Previous slide",
+        "a11y.carouselNext": "Next slide",
+        "a11y.carouselGoToSlide": "Go to slide",
 
         // Header
         "header.tagline": "Premium Medical Equipment",
@@ -49,6 +53,8 @@ const translations = {
         "home.reason4": "Free Shipping Over 150€",
         "home.carousel": "What's New",
         "home.carouselSub": "Latest promotions and arrivals.",
+        "home.carouselEmpty": "No slides available yet.",
+        "home.carouselDefaultCta": "Learn more",
         "home.shopBy": "Shop by Category",
         "home.shopBySub": "Browse our specialized product ranges.",
         "home.bestSellers": "Best Sellers",
@@ -170,6 +176,10 @@ const translations = {
         "a11y.cartEmpty": "Votre panier est vide",
         "a11y.searchSubmit": "Lancer la recherche",
         "a11y.clearSearch": "Effacer la recherche",
+        "a11y.carouselRegion": "Carrousel de mises en avant",
+        "a11y.carouselPrev": "Diapositive précédente",
+        "a11y.carouselNext": "Diapositive suivante",
+        "a11y.carouselGoToSlide": "Aller à la diapositive",
 
         // Header
         "header.tagline": "Équipement Médical Premium",
@@ -209,6 +219,8 @@ const translations = {
         "home.reason4": "Livraison gratuite dès 150€",
         "home.carousel": "Nouveautés",
         "home.carouselSub": "Dernières promotions et nouveaux arrivages.",
+        "home.carouselEmpty": "Aucune diapositive pour le moment.",
+        "home.carouselDefaultCta": "En savoir plus",
         "home.shopBy": "Acheter par catégorie",
         "home.shopBySub": "Parcourez nos gammes de produits spécialisés.",
         "home.bestSellers": "Meilleures ventes",
@@ -330,6 +342,10 @@ const translations = {
         "a11y.cartEmpty": "سلتك فارغة",
         "a11y.searchSubmit": "تنفيذ البحث",
         "a11y.clearSearch": "مسح البحث",
+        "a11y.carouselRegion": "عرض الشرائح المميزة",
+        "a11y.carouselPrev": "الشريحة السابقة",
+        "a11y.carouselNext": "الشريحة التالية",
+        "a11y.carouselGoToSlide": "الانتقال إلى الشريحة",
 
         // Header
         "header.tagline": "معدات طبية متميزة",
@@ -369,6 +385,8 @@ const translations = {
         "home.reason4": "شحن مجاني فوق 150€",
         "home.carousel": "الجديد",
         "home.carouselSub": "أحدث العروض والمنتجات الجديدة.",
+        "home.carouselEmpty": "لا توجد شرائح متاحة حتى الآن.",
+        "home.carouselDefaultCta": "اعرف المزيد",
         "home.shopBy": "تسوق حسب الفئة",
         "home.shopBySub": "تصفح مجموعاتنا المتخصصة من المنتجات.",
         "home.bestSellers": "الأكثر مبيعاً",
@@ -489,6 +507,10 @@ const translations = {
         "a11y.cartEmpty": "העגלה שלך ריקה",
         "a11y.searchSubmit": "בצע חיפוש",
         "a11y.clearSearch": "נקה חיפוש",
+        "a11y.carouselRegion": "קרוסלת הדגשות",
+        "a11y.carouselPrev": "שקופית קודמת",
+        "a11y.carouselNext": "שקופית הבאה",
+        "a11y.carouselGoToSlide": "עבור לשקופית",
 
         // Header
         "header.tagline": "ציוד רפואי איכותי",
@@ -528,6 +550,8 @@ const translations = {
         "home.reason4": "משלוח חינם מעל 150€",
         "home.carousel": "מה חדש",
         "home.carouselSub": "מבצעים ומוצרים חדשים.",
+        "home.carouselEmpty": "אין שקופיות זמינות כרגע.",
+        "home.carouselDefaultCta": "למידע נוסף",
         "home.shopBy": "קנה לפי קטגוריה",
         "home.shopBySub": "עיין בסדרות המוצרים המתמחות שלנו.",
         "home.bestSellers": "הנמכרים ביותר",

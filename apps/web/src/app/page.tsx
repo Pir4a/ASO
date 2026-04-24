@@ -62,15 +62,11 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="card space-y-4 p-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-foreground">{t("home.carousel")}</h2>
-          <p className="text-sm text-foreground/70">{t("home.carouselSub")}</p>
-        </div>
+      <section>
         <Carousel slides={slides} />
 
         {homepageText && (homepageText.headline || homepageText.body) && (
-          <div className="mt-4 rounded-2xl bg-linear-to-br from-primary/5 to-transparent p-5 ring-1 ring-primary/10">
+          <div className="mt-6 rounded-2xl bg-linear-to-br from-primary/5 to-transparent p-5 ring-1 ring-primary/10">
             {homepageText.headline && (
               <p className="text-base font-semibold text-foreground">{homepageText.headline}</p>
             )}
