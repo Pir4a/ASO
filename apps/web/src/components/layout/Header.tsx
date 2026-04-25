@@ -25,7 +25,7 @@ export function Header({ locale }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname() || "/";
   const { user, isAuthenticated, logout } = useAuth();
-  const { items, total } = useCart();
+  const { items, total, currency } = useCart();
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
@@ -49,7 +49,10 @@ export function Header({ locale }: HeaderProps) {
   }, []);
 
   const itemCount = items.reduce((sum, it) => sum + it.quantity, 0);
-  const totalLabel = (total || 0).toFixed(2).replace(".", ",") + " €";
+  const totalLabel = new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: currency || "EUR",
+  }).format((total || 0) / 100);
 
   const handleLogout = () => {
     logout();

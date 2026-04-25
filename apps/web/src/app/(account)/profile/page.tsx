@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  useEffect,
+  useMemo,
   useState,
   type ComponentType,
   type FormEvent,
@@ -13,6 +15,12 @@ import { useAuth } from "@/context/AuthContext";
 import { AddressList } from "@/components/account/AddressList";
 import { PaymentMethodList } from "@/components/account/PaymentMethodList";
 import { authFetch } from "@/lib/auth";
+import {
+  getOrders,
+  type OrderDTO,
+  type OrderStatus,
+  type OrdersByYear,
+} from "@/lib/api";
 
 type Section = "profile" | "addresses" | "payments" | "orders" | "security";
 
@@ -523,7 +531,99 @@ function EditableField({
 }
 
 /* ── Orders shortcut ────────────────────────────────────────── */
+
+const STATUS_LABELS: Record<OrderStatus, string> = {
+  pending: "En attente",
+  processing: "En traitement",
+  shipped: "Expédiée",
+  delivered: "Livrée",
+  cancelled: "Annulée",
+};
+
+const ACTIVE_STATUSES: OrderStatus[] = ["pending", "processing", "shipped"];
+
+function statusTone(status: OrderStatus): string {
+  switch (status) {
+    case "delivered":
+      return "bg-success/10 text-success";
+    case "cancelled":
+      return "bg-error/10 text-error";
+    case "shipped":
+      return "bg-foreground/10 text-foreground";
+    default:
+      return "bg-primary/10 text-primary";
+  }
+}
+
+function formatPrice(value: number, currency: string) {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: currency || "EUR",
+  }).format(value);
+}
+
+function formatDate(iso?: string | Date) {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return String(iso);
+  }
+}
+
 function OrdersShortcut() {
+  const [data, setData] = useState<OrdersByYear | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await getOrders();
+        if (!cancelled) setData(res);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Erreur de chargement.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const flat = useMemo<OrderDTO[]>(() => {
+    if (!data) return [];
+    return Object.values(data).flat() as OrderDTO[];
+  }, [data]);
+
+  const counts = useMemo(() => {
+    const r = { active: 0, delivered: 0, cancelled: 0 };
+    for (const o of flat) {
+      if (ACTIVE_STATUSES.includes(o.status)) r.active += 1;
+      else if (o.status === "delivered") r.delivered += 1;
+      else if (o.status === "cancelled") r.cancelled += 1;
+    }
+    return r;
+  }, [flat]);
+
+  const recent = useMemo(
+    () =>
+      [...flat]
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        )
+        .slice(0, 4),
+    [flat],
+  );
+
   return (
     <SectionCard
       eyebrow="Commandes"
@@ -531,10 +631,74 @@ function OrdersShortcut() {
       hint="Suivi de livraison, statut et téléchargement de factures."
     >
       <div className="grid gap-3 sm:grid-cols-3">
-        <StatusTile color="primary" label="En cours" hint="Pending · processing · shipped" />
-        <StatusTile color="success" label="Terminées" hint="Livrées" />
-        <StatusTile color="error" label="Annulées" hint="Cancelled" />
+        <StatusTile color="primary" label="En cours" value={counts.active} hint="En attente · traitement · expédition" />
+        <StatusTile color="success" label="Terminées" value={counts.delivered} hint="Livrées" />
+        <StatusTile color="error" label="Annulées" value={counts.cancelled} hint="Annulées" />
       </div>
+
+      {loading ? (
+        <div className="mt-6 rounded-xl border border-dashed border-foreground/15 bg-background/40 px-6 py-8 text-center text-sm text-foreground/55">
+          Chargement de vos commandes…
+        </div>
+      ) : error ? (
+        <div className="mt-6 inline-flex items-center gap-2 rounded-lg border border-error/30 bg-error/10 px-3.5 py-2.5 text-[13px] text-error">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
+            <circle cx="8" cy="8" r="6" />
+            <path d="m4.5 4.5 7 7" />
+          </svg>
+          {error}
+        </div>
+      ) : flat.length === 0 ? (
+        <div className="mt-6 rounded-xl border border-dashed border-foreground/15 bg-background/40 px-6 py-8 text-center text-sm text-foreground/55">
+          Aucune commande pour le moment.
+        </div>
+      ) : (
+        <div className="mt-6">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <h3 className="font-heading text-[14px] font-semibold text-foreground">
+              Dernières commandes
+            </h3>
+            <span className="text-[11.5px] text-foreground/55">
+              {flat.length} au total
+            </span>
+          </div>
+          <ul className="divide-y divide-foreground/5 overflow-hidden rounded-xl border border-foreground/10" role="list">
+            {recent.map((o) => {
+              const number = o.orderNumber ?? `ALT-${o.id.slice(0, 8).toUpperCase()}`;
+              return (
+                <li key={o.id}>
+                  <Link
+                    href={`/orders/${encodeURIComponent(o.id)}`}
+                    className="grid grid-cols-[1fr_auto_auto_28px] items-center gap-3 px-4 py-3 transition hover:bg-background/40"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-mono text-[12px] font-semibold text-foreground">
+                        {number}
+                      </p>
+                      <p className="mt-0.5 text-[11.5px] text-foreground/55">
+                        {formatDate(o.createdAt)}
+                      </p>
+                    </div>
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusTone(o.status)}`}
+                    >
+                      <span aria-hidden="true" className="block h-1.5 w-1.5 rounded-full bg-current" />
+                      {STATUS_LABELS[o.status] ?? o.status}
+                    </span>
+                    <span className="font-heading text-[13.5px] font-bold tabular-nums text-foreground">
+                      {formatPrice(Number(o.total), o.currency)}
+                    </span>
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5 justify-self-end text-foreground/35">
+                      <path d="M6 4l4 4-4 4" />
+                    </svg>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       <Link
         href="/orders"
         style={{ color: "#fff" }}
@@ -552,10 +716,12 @@ function OrdersShortcut() {
 function StatusTile({
   color,
   label,
+  value,
   hint,
 }: {
   color: "primary" | "success" | "error";
   label: string;
+  value: number;
   hint: string;
 }) {
   const cls = {
@@ -565,18 +731,23 @@ function StatusTile({
   }[color];
   return (
     <div className="rounded-xl border border-foreground/10 bg-white px-4 py-4">
-      <span
-        className={`inline-flex h-7 w-7 items-center justify-center rounded-lg ${cls}`}
-        aria-hidden="true"
-      >
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-3.5 w-3.5">
-          <path d="M2 3h2l1.5 8h7L14 5H5" />
-          <circle cx="6" cy="14" r="1" />
-          <circle cx="12" cy="14" r="1" />
-        </svg>
-      </span>
-      <p className="mt-3 font-heading text-[15px] font-semibold text-foreground">{label}</p>
-      <p className="mt-0.5 text-[11.5px] text-foreground/55">{hint}</p>
+      <div className="flex items-center justify-between gap-2">
+        <span
+          className={`inline-flex h-7 w-7 items-center justify-center rounded-lg ${cls}`}
+          aria-hidden="true"
+        >
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-3.5 w-3.5">
+            <path d="M2 3h2l1.5 8h7L14 5H5" />
+            <circle cx="6" cy="14" r="1" />
+            <circle cx="12" cy="14" r="1" />
+          </svg>
+        </span>
+        <span className="font-heading text-[22px] font-bold tabular-nums text-foreground">
+          {value}
+        </span>
+      </div>
+      <p className="mt-2 font-heading text-[14px] font-semibold text-foreground">{label}</p>
+      <p className="mt-0.5 text-[11px] text-foreground/55">{hint}</p>
     </div>
   );
 }
