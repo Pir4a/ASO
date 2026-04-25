@@ -165,6 +165,7 @@ function BackofficeDashboard() {
   const [newCategory, setNewCategory] = useState({ name: "", slug: "", description: "", imageUrl: "" });
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   const flash = (kind: "success" | "error", text: string) => {
     setFeedback({ kind, text });
@@ -445,6 +446,10 @@ function BackofficeDashboard() {
   const editingProduct = useMemo(
     () => products.find((p) => p.id === editingProductId) ?? null,
     [products, editingProductId],
+  );
+  const selectedProduct = useMemo(
+    () => products.find((p) => p.id === selectedProductId) ?? null,
+    [products, selectedProductId],
   );
 
   const filteredProducts = products.filter(
@@ -1319,6 +1324,14 @@ function BackofficeDashboard() {
                               </label>
                             </td>
                             <td className="num">
+                              <button
+                                className="bo-btn"
+                                type="button"
+                                onClick={() => setSelectedProductId(p.id)}
+                                title="Détail"
+                              >
+                                <Icon.Doc /> Détail
+                              </button>
                               <IconButton
                                 tone="primary"
                                 onClick={() => {
@@ -1337,6 +1350,40 @@ function BackofficeDashboard() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                )}
+              </Panel>
+
+              <Panel
+                title="Détail produit"
+                subtitle={selectedProduct?.name ?? "Sélectionnez un produit"}
+              >
+                {!selectedProduct ? (
+                  <p className="bo-muted" style={{ textAlign: "center", padding: 24 }}>
+                    Cliquez sur « Détail » sur une ligne produit.
+                  </p>
+                ) : (
+                  <div style={{ display: "grid", gap: 10 }}>
+                    <div className="bo-card" style={{ padding: 10 }}>
+                      <div className="bo-label">Slug</div>
+                      <div className="bo-mono" style={{ fontSize: 12 }}>
+                        {selectedProduct.slug ?? "—"}
+                      </div>
+                    </div>
+                    <div className="bo-card" style={{ padding: 10 }}>
+                      <div className="bo-label">Catégorie</div>
+                      <div>{selectedProduct.category?.name ?? "—"}</div>
+                    </div>
+                    <div className="bo-card" style={{ padding: 10 }}>
+                      <div className="bo-label">Description</div>
+                      <div className="bo-muted">{selectedProduct.description?.trim() || "—"}</div>
+                    </div>
+                    <div className="bo-card" style={{ padding: 10 }}>
+                      <div className="bo-label">Galerie</div>
+                      <div className="bo-muted">
+                        {Array.isArray(selectedProduct.galleryUrls) ? selectedProduct.galleryUrls.length : 0} image(s)
+                      </div>
+                    </div>
                   </div>
                 )}
               </Panel>
