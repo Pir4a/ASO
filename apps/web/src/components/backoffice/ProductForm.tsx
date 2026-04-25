@@ -18,6 +18,7 @@ interface ProductFormProps {
 export function ProductForm({ categories, onCreated }: ProductFormProps) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [useCustomSlug, setUseCustomSlug] = useState(false);
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
@@ -41,10 +42,14 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-");
 
+  const normalizeSlugInput = (value: string) => generateSlug(value).slice(0, 255);
+
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const next = e.target.value;
     setName(next);
-    setSlug(generateSlug(next));
+    if (!useCustomSlug) {
+      setSlug(generateSlug(next));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -115,6 +120,7 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
       setGalleryUrlsText("");
       setSpecsJson("");
       setFeatured(false);
+      setUseCustomSlug(false);
       onCreated?.();
       router.refresh();
     } catch (err: unknown) {
@@ -137,7 +143,45 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
         </div>
         <div>
           <label htmlFor="slug" className={labelCls}>Slug (URL)</label>
-          <input id="slug" type="text" className={inputCls} value={slug} onChange={(e) => setSlug(e.target.value)} required />
+          <div className="space-y-2">
+            <label className="inline-flex items-center gap-2 text-xs text-foreground/70">
+              <input
+                type="checkbox"
+                checked={useCustomSlug}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setUseCustomSlug(checked);
+                  if (!checked) setSlug(generateSlug(name));
+                }}
+              />
+              URL personnalisée (slug SEO)
+            </label>
+            <div className="flex gap-2">
+              <span className="inline-flex items-center rounded-lg border border-foreground/10 bg-background px-2 text-xs text-foreground/60">
+                /products/
+              </span>
+              <input
+                id="slug"
+                type="text"
+                className={inputCls}
+                value={slug}
+                onChange={(e) => setSlug(normalizeSlugInput(e.target.value))}
+                disabled={!useCustomSlug}
+                required
+              />
+              <button
+                type="button"
+                className="rounded-lg border border-foreground/15 px-2.5 text-xs font-semibold text-foreground/70 hover:bg-background"
+                onClick={() => setSlug(generateSlug(name))}
+                title="Régénérer depuis le nom"
+              >
+                Auto
+              </button>
+            </div>
+            <p className="text-[11px] text-foreground/55">
+              URL finale : <span className="font-mono">/products/{slug || "..."}</span>
+            </p>
+          </div>
         </div>
       </div>
 
