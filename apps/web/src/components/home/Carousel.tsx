@@ -172,26 +172,6 @@ export function Carousel({ slides }: { slides: CarouselSlide[] }) {
 
       {count > 1 && (
         <>
-          {/* Edge click zones for prev/next */}
-          <button
-            type="button"
-            onClick={prev}
-            aria-label={t("a11y.carouselPrev")}
-            tabIndex={-1}
-            className="absolute inset-y-0 start-0 z-10 w-1/3 cursor-w-resize bg-transparent focus:outline-none"
-          >
-            <span className="sr-only">{t("a11y.carouselPrev")}</span>
-          </button>
-          <button
-            type="button"
-            onClick={next}
-            aria-label={t("a11y.carouselNext")}
-            tabIndex={-1}
-            className="absolute inset-y-0 end-0 z-10 w-1/3 cursor-e-resize bg-transparent focus:outline-none"
-          >
-            <span className="sr-only">{t("a11y.carouselNext")}</span>
-          </button>
-
           {/* Top-right arrow controls */}
           <div className="absolute right-5 top-5 z-30 flex gap-2">
             <button
