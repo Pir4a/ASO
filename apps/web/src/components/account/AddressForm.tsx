@@ -1,112 +1,190 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 
-interface Address {
+export interface AddressFormData {
     id?: string;
+    firstName?: string;
+    lastName?: string;
     street: string;
+    address2?: string;
     city: string;
+    region?: string;
     postalCode: string;
     country: string;
     phone?: string;
 }
 
 interface AddressFormProps {
-    initialData?: Address;
-    onSubmit: (data: Address) => Promise<void>;
+    initialData?: AddressFormData;
+    onSubmit: (data: AddressFormData) => Promise<void>;
     onCancel: () => void;
+    submitLabel?: string;
 }
 
-export function AddressForm({ initialData, onSubmit, onCancel }: AddressFormProps) {
-    const [formData, setFormData] = useState<Address>({
-        street: initialData?.street || "",
-        city: initialData?.city || "",
-        postalCode: initialData?.postalCode || "",
-        country: initialData?.country || "",
-        phone: initialData?.phone || "",
+const inputCls =
+    "w-full rounded-lg border border-foreground/10 bg-white px-3.5 py-2.5 text-[14px] text-foreground placeholder:text-foreground/45 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15";
+const labelCls =
+    "mb-1.5 block text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/65";
+
+export function AddressForm({
+    initialData,
+    onSubmit,
+    onCancel,
+    submitLabel = "Enregistrer",
+}: AddressFormProps) {
+    const [data, setData] = useState<AddressFormData>({
+        firstName: initialData?.firstName ?? "",
+        lastName: initialData?.lastName ?? "",
+        street: initialData?.street ?? "",
+        address2: initialData?.address2 ?? "",
+        city: initialData?.city ?? "",
+        region: initialData?.region ?? "",
+        postalCode: initialData?.postalCode ?? "",
+        country: initialData?.country ?? "France",
+        phone: initialData?.phone ?? "",
     });
     const [loading, setLoading] = useState(false);
+    const set = <K extends keyof AddressFormData>(key: K, value: AddressFormData[K]) =>
+        setData((p) => ({ ...p, [key]: value }));
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
-            await onSubmit(formData);
+            await onSubmit(data);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
             <div>
-                <label className="block text-sm font-medium text-foreground/80">Rue</label>
+                <label htmlFor="addr-fn" className={labelCls}>Prénom</label>
                 <input
-                    type="text"
+                    id="addr-fn"
                     required
-                    className="mt-1 block w-full rounded-md border-foreground/20 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                    value={formData.street}
-                    onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                    value={data.firstName}
+                    onChange={(e) => set("firstName", e.target.value)}
+                    className={inputCls}
                 />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-foreground/80">Ville</label>
-                    <input
-                        type="text"
-                        required
-                        className="mt-1 block w-full rounded-md border-foreground/20 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                        value={formData.city}
-                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-foreground/80">Code Postal</label>
-                    <input
-                        type="text"
-                        required
-                        className="mt-1 block w-full rounded-md border-foreground/20 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                        value={formData.postalCode}
-                        onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-                    />
-                </div>
+            <div>
+                <label htmlFor="addr-ln" className={labelCls}>Nom</label>
+                <input
+                    id="addr-ln"
+                    required
+                    value={data.lastName}
+                    onChange={(e) => set("lastName", e.target.value)}
+                    className={inputCls}
+                />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-foreground/80">Pays</label>
-                    <input
-                        type="text"
-                        required
-                        className="mt-1 block w-full rounded-md border-foreground/20 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                        value={formData.country}
-                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-foreground/80">Téléphone (Optionnel)</label>
-                    <input
-                        type="text"
-                        className="mt-1 block w-full rounded-md border-foreground/20 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    />
-                </div>
+            <div className="sm:col-span-2">
+                <label htmlFor="addr-street" className={labelCls}>Adresse</label>
+                <input
+                    id="addr-street"
+                    required
+                    placeholder="Numéro et rue"
+                    value={data.street}
+                    onChange={(e) => set("street", e.target.value)}
+                    className={inputCls}
+                />
             </div>
-            <div className="flex justify-end space-x-3">
+            <div className="sm:col-span-2">
+                <label htmlFor="addr-2" className={labelCls}>
+                    Complément d&apos;adresse <span className="font-normal lowercase tracking-normal text-foreground/45">(optionnel)</span>
+                </label>
+                <input
+                    id="addr-2"
+                    placeholder="Bât., étage, code…"
+                    value={data.address2}
+                    onChange={(e) => set("address2", e.target.value)}
+                    className={inputCls}
+                />
+            </div>
+            <div>
+                <label htmlFor="addr-postal" className={labelCls}>Code postal</label>
+                <input
+                    id="addr-postal"
+                    required
+                    inputMode="numeric"
+                    value={data.postalCode}
+                    onChange={(e) => set("postalCode", e.target.value)}
+                    className={`${inputCls} font-mono tabular-nums`}
+                />
+            </div>
+            <div>
+                <label htmlFor="addr-city" className={labelCls}>Ville</label>
+                <input
+                    id="addr-city"
+                    required
+                    value={data.city}
+                    onChange={(e) => set("city", e.target.value)}
+                    className={inputCls}
+                />
+            </div>
+            <div>
+                <label htmlFor="addr-region" className={labelCls}>
+                    Région <span className="font-normal lowercase tracking-normal text-foreground/45">(optionnel)</span>
+                </label>
+                <input
+                    id="addr-region"
+                    value={data.region}
+                    onChange={(e) => set("region", e.target.value)}
+                    className={inputCls}
+                />
+            </div>
+            <div>
+                <label htmlFor="addr-country" className={labelCls}>Pays</label>
+                <input
+                    id="addr-country"
+                    required
+                    value={data.country}
+                    onChange={(e) => set("country", e.target.value)}
+                    className={inputCls}
+                />
+            </div>
+            <div className="sm:col-span-2">
+                <label htmlFor="addr-phone" className={labelCls}>Téléphone mobile</label>
+                <input
+                    id="addr-phone"
+                    type="tel"
+                    placeholder="+33 6 12 34 56 78"
+                    value={data.phone}
+                    onChange={(e) => set("phone", e.target.value)}
+                    className={inputCls}
+                />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-end gap-2 sm:col-span-2">
                 <button
                     type="button"
                     onClick={onCancel}
-                    className="px-4 py-2 border border-foreground/20 rounded-md text-sm font-medium text-foreground/80 hover:bg-background"
                     disabled={loading}
+                    className="inline-flex h-10 items-center gap-2 rounded-lg border border-foreground/15 bg-white px-4 text-[13px] font-semibold text-foreground transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     Annuler
                 </button>
                 <button
                     type="submit"
-                    className="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-hover disabled:opacity-50"
                     disabled={loading}
+                    style={{ color: "#fff" }}
+                    className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-[13px] font-semibold transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                    {loading ? "Enregistrement..." : "Enregistrer"}
+                    {loading ? (
+                        <>
+                            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            Enregistrement…
+                        </>
+                    ) : (
+                        <>
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="h-3.5 w-3.5">
+                                <path d="m3 8 3.5 3.5L13 5" />
+                            </svg>
+                            {submitLabel}
+                        </>
+                    )}
                 </button>
             </div>
         </form>
