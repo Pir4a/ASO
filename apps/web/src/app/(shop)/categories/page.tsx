@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getCategories, getProducts } from "@/lib/api";
 import { getLocaleFromCookie } from "@/lib/i18n.server";
 import { getTranslations } from "@/lib/translations";
-import { CategoryIndexHero } from "@/components/category/CategoryIndexHero";
+import { CategoryHero } from "@/components/category/CategoryHero";
 import { CategoryListingCards } from "@/components/category/CategoryListingCards";
 
 export default async function CategoriesPage() {
@@ -37,9 +37,10 @@ export default async function CategoriesPage() {
         <span className="font-semibold text-foreground">Catégories</span>
       </nav>
 
-      <CategoryIndexHero
-        title={t("categories.title")}
-        subtitle={t("categories.subtitle")}
+      <CategoryHero
+        eyebrow="Catalogue"
+        name={t("categories.title")}
+        description={t("categories.subtitle")}
         stats={stats}
       />
 

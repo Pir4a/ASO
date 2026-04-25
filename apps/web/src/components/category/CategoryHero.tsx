@@ -1,5 +1,7 @@
 import Image from "next/image";
 
+type Stat = { value: string; label: string };
+
 type CategoryHeroProps = {
   name: string;
   description?: string;
@@ -8,6 +10,8 @@ type CategoryHeroProps = {
   availableTotal?: number;
   /** Eyebrow label shown above the title (defaults to "Catégorie"). */
   eyebrow?: string;
+  /** Optional stats strip rendered on the description band. */
+  stats?: Stat[];
 };
 
 export function CategoryHero({
@@ -17,6 +21,7 @@ export function CategoryHero({
   productsTotal,
   availableTotal,
   eyebrow = "Catégorie",
+  stats,
 }: CategoryHeroProps) {
   return (
     <section className="overflow-hidden rounded-2xl border border-foreground/10 bg-white shadow-[0_8px_28px_rgba(0,61,92,0.08)]">
@@ -77,9 +82,9 @@ export function CategoryHero({
         </div>
       </div>
 
-      {/* Description band — mandatory per spec */}
-      {description && (
-        <div className="grid items-center gap-5 border-t border-foreground/5 px-6 py-6 md:grid-cols-[44px_1fr] md:gap-5 md:px-8 md:py-7">
+      {/* Description band + optional stats */}
+      {(description || (stats && stats.length > 0)) && (
+        <div className="grid items-center gap-5 border-t border-foreground/5 px-6 py-6 md:px-8 md:py-7 lg:grid-cols-[44px_1fr_auto]">
           <div
             aria-hidden="true"
             className="grid h-11 w-11 place-items-center rounded-xl bg-background text-primary"
@@ -89,7 +94,28 @@ export function CategoryHero({
               <path d="M12 8v.01M11 12h1v4h1" />
             </svg>
           </div>
-          <p className="m-0 text-[14.5px] leading-relaxed text-foreground/75">{description}</p>
+          {description ? (
+            <p className="m-0 text-[14.5px] leading-relaxed text-foreground/75">{description}</p>
+          ) : (
+            <span aria-hidden="true" />
+          )}
+          {stats && stats.length > 0 && (
+            <ul
+              className="flex justify-around gap-6 border-t border-foreground/10 pt-4 text-center lg:justify-end lg:gap-7 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0"
+              role="list"
+            >
+              {stats.map((s) => (
+                <li key={s.label}>
+                  <p className="font-heading text-[18px] font-semibold leading-tight text-foreground tabular-nums">
+                    {s.value}
+                  </p>
+                  <p className="mt-0.5 text-[10.5px] font-medium uppercase tracking-[0.08em] text-foreground/55">
+                    {s.label}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
     </section>

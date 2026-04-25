@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { sendChatMessage } from "@/lib/api";
 import { useT } from "@/context/LocaleContext";
-import { CategoryIndexHero } from "@/components/category/CategoryIndexHero";
+import { CategoryHero } from "@/components/category/CategoryHero";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
@@ -33,10 +33,10 @@ export default function ContactPage() {
       </nav>
 
       {/* Hero */}
-      <CategoryIndexHero
+      <CategoryHero
         eyebrow="Support"
-        title={t("contact.title")}
-        subtitle={t("contact.subtitle")}
+        name={t("contact.title")}
+        description={t("contact.subtitle")}
         stats={[
           { value: "< 2 h", label: "Réponse moyenne" },
           { value: "24/7", label: "Assistant IA" },
