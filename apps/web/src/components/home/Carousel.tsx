@@ -131,7 +131,7 @@ export function Carousel({ slides }: { slides: CarouselSlide[] }) {
                 className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-foreground/80 via-foreground/35 to-transparent"
               />
 
-              <div className="absolute inset-x-0 bottom-0 z-10 px-6 pb-12 pt-10 md:px-14 md:pb-14 lg:px-16">
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-6 pb-12 pt-10 md:px-14 md:pb-14 lg:px-16">
                 <div className="max-w-2xl">
                   <span className="mb-3 inline-block rounded-sm border border-white/30 bg-white/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-sm">
                     {t("home.carousel")}
@@ -172,6 +172,50 @@ export function Carousel({ slides }: { slides: CarouselSlide[] }) {
 
       {count > 1 && (
         <>
+          {/* Click-to-navigate zones — hover reveals a soft gradient + circular arrow */}
+          <button
+            type="button"
+            onClick={prev}
+            aria-label={t("a11y.carouselPrev")}
+            tabIndex={-1}
+            className="group absolute inset-y-0 start-0 z-10 w-1/3 cursor-w-resize bg-transparent focus:outline-none"
+          >
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 start-0 w-full bg-gradient-to-r from-foreground/30 to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+            />
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute start-5 top-1/2 grid h-12 w-12 -translate-y-1/2 scale-90 place-items-center rounded-full bg-white/0 text-transparent shadow-none transition-all duration-200 group-hover:scale-100 group-hover:bg-white/90 group-hover:text-foreground group-hover:shadow-lg md:start-7"
+            >
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-5 w-5">
+                <path d="M13 8H3m3-3-3 3 3 3" />
+              </svg>
+            </span>
+            <span className="sr-only">{t("a11y.carouselPrev")}</span>
+          </button>
+          <button
+            type="button"
+            onClick={next}
+            aria-label={t("a11y.carouselNext")}
+            tabIndex={-1}
+            className="group absolute inset-y-0 end-0 z-10 w-1/3 cursor-e-resize bg-transparent focus:outline-none"
+          >
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 end-0 w-full bg-gradient-to-l from-foreground/30 to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+            />
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute end-5 top-1/2 grid h-12 w-12 -translate-y-1/2 scale-90 place-items-center rounded-full bg-white/0 text-transparent shadow-none transition-all duration-200 group-hover:scale-100 group-hover:bg-white/90 group-hover:text-foreground group-hover:shadow-lg md:end-7"
+            >
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-5 w-5">
+                <path d="M3 8h10m-3-3 3 3-3 3" />
+              </svg>
+            </span>
+            <span className="sr-only">{t("a11y.carouselNext")}</span>
+          </button>
+
           {/* Top-right arrow controls */}
           <div className="absolute right-5 top-5 z-30 flex gap-2">
             <button
