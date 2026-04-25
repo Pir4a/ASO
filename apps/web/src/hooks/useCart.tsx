@@ -35,6 +35,7 @@ export interface CartItem {
     currency: string;
     name?: string;
     stock?: number;
+    thumbnailUrl?: string;
 }
 
 export interface CartState {

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -210,11 +211,23 @@ export default function CartPage() {
                 }`}
               >
                 <div className="flex flex-wrap items-center gap-4 px-4 py-4 sm:px-5">
-                  {/* Thumb placeholder */}
-                  <div className="grid h-16 w-16 flex-none place-items-center overflow-hidden rounded-lg border border-foreground/5 bg-gradient-to-br from-background to-white text-primary">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-7 w-7">
-                      <path d="M21 7.5 12 3 3 7.5m18 0L12 12M21 7.5v9L12 21M3 7.5 12 12M3 7.5v9L12 21m0-9v9" />
-                    </svg>
+                  {/* Product thumbnail (real image, falls back to brand icon) */}
+                  <div className="relative h-16 w-16 flex-none overflow-hidden rounded-lg border border-foreground/5 bg-gradient-to-br from-background to-white">
+                    {item.thumbnailUrl ? (
+                      <Image
+                        src={item.thumbnailUrl}
+                        alt=""
+                        fill
+                        sizes="64px"
+                        className={`object-cover ${oos ? "grayscale" : ""}`}
+                      />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center text-primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-7 w-7">
+                          <path d="M21 7.5 12 3 3 7.5m18 0L12 12M21 7.5v9L12 21M3 7.5 12 12M3 7.5v9L12 21m0-9v9" />
+                        </svg>
+                      </div>
+                    )}
                   </div>
 
                   {/* Name + unit price */}

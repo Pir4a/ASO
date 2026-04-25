@@ -331,7 +331,7 @@ function cartAuthHeaders(guestCartId?: string): Record<string, string> {
 
 export async function getCart(guestCartId?: string): Promise<{
   id?: string;
-  items: { productId: string; quantity: number; priceCents: number; currency: string; name?: string; stock?: number }[];
+  items: { productId: string; quantity: number; priceCents: number; currency: string; name?: string; stock?: number; thumbnailUrl?: string }[];
   subtotal: number;
   vat: number;
   total: number;
@@ -360,6 +360,7 @@ export async function getCart(guestCartId?: string): Promise<{
       currency: item.productCurrency || "EUR",
       name: item.productName || "Unknown Product",
       stock: item.productStock,
+      thumbnailUrl: item.productThumbnailUrl,
     }));
 
     const subtotal = items.reduce((sum: number, item: any) => sum + item.priceCents * item.quantity, 0);
