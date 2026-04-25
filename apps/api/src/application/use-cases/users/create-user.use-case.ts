@@ -5,27 +5,29 @@ import type { UserRepository } from '../../../domain/repositories/user.repositor
 
 @Injectable()
 export class CreateUserUseCase {
-    constructor(
-        @Inject(USER_REPOSITORY_TOKEN)
-        private readonly userRepository: UserRepository,
-    ) { }
+  constructor(
+    @Inject(USER_REPOSITORY_TOKEN)
+    private readonly userRepository: UserRepository,
+  ) {}
 
-    async execute(
-        email: string,
-        passwordHash: string,
-        firstName?: string,
-        lastName?: string,
-        verificationToken?: string
-    ): Promise<User> {
-        const user = new User({
-            email,
-            passwordHash,
-            firstName,
-            lastName,
-            isVerified: false,
-            verificationToken,
-            verificationTokenExpires: verificationToken ? new Date(Date.now() + 24 * 60 * 60 * 1000) : undefined // 24h
-        });
-        return this.userRepository.create(user);
-    }
+  async execute(
+    email: string,
+    passwordHash: string,
+    firstName?: string,
+    lastName?: string,
+    verificationToken?: string,
+  ): Promise<User> {
+    const user = new User({
+      email,
+      passwordHash,
+      firstName,
+      lastName,
+      isVerified: false,
+      verificationToken,
+      verificationTokenExpires: verificationToken
+        ? new Date(Date.now() + 24 * 60 * 60 * 1000)
+        : undefined, // 24h
+    });
+    return this.userRepository.create(user);
+  }
 }

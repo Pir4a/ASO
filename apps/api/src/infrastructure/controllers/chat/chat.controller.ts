@@ -4,11 +4,11 @@ import { ChatMessageDto } from '../../dto/chat/chat.dto';
 
 @Controller('chat')
 export class ChatController {
-    constructor(private readonly chatService: ChatService) { }
+  constructor(private readonly chatService: ChatService) {}
 
-    @Post()
-    async chat(@Body() body: ChatMessageDto) {
-        const reply = await this.chatService.chat(body.message, body.history);
-        return { reply };
-    }
+  @Post()
+  async chat(@Body() body: ChatMessageDto) {
+    const reply = await this.chatService.chat(body.message, body.history);
+    return { reply };
+  }
 }

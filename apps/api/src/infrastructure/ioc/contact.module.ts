@@ -10,6 +10,11 @@ import { ContactMessage } from '../persistence/typeorm/entities/contact-message.
 @Module({
   imports: [TypeOrmModule.forFeature([ContactMessage])],
   controllers: [ContactController],
-  providers: [CreateContactMessageUseCase, GetContactMessagesUseCase, JwtAuthGuard, RolesGuard],
+  providers: [
+    CreateContactMessageUseCase,
+    GetContactMessagesUseCase,
+    JwtAuthGuard,
+    RolesGuard,
+  ],
 })
 export class ContactModule {}

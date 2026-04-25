@@ -18,27 +18,27 @@ import { OptionalJwtAuthGuard } from '../guards/optional-jwt-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Cart, CartItem]),
-        ProductsModule,
-        PromotionModule,
-        AuthModule,
-    ],
-    controllers: [CartController],
-    providers: [
-        {
-            provide: CART_REPOSITORY_TOKEN,
-            useClass: TypeOrmCartRepository,
-        },
-        AddToCartUseCase,
-        GetCartUseCase,
-        UpdateCartItemUseCase,
-        RemoveFromCartUseCase,
-        MergeGuestCartUseCase,
-        ApplyPromotionUseCase,
-        OptionalJwtAuthGuard,
-        JwtAuthGuard,
-    ],
-    exports: [CART_REPOSITORY_TOKEN],
+  imports: [
+    TypeOrmModule.forFeature([Cart, CartItem]),
+    ProductsModule,
+    PromotionModule,
+    AuthModule,
+  ],
+  controllers: [CartController],
+  providers: [
+    {
+      provide: CART_REPOSITORY_TOKEN,
+      useClass: TypeOrmCartRepository,
+    },
+    AddToCartUseCase,
+    GetCartUseCase,
+    UpdateCartItemUseCase,
+    RemoveFromCartUseCase,
+    MergeGuestCartUseCase,
+    ApplyPromotionUseCase,
+    OptionalJwtAuthGuard,
+    JwtAuthGuard,
+  ],
+  exports: [CART_REPOSITORY_TOKEN],
 })
-export class CartModule { }
+export class CartModule {}

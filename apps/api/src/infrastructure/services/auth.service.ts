@@ -29,7 +29,7 @@ export class AuthService {
     private readonly updateUserUseCase: UpdateUserUseCase,
     @Inject(EMAIL_GATEWAY) private readonly emailGateway: EmailGateway,
     private readonly verifyEmailUseCase: VerifyEmailUseCase,
-  ) { }
+  ) {}
 
   async register(registerDto: RegisterDto) {
     const { email, password, firstName, lastName } = registerDto;
@@ -47,7 +47,7 @@ export class AuthService {
       passwordHash,
       firstName,
       lastName,
-      verificationToken
+      verificationToken,
     );
 
     try {
@@ -74,10 +74,14 @@ export class AuthService {
     }
 
     if (!user.isVerified) {
-      throw new UnauthorizedException('Veuillez vérifier votre email avant de vous connecter.');
+      throw new UnauthorizedException(
+        'Veuillez vérifier votre email avant de vous connecter.',
+      );
     }
     if (user.isActive === false) {
-      throw new UnauthorizedException('Ce compte a été désactivé par un administrateur.');
+      throw new UnauthorizedException(
+        'Ce compte a été désactivé par un administrateur.',
+      );
     }
 
     user.lastLoginAt = new Date();

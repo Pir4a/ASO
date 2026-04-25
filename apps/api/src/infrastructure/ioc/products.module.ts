@@ -32,6 +32,10 @@ import { RolesGuard } from '../guards/roles.guard';
     JwtAuthGuard,
     RolesGuard,
   ],
-  exports: [PRODUCT_REPOSITORY_TOKEN, GetProductsUseCase, FindProductBySlugUseCase],
+  exports: [
+    PRODUCT_REPOSITORY_TOKEN,
+    GetProductsUseCase,
+    FindProductBySlugUseCase,
+  ],
 })
-export class ProductsModule { }
+export class ProductsModule {}

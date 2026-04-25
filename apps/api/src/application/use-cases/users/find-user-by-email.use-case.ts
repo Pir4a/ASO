@@ -5,12 +5,12 @@ import type { UserRepository } from '../../../domain/repositories/user.repositor
 
 @Injectable()
 export class FindUserByEmailUseCase {
-    constructor(
-        @Inject(USER_REPOSITORY_TOKEN)
-        private readonly userRepository: UserRepository,
-    ) { }
+  constructor(
+    @Inject(USER_REPOSITORY_TOKEN)
+    private readonly userRepository: UserRepository,
+  ) {}
 
-    async execute(email: string): Promise<User | null> {
-        return this.userRepository.findByEmail(email);
-    }
+  async execute(email: string): Promise<User | null> {
+    return this.userRepository.findByEmail(email);
+  }
 }

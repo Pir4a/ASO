@@ -11,21 +11,18 @@ import { DeleteUserAddressUseCase } from '../../application/use-cases/users/dele
 import { UsersModule } from './users.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Address]),
-        UsersModule,
-    ],
-    controllers: [ProfileController],
-    providers: [
-        {
-            provide: ADDRESS_REPOSITORY_TOKEN,
-            useClass: TypeOrmAddressRepository,
-        },
-        GetUserAddressesUseCase,
-        CreateUserAddressUseCase,
-        UpdateUserAddressUseCase,
-        DeleteUserAddressUseCase,
-    ],
-    exports: [ADDRESS_REPOSITORY_TOKEN],
+  imports: [TypeOrmModule.forFeature([Address]), UsersModule],
+  controllers: [ProfileController],
+  providers: [
+    {
+      provide: ADDRESS_REPOSITORY_TOKEN,
+      useClass: TypeOrmAddressRepository,
+    },
+    GetUserAddressesUseCase,
+    CreateUserAddressUseCase,
+    UpdateUserAddressUseCase,
+    DeleteUserAddressUseCase,
+  ],
+  exports: [ADDRESS_REPOSITORY_TOKEN],
 })
-export class AddressModule { }
+export class AddressModule {}

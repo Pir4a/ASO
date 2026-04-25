@@ -1,9 +1,22 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { GetUsersUseCase } from '../../../application/use-cases/users/get-users.use-case';
 import { FindUserByIdUseCase } from '../../../application/use-cases/users/find-user-by-id.use-case';
 import { UpdateUserUseCase } from '../../../application/use-cases/users/update-user.use-case';
 import { DeleteUserUseCase } from '../../../application/use-cases/users/delete-user.use-case';
-import { UpdateUserStatusDto, SendAdminEmailDto } from '../../dto/users/admin-user-actions.dto';
+import {
+  UpdateUserStatusDto,
+  SendAdminEmailDto,
+} from '../../dto/users/admin-user-actions.dto';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { RolesGuard } from '../../guards/roles.guard';
 import { Roles } from '../../auth/roles.decorator';
@@ -29,14 +42,22 @@ export class UsersController {
     const filtered = users.filter((u) => {
       if (status === 'inactive' && u.isActive !== false) return false;
       if (status === 'pending' && u.isVerified !== false) return false;
-      if (status === 'active' && (u.isActive === false || u.isVerified === false)) return false;
-      if (query && !u.email.toLowerCase().includes(query.toLowerCase())) return false;
+      if (
+        status === 'active' &&
+        (u.isActive === false || u.isVerified === false)
+      )
+        return false;
+      if (query && !u.email.toLowerCase().includes(query.toLowerCase()))
+        return false;
       return true;
     });
 
     filtered.sort((a, b) => {
       if (sort === 'lastLogin') {
-        return new Date(b.lastLoginAt || 0).getTime() - new Date(a.lastLoginAt || 0).getTime();
+        return (
+          new Date(b.lastLoginAt || 0).getTime() -
+          new Date(a.lastLoginAt || 0).getTime()
+        );
       }
       return a.email.localeCompare(b.email);
     });
@@ -49,13 +70,17 @@ export class UsersController {
       lastName: u.lastName,
       isVerified: u.isVerified,
       isActive: u.isActive !== false,
-      status: u.isActive === false ? 'inactive' : u.isVerified ? 'active' : 'pending',
+      status:
+        u.isActive === false ? 'inactive' : u.isVerified ? 'active' : 'pending',
       lastLoginAt: u.lastLoginAt ?? null,
     }));
   }
 
   @Patch(':id/status')
-  async updateStatus(@Param('id') id: string, @Body() body: UpdateUserStatusDto) {
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() body: UpdateUserStatusDto,
+  ) {
     const user = await this.findUserByIdUseCase.execute(id);
     if (!user) return { message: 'Utilisateur introuvable.' };
     user.isActive = body.status === 'active';
@@ -73,7 +98,10 @@ export class UsersController {
   async resetPassword(@Param('id') id: string) {
     const user = await this.findUserByIdUseCase.execute(id);
     if (!user) return { message: 'Utilisateur introuvable.' };
-    return { success: true, message: `Email de réinitialisation envoyé à ${user.email}` };
+    return {
+      success: true,
+      message: `Email de réinitialisation envoyé à ${user.email}`,
+    };
   }
 
   @Post(':id/send-email')
@@ -87,9 +115,12 @@ export class UsersController {
       message: 'Email admin enregistré (mode MVP).',
     };
   }
-  
+
   @Patch(':id/role')
-  async updateRole(@Param('id') id: string, @Body() body: { role: 'customer' | 'admin' }) {
+  async updateRole(
+    @Param('id') id: string,
+    @Body() body: { role: 'customer' | 'admin' },
+  ) {
     const user = await this.findUserByIdUseCase.execute(id);
     if (!user) return { message: 'Utilisateur introuvable.' };
     user.role = body.role;

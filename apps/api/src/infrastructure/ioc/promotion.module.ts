@@ -5,15 +5,13 @@ import { TypeOrmPromotionRepository } from '../persistence/typeorm/repositories/
 import { PROMOTION_REPOSITORY_TOKEN } from '../../domain/repositories/promotion.repository.interface';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Promotion]),
-    ],
-    providers: [
-        {
-            provide: PROMOTION_REPOSITORY_TOKEN,
-            useClass: TypeOrmPromotionRepository,
-        },
-    ],
-    exports: [PROMOTION_REPOSITORY_TOKEN],
+  imports: [TypeOrmModule.forFeature([Promotion])],
+  providers: [
+    {
+      provide: PROMOTION_REPOSITORY_TOKEN,
+      useClass: TypeOrmPromotionRepository,
+    },
+  ],
+  exports: [PROMOTION_REPOSITORY_TOKEN],
 })
-export class PromotionModule { }
+export class PromotionModule {}

@@ -7,42 +7,44 @@ import { CategoryMapper } from '../mappers/category.mapper';
 
 @Injectable()
 export class TypeOrmCategoryRepository implements CategoryRepository {
-    private readonly repository: Repository<TypeOrmCategory>;
+  private readonly repository: Repository<TypeOrmCategory>;
 
-    constructor(dataSource: DataSource) {
-        this.repository = dataSource.getRepository(TypeOrmCategory);
-    }
+  constructor(dataSource: DataSource) {
+    this.repository = dataSource.getRepository(TypeOrmCategory);
+  }
 
-    async findAll(): Promise<DomainCategory[]> {
-        const entities = await this.repository.find({ order: { order: 'ASC' } });
-        return entities.map(CategoryMapper.toDomain);
-    }
+  async findAll(): Promise<DomainCategory[]> {
+    const entities = await this.repository.find({ order: { order: 'ASC' } });
+    return entities.map(CategoryMapper.toDomain);
+  }
 
-    async findById(id: string): Promise<DomainCategory | null> {
-        const entity = await this.repository.findOne({ where: { id } });
-        if (!entity) return null;
-        return CategoryMapper.toDomain(entity);
-    }
+  async findById(id: string): Promise<DomainCategory | null> {
+    const entity = await this.repository.findOne({ where: { id } });
+    if (!entity) return null;
+    return CategoryMapper.toDomain(entity);
+  }
 
-    async create(category: DomainCategory): Promise<DomainCategory> {
-        const entity = this.repository.create(CategoryMapper.toPersistence(category));
-        const saved = await this.repository.save(entity);
-        return CategoryMapper.toDomain(saved);
-    }
+  async create(category: DomainCategory): Promise<DomainCategory> {
+    const entity = this.repository.create(
+      CategoryMapper.toPersistence(category),
+    );
+    const saved = await this.repository.save(entity);
+    return CategoryMapper.toDomain(saved);
+  }
 
-    async update(category: DomainCategory): Promise<DomainCategory> {
-        const entity = CategoryMapper.toPersistence(category);
-        const saved = await this.repository.save(entity);
-        return CategoryMapper.toDomain(saved);
-    }
+  async update(category: DomainCategory): Promise<DomainCategory> {
+    const entity = CategoryMapper.toPersistence(category);
+    const saved = await this.repository.save(entity);
+    return CategoryMapper.toDomain(saved);
+  }
 
-    async delete(id: string): Promise<void> {
-        await this.repository.delete(id);
-    }
+  async delete(id: string): Promise<void> {
+    await this.repository.delete(id);
+  }
 
-    async findBySlug(slug: string): Promise<DomainCategory | null> {
-        const entity = await this.repository.findOne({ where: { slug } });
-        if (!entity) return null;
-        return CategoryMapper.toDomain(entity);
-    }
+  async findBySlug(slug: string): Promise<DomainCategory | null> {
+    const entity = await this.repository.findOne({ where: { slug } });
+    if (!entity) return null;
+    return CategoryMapper.toDomain(entity);
+  }
 }

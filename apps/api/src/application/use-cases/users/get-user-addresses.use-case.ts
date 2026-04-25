@@ -5,12 +5,12 @@ import { ADDRESS_REPOSITORY_TOKEN } from '../../../domain/repositories/address.r
 
 @Injectable()
 export class GetUserAddressesUseCase {
-    constructor(
-        @Inject(ADDRESS_REPOSITORY_TOKEN)
-        private readonly addressRepository: AddressRepository,
-    ) { }
+  constructor(
+    @Inject(ADDRESS_REPOSITORY_TOKEN)
+    private readonly addressRepository: AddressRepository,
+  ) {}
 
-    async execute(userId: string): Promise<Address[]> {
-        return this.addressRepository.findAllByUserId(userId);
-    }
+  async execute(userId: string): Promise<Address[]> {
+    return this.addressRepository.findAllByUserId(userId);
+  }
 }

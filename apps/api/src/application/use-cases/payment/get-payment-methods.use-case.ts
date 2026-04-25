@@ -6,19 +6,19 @@ import type { UserRepository } from '../../../domain/repositories/user.repositor
 
 @Injectable()
 export class GetPaymentMethodsUseCase {
-    constructor(
-        @Inject(PAYMENT_GATEWAY)
-        private readonly paymentGateway: PaymentGateway,
-        @Inject(USER_REPOSITORY_TOKEN)
-        private readonly userRepository: UserRepository,
-    ) { }
+  constructor(
+    @Inject(PAYMENT_GATEWAY)
+    private readonly paymentGateway: PaymentGateway,
+    @Inject(USER_REPOSITORY_TOKEN)
+    private readonly userRepository: UserRepository,
+  ) {}
 
-    async execute(userId: string): Promise<any[]> {
-        const user = await this.userRepository.findById(userId);
-        if (!user || !user.stripeCustomerId) {
-            return [];
-        }
-
-        return this.paymentGateway.listPaymentMethods(user.stripeCustomerId);
+  async execute(userId: string): Promise<any[]> {
+    const user = await this.userRepository.findById(userId);
+    if (!user || !user.stripeCustomerId) {
+      return [];
     }
+
+    return this.paymentGateway.listPaymentMethods(user.stripeCustomerId);
+  }
 }

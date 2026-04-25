@@ -434,7 +434,7 @@ async function seed() {
         translations: {
           fr: {
             headline: 'Équipement médical professionnel, livré avec excellence',
-            body: "Votre partenaire de confiance pour les dispositifs et équipements médicaux haut de gamme. Certifié ISO 13485. Livraison rapide partout en Europe.",
+            body: 'Votre partenaire de confiance pour les dispositifs et équipements médicaux haut de gamme. Certifié ISO 13485. Livraison rapide partout en Europe.',
           },
         },
       },

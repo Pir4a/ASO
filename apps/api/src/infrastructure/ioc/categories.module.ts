@@ -22,6 +22,10 @@ import { RolesGuard } from '../guards/roles.guard';
     JwtAuthGuard,
     RolesGuard,
   ],
-  exports: [GetCategoriesUseCase, FindCategoryByIdUseCase, CATEGORY_REPOSITORY_TOKEN],
+  exports: [
+    GetCategoriesUseCase,
+    FindCategoryByIdUseCase,
+    CATEGORY_REPOSITORY_TOKEN,
+  ],
 })
-export class CategoriesModule { }
+export class CategoriesModule {}

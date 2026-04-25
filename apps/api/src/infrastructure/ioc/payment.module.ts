@@ -12,19 +12,19 @@ import { OrdersModule } from './orders.module';
 import { UsersModule } from './users.module';
 
 @Module({
-    imports: [CartModule, forwardRef(() => OrdersModule), UsersModule],
-    controllers: [PaymentController],
-    providers: [
-        {
-            provide: PAYMENT_GATEWAY,
-            useClass: StripePaymentService,
-        },
-        CreatePaymentIntentUseCase,
-        CreateSetupIntentUseCase,
-        GetPaymentMethodsUseCase,
-        DeletePaymentMethodUseCase,
-        SetDefaultPaymentMethodUseCase,
-    ],
-    exports: [PAYMENT_GATEWAY],
+  imports: [CartModule, forwardRef(() => OrdersModule), UsersModule],
+  controllers: [PaymentController],
+  providers: [
+    {
+      provide: PAYMENT_GATEWAY,
+      useClass: StripePaymentService,
+    },
+    CreatePaymentIntentUseCase,
+    CreateSetupIntentUseCase,
+    GetPaymentMethodsUseCase,
+    DeletePaymentMethodUseCase,
+    SetDefaultPaymentMethodUseCase,
+  ],
+  exports: [PAYMENT_GATEWAY],
 })
-export class PaymentModule { }
+export class PaymentModule {}

@@ -5,12 +5,12 @@ import type { ProductRepository } from '../../../domain/repositories/product.rep
 
 @Injectable()
 export class FindProductBySlugUseCase {
-    constructor(
-        @Inject(PRODUCT_REPOSITORY_TOKEN)
-        private readonly productRepository: ProductRepository,
-    ) { }
+  constructor(
+    @Inject(PRODUCT_REPOSITORY_TOKEN)
+    private readonly productRepository: ProductRepository,
+  ) {}
 
-    async execute(slug: string): Promise<Product | null> {
-        return this.productRepository.findOneBySlug(slug);
-    }
+  async execute(slug: string): Promise<Product | null> {
+    return this.productRepository.findOneBySlug(slug);
+  }
 }

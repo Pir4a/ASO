@@ -5,12 +5,12 @@ import { Cart } from '../../../domain/entities/cart.entity';
 
 @Injectable()
 export class GetCartUseCase {
-    constructor(
-        @Inject(CART_REPOSITORY_TOKEN)
-        private readonly cartRepository: CartRepository,
-    ) { }
+  constructor(
+    @Inject(CART_REPOSITORY_TOKEN)
+    private readonly cartRepository: CartRepository,
+  ) {}
 
-    async execute(userId: string): Promise<Cart | null> {
-        return this.cartRepository.findByUserId(userId);
-    }
+  async execute(userId: string): Promise<Cart | null> {
+    return this.cartRepository.findByUserId(userId);
+  }
 }

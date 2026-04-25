@@ -43,4 +43,4 @@ import { RolesGuard } from '../guards/roles.guard';
     DeleteUserUseCase,
   ],
 })
-export class UsersModule { }
+export class UsersModule {}

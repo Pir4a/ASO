@@ -5,12 +5,12 @@ import type { CategoryRepository } from '../../../domain/repositories/category.r
 
 @Injectable()
 export class GetCategoriesUseCase {
-    constructor(
-        @Inject(CATEGORY_REPOSITORY_TOKEN)
-        private readonly categoryRepository: CategoryRepository,
-    ) { }
+  constructor(
+    @Inject(CATEGORY_REPOSITORY_TOKEN)
+    private readonly categoryRepository: CategoryRepository,
+  ) {}
 
-    async execute(): Promise<Category[]> {
-        return this.categoryRepository.findAll();
-    }
+  async execute(): Promise<Category[]> {
+    return this.categoryRepository.findAll();
+  }
 }

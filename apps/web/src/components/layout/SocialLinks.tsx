@@ -49,11 +49,11 @@ export function SocialLinks({ variant = "dark" }: SocialLinksProps) {
 
   const baseClass =
     variant === "dark"
-      ? "text-foreground/40 hover:text-white focus:text-white"
-      : "text-foreground/60 hover:text-primary focus:text-primary";
+      ? "text-white/90 bg-white/10 hover:bg-white hover:text-foreground focus:bg-white focus:text-foreground border border-white/20"
+      : "text-foreground/80 bg-foreground/5 hover:bg-primary hover:text-white focus:bg-primary focus:text-white border border-foreground/15";
 
   return (
-    <ul className="flex items-center gap-3" aria-label={t("social.followUs")}>
+    <ul className="flex flex-wrap items-center gap-3" aria-label={t("social.followUs")}>
       {links.map((link) => (
         <li key={link.name}>
           <a
@@ -61,7 +61,7 @@ export function SocialLinks({ variant = "dark" }: SocialLinksProps) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={t(link.labelKey)}
-            className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${baseClass}`}
+            className={`inline-flex h-10 w-10 items-center justify-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-primary ${baseClass}`}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

@@ -55,64 +55,69 @@ Answer customer questions helpfully and concisely. Use the knowledge base below.
 
 @Injectable()
 export class ChatService {
-    private readonly logger = new Logger(ChatService.name);
-    private readonly ollamaUrl: string;
-    private readonly model: string;
+  private readonly logger = new Logger(ChatService.name);
+  private readonly ollamaUrl: string;
+  private readonly model: string;
 
-    constructor(private readonly config: ConfigService) {
-        this.ollamaUrl = this.config.get<string>('OLLAMA_URL', 'http://localhost:11434');
-        this.model = this.config.get<string>('OLLAMA_MODEL', 'llama3.2:3b');
+  constructor(private readonly config: ConfigService) {
+    this.ollamaUrl = this.config.get<string>(
+      'OLLAMA_URL',
+      'http://localhost:11434',
+    );
+    this.model = this.config.get<string>('OLLAMA_MODEL', 'llama3.2:3b');
+  }
+
+  async chat(
+    message: string,
+    history?: { role: string; content: string }[],
+  ): Promise<string> {
+    const prompt = this.buildPrompt(message, history);
+
+    try {
+      const response = await fetch(`${this.ollamaUrl}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: this.model,
+          prompt,
+          system: SYSTEM_PROMPT,
+          stream: false,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        this.logger.error(`Ollama error ${response.status}: ${errorText}`);
+        throw new Error('Failed to get response from AI');
+      }
+
+      const data = await response.json();
+      return data.response?.trim() || 'Sorry, I could not generate a response.';
+    } catch (error) {
+      this.logger.error('Ollama request failed', error);
+
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        return 'The AI service is currently unavailable. Please try again later or contact our support team at support@althea-systems.com.';
+      }
+      throw error;
+    }
+  }
+
+  private buildPrompt(
+    message: string,
+    history?: { role: string; content: string }[],
+  ): string {
+    if (!history || history.length === 0) {
+      return message;
     }
 
-    async chat(
-        message: string,
-        history?: { role: string; content: string }[],
-    ): Promise<string> {
-        const prompt = this.buildPrompt(message, history);
+    const context = history
+      .slice(-6) // keep last 6 messages for context
+      .map(
+        (h) => `${h.role === 'user' ? 'Customer' : 'Assistant'}: ${h.content}`,
+      )
+      .join('\n');
 
-        try {
-            const response = await fetch(`${this.ollamaUrl}/api/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: this.model,
-                    prompt,
-                    system: SYSTEM_PROMPT,
-                    stream: false,
-                }),
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                this.logger.error(`Ollama error ${response.status}: ${errorText}`);
-                throw new Error('Failed to get response from AI');
-            }
-
-            const data = await response.json();
-            return data.response?.trim() || 'Sorry, I could not generate a response.';
-        } catch (error) {
-            this.logger.error('Ollama request failed', error);
-
-            if (error instanceof TypeError && error.message.includes('fetch')) {
-                return 'The AI service is currently unavailable. Please try again later or contact our support team at support@althea-systems.com.';
-            }
-            throw error;
-        }
-    }
-
-    private buildPrompt(
-        message: string,
-        history?: { role: string; content: string }[],
-    ): string {
-        if (!history || history.length === 0) {
-            return message;
-        }
-
-        const context = history
-            .slice(-6) // keep last 6 messages for context
-            .map((h) => `${h.role === 'user' ? 'Customer' : 'Assistant'}: ${h.content}`)
-            .join('\n');
-
-        return `${context}\nCustomer: ${message}`;
-    }
+    return `${context}\nCustomer: ${message}`;
+  }
 }

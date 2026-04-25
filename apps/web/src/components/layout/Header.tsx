@@ -11,6 +11,7 @@ import { useT } from "@/context/LocaleContext";
 import { useCart } from "@/hooks/useCart";
 import type { Locale } from "@/lib/i18n.shared";
 import { MobileMenu } from "./MobileMenu";
+import { SocialLinks } from "./SocialLinks";
 
 const API_URL =
   (typeof window !== "undefined" ? process.env.NEXT_PUBLIC_API_URL : undefined) ||
@@ -100,6 +101,10 @@ export function Header({ locale }: HeaderProps) {
                 Paiement sécurisé
               </li>
             </ul>
+
+            <div className="hidden lg:block">
+              <SocialLinks variant="dark" />
+            </div>
 
             <div className="ml-auto flex items-center gap-2.5 text-[12.5px] font-medium sm:gap-3.5">
               {isAuthenticated ? (

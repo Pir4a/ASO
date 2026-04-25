@@ -38,5 +38,4 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
   ],
   exports: [AuthService, JwtStrategy, PassportModule],
 })
-export class AuthModule { }
-
+export class AuthModule {}

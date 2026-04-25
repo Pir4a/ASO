@@ -5,12 +5,12 @@ import type { UserRepository } from '../../../domain/repositories/user.repositor
 
 @Injectable()
 export class GetUsersUseCase {
-    constructor(
-        @Inject(USER_REPOSITORY_TOKEN)
-        private readonly userRepository: UserRepository,
-    ) { }
+  constructor(
+    @Inject(USER_REPOSITORY_TOKEN)
+    private readonly userRepository: UserRepository,
+  ) {}
 
-    async execute(): Promise<User[]> {
-        return this.userRepository.findAll();
-    }
+  async execute(): Promise<User[]> {
+    return this.userRepository.findAll();
+  }
 }

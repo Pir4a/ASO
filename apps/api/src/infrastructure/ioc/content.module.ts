@@ -8,8 +8,8 @@ import { RolesGuard } from '../guards/roles.guard';
 import { AuthModule } from './auth.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([ContentBlock]), AuthModule],
-    controllers: [ContentController],
-    providers: [GetContentUseCase, JwtAuthGuard, RolesGuard],
+  imports: [TypeOrmModule.forFeature([ContentBlock]), AuthModule],
+  controllers: [ContentController],
+  providers: [GetContentUseCase, JwtAuthGuard, RolesGuard],
 })
-export class ContentModule { }
+export class ContentModule {}

@@ -1,27 +1,31 @@
 import {
-    IsString,
-    IsNotEmpty,
-    IsNumber,
-    IsPositive,
-    IsInt,
-    Min,
-    MaxLength,
-    IsOptional,
-    IsBoolean,
-    IsArray,
-    IsObject,
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  IsPositive,
+  IsInt,
+  Min,
+  MaxLength,
+  IsOptional,
+  IsBoolean,
+  IsArray,
+  IsObject,
   IsIn,
 } from 'class-validator';
 
 export class CreateProductDto {
   @IsString()
   @IsNotEmpty({ message: 'Le nom du produit ne peut pas être vide.' })
-  @MaxLength(255, { message: 'Le nom du produit ne peut pas dépasser 255 caractères.' })
+  @MaxLength(255, {
+    message: 'Le nom du produit ne peut pas dépasser 255 caractères.',
+  })
   name: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Le slug du produit ne peut pas être vide.' })
-  @MaxLength(255, { message: 'Le slug du produit ne peut pas dépasser 255 caractères.' })
+  @MaxLength(255, {
+    message: 'Le slug du produit ne peut pas dépasser 255 caractères.',
+  })
   // TODO: Ajouter un validateur personnalisé pour un slug unique
   slug: string;
 

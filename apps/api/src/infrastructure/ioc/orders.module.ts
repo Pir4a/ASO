@@ -23,30 +23,30 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Order, OrderItem]),
-        CartModule,
-        UsersModule,
-        AddressModule,
-        AuthModule,
-        ProductsModule,
-        forwardRef(() => PaymentModule),
-    ],
-    controllers: [CheckoutController, OrdersController, AdminController],
-    providers: [
-        {
-            provide: ORDER_REPOSITORY_TOKEN,
-            useClass: TypeOrmOrderRepository,
-        },
-        CreateOrderUseCase,
-        ConfirmOrderPaymentUseCase,
-        GetOrdersUseCase,
-        GetOrderDetailsUseCase,
-        GenerateInvoicePdfUseCase,
-        PdfService,
-        JwtAuthGuard,
-        RolesGuard,
-    ],
-    exports: [ORDER_REPOSITORY_TOKEN],
+  imports: [
+    TypeOrmModule.forFeature([Order, OrderItem]),
+    CartModule,
+    UsersModule,
+    AddressModule,
+    AuthModule,
+    ProductsModule,
+    forwardRef(() => PaymentModule),
+  ],
+  controllers: [CheckoutController, OrdersController, AdminController],
+  providers: [
+    {
+      provide: ORDER_REPOSITORY_TOKEN,
+      useClass: TypeOrmOrderRepository,
+    },
+    CreateOrderUseCase,
+    ConfirmOrderPaymentUseCase,
+    GetOrdersUseCase,
+    GetOrderDetailsUseCase,
+    GenerateInvoicePdfUseCase,
+    PdfService,
+    JwtAuthGuard,
+    RolesGuard,
+  ],
+  exports: [ORDER_REPOSITORY_TOKEN],
 })
-export class OrdersModule { }
+export class OrdersModule {}

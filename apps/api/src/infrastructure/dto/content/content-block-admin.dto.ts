@@ -10,7 +10,11 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export const CONTENT_TYPES = ['carousel', 'homepage_text', 'category_image'] as const;
+export const CONTENT_TYPES = [
+  'carousel',
+  'homepage_text',
+  'category_image',
+] as const;
 export type AdminContentType = (typeof CONTENT_TYPES)[number];
 
 export class CreateContentBlockDto {

@@ -1,4 +1,15 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Patch, Param, Get, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Patch,
+  Param,
+  Get,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { RegisterDto, LoginDto, UpdateUserRoleDto } from '../dto/auth/auth.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
@@ -7,7 +18,7 @@ import { Roles } from '../auth/roles.decorator';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Post('register')
   register(@Body() registerDto: RegisterDto) {

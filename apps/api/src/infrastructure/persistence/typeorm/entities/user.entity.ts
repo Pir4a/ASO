@@ -5,39 +5,39 @@ export type UserRole = 'customer' | 'admin';
 @Entity({ name: 'users' })
 @Unique(['email'])
 export class User {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column()
-    email: string;
+  @Column()
+  email: string;
 
-    @Column()
-    passwordHash: string;
+  @Column()
+  passwordHash: string;
 
-    @Column({ type: 'varchar', length: 20, default: 'customer' })
-    role: UserRole;
+  @Column({ type: 'varchar', length: 20, default: 'customer' })
+  role: UserRole;
 
-    @Column({ nullable: true })
-    firstName?: string;
+  @Column({ nullable: true })
+  firstName?: string;
 
-    @Column({ nullable: true })
-    lastName?: string;
+  @Column({ nullable: true })
+  lastName?: string;
 
-    @Column({ default: false })
-    isVerified: boolean;
+  @Column({ default: false })
+  isVerified: boolean;
 
-    @Column({ default: true })
-    isActive: boolean;
+  @Column({ default: true })
+  isActive: boolean;
 
-    @Column({ nullable: true })
-    lastLoginAt?: Date;
+  @Column({ nullable: true })
+  lastLoginAt?: Date;
 
-    @Column({ nullable: true })
-    verificationToken?: string;
+  @Column({ nullable: true })
+  verificationToken?: string;
 
-    @Column({ nullable: true })
-    verificationTokenExpires?: Date;
+  @Column({ nullable: true })
+  verificationTokenExpires?: Date;
 
-    @Column({ nullable: true })
-    stripeCustomerId?: string;
+  @Column({ nullable: true })
+  stripeCustomerId?: string;
 }

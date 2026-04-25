@@ -7,48 +7,50 @@ import { UserMapper } from '../mappers/user.mapper';
 
 @Injectable()
 export class PostgresUserRepository implements UserRepository {
-    private readonly repository: Repository<TypeOrmUser>;
+  private readonly repository: Repository<TypeOrmUser>;
 
-    constructor(dataSource: DataSource) {
-        this.repository = dataSource.getRepository(TypeOrmUser);
-    }
+  constructor(dataSource: DataSource) {
+    this.repository = dataSource.getRepository(TypeOrmUser);
+  }
 
-    async findAll(): Promise<DomainUser[]> {
-        const entities = await this.repository.find();
-        return entities.map(UserMapper.toDomain);
-    }
+  async findAll(): Promise<DomainUser[]> {
+    const entities = await this.repository.find();
+    return entities.map(UserMapper.toDomain);
+  }
 
-    async findByEmail(email: string): Promise<DomainUser | null> {
-        const entity = await this.repository.findOne({ where: { email } });
-        if (!entity) return null;
-        return UserMapper.toDomain(entity);
-    }
+  async findByEmail(email: string): Promise<DomainUser | null> {
+    const entity = await this.repository.findOne({ where: { email } });
+    if (!entity) return null;
+    return UserMapper.toDomain(entity);
+  }
 
-    async findByVerificationToken(token: string): Promise<DomainUser | null> {
-        const entity = await this.repository.findOne({ where: { verificationToken: token } });
-        if (!entity) return null;
-        return UserMapper.toDomain(entity);
-    }
+  async findByVerificationToken(token: string): Promise<DomainUser | null> {
+    const entity = await this.repository.findOne({
+      where: { verificationToken: token },
+    });
+    if (!entity) return null;
+    return UserMapper.toDomain(entity);
+  }
 
-    async create(user: DomainUser): Promise<DomainUser> {
-        const persistenceEntity = UserMapper.toPersistence(user);
-        const newEntity = await this.repository.save(persistenceEntity);
-        return UserMapper.toDomain(newEntity);
-    }
+  async create(user: DomainUser): Promise<DomainUser> {
+    const persistenceEntity = UserMapper.toPersistence(user);
+    const newEntity = await this.repository.save(persistenceEntity);
+    return UserMapper.toDomain(newEntity);
+  }
 
-    async findById(id: string): Promise<DomainUser | null> {
-        const entity = await this.repository.findOne({ where: { id } });
-        if (!entity) return null;
-        return UserMapper.toDomain(entity);
-    }
+  async findById(id: string): Promise<DomainUser | null> {
+    const entity = await this.repository.findOne({ where: { id } });
+    if (!entity) return null;
+    return UserMapper.toDomain(entity);
+  }
 
-    async update(user: DomainUser): Promise<DomainUser> {
-        const persistenceEntity = UserMapper.toPersistence(user);
-        const savedEntity = await this.repository.save(persistenceEntity);
-        return UserMapper.toDomain(savedEntity);
-    }
+  async update(user: DomainUser): Promise<DomainUser> {
+    const persistenceEntity = UserMapper.toPersistence(user);
+    const savedEntity = await this.repository.save(persistenceEntity);
+    return UserMapper.toDomain(savedEntity);
+  }
 
-    async delete(id: string): Promise<void> {
-        await this.repository.delete(id);
-    }
+  async delete(id: string): Promise<void> {
+    await this.repository.delete(id);
+  }
 }
