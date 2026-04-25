@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import {
+  API_URL,
   confirmOrderPayment,
   createOrder,
   createPaymentIntent,
@@ -44,7 +45,6 @@ function formatPrice(cents: number, currency = "EUR") {
 export default function CheckoutPage() {
   const { refreshCart } = useCart();
   const { user, isAuthenticated } = useAuth();
-  const router = useRouter();
 
   const [step, setStep] = useState<Step>(isAuthenticated ? "address" : "identify");
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -243,58 +243,10 @@ export default function CheckoutPage() {
         {/* ── Left: step content ──────────────────────────── */}
         <div className="space-y-5">
           {step === "identify" && (
-            <SectionCard
-              eyebrow="Étape 1"
-              title="Identifiez-vous pour continuer"
-              hint="Connectez-vous pour récupérer vos adresses et cartes — ou continuez en invité."
-            >
-              <div className="grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => router.push(`/login?return_to=${encodeURIComponent("/checkout")}`)}
-                  style={{ color: "#fff" }}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-[14px] font-semibold transition hover:bg-primary-hover"
-                >
-                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
-                    <path d="M6 2H3v12h3M10 5l3 3-3 3M6 8h7" />
-                  </svg>
-                  Se connecter
-                </button>
-                <button
-                  type="button"
-                  onClick={() => router.push(`/signup?return_to=${encodeURIComponent("/checkout")}`)}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-foreground/15 bg-white px-4 text-[14px] font-semibold text-foreground transition hover:border-primary hover:text-primary"
-                >
-                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
-                    <path d="M8 3v10M3 8h10" />
-                  </svg>
-                  Créer un compte
-                </button>
-              </div>
-
-              <div className="mt-5 flex items-center gap-3 text-[11.5px] uppercase tracking-[0.08em] text-foreground/45">
-                <span aria-hidden="true" className="h-px flex-1 bg-foreground/10" />
-                ou
-                <span aria-hidden="true" className="h-px flex-1 bg-foreground/10" />
-              </div>
-
-              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-foreground/15 bg-background/40 px-4 py-3.5">
-                <p className="text-[13.5px] text-foreground/75">
-                  Continuer en <b className="font-semibold text-foreground">invité</b> — vous
-                  pourrez toujours créer un compte plus tard pour suivre vos achats.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setStep("address")}
-                  className="inline-flex h-10 items-center gap-2 rounded-lg border border-foreground/15 bg-white px-4 text-[13px] font-semibold text-foreground transition hover:border-primary hover:text-primary"
-                >
-                  Continuer sans compte
-                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
-                    <path d="M3 8h10m-3-3 3 3-3 3" />
-                  </svg>
-                </button>
-              </div>
-            </SectionCard>
+            <IdentifyStep
+              onAuthenticated={() => setStep("address")}
+              onContinueAsGuest={() => setStep("address")}
+            />
           )}
 
           {step === "address" && (
@@ -673,6 +625,258 @@ function SectionCard({
         {hint && <p className="mt-1 text-[13px] text-foreground/60">{hint}</p>}
       </header>
       <div className="px-6 py-5">{children}</div>
+    </section>
+  );
+}
+
+/* ── Identification step ────────────────────────────────────── */
+function IdentifyStep({
+  onAuthenticated,
+  onContinueAsGuest,
+}: {
+  onAuthenticated: () => void;
+  onContinueAsGuest: () => void;
+}) {
+  const router = useRouter();
+  const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleLogin = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, rememberMe }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || "Identifiants incorrects.");
+      await login(data.access_token, data.user);
+      onAuthenticated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Connexion impossible.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-foreground/10 bg-white">
+      {/* Branded header band */}
+      <header className="relative overflow-hidden bg-gradient-to-br from-foreground to-[#00253a] px-6 py-7 text-white md:px-8">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 60% 80% at 100% 0%, rgba(0,168,181,0.45) 0%, transparent 60%)",
+          }}
+        />
+        <div className="relative">
+          <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#b3eef2]">
+            <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary-hover" />
+            Étape 1 · Identification
+          </p>
+          <h2 className="font-heading text-[22px] font-semibold leading-tight tracking-tight md:text-[26px]">
+            Avant de finaliser votre commande
+          </h2>
+          <p className="mt-1.5 max-w-xl text-[13.5px] text-white/75">
+            Connectez-vous pour récupérer vos adresses et cartes enregistrées,
+            ou continuez en tant qu&apos;invité.
+          </p>
+        </div>
+      </header>
+
+      <div className="grid gap-0 lg:grid-cols-2">
+        {/* Left: inline login */}
+        <div className="space-y-4 px-6 py-6 lg:border-r lg:border-foreground/5">
+          <h3 className="font-heading text-[15px] font-semibold text-foreground">
+            J&apos;ai déjà un compte
+          </h3>
+
+          <form onSubmit={handleLogin} className="space-y-3.5">
+            <div>
+              <label
+                htmlFor="checkout-login-email"
+                className="mb-1.5 block text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/65"
+              >
+                Email
+              </label>
+              <input
+                id="checkout-login-email"
+                type="email"
+                required
+                autoComplete="email"
+                placeholder="vous@exemple.fr"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-lg border border-foreground/10 bg-white px-3.5 py-2.5 text-[14px] text-foreground placeholder:text-foreground/45 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+              />
+            </div>
+
+            <div>
+              <div className="mb-1.5 flex items-baseline justify-between">
+                <label
+                  htmlFor="checkout-login-pw"
+                  className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/65"
+                >
+                  Mot de passe
+                </label>
+                <Link
+                  href="/forgot-password"
+                  className="text-[11.5px] font-semibold text-primary transition hover:text-primary-hover"
+                >
+                  Oublié ?
+                </Link>
+              </div>
+              <div className="relative">
+                <input
+                  id="checkout-login-pw"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-lg border border-foreground/10 bg-white px-3.5 py-2.5 pr-10 text-[14px] text-foreground placeholder:text-foreground/45 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  aria-label={showPassword ? "Masquer" : "Afficher"}
+                  className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded text-foreground/55 transition hover:bg-background hover:text-primary"
+                >
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="h-3.5 w-3.5">
+                    {showPassword ? (
+                      <>
+                        <path d="M2 2l12 12" />
+                        <path d="M3 8s2-4 5-4M13 8s-2 4-5 4" />
+                      </>
+                    ) : (
+                      <>
+                        <path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8Z" />
+                        <circle cx="8" cy="8" r="2" />
+                      </>
+                    )}
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 text-[12.5px] text-foreground/75">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 rounded border-foreground/25 text-primary focus:ring-2 focus:ring-primary/30"
+              />
+              Se souvenir de moi (7 jours)
+            </label>
+
+            {error && (
+              <div
+                role="alert"
+                className="flex items-center gap-2 rounded-lg border border-error/30 bg-error/10 px-3 py-2 text-[12.5px] text-error"
+              >
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
+                  <circle cx="8" cy="8" r="6" />
+                  <path d="m4.5 4.5 7 7" />
+                </svg>
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{ color: "#fff" }}
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-[14px] font-semibold transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {submitting ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Connexion…
+                </>
+              ) : (
+                <>
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
+                    <path d="M6 2H3v12h3M10 5l3 3-3 3M6 8h7" />
+                  </svg>
+                  Se connecter et continuer
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Right: signup + guest */}
+        <div className="space-y-5 bg-background/30 px-6 py-6">
+          <div>
+            <h3 className="font-heading text-[15px] font-semibold text-foreground">
+              Pas encore de compte ?
+            </h3>
+            <p className="mt-1.5 text-[13px] text-foreground/65">
+              Créez-en un en quelques secondes pour suivre vos commandes,
+              télécharger vos factures et réutiliser vos cartes.
+            </p>
+            <ul
+              role="list"
+              className="mt-3 space-y-1.5 text-[12.5px] text-foreground/75"
+            >
+              {[
+                "Suivi de livraison + historique des commandes",
+                "Adresses et cartes enregistrées (paiement en 1 clic)",
+                "Factures PDF Althea Systems",
+              ].map((b) => (
+                <li key={b} className="inline-flex items-start gap-2">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 flex-none text-primary">
+                    <path d="m3 8 3.5 3.5L13 5" />
+                  </svg>
+                  {b}
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              onClick={() =>
+                router.push(`/signup?return_to=${encodeURIComponent("/checkout")}`)
+              }
+              className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-foreground/15 bg-white px-4 text-[14px] font-semibold text-foreground transition hover:border-primary hover:text-primary"
+            >
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
+                <path d="M8 3v10M3 8h10" />
+              </svg>
+              Créer un compte
+            </button>
+          </div>
+
+          <div className="rounded-xl border border-dashed border-foreground/15 bg-white/60 p-4">
+            <p className="font-heading text-[13.5px] font-semibold text-foreground">
+              Continuer en invité
+            </p>
+            <p className="mt-1 text-[12px] text-foreground/65">
+              Vous pourrez créer un compte plus tard pour retrouver vos achats.
+            </p>
+            <button
+              type="button"
+              onClick={onContinueAsGuest}
+              className="mt-3 inline-flex h-9 items-center gap-1.5 text-[12.5px] font-semibold text-primary transition hover:text-primary-hover"
+            >
+              Continuer sans compte
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3 w-3">
+                <path d="M3 8h10m-3-3 3 3-3 3" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
