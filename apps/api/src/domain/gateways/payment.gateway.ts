@@ -26,6 +26,12 @@ export interface PaymentGateway {
     listPaymentMethods(stripeCustomerId: string): Promise<PaymentMethodSummary[]>;
     detachPaymentMethod(paymentMethodId: string): Promise<void>;
     setDefaultPaymentMethod(stripeCustomerId: string, paymentMethodId: string): Promise<void>;
+    /** Retrieve a single payment method (used to capture brand+last4 after a successful intent). */
+    retrievePaymentMethod(paymentMethodId: string): Promise<PaymentMethodSummary | null>;
+    /** Retrieve a payment intent and (best-effort) the card details that authorized it. */
+    retrievePaymentIntentCard(
+        paymentIntentId: string,
+    ): Promise<{ paymentMethodId?: string; brand?: string; last4?: string; status: string }>;
     verifyPayment(paymentId: string): Promise<string>; // Returns status
 }
 

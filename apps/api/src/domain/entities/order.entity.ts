@@ -32,6 +32,9 @@ export class Order {
     billingAddress?: Address;
     paymentMethod?: string; // e.g., 'stripe', 'paypal'
     paymentId?: string;
+    paymentMethodId?: string; // Stripe pm_…
+    paymentBrand?: string;
+    paymentLast4?: string;
     paymentStatus?: string;
     /** Append-only status timeline for admin / support. */
     statusHistory?: OrderStatusEvent[];
