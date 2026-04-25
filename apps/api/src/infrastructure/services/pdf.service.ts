@@ -224,9 +224,14 @@ export class PdfService {
     }
 
     private formatPrice(amount: number, currency: string): string {
+        // Intl FR uses U+202F (narrow no-break space) and U+00A0 (no-break space)
+        // for thousands grouping. PDFKit's default Helvetica font has no glyph
+        // for either, so it falls back to a "/" — replace them with a regular space.
         return new Intl.NumberFormat('fr-FR', {
             style: 'currency',
             currency: currency || 'EUR',
-        }).format(amount);
+        })
+            .format(amount)
+            .replace(/[  ]/g, ' ');
     }
 }
