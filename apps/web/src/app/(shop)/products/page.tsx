@@ -1,59 +1,58 @@
 import Link from "next/link";
-import { getProductsCatalog } from "@/lib/api";
+import { getCategories, getProducts, getProductsCatalog } from "@/lib/api";
 import { getLocaleFromCookie } from "@/lib/i18n.server";
 import { getTranslations } from "@/lib/translations";
-import { CategoryIndexHero } from "@/components/category/CategoryIndexHero";
-import { CategoryPagination } from "@/components/category/CategoryPagination";
-import { ProductCatalogListing } from "@/components/product/ProductCatalogListing";
+import { CategoryHero } from "@/components/category/CategoryHero";
+import { CategoryCatalog } from "@/components/category/CategoryCatalog";
 
-export default async function ProductsListPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string }>;
-}) {
-  const { page: pageParam } = await searchParams;
-  const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
-  const { products, meta } = await getProductsCatalog({ page, limit: 12 });
+export default async function ProductsListPage() {
+  const [categories, allProducts, page] = await Promise.all([
+    getCategories(),
+    getProducts(),
+    getProductsCatalog({ page: 1, limit: 48 }),
+  ]);
+
+  const products = page.products;
+  const availableTotal = products.filter(
+    (p) => p.status !== "out_of_stock" && (p.stock ?? 0) > 0,
+  ).length;
+
+  const productCounts: Record<string, number> = {};
+  for (const c of categories) {
+    productCounts[c.slug] = allProducts.filter((p) => p.categoryId === c.id).length;
+  }
 
   const locale = await getLocaleFromCookie();
   const t = getTranslations(locale);
 
   return (
-    <div className="space-y-10">
-      <CategoryIndexHero
-        eyebrow={t("products.heroEyebrow")}
-        title={t("products.catalogTitle")}
-        subtitle={t("products.catalogSubtitle")}
-        headingId="products-catalog-heading"
+    <div className="space-y-6">
+      <nav
+        aria-label="Fil d'Ariane"
+        className="flex flex-wrap items-center gap-2 text-sm text-foreground/60"
+      >
+        <Link href="/" className="hover:text-primary">
+          Accueil
+        </Link>
+        <span aria-hidden="true" className="text-foreground/25">/</span>
+        <span className="font-semibold text-foreground">Catalogue</span>
+      </nav>
+
+      <CategoryHero
+        name={t("products.catalogTitle")}
+        description={t("products.catalogSubtitle")}
+        productsTotal={page.meta.total}
+        availableTotal={availableTotal}
       />
 
-      <section className="card space-y-4 p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-            <p className="text-sm text-foreground/70">{t("products.sortHint")}</p>
-            <Link
-              href="/search"
-              className="inline-flex w-fit shrink-0 items-center rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/10"
-            >
-              {t("products.searchFiltersLink")}
-            </Link>
-          </div>
-          <p className="text-sm font-medium text-foreground/70 sm:text-end">
-            {meta.total}{" "}
-            {meta.total === 1 ? t("products.countSingle") : t("products.countPlural")}
-          </p>
-        </div>
-
-        {products.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-foreground/10 bg-background py-12 text-center text-sm text-foreground/60">
-            {t("products.empty")}
-          </p>
-        ) : (
-          <ProductCatalogListing products={products} />
-        )}
-
-        <CategoryPagination basePath="/products" page={meta.page} totalPages={meta.totalPages} />
-      </section>
+      <CategoryCatalog
+        categories={categories}
+        activeSlug={null}
+        products={products}
+        productCounts={productCounts}
+        allHref="/products"
+        allCount={page.meta.total}
+      />
     </div>
   );
 }
