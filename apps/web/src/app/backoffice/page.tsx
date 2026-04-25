@@ -1,11 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import "./backoffice.css";
+
 import { AuthGuard } from "@/components/guards/AuthGuard";
 import { ProductForm } from "@/components/backoffice/ProductForm";
 import { ContentManager } from "@/components/backoffice/ContentManager";
 import { DashboardCharts, type AdminDashboardData } from "@/components/backoffice/DashboardCharts";
-import { Badge, Icon, IconButton, Panel, StatCard } from "@/components/backoffice/DashboardUI";
+import {
+  BarChart,
+  Donut,
+  Icon,
+  IconButton,
+  KpiCard,
+  Panel,
+} from "@/components/backoffice/DashboardUI";
 import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/auth";
 
@@ -90,22 +101,34 @@ type AdminOrderDetail = {
   }[];
 };
 
-type Section = "overview" | "products" | "categories" | "content" | "orders" | "users" | "messages";
+type Section =
+  | "overview"
+  | "analytics"
+  | "products"
+  | "categories"
+  | "content"
+  | "orders"
+  | "users"
+  | "messages"
+  | "settings";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
-const SECTION_META: Record<Section, { label: string; hint: string; icon: React.ReactNode }> = {
-  overview: { label: "Overview", hint: "Indicateurs globaux", icon: <Icon.Overview /> },
-  products: { label: "Produits", hint: "Catalogue & matériel", icon: <Icon.Products /> },
-  categories: { label: "Catégories", hint: "Arborescence & ordre", icon: <Icon.Categories /> },
-  content: { label: "Contenu", hint: "Carrousel & homepage", icon: <Icon.Overview /> },
-  orders: { label: "Commandes", hint: "Liste & statuts", icon: <Icon.Orders /> },
-  users: { label: "Utilisateurs", hint: "Clients & admins", icon: <Icon.Users /> },
-  messages: { label: "Messages", hint: "Contacts & support", icon: <Icon.Messages /> },
+const SECTION_LABEL: Record<Section, string> = {
+  overview: "Overview",
+  analytics: "Analytique",
+  products: "Produits",
+  categories: "Catégories",
+  content: "Contenu",
+  orders: "Commandes",
+  users: "Utilisateurs",
+  messages: "Messages",
+  settings: "Paramètres",
 };
 
 function BackofficeDashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const router = useRouter();
   const [section, setSection] = useState<Section>("overview");
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -116,6 +139,7 @@ function BackofficeDashboard() {
   const [search, setSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
   const [categorySearch, setCategorySearch] = useState("");
+  const [globalSearch, setGlobalSearch] = useState("");
 
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -260,6 +284,16 @@ function BackofficeDashboard() {
     }
   };
 
+  const refreshAll = () =>
+    Promise.all([
+      loadCategories(),
+      loadProducts(),
+      loadUsers(),
+      loadContactMessages(),
+      loadDashboard(),
+      section === "orders" ? loadAdminOrders(ordersPage, ordersStatusFilter) : Promise.resolve(),
+    ]);
+
   useEffect(() => {
     void Promise.all([loadCategories(), loadProducts(), loadUsers(), loadContactMessages(), loadDashboard()]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -389,6 +423,11 @@ function BackofficeDashboard() {
     flash("success", `Action groupée appliquée.`);
   };
 
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
+
   /* ------------------------------- Derived -------------------------------- */
 
   const adminCount = users.filter((u) => u.role === "admin").length;
@@ -397,9 +436,10 @@ function BackofficeDashboard() {
   const outOfStockCount = products.filter((p) => (p.stock ?? 0) === 0).length;
   const activeCategories = categories.filter((c) => c.isActive).length;
 
-  const filteredProducts = products.filter((p) =>
-    (p.name ?? "").toLowerCase().includes(productSearch.toLowerCase()) ||
-    (p.sku ?? "").toLowerCase().includes(productSearch.toLowerCase()),
+  const filteredProducts = products.filter(
+    (p) =>
+      (p.name ?? "").toLowerCase().includes(productSearch.toLowerCase()) ||
+      (p.sku ?? "").toLowerCase().includes(productSearch.toLowerCase()),
   );
 
   const filteredCategories = [...categories]
@@ -410,45 +450,47 @@ function BackofficeDashboard() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 
-  // Category distribution for products
-  const categoryDist = categories
-    .map((c) => ({
-      name: c.name,
-      count: products.filter((p) => p.category?.id === c.id || p.categoryId === c.id).length,
-    }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 6);
-  const maxDist = Math.max(1, ...categoryDist.map((d) => d.count));
+  const categoryDist = useMemo(
+    () =>
+      categories
+        .map((c) => ({
+          name: c.name,
+          count: products.filter((p) => p.category?.id === c.id || p.categoryId === c.id).length,
+        }))
+        .sort((a, b) => b.count - a.count),
+    [categories, products],
+  );
+  const catalogTotal = categoryDist.reduce((s, c) => s + c.count, 0);
 
-  /* --------------------------------- UI ----------------------------------- */
+  const stockAlerts = useMemo(
+    () =>
+      products
+        .filter((p) => (p.stock ?? 0) < 5)
+        .sort((a, b) => (a.stock ?? 0) - (b.stock ?? 0))
+        .slice(0, 5),
+    [products],
+  );
 
-  const navItem = (key: Section) => {
-    const meta = SECTION_META[key];
-    const active = section === key;
-    return (
-      <button
-        key={key}
-        type="button"
-        onClick={() => setSection(key)}
-        className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
-          active
-            ? "bg-linear-to-r from-primary to-primary-hover text-white shadow-md shadow-primary/20"
-            : "text-foreground/70 hover:bg-background hover:text-foreground"
-        }`}
-      >
-        <span className={active ? "text-white" : "text-foreground/50 group-hover:text-primary"}>{meta.icon}</span>
-        <span className="flex-1 text-left">{meta.label}</span>
-        {key === "messages" && contactMessages.length > 0 && (
-          <span
-            className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
-              active ? "bg-white/25 text-white" : "bg-error/10 text-error"
-            }`}
-          >
-            {contactMessages.length}
-          </span>
-        )}
-      </button>
-    );
+  const recentOrdersPreview = useMemo(() => {
+    const src = adminOrders.length > 0 ? adminOrders : [];
+    return src.slice(0, 5);
+  }, [adminOrders]);
+
+  const counts = {
+    products: products.length,
+    categories: categories.length,
+    orders: ordersMeta?.total ?? adminOrders.length,
+    users: users.length,
+    messages: contactMessages.length,
+  };
+
+  const sparkSeed = (key: string) => {
+    let s = 0;
+    for (let i = 0; i < key.length; i++) s = (s * 31 + key.charCodeAt(i)) >>> 0;
+    return Array.from({ length: 12 }, () => {
+      s = (s * 9301 + 49297) % 233280;
+      return Math.round((s / 233280) * 8) + 4;
+    });
   };
 
   const today = new Date().toLocaleDateString("fr-FR", {
@@ -458,960 +500,1450 @@ function BackofficeDashboard() {
     day: "numeric",
   });
 
+  /* ------------------------------- Sidebar -------------------------------- */
+
+  const sidebarSections: { label: string; items: { id: Section; name: string; icon: keyof typeof Icon; count?: number; dot?: boolean }[] }[] = [
+    {
+      label: "Tableau de bord",
+      items: [
+        { id: "overview", name: "Overview", icon: "Overview" },
+        { id: "analytics", name: "Analytique", icon: "Flag" },
+      ],
+    },
+    {
+      label: "Catalogue",
+      items: [
+        { id: "products", name: "Produits", icon: "Products", count: counts.products },
+        { id: "categories", name: "Catégories", icon: "Categories", count: counts.categories },
+        { id: "content", name: "Contenu", icon: "Doc" },
+      ],
+    },
+    {
+      label: "Opérations",
+      items: [
+        { id: "orders", name: "Commandes", icon: "Orders", count: counts.orders },
+        { id: "users", name: "Utilisateurs", icon: "Users", count: counts.users },
+        { id: "messages", name: "Messages", icon: "Messages", dot: counts.messages > 0 },
+      ],
+    },
+    {
+      label: "Système",
+      items: [{ id: "settings", name: "Paramètres", icon: "Settings" }],
+    },
+  ];
+
   const orderStatusBadge = (status: string) => {
-    const map: Record<string, { tone: "slate" | "sky" | "violet" | "emerald" | "rose"; label: string }> = {
-      pending: { tone: "slate", label: "En attente" },
-      processing: { tone: "sky", label: "En traitement" },
-      shipped: { tone: "violet", label: "Expédiée" },
-      delivered: { tone: "emerald", label: "Livrée" },
-      cancelled: { tone: "rose", label: "Annulée" },
+    const map: Record<string, { tone: "ok" | "warn" | "neutral" | "danger" | "brand"; label: string }> = {
+      pending: { tone: "warn", label: "En attente" },
+      processing: { tone: "brand", label: "En traitement" },
+      shipped: { tone: "neutral", label: "Expédiée" },
+      delivered: { tone: "ok", label: "Livrée" },
+      cancelled: { tone: "danger", label: "Annulée" },
     };
-    const m = map[status] ?? { tone: "slate" as const, label: status };
-    return <Badge tone={m.tone}>{m.label}</Badge>;
+    const m = map[status] ?? { tone: "neutral" as const, label: status };
+    return <span className={`bo-badge ${m.tone}`}>{m.label}</span>;
   };
 
   const productStatusBadge = (p: Product) => {
     const stock = p.stock ?? 0;
-    if (stock === 0) return <Badge tone="rose">Rupture</Badge>;
-    if (stock < 5) return <Badge tone="amber">Stock faible</Badge>;
-    if (p.status === "new") return <Badge tone="violet">Nouveau</Badge>;
-    return <Badge tone="emerald">En stock</Badge>;
+    if (stock === 0) return <span className="bo-badge danger">Rupture</span>;
+    if (stock < 5) return <span className="bo-badge warn">Faible</span>;
+    if (p.status === "new") return <span className="bo-badge brand">Nouveau</span>;
+    return <span className="bo-badge ok">En stock</span>;
   };
 
+  const initials = (s: string) =>
+    s
+      .replace(/[^A-Za-z0-9 ]+/g, " ")
+      .trim()
+      .split(/\s+/)
+      .map((w) => w[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "?";
+
+  /* --------------------------------- UI ----------------------------------- */
+
   return (
-    <div className="-mt-8 min-h-screen">
-      {/* Page background tint */}
-      <div className="bg-linear-to-br from-background via-background to-background/30 py-6">
-        <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
-          {/* Sidebar */}
-          <aside className="lg:sticky lg:top-20 lg:self-start">
-            <div className="rounded-2xl bg-white p-4 shadow-[0_4px_6px_-1px_rgb(0,0,0,0.08),0_2px_4px_-2px_rgb(0,0,0,0.05)]">
-              <div className="mb-4 flex items-center gap-3 border-b border-foreground/10 pb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-primary-hover text-white shadow-md">
-                  <Icon.Shield className="h-5 w-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-foreground">Admin Panel</p>
-                  <p className="truncate text-[11px] text-foreground/60">{user?.email ?? "admin"}</p>
-                </div>
-              </div>
-              <nav className="space-y-1">
-                {(Object.keys(SECTION_META) as Section[]).map((k) => navItem(k))}
-              </nav>
-              <div className="mt-4 rounded-xl bg-linear-to-br from-primary/10 to-primary-hover/5 p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">Statut système</p>
-                <p className="mt-1 flex items-center gap-2 text-xs font-medium text-foreground/80">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/40 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
-                  </span>
-                  Tous les services actifs
-                </p>
+    <div className="bo-root">
+      <div className="bo-app">
+        {/* Brand corner */}
+        <div className="bo-brand-cell">
+          <div className="bo-brand-mark">A+</div>
+          <div className="bo-brand-name">Althea Systems</div>
+          <div className="bo-brand-env">PROD</div>
+        </div>
+
+        {/* Top bar */}
+        <header className="bo-topbar">
+          <div className="bo-crumbs">
+            <span>Dashboard</span>
+            <span className="sep">/</span>
+            <span className="current">{SECTION_LABEL[section]}</span>
+          </div>
+          <div className="bo-top-spacer" />
+          <div className="bo-search">
+            <Icon.Search />
+            <input
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+              placeholder="Rechercher produits, commandes, clients…"
+            />
+            <kbd>⌘K</kbd>
+          </div>
+          <Link href="/" className="bo-btn" title="Retour au site">
+            <Icon.Home /> Retour au site
+          </Link>
+          <button className="bo-icon-btn" title="Notifications" type="button">
+            <Icon.Bell />
+          </button>
+          <button className="bo-icon-btn" title="Paramètres" type="button" onClick={() => setSection("settings")}>
+            <Icon.Settings />
+          </button>
+          <div className="bo-divider-v" />
+          <div className="bo-user-chip" title={user?.email ?? "admin"}>
+            <span className="avatar">{(user?.email ?? "A")[0].toUpperCase()}</span>
+            <div>
+              <div style={{ fontWeight: 500, lineHeight: 1.1 }}>{user?.email?.split("@")[0] ?? "admin"}</div>
+              <div style={{ fontSize: 10, color: "var(--bo-text-dim)", lineHeight: 1.1 }}>
+                {user?.email ?? "admin@althea.local"}
               </div>
             </div>
-          </aside>
+            <span className="role">Admin</span>
+            <Icon.ChevD />
+          </div>
+          <button className="bo-icon-btn danger" title="Déconnexion" type="button" onClick={handleLogout}>
+            <Icon.Logout />
+          </button>
+        </header>
 
-          {/* Main content */}
-          <main className="space-y-6">
-            {/* Top bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white px-5 py-4 shadow-[0_4px_6px_-1px_rgb(0,0,0,0.08),0_2px_4px_-2px_rgb(0,0,0,0.05)]">
-              <div>
-                <div className="flex items-center gap-2 text-xs font-medium text-foreground/60">
-                  <span>Dashboard</span>
-                  <span className="text-foreground/40">/</span>
-                  <span className="text-primary">{SECTION_META[section].label}</span>
-                </div>
-                <h1 className="text-xl font-bold text-foreground">
-                  {section === "overview" ? `Bonjour ${user?.email?.split("@")[0] ?? "Admin"} 👋` : SECTION_META[section].label}
-                </h1>
-                <p className="text-xs text-foreground/60 first-letter:capitalize">{today}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() =>
-                    void Promise.all([
-                      loadCategories(),
-                      loadProducts(),
-                      loadUsers(),
-                      loadContactMessages(),
-                      loadDashboard(),
-                      section === "orders" ? loadAdminOrders(ordersPage, ordersStatusFilter) : Promise.resolve(),
-                    ])
-                  }
-                  className="inline-flex items-center gap-2 rounded-lg border border-foreground/10 bg-white px-3 py-2 text-xs font-semibold text-foreground/80 transition hover:border-primary hover:text-primary"
-                >
-                  <Icon.Refresh />
-                  Rafraîchir
-                </button>
-                <div className="relative">
-                  <button className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg border border-foreground/10 bg-white text-foreground/70 transition hover:border-primary hover:text-primary">
-                    <Icon.Bell />
-                    {contactMessages.length > 0 && (
-                      <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold text-white">
-                        {contactMessages.length}
-                      </span>
-                    )}
+        {/* Sidebar */}
+        <aside className="bo-sidebar">
+          {sidebarSections.map((sec) => (
+            <div className="bo-side-section" key={sec.label}>
+              <div className="bo-side-label">{sec.label}</div>
+              {sec.items.map((it) => {
+                const IcoCmp = Icon[it.icon];
+                const active = section === it.id;
+                return (
+                  <button
+                    key={it.id}
+                    type="button"
+                    onClick={() => setSection(it.id)}
+                    className={`bo-nav-item ${active ? "active" : ""}`}
+                  >
+                    <IcoCmp className="ico" />
+                    <span>{it.name}</span>
+                    {typeof it.count === "number" && <span className="count bo-num">{it.count}</span>}
+                    {it.dot && <span className="dot" />}
                   </button>
-                </div>
+                );
+              })}
+            </div>
+          ))}
+          <div className="bo-side-footer">
+            <div className="bo-status-row">
+              <span className="bo-status-dot" />
+              <span>Tous les services actifs</span>
+            </div>
+            <div className="bo-status-row bo-dim bo-mono" style={{ fontSize: 10 }}>
+              api · db · cdn · queue
+            </div>
+            <div
+              className="bo-status-row bo-dim"
+              style={{ fontSize: 10, justifyContent: "space-between" }}
+            >
+              <span>v2.14.3</span>
+              <span className="bo-mono">build a7f9e2</span>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main */}
+        <main className="bo-main">
+          {/* Page head */}
+          <div className="bo-page-head">
+            <div>
+              <h1 className="bo-page-title">
+                {section === "overview"
+                  ? `Bonjour ${user?.email?.split("@")[0] ?? "admin"}`
+                  : SECTION_LABEL[section]}
+                <span className="bo-page-pill">PROD</span>
+              </h1>
+              <div className="bo-page-sub" style={{ textTransform: "lowercase" }}>
+                <span style={{ textTransform: "capitalize" }}>{today}</span>
+                {" · Dernière synchro à l'instant"}
               </div>
             </div>
-
-            {/* Flash feedback */}
-            {feedback && (
-              <div
-                className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm shadow-sm ${
-                  feedback.kind === "success"
-                    ? "border border-success/30 bg-success/10 text-success"
-                    : "border border-error/30 bg-error/10 text-error"
-                }`}
-              >
-                {feedback.kind === "success" ? <Icon.Check /> : <Icon.X />}
-                {feedback.text}
-              </div>
-            )}
-
-            {/* OVERVIEW */}
-            {section === "overview" && (
-              <>
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  <StatCard
-                    label="Produits"
-                    value={products.length}
-                    trend={`${products.length - outOfStockCount} dispo`}
-                    hint={`${outOfStockCount} en rupture`}
-                    tone="primary"
-                    icon={<Icon.Products />}
-                  />
-                  <StatCard
-                    label="Catégories"
-                    value={categories.length}
-                    hint={`${activeCategories} actives`}
-                    tone="violet"
-                    icon={<Icon.Categories />}
-                  />
-                  <StatCard
-                    label="Utilisateurs"
-                    value={users.length}
-                    trend={`${activeUsers} actifs`}
-                    hint={`${adminCount} admin${adminCount > 1 ? "s" : ""}`}
-                    tone="emerald"
-                    icon={<Icon.Users />}
-                  />
-                  <StatCard
-                    label="Messages"
-                    value={contactMessages.length}
-                    hint="Contacts non lus"
-                    tone={contactMessages.length > 0 ? "amber" : "sky"}
-                    icon={<Icon.Messages />}
-                  />
-                </div>
-
-                {loadingDashboard ? (
-                  <p className="text-center text-sm text-foreground/50">Chargement des indicateurs vente…</p>
-                ) : dashboard ? (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <StatCard
-                      label="CA aujourd&apos;hui"
-                      value={`${dashboard.kpi.revenueToday.toFixed(2)} €`}
-                      trend={`Hier : ${dashboard.kpi.revenueYesterday.toFixed(2)} €`}
-                      hint="Hors commandes annulées"
-                      tone="primary"
-                      icon={<Icon.TrendUp />}
-                    />
-                    <StatCard
-                      label="Commandes aujourd&apos;hui"
-                      value={dashboard.kpi.ordersToday}
-                      trend={`Hier : ${dashboard.kpi.ordersYesterday}`}
-                      hint="Nombre de commandes créées"
-                      tone="sky"
-                      icon={<Icon.Orders />}
-                    />
-                  </div>
-                ) : null}
-
-                <div className="grid gap-6 lg:grid-cols-3">
-                  <Panel title="Répartition du catalogue" subtitle="Produits par catégorie" className="lg:col-span-2">
-                    {categoryDist.length === 0 ? (
-                      <p className="py-8 text-center text-sm text-foreground/50">Pas encore de données.</p>
-                    ) : (
-                      <div className="space-y-3">
-                        {categoryDist.map((d) => (
-                          <div key={d.name}>
-                            <div className="mb-1 flex items-center justify-between text-xs">
-                              <span className="font-medium text-foreground/80">{d.name}</span>
-                              <span className="font-semibold text-foreground/60">{d.count}</span>
-                            </div>
-                            <div className="h-2 overflow-hidden rounded-full bg-background">
-                              <div
-                                className="h-full rounded-full bg-linear-to-r from-primary to-primary-hover"
-                                style={{ width: `${(d.count / maxDist) * 100}%` }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </Panel>
-
-                  <Panel title="Alertes stock" subtitle="Produits à surveiller">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between rounded-xl bg-error/10 p-3">
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-error">Rupture</p>
-                          <p className="text-2xl font-bold text-error">{outOfStockCount}</p>
-                        </div>
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-error/10 text-error">
-                          <Icon.X className="h-5 w-5" />
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between rounded-xl bg-warning/10 p-3">
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-warning">Stock faible</p>
-                          <p className="text-2xl font-bold text-warning">{lowStockCount}</p>
-                        </div>
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/10 text-warning">
-                          <Icon.TrendUp className="h-5 w-5" />
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setSection("products")}
-                        className="w-full rounded-lg border border-foreground/10 bg-white py-2 text-xs font-semibold text-foreground/70 transition hover:border-primary hover:text-primary"
-                      >
-                        Voir les produits →
-                      </button>
-                    </div>
-                  </Panel>
-                </div>
-
-                {dashboard ? (
-                  <Panel title="Graphiques vente" subtitle="7 jours, 5 semaines, statuts, catégories (30 j.)">
-                    <DashboardCharts data={dashboard} />
-                  </Panel>
-                ) : null}
-
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <Panel
-                    title="Derniers messages"
-                    subtitle={`${contactMessages.length} au total`}
-                    actions={
-                      <button
-                        onClick={() => setSection("messages")}
-                        className="text-xs font-semibold text-primary hover:underline"
-                      >
-                        Voir tout
-                      </button>
-                    }
-                  >
-                    {recentMessages.length === 0 ? (
-                      <p className="py-8 text-center text-sm text-foreground/50">Aucun message pour le moment.</p>
-                    ) : (
-                      <ul className="-my-2 divide-y divide-foreground/10">
-                        {recentMessages.map((m) => (
-                          <li key={m.id} className="flex items-start gap-3 py-3">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold uppercase text-primary">
-                              {m.email.slice(0, 2)}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between gap-2">
-                                <p className="truncate text-sm font-semibold text-foreground">{m.subject}</p>
-                                <span className="shrink-0 text-[10px] text-foreground/50">
-                                  {new Date(m.createdAt).toLocaleDateString("fr-FR")}
-                                </span>
-                              </div>
-                              <p className="truncate text-xs text-foreground/60">{m.email}</p>
-                              <p className="mt-1 line-clamp-1 text-xs text-foreground/70">{m.message}</p>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </Panel>
-
-                  <Panel title="Actions rapides" subtitle="Raccourcis admin">
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        onClick={() => {
-                          setSection("products");
-                          setShowProductForm(true);
-                        }}
-                        className="group flex flex-col items-start gap-2 rounded-xl border border-foreground/10 bg-white p-4 text-left transition hover:border-primary hover:shadow-md"
-                      >
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
-                          <Icon.Plus />
-                        </div>
-                        <p className="text-sm font-semibold text-foreground">Nouveau produit</p>
-                        <p className="text-xs text-foreground/60">Ajouter au catalogue</p>
-                      </button>
-                      <button
-                        onClick={() => setSection("categories")}
-                        className="group flex flex-col items-start gap-2 rounded-xl border border-foreground/10 bg-white p-4 text-left transition hover:border-primary hover:shadow-md"
-                      >
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
-                          <Icon.Categories />
-                        </div>
-                        <p className="text-sm font-semibold text-foreground">Catégories</p>
-                        <p className="text-xs text-foreground/60">Organiser l'arborescence</p>
-                      </button>
-                      <button
-                        onClick={() => setSection("users")}
-                        className="group flex flex-col items-start gap-2 rounded-xl border border-foreground/10 bg-white p-4 text-left transition hover:border-success hover:shadow-md"
-                      >
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-success/10 text-success transition group-hover:bg-success group-hover:text-white">
-                          <Icon.Users />
-                        </div>
-                        <p className="text-sm font-semibold text-foreground">Utilisateurs</p>
-                        <p className="text-xs text-foreground/60">Gérer les comptes</p>
-                      </button>
-                      <button
-                        onClick={() => setSection("messages")}
-                        className="group flex flex-col items-start gap-2 rounded-xl border border-foreground/10 bg-white p-4 text-left transition hover:border-warning hover:shadow-md"
-                      >
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-warning/10 text-warning transition group-hover:bg-warning group-hover:text-white">
-                          <Icon.Messages />
-                        </div>
-                        <p className="text-sm font-semibold text-foreground">Messages</p>
-                        <p className="text-xs text-foreground/60">Boîte de réception</p>
-                      </button>
-                    </div>
-                  </Panel>
-                </div>
-              </>
-            )}
-
-            {/* PRODUCTS */}
-            {section === "products" && (
-              <>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <StatCard label="Total" value={products.length} tone="primary" icon={<Icon.Products />} />
-                  <StatCard label="Stock faible" value={lowStockCount} tone="amber" icon={<Icon.TrendUp />} />
-                  <StatCard label="En rupture" value={outOfStockCount} tone="rose" icon={<Icon.X />} />
-                </div>
-
-                {showProductForm && (
-                  <Panel
-                    title="Ajouter un produit"
-                    subtitle="Nouveau matériel médical"
-                    actions={
-                      <IconButton onClick={() => setShowProductForm(false)} title="Fermer">
-                        <Icon.X /> Fermer
-                      </IconButton>
-                    }
-                  >
-                    <ProductForm
-                      categories={categories}
-                      onCreated={() => {
-                        void loadProducts();
-                        setShowProductForm(false);
-                        flash("success", "Produit ajouté.");
-                      }}
-                    />
-                  </Panel>
-                )}
-
-                <Panel
-                  title="Catalogue"
-                  subtitle={`${filteredProducts.length} produit${filteredProducts.length > 1 ? "s" : ""}`}
-                  actions={
-                    <>
-                      <div className="relative">
-                        <Icon.Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/50" />
-                        <input
-                          value={productSearch}
-                          onChange={(e) => setProductSearch(e.target.value)}
-                          placeholder="Rechercher…"
-                          className="w-48 rounded-lg border border-foreground/10 bg-white py-1.5 pl-8 pr-3 text-xs text-foreground/80 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-                        />
-                      </div>
-                      <button
-                        onClick={() => setShowProductForm((v) => !v)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-primary-hover"
-                      >
-                        <Icon.Plus /> Ajouter
-                      </button>
-                    </>
-                  }
+            <div className="bo-head-actions">
+              <button className="bo-btn" type="button" onClick={() => void refreshAll()}>
+                <Icon.Refresh /> Rafraîchir
+              </button>
+              {section === "products" && (
+                <button
+                  className="bo-btn primary"
+                  type="button"
+                  onClick={() => setShowProductForm((v) => !v)}
                 >
-                  {loadingProducts ? (
-                    <p className="py-8 text-center text-sm text-foreground/50">Chargement…</p>
-                  ) : filteredProducts.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-foreground/50">Aucun produit trouvé.</p>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm">
-                        <thead>
-                          <tr className="border-b border-foreground/10 text-[11px] uppercase tracking-wider text-foreground/60">
-                            <th className="py-2 pr-4 font-semibold">Produit</th>
-                            <th className="py-2 pr-4 font-semibold">SKU</th>
-                            <th className="py-2 pr-4 font-semibold">Catégorie</th>
-                            <th className="py-2 pr-4 font-semibold">Prix</th>
-                            <th className="py-2 pr-4 font-semibold">TVA</th>
-                            <th className="py-2 pr-4 font-semibold">Stock</th>
-                            <th className="py-2 pr-4 font-semibold">Statut</th>
-                            <th className="py-2 pr-4 font-semibold">Vedette</th>
-                            <th className="py-2 pr-4 text-right font-semibold">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-foreground/10">
-                          {filteredProducts.map((p) => (
-                            <tr key={p.id} className="transition hover:bg-background">
-                              <td className="py-3 pr-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-background text-[10px] font-bold uppercase text-foreground/60">
-                                    {p.thumbnailUrl ? (
-                                      // eslint-disable-next-line @next/next/no-img-element
-                                      <img src={p.thumbnailUrl} alt={p.name ?? ""} className="h-full w-full rounded-lg object-cover" />
-                                    ) : (
-                                      (p.name ?? "?").slice(0, 2)
-                                    )}
-                                  </div>
-                                  <span className="font-medium text-foreground">{p.name ?? "—"}</span>
-                                </div>
-                              </td>
-                              <td className="py-3 pr-4 font-mono text-[11px] text-foreground/60">{p.sku ?? "—"}</td>
-                              <td className="py-3 pr-4 text-foreground/70">{p.category?.name ?? "—"}</td>
-                              <td className="py-3 pr-4 font-semibold text-foreground">
-                                {typeof p.price === "number" ? `${p.price.toFixed(2)} €` : "—"}
-                              </td>
-                              <td className="py-3 pr-4 text-xs text-foreground/70">
-                                {p.vatRate !== undefined && p.vatRate !== null ? `${p.vatRate} %` : "20 %"}
-                              </td>
-                              <td className="py-3 pr-4 text-foreground/80">{p.stock ?? 0}</td>
-                              <td className="py-3 pr-4">{productStatusBadge(p)}</td>
-                              <td className="py-3 pr-4">
-                                <label className="inline-flex cursor-pointer items-center gap-2">
-                                  <input
-                                    type="checkbox"
-                                    checked={!!p.featured}
-                                    onChange={() => toggleFeatured(p)}
-                                    className="h-4 w-4 rounded border-foreground/20 text-primary focus:ring-primary"
-                                    aria-label={p.featured ? "Retirer des vedettes" : "Mettre en vedette"}
-                                  />
-                                  {p.featured ? (
-                                    <Badge tone="violet">★ #{(p.featuredOrder ?? 0) + 1}</Badge>
-                                  ) : (
-                                    <span className="text-xs text-foreground/50">—</span>
-                                  )}
-                                </label>
-                              </td>
-                              <td className="py-3 pr-4">
-                                <div className="flex justify-end gap-1">
-                                  <IconButton tone="rose" onClick={() => deleteProduct(p.id)} title="Supprimer">
-                                    <Icon.Trash />
-                                  </IconButton>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </Panel>
-              </>
-            )}
+                  <Icon.Plus /> Nouveau produit
+                </button>
+              )}
+            </div>
+          </div>
 
-            {/* CATEGORIES */}
-            {section === "categories" && (
-              <>
-                <Panel title="Créer une catégorie" subtitle="Ajouter à l'arborescence">
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <input
-                      value={newCategory.name}
-                      onChange={(e) => setNewCategory((p) => ({ ...p, name: e.target.value }))}
-                      placeholder="Nom"
-                      className="rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-                    />
-                    <input
-                      value={newCategory.slug}
-                      onChange={(e) => setNewCategory((p) => ({ ...p, slug: e.target.value }))}
-                      placeholder="slug-url"
-                      className="rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm font-mono outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-                    />
-                    <input
-                      value={newCategory.description}
-                      onChange={(e) => setNewCategory((p) => ({ ...p, description: e.target.value }))}
-                      placeholder="Description"
-                      className="rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-                    />
-                    <input
-                      value={newCategory.imageUrl}
-                      onChange={(e) => setNewCategory((p) => ({ ...p, imageUrl: e.target.value }))}
-                      placeholder="URL de l'image (bannière)"
-                      className="rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-                    />
+          {/* Flash banner */}
+          {feedback && (
+            <div className={`bo-flash ${feedback.kind}`}>
+              {feedback.kind === "success" ? <Icon.Check /> : <Icon.X />}
+              {feedback.text}
+            </div>
+          )}
+
+          {/* OVERVIEW */}
+          {section === "overview" && (
+            <>
+              <div className="bo-grid bo-kpi-row">
+                <KpiCard
+                  label="Produits"
+                  value={products.length}
+                  hint={`${outOfStockCount} en rupture · ${products.length - outOfStockCount} dispo`}
+                  delta={
+                    outOfStockCount > 0
+                      ? { dir: "down", txt: `${outOfStockCount} rupture` }
+                      : { dir: "flat", txt: "stable" }
+                  }
+                  spark={sparkSeed("p" + products.length)}
+                />
+                <KpiCard
+                  label="Catégories"
+                  value={categories.length}
+                  hint={`${activeCategories} active${activeCategories > 1 ? "s" : ""}`}
+                  delta={{ dir: "flat", txt: "stable" }}
+                  spark={sparkSeed("c" + categories.length)}
+                />
+                <KpiCard
+                  label="Utilisateurs"
+                  value={users.length}
+                  hint={`${adminCount} admin${adminCount > 1 ? "s" : ""} · ${users.length - adminCount} clients`}
+                  delta={{ dir: "up", txt: `${activeUsers} actifs` }}
+                  spark={sparkSeed("u" + users.length)}
+                />
+                <KpiCard
+                  label="Messages"
+                  value={contactMessages.length}
+                  hint={contactMessages.length === 0 ? "0 non lus" : `${contactMessages.length} non lus`}
+                  delta={
+                    contactMessages.length > 0
+                      ? { dir: "up", txt: "+" + contactMessages.length }
+                      : { dir: "flat", txt: "—" }
+                  }
+                  spark={sparkSeed("m" + contactMessages.length)}
+                />
+              </div>
+
+              {dashboard && (
+                <div
+                  className="bo-grid bo-kpi-row"
+                  style={{ gridTemplateColumns: "1.3fr 1.3fr 1fr 1fr" }}
+                >
+                  <KpiCard
+                    label="CA aujourd'hui"
+                    value={dashboard.kpi.revenueToday.toFixed(2).replace(".", ",")}
+                    unit="EUR"
+                    hint={`Hier · ${dashboard.kpi.revenueYesterday.toFixed(2).replace(".", ",")} EUR`}
+                    hintRight="Hors annulées"
+                    delta={
+                      dashboard.kpi.revenueToday >= dashboard.kpi.revenueYesterday
+                        ? { dir: "up", txt: "↑" }
+                        : { dir: "down", txt: "↓" }
+                    }
+                    spark={sparkSeed("rev" + dashboard.kpi.revenueToday)}
+                  />
+                  <KpiCard
+                    label="Commandes aujourd'hui"
+                    value={dashboard.kpi.ordersToday}
+                    hint={`Hier · ${dashboard.kpi.ordersYesterday}`}
+                    hintRight="Toutes origines"
+                    delta={
+                      dashboard.kpi.ordersToday >= dashboard.kpi.ordersYesterday
+                        ? { dir: "up", txt: `+${dashboard.kpi.ordersToday - dashboard.kpi.ordersYesterday}` }
+                        : { dir: "down", txt: `${dashboard.kpi.ordersToday - dashboard.kpi.ordersYesterday}` }
+                    }
+                    spark={sparkSeed("ord" + dashboard.kpi.ordersToday)}
+                  />
+                  <KpiCard
+                    label="Taux conv."
+                    value="2,4"
+                    unit="%"
+                    hint="visites → commandes"
+                    spark={[1.8, 2.1, 2.0, 2.3, 2.2, 2.4, 2.4]}
+                  />
+                  <KpiCard
+                    label="Panier moyen"
+                    value={
+                      dashboard.kpi.ordersToday > 0
+                        ? Math.round(dashboard.kpi.revenueToday / Math.max(1, dashboard.kpi.ordersToday)).toString()
+                        : "—"
+                    }
+                    unit="EUR"
+                    hint="30 derniers jours"
+                    spark={[380, 395, 402, 398, 410, 408, 412]}
+                  />
+                </div>
+              )}
+
+              {/* Catalog distribution + stock alerts */}
+              <div className="bo-grid bo-col-row">
+                <div className="bo-card">
+                  <div className="bo-card-head">
+                    <div>
+                      <div className="bo-card-title">Répartition du catalogue</div>
+                      <div className="bo-card-sub">
+                        {catalogTotal} produit{catalogTotal > 1 ? "s" : ""} · {activeCategories} catégorie
+                        {activeCategories > 1 ? "s" : ""} active{activeCategories > 1 ? "s" : ""}
+                      </div>
+                    </div>
+                    <div className="bo-card-actions">
+                      <div className="bo-tab-row">
+                        <button className="bo-tab active" type="button">
+                          Nombre
+                        </button>
+                        <button className="bo-tab" type="button" disabled>
+                          CA
+                        </button>
+                        <button className="bo-tab" type="button" disabled>
+                          Stock
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-4 flex justify-end">
-                    <button
-                      onClick={createCategory}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover"
-                    >
-                      <Icon.Plus /> Créer
+                  <div>
+                    {categoryDist.length === 0 ? (
+                      <div style={{ padding: 24, textAlign: "center" }} className="bo-muted">
+                        Pas encore de données.
+                      </div>
+                    ) : (
+                      categoryDist.map((c) => {
+                        const pct = catalogTotal === 0 ? 0 : Math.round((c.count / catalogTotal) * 100);
+                        return (
+                          <div className="bo-dist-row" key={c.name}>
+                            <div className="bo-dist-name">{c.name}</div>
+                            <div className="bo-dist-bar-wrap">
+                              <div className="bo-dist-bar" style={{ width: pct + "%" }} />
+                            </div>
+                            <div className="bo-dist-count bo-num">{c.count}</div>
+                            <div className="bo-dist-pct bo-num">{pct}%</div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                <div className="bo-card">
+                  <div className="bo-card-head">
+                    <div>
+                      <div className="bo-card-title">Alertes stock</div>
+                      <div className="bo-card-sub">
+                        {outOfStockCount} en rupture · {lowStockCount} faible{lowStockCount > 1 ? "s" : ""}
+                      </div>
+                    </div>
+                    <button className="bo-btn" type="button" onClick={() => setSection("products")}>
+                      Voir tout <Icon.ChevR />
                     </button>
                   </div>
-                </Panel>
+                  <div>
+                    {stockAlerts.length === 0 ? (
+                      <div style={{ padding: 24, textAlign: "center" }} className="bo-muted">
+                        Aucune alerte stock.
+                      </div>
+                    ) : (
+                      stockAlerts.map((a) => (
+                        <div className="bo-alert-row" key={a.id}>
+                          <div>
+                            <div className="bo-alert-name">{a.name ?? "—"}</div>
+                            <span className="bo-alert-sku">{a.sku ?? "—"}</span>
+                          </div>
+                          <div className="bo-alert-stock">{a.stock ?? 0} / 10</div>
+                          {(a.stock ?? 0) === 0 ? (
+                            <span className="bo-badge danger">
+                              <Icon.Warn /> Rupture
+                            </span>
+                          ) : (
+                            <span className="bo-badge warn">
+                              <Icon.Warn /> Faible
+                            </span>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
 
-                <Panel
-                  title="Gestion des catégories"
-                  subtitle={`${filteredCategories.length} catégorie${filteredCategories.length > 1 ? "s" : ""} · ${activeCategories} active${activeCategories > 1 ? "s" : ""}`}
-                  actions={
-                    <>
-                      <div className="relative">
-                        <Icon.Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/50" />
-                        <input
-                          value={categorySearch}
-                          onChange={(e) => setCategorySearch(e.target.value)}
-                          placeholder="Filtrer…"
-                          className="w-44 rounded-lg border border-foreground/10 bg-white py-1.5 pl-8 pr-3 text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+              {/* Sales chart + status donut */}
+              {dashboard && (
+                <div className="bo-grid bo-sales-row">
+                  <div className="bo-card">
+                    <div className="bo-card-head">
+                      <div>
+                        <div className="bo-card-title">Commandes — 7 derniers jours</div>
+                        <div className="bo-card-sub">Volume quotidien · fuseau Europe/Paris</div>
+                      </div>
+                    </div>
+                    <div className="bo-chart-legend">
+                      <div className="bo-lg-item">
+                        <span className="bo-lg-sw" style={{ background: "var(--bo-brand)" }} /> Commandes créées
+                      </div>
+                    </div>
+                    <div className="bo-chart-area">
+                      <BarChart
+                        data={dashboard.salesByDay.map((d) => d.orders)}
+                        labels={dashboard.salesByDay.map((d) => d.date.slice(8))}
+                        color="var(--bo-brand)"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bo-card">
+                    <div className="bo-card-head">
+                      <div>
+                        <div className="bo-card-title">Statuts des commandes</div>
+                        <div className="bo-card-sub">7 derniers jours</div>
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "180px 1fr",
+                        gap: 10,
+                        padding: 14,
+                        alignItems: "center",
+                      }}
+                    >
+                      <div style={{ display: "grid", placeItems: "center" }}>
+                        <Donut
+                          centerLabel="COMMANDES"
+                          segments={dashboard.statusMix7d.map((s) => ({
+                            label: s.status,
+                            value: s.count,
+                            color:
+                              s.status === "delivered"
+                                ? "var(--bo-ok)"
+                                : s.status === "pending"
+                                ? "var(--bo-warn)"
+                                : s.status === "cancelled"
+                                ? "var(--bo-danger)"
+                                : "var(--bo-brand)",
+                          }))}
                         />
                       </div>
-                      {selectedCategoryIds.length > 0 && (
-                        <>
-                          <span className="text-xs font-medium text-foreground/60">
-                            {selectedCategoryIds.length} sélectionnée{selectedCategoryIds.length > 1 ? "s" : ""}
-                          </span>
-                          <IconButton tone="emerald" onClick={() => bulkCategoryAction("activate")}>
-                            <Icon.Check /> Activer
-                          </IconButton>
-                          <IconButton onClick={() => bulkCategoryAction("deactivate")}>
-                            <Icon.X /> Désactiver
-                          </IconButton>
-                          <IconButton tone="rose" onClick={() => bulkCategoryAction("delete")}>
-                            <Icon.Trash /> Supprimer
-                          </IconButton>
-                        </>
-                      )}
-                    </>
-                  }
-                >
-                  {filteredCategories.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-foreground/50">Aucune catégorie.</p>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm">
-                        <thead>
-                          <tr className="border-b border-foreground/10 text-[11px] uppercase tracking-wider text-foreground/60">
-                            <th className="w-10 py-2"></th>
-                            <th className="py-2 pr-4 font-semibold">Ordre</th>
-                            <th className="py-2 pr-4 font-semibold">Nom</th>
-                            <th className="py-2 pr-4 font-semibold">Slug</th>
-                            <th className="py-2 pr-4 font-semibold">Statut</th>
-                            <th className="py-2 pr-4 text-right font-semibold">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-foreground/10">
-                          {filteredCategories.map((cat) => (
-                            <tr key={cat.id} className="transition hover:bg-background">
-                              <td className="py-3">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedCategoryIds.includes(cat.id)}
-                                  onChange={(e) =>
-                                    setSelectedCategoryIds((prev) =>
-                                      e.target.checked ? [...prev, cat.id] : prev.filter((id) => id !== cat.id),
-                                    )
-                                  }
-                                  className="h-4 w-4 rounded border-foreground/20 text-primary focus:ring-primary"
-                                />
-                              </td>
-                              <td className="py-3 pr-4 text-xs font-mono text-foreground/60">#{cat.order}</td>
-                              <td className="py-3 pr-4">
-                                <div className="flex items-center gap-3">
-                                  {cat.imageUrl ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img
-                                      src={cat.imageUrl}
-                                      alt=""
-                                      className="h-10 w-14 shrink-0 rounded-md object-cover"
-                                    />
-                                  ) : (
-                                    <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded-md bg-background text-[10px] font-semibold text-foreground/50">
-                                      —
-                                    </div>
-                                  )}
-                                  <span className="font-medium text-foreground">{cat.name}</span>
-                                </div>
-                              </td>
-                              <td className="py-3 pr-4 font-mono text-[11px] text-foreground/60">{cat.slug}</td>
-                              <td className="py-3 pr-4">
-                                {cat.isActive ? <Badge tone="emerald">Active</Badge> : <Badge tone="slate">Inactive</Badge>}
-                              </td>
-                              <td className="py-3 pr-4">
-                                <div className="flex justify-end gap-1">
-                                  <IconButton onClick={() => moveCategory(cat.id, "up")} title="Monter">
-                                    <Icon.ArrowUp />
-                                  </IconButton>
-                                  <IconButton onClick={() => moveCategory(cat.id, "down")} title="Descendre">
-                                    <Icon.ArrowDown />
-                                  </IconButton>
-                                  <IconButton
-                                    tone={cat.isActive ? "slate" : "emerald"}
-                                    onClick={() => updateCategory(cat.id, { isActive: !cat.isActive })}
-                                  >
-                                    {cat.isActive ? "Désactiver" : "Activer"}
-                                  </IconButton>
-                                  <IconButton
-                                    onClick={() => {
-                                      const next = prompt("URL de l'image (vide pour retirer)", cat.imageUrl ?? "");
-                                      if (next === null) return;
-                                      void updateCategory(cat.id, { imageUrl: next.trim() || undefined });
-                                    }}
-                                    title="Changer l'image"
-                                  >
-                                    <Icon.Edit /> Image
-                                  </IconButton>
-                                  <IconButton tone="rose" onClick={() => deleteCategory(cat.id)} title="Supprimer">
-                                    <Icon.Trash />
-                                  </IconButton>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                      <div className="bo-vstack" style={{ gap: 2 }}>
+                        {dashboard.statusMix7d.map((s) => {
+                          const total = dashboard.statusMix7d.reduce((a, b) => a + b.count, 0) || 1;
+                          const pct = Math.round((s.count / total) * 100);
+                          const swatch =
+                            s.status === "delivered"
+                              ? "var(--bo-ok)"
+                              : s.status === "pending"
+                              ? "var(--bo-warn)"
+                              : s.status === "cancelled"
+                              ? "var(--bo-danger)"
+                              : "var(--bo-brand)";
+                          return (
+                            <div
+                              key={s.status}
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "12px 1fr auto auto",
+                                gap: 8,
+                                alignItems: "center",
+                                padding: "5px 2px",
+                                borderTop: "1px solid var(--bo-border)",
+                              }}
+                            >
+                              <span style={{ width: 10, height: 10, background: swatch, borderRadius: 2 }} />
+                              <span style={{ textTransform: "capitalize" }}>{s.status}</span>
+                              <span className="bo-num" style={{ fontWeight: 600 }}>
+                                {s.count}
+                              </span>
+                              <span className="bo-num bo-dim" style={{ fontSize: 11, width: 32, textAlign: "right" }}>
+                                {pct}%
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  )}
-                </Panel>
-              </>
-            )}
+                  </div>
+                </div>
+              )}
 
-            {/* CONTENT */}
-            {section === "content" && <ContentManager flash={flash} />}
-
-            {section === "orders" && (
-              <div className="grid gap-6 lg:grid-cols-[1fr_minmax(0,22rem)]">
-                <Panel
-                  title="Commandes"
-                  subtitle={ordersMeta ? `${ordersMeta.total} commande(s)` : ""}
-                  actions={
-                    <div className="flex flex-wrap items-center gap-2">
-                      <select
-                        value={ordersStatusFilter}
-                        onChange={(e) => {
-                          setOrdersStatusFilter(e.target.value);
-                          setOrdersPage(1);
-                        }}
-                        className="rounded-lg border border-foreground/10 bg-white px-2 py-1.5 text-xs outline-none focus:border-primary"
-                      >
-                        <option value="">Tous statuts</option>
-                        <option value="pending">En attente</option>
-                        <option value="processing">En traitement</option>
-                        <option value="shipped">Expédiée</option>
-                        <option value="delivered">Livrée</option>
-                        <option value="cancelled">Annulée</option>
-                      </select>
+              {/* Recent orders + recent messages */}
+              <div className="bo-grid bo-col-row">
+                <div className="bo-card">
+                  <div className="bo-card-head">
+                    <div>
+                      <div className="bo-card-title">Commandes récentes</div>
+                      <div className="bo-card-sub">
+                        {recentOrdersPreview.length} dernière{recentOrdersPreview.length > 1 ? "s" : ""} · triées par date
+                      </div>
                     </div>
-                  }
-                >
-                  {loadingOrders ? (
-                    <p className="py-8 text-center text-sm text-foreground/50">Chargement…</p>
-                  ) : adminOrders.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-foreground/50">Aucune commande.</p>
+                    <button className="bo-btn" type="button" onClick={() => setSection("orders")}>
+                      Toutes les commandes <Icon.ChevR />
+                    </button>
+                  </div>
+                  {recentOrdersPreview.length === 0 ? (
+                    <div style={{ padding: 24, textAlign: "center" }} className="bo-muted">
+                      Aucune commande.
+                    </div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm">
-                        <thead>
-                          <tr className="border-b border-foreground/10 text-[11px] uppercase tracking-wider text-foreground/60">
-                            <th className="py-2 pr-3 font-semibold">Date</th>
-                            <th className="py-2 pr-3 font-semibold">Client</th>
-                            <th className="py-2 pr-3 font-semibold">Statut</th>
-                            <th className="py-2 pr-3 font-semibold">Total</th>
-                            <th className="py-2 pr-3 font-semibold">Lignes</th>
-                            <th className="py-2 text-right font-semibold">Voir</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-foreground/10">
-                          {adminOrders.map((o) => (
-                            <tr key={o.id} className="transition hover:bg-background">
-                              <td className="py-2.5 pr-3 text-xs text-foreground/70">
-                                {new Date(o.createdAt).toLocaleString("fr-FR")}
+                    <table className="bo-data">
+                      <thead>
+                        <tr>
+                          <th>Référence</th>
+                          <th>Client</th>
+                          <th>Statut</th>
+                          <th className="num">Montant</th>
+                          <th>Reçue</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recentOrdersPreview.map((o) => {
+                          const cust = o.customerEmail ?? o.userId.slice(0, 8) + "…";
+                          return (
+                            <tr key={o.id}>
+                              <td className="bo-mono" style={{ fontSize: 11.5 }}>
+                                {o.id.slice(0, 14)}
                               </td>
-                              <td className="max-w-[10rem] truncate py-2.5 pr-3 text-xs text-foreground">
-                                {o.customerEmail ?? o.userId.slice(0, 8) + "…"}
+                              <td>
+                                <span
+                                  className="bo-avatar-sm"
+                                  style={{
+                                    background: `oklch(0.65 0.12 ${(cust.charCodeAt(0) * 3) % 360})`,
+                                  }}
+                                >
+                                  {initials(cust)}
+                                </span>
+                                {cust}
                               </td>
-                              <td className="py-2.5 pr-3">{orderStatusBadge(o.status)}</td>
-                              <td className="py-2.5 pr-3 font-semibold text-foreground">
+                              <td>{orderStatusBadge(o.status)}</td>
+                              <td className="num" style={{ fontWeight: 600 }}>
                                 {o.total.toFixed(2)} {o.currency}
                               </td>
-                              <td className="py-2.5 pr-3 text-xs text-foreground/60">{o.lineCount}</td>
-                              <td className="py-2.5 text-right">
+                              <td className="muted">{new Date(o.createdAt).toLocaleString("fr-FR")}</td>
+                              <td className="num">
                                 <button
+                                  className="bo-icon-btn"
+                                  style={{ width: 22, height: 22 }}
                                   type="button"
-                                  onClick={() => void openOrderDetail(o.id)}
-                                  className="text-xs font-semibold text-primary hover:underline"
+                                  onClick={() => {
+                                    setSection("orders");
+                                    void openOrderDetail(o.id);
+                                  }}
                                 >
-                                  Détail
+                                  <Icon.ChevR />
                                 </button>
                               </td>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   )}
-                  {ordersMeta && ordersMeta.totalPages > 1 ? (
-                    <div className="mt-4 flex items-center justify-between border-t border-foreground/10 pt-3 text-xs">
-                      <span className="text-foreground/60">
-                        Page {ordersMeta.page} / {ordersMeta.totalPages}
-                      </span>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          disabled={ordersPage <= 1}
-                          onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
-                          className="rounded-lg border border-foreground/10 px-3 py-1 font-semibold text-foreground/80 disabled:opacity-40"
-                        >
-                          Précédent
-                        </button>
-                        <button
-                          type="button"
-                          disabled={ordersPage >= ordersMeta.totalPages}
-                          onClick={() => setOrdersPage((p) => p + 1)}
-                          className="rounded-lg border border-foreground/10 px-3 py-1 font-semibold text-foreground/80 disabled:opacity-40"
-                        >
-                          Suivant
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                </Panel>
+                </div>
 
-                <div className="space-y-4">
-                  <Panel title="Détail commande" subtitle="Lignes, historique de statut">
-                    {loadingOrderDetail ? (
-                      <p className="text-center text-sm text-foreground/50">Chargement…</p>
-                    ) : !orderDetail ? (
-                      <p className="text-center text-sm text-foreground/50">
-                        Sélectionnez une commande pour afficher le détail.
-                      </p>
+                <div className="bo-card">
+                  <div className="bo-card-head">
+                    <div>
+                      <div className="bo-card-title">Derniers messages</div>
+                      <div className="bo-card-sub">{contactMessages.length} au total</div>
+                    </div>
+                    <button className="bo-btn" type="button" onClick={() => setSection("messages")}>
+                      Voir tout <Icon.ChevR />
+                    </button>
+                  </div>
+                  <div>
+                    {recentMessages.length === 0 ? (
+                      <div style={{ padding: 24, textAlign: "center" }} className="bo-muted">
+                        Aucun message pour le moment.
+                      </div>
                     ) : (
-                      <div className="space-y-4 text-sm">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="font-mono text-xs text-foreground/60">{orderDetail.id}</p>
-                          {orderStatusBadge(orderDetail.status)}
-                        </div>
-                        <p className="text-lg font-bold text-foreground">
-                          {orderDetail.total.toFixed(2)} {orderDetail.currency}
-                        </p>
-                        <div>
-                          <p className="mb-1 text-xs font-semibold uppercase text-foreground/60">Changer le statut</p>
-                          <div className="flex flex-wrap gap-2">
-                            {(["pending", "processing", "shipped", "delivered", "cancelled"] as const).map((st) => (
-                              <button
-                                key={st}
-                                type="button"
-                                disabled={orderDetail.status === st}
-                                onClick={() => void patchOrderStatus(orderDetail.id, st)}
-                                className="rounded-lg border border-foreground/10 px-2 py-1 text-xs font-semibold text-foreground/80 transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-                              >
-                                {st}
-                              </button>
-                            ))}
+                      recentMessages.map((m) => (
+                        <div className="bo-feed-row" key={m.id}>
+                          <div className="bo-feed-time">
+                            {new Date(m.createdAt).toLocaleTimeString("fr-FR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </div>
+                          <div className="bo-feed-main">
+                            <span className="bo-feed-tag update">contact</span>
+                            <span className="bo-mono" style={{ fontSize: 11.5, color: "var(--bo-text-muted)" }}>
+                              {m.email}
+                            </span>
+                            <span style={{ fontWeight: 500 }}>{m.subject}</span>
                           </div>
                         </div>
-                        <div>
-                          <p className="mb-1 text-xs font-semibold uppercase text-foreground/60">Historique</p>
-                          <ul className="max-h-40 space-y-1 overflow-y-auto text-xs text-foreground/70">
-                            {(orderDetail.statusHistory ?? []).map((h, i) => (
-                              <li key={`${h.at}-${i}`} className="flex justify-between gap-2 border-b border-foreground/10 py-1">
-                                <span>{orderStatusBadge(h.status)}</span>
-                                <span className="shrink-0 text-foreground/50">
-                                  {new Date(h.at).toLocaleString("fr-FR")}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div>
-                          <p className="mb-1 text-xs font-semibold uppercase text-foreground/60">Lignes</p>
-                          <ul className="space-y-2 text-xs">
-                            {orderDetail.items.map((it) => (
-                              <li key={it.id} className="flex justify-between gap-2 rounded-lg bg-background px-2 py-2">
-                                <span className="min-w-0 truncate font-medium text-foreground">{it.productName}</span>
-                                <span className="shrink-0 font-mono text-foreground/60">
-                                  ×{it.quantity} · {(it.price * it.quantity).toFixed(2)} €
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
+                      ))
                     )}
-                  </Panel>
+                  </div>
                 </div>
               </div>
-            )}
 
-            {/* USERS */}
-            {section === "users" && (
-              <>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <StatCard label="Total" value={users.length} tone="primary" icon={<Icon.Users />} />
-                  <StatCard label="Actifs" value={activeUsers} tone="emerald" icon={<Icon.Check />} />
-                  <StatCard label="Administrateurs" value={adminCount} tone="violet" icon={<Icon.Shield />} />
+              {/* Status bar */}
+              <div className="bo-statusbar">
+                <div className="bo-hstack">
+                  <span className="dot" /> operational
                 </div>
+                <span>env: prod</span>
+                <span>region: eu-west-3</span>
+                <span>api: 42 ms</span>
+                <span>db: 11 ms</span>
+                <span style={{ marginLeft: "auto" }}>© Althea Systems</span>
+              </div>
+            </>
+          )}
 
+          {/* ANALYTICS */}
+          {section === "analytics" && (
+            <Panel title="Analytique" subtitle="Graphiques détaillés (7 jours, 5 semaines, statuts, catégories)">
+              {loadingDashboard ? (
+                <p className="bo-muted" style={{ padding: 24, textAlign: "center" }}>
+                  Chargement…
+                </p>
+              ) : dashboard ? (
+                <DashboardCharts data={dashboard} />
+              ) : (
+                <p className="bo-muted" style={{ padding: 24, textAlign: "center" }}>
+                  Pas de données à afficher.
+                </p>
+              )}
+            </Panel>
+          )}
+
+          {/* PRODUCTS */}
+          {section === "products" && (
+            <>
+              <div className="bo-grid bo-kpi-row" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+                <KpiCard label="Total" value={products.length} hint="catalogue complet" />
+                <KpiCard
+                  label="Stock faible"
+                  value={lowStockCount}
+                  hint="< 5 unités"
+                  delta={lowStockCount > 0 ? { dir: "down", txt: "à surveiller" } : { dir: "flat", txt: "—" }}
+                />
+                <KpiCard
+                  label="En rupture"
+                  value={outOfStockCount}
+                  hint="0 unité disponible"
+                  delta={outOfStockCount > 0 ? { dir: "down", txt: "urgent" } : { dir: "flat", txt: "—" }}
+                />
+              </div>
+
+              {showProductForm && (
                 <Panel
-                  title="Gestion des utilisateurs"
-                  subtitle={`${users.length} compte${users.length > 1 ? "s" : ""}`}
+                  title="Ajouter un produit"
+                  subtitle="Nouveau matériel médical"
                   actions={
-                    <>
-                      <div className="relative">
-                        <Icon.Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/50" />
-                        <input
-                          value={search}
-                          onChange={(e) => setSearch(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && loadUsers(search)}
-                          placeholder="Rechercher un email…"
-                          className="w-60 rounded-lg border border-foreground/10 bg-white py-1.5 pl-8 pr-3 text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-                        />
-                      </div>
-                      <button
-                        onClick={() => loadUsers(search)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-primary-hover"
-                      >
-                        Rechercher
-                      </button>
-                    </>
+                    <button className="bo-btn" type="button" onClick={() => setShowProductForm(false)}>
+                      <Icon.X /> Fermer
+                    </button>
                   }
                 >
-                  {loadingUsers ? (
-                    <p className="py-8 text-center text-sm text-foreground/50">Chargement…</p>
-                  ) : users.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-foreground/50">Aucun utilisateur.</p>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm">
-                        <thead>
-                          <tr className="border-b border-foreground/10 text-[11px] uppercase tracking-wider text-foreground/60">
-                            <th className="py-2 pr-4 font-semibold">Utilisateur</th>
-                            <th className="py-2 pr-4 font-semibold">Rôle</th>
-                            <th className="py-2 pr-4 font-semibold">Statut</th>
-                            <th className="py-2 pr-4 font-semibold">Dernière connexion</th>
-                            <th className="py-2 pr-4 text-right font-semibold">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-foreground/10">
-                          {users.map((u) => (
-                            <tr key={u.id} className="transition hover:bg-background">
-                              <td className="py-3 pr-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-primary-hover/10 text-[11px] font-bold uppercase text-primary">
-                                    {u.email.slice(0, 2)}
-                                  </div>
-                                  <span className="font-medium text-foreground">{u.email}</span>
-                                </div>
-                              </td>
-                              <td className="py-3 pr-4">
-                                {u.role === "admin" ? (
-                                  <Badge tone="violet">
-                                    <Icon.Shield /> Admin
-                                  </Badge>
-                                ) : (
-                                  <Badge tone="slate">Client</Badge>
-                                )}
-                              </td>
-                              <td className="py-3 pr-4">
-                                {u.status === "active" ? (
-                                  <Badge tone="emerald">Actif</Badge>
-                                ) : u.status === "pending" ? (
-                                  <Badge tone="amber">En attente</Badge>
-                                ) : (
-                                  <Badge tone="rose">Inactif</Badge>
-                                )}
-                              </td>
-                              <td className="py-3 pr-4 text-xs text-foreground/60">
-                                {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString("fr-FR") : "Jamais"}
-                              </td>
-                              <td className="py-3 pr-4">
-                                <div className="flex flex-wrap justify-end gap-1">
-                                  <IconButton
-                                    tone={u.isActive ? "slate" : "emerald"}
-                                    onClick={() => runAction(u.id, u.isActive ? "deactivate" : "activate")}
-                                  >
-                                    {u.isActive ? "Désactiver" : "Activer"}
-                                  </IconButton>
-                                  <IconButton
-                                    tone="primary"
-                                    onClick={() => runAction(u.id, u.role === "admin" ? "demote" : "promote")}
-                                  >
-                                    <Icon.Shield />
-                                    {u.role === "admin" ? "Retirer" : "Promouvoir"}
-                                  </IconButton>
-                                  <IconButton onClick={() => runAction(u.id, "reset")} title="Reset mot de passe">
-                                    <Icon.Key />
-                                  </IconButton>
-                                  <IconButton tone="rose" onClick={() => runAction(u.id, "delete")} title="Supprimer">
-                                    <Icon.Trash />
-                                  </IconButton>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                  <ProductForm
+                    categories={categories}
+                    onCreated={() => {
+                      void loadProducts();
+                      setShowProductForm(false);
+                      flash("success", "Produit ajouté.");
+                    }}
+                  />
                 </Panel>
-              </>
-            )}
+              )}
 
-            {/* MESSAGES */}
-            {section === "messages" && (
               <Panel
-                title="Messages contact"
-                subtitle={`${contactMessages.length} message${contactMessages.length > 1 ? "s" : ""}`}
+                title="Catalogue"
+                subtitle={`${filteredProducts.length} produit${filteredProducts.length > 1 ? "s" : ""}`}
                 actions={
-                  <button
-                    onClick={loadContactMessages}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-primary-hover"
-                  >
-                    <Icon.Refresh /> Rafraîchir
-                  </button>
+                  <>
+                    <input
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      placeholder="Rechercher…"
+                      className="bo-input compact"
+                      style={{ width: 200 }}
+                    />
+                    <button className="bo-btn primary" type="button" onClick={() => setShowProductForm((v) => !v)}>
+                      <Icon.Plus /> Ajouter
+                    </button>
+                  </>
                 }
               >
-                {loadingMessages ? (
-                  <p className="py-8 text-center text-sm text-foreground/50">Chargement…</p>
-                ) : contactMessages.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-background text-foreground/50">
-                      <Icon.Messages className="h-7 w-7" />
-                    </div>
-                    <p className="text-sm text-foreground/60">Aucun message pour le moment.</p>
-                  </div>
+                {loadingProducts ? (
+                  <p className="bo-muted" style={{ padding: 24, textAlign: "center" }}>
+                    Chargement…
+                  </p>
+                ) : filteredProducts.length === 0 ? (
+                  <p className="bo-muted" style={{ padding: 24, textAlign: "center" }}>
+                    Aucun produit trouvé.
+                  </p>
                 ) : (
-                  <ul className="-my-3 divide-y divide-foreground/10">
-                    {contactMessages
-                      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                      .map((msg) => (
-                        <li key={msg.id} className="py-4">
-                          <div className="flex items-start gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold uppercase text-primary">
-                              {msg.email.slice(0, 2)}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <p className="text-sm font-semibold text-foreground">{msg.subject}</p>
-                                <span className="text-[11px] text-foreground/50">
-                                  {new Date(msg.createdAt).toLocaleString("fr-FR")}
-                                </span>
+                  <div style={{ overflowX: "auto" }}>
+                    <table className="bo-data">
+                      <thead>
+                        <tr>
+                          <th>Produit</th>
+                          <th>SKU</th>
+                          <th>Catégorie</th>
+                          <th className="num">Prix</th>
+                          <th className="num">TVA</th>
+                          <th className="num">Stock</th>
+                          <th>Statut</th>
+                          <th>Vedette</th>
+                          <th className="num">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredProducts.map((p) => (
+                          <tr key={p.id}>
+                            <td>
+                              <div className="bo-hstack">
+                                <div
+                                  style={{
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: 4,
+                                    background: "var(--bo-panel-2)",
+                                    border: "1px solid var(--bo-border)",
+                                    display: "grid",
+                                    placeItems: "center",
+                                    overflow: "hidden",
+                                    fontSize: 10,
+                                    color: "var(--bo-text-muted)",
+                                  }}
+                                >
+                                  {p.thumbnailUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={p.thumbnailUrl}
+                                      alt=""
+                                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                    />
+                                  ) : (
+                                    initials(p.name ?? "?")
+                                  )}
+                                </div>
+                                <span style={{ fontWeight: 500 }}>{p.name ?? "—"}</span>
                               </div>
-                              <a
-                                href={`mailto:${msg.email}`}
-                                className="text-xs font-medium text-primary hover:underline"
-                              >
-                                {msg.email}
-                              </a>
-                              <p className="mt-2 whitespace-pre-wrap text-sm text-foreground/80">{msg.message}</p>
-                            </div>
-                          </div>
-                        </li>
-                      ))}
-                  </ul>
+                            </td>
+                            <td className="bo-mono" style={{ fontSize: 11 }}>
+                              {p.sku ?? "—"}
+                            </td>
+                            <td className="muted">{p.category?.name ?? "—"}</td>
+                            <td className="num" style={{ fontWeight: 600 }}>
+                              {typeof p.price === "number" ? `${p.price.toFixed(2)} €` : "—"}
+                            </td>
+                            <td className="num muted">
+                              {p.vatRate !== undefined && p.vatRate !== null ? `${p.vatRate} %` : "20 %"}
+                            </td>
+                            <td className="num">{p.stock ?? 0}</td>
+                            <td>{productStatusBadge(p)}</td>
+                            <td>
+                              <label className="bo-hstack" style={{ cursor: "pointer", gap: 6 }}>
+                                <input
+                                  type="checkbox"
+                                  checked={!!p.featured}
+                                  onChange={() => toggleFeatured(p)}
+                                  aria-label={p.featured ? "Retirer des vedettes" : "Mettre en vedette"}
+                                />
+                                {p.featured ? (
+                                  <span className="bo-badge brand">★ #{(p.featuredOrder ?? 0) + 1}</span>
+                                ) : (
+                                  <span className="bo-dim">—</span>
+                                )}
+                              </label>
+                            </td>
+                            <td className="num">
+                              <IconButton tone="rose" onClick={() => deleteProduct(p.id)} title="Supprimer">
+                                <Icon.Trash />
+                              </IconButton>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </Panel>
-            )}
-          </main>
-        </div>
+            </>
+          )}
+
+          {/* CATEGORIES */}
+          {section === "categories" && (
+            <>
+              <Panel title="Créer une catégorie" subtitle="Ajouter à l'arborescence">
+                <div
+                  style={{
+                    display: "grid",
+                    gap: 10,
+                    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                  }}
+                >
+                  <div>
+                    <div className="bo-label">Nom</div>
+                    <input
+                      value={newCategory.name}
+                      onChange={(e) => setNewCategory((p) => ({ ...p, name: e.target.value }))}
+                      placeholder="Imaging & Diagnostics"
+                      className="bo-input"
+                    />
+                  </div>
+                  <div>
+                    <div className="bo-label">Slug</div>
+                    <input
+                      value={newCategory.slug}
+                      onChange={(e) => setNewCategory((p) => ({ ...p, slug: e.target.value }))}
+                      placeholder="imaging-diagnostics"
+                      className="bo-input bo-mono"
+                    />
+                  </div>
+                  <div>
+                    <div className="bo-label">Description</div>
+                    <input
+                      value={newCategory.description}
+                      onChange={(e) => setNewCategory((p) => ({ ...p, description: e.target.value }))}
+                      placeholder="Description courte"
+                      className="bo-input"
+                    />
+                  </div>
+                  <div>
+                    <div className="bo-label">Image (URL)</div>
+                    <input
+                      value={newCategory.imageUrl}
+                      onChange={(e) => setNewCategory((p) => ({ ...p, imageUrl: e.target.value }))}
+                      placeholder="https://…/image.jpg"
+                      className="bo-input"
+                    />
+                  </div>
+                </div>
+                <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
+                  <button className="bo-btn primary" type="button" onClick={createCategory}>
+                    <Icon.Plus /> Créer
+                  </button>
+                </div>
+              </Panel>
+
+              <Panel
+                title="Gestion des catégories"
+                subtitle={`${filteredCategories.length} catégorie${filteredCategories.length > 1 ? "s" : ""} · ${activeCategories} active${activeCategories > 1 ? "s" : ""}`}
+                actions={
+                  <>
+                    <input
+                      value={categorySearch}
+                      onChange={(e) => setCategorySearch(e.target.value)}
+                      placeholder="Filtrer…"
+                      className="bo-input compact"
+                      style={{ width: 180 }}
+                    />
+                    {selectedCategoryIds.length > 0 && (
+                      <>
+                        <span className="bo-muted" style={{ fontSize: 11 }}>
+                          {selectedCategoryIds.length} sélectionnée{selectedCategoryIds.length > 1 ? "s" : ""}
+                        </span>
+                        <IconButton tone="emerald" onClick={() => bulkCategoryAction("activate")}>
+                          <Icon.Check /> Activer
+                        </IconButton>
+                        <IconButton onClick={() => bulkCategoryAction("deactivate")}>
+                          <Icon.X /> Désactiver
+                        </IconButton>
+                        <IconButton tone="rose" onClick={() => bulkCategoryAction("delete")}>
+                          <Icon.Trash /> Supprimer
+                        </IconButton>
+                      </>
+                    )}
+                  </>
+                }
+              >
+                {filteredCategories.length === 0 ? (
+                  <p className="bo-muted" style={{ padding: 24, textAlign: "center" }}>
+                    Aucune catégorie.
+                  </p>
+                ) : (
+                  <div style={{ overflowX: "auto" }}>
+                    <table className="bo-data">
+                      <thead>
+                        <tr>
+                          <th style={{ width: 32 }}></th>
+                          <th>Ordre</th>
+                          <th>Nom</th>
+                          <th>Slug</th>
+                          <th>Statut</th>
+                          <th className="num">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredCategories.map((cat) => (
+                          <tr key={cat.id}>
+                            <td>
+                              <input
+                                type="checkbox"
+                                checked={selectedCategoryIds.includes(cat.id)}
+                                onChange={(e) =>
+                                  setSelectedCategoryIds((prev) =>
+                                    e.target.checked ? [...prev, cat.id] : prev.filter((id) => id !== cat.id),
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="bo-mono muted" style={{ fontSize: 11 }}>
+                              #{cat.order}
+                            </td>
+                            <td>
+                              <div className="bo-hstack">
+                                {cat.imageUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={cat.imageUrl}
+                                    alt=""
+                                    style={{
+                                      width: 36,
+                                      height: 28,
+                                      borderRadius: 4,
+                                      objectFit: "cover",
+                                      border: "1px solid var(--bo-border)",
+                                    }}
+                                  />
+                                ) : (
+                                  <div
+                                    style={{
+                                      width: 36,
+                                      height: 28,
+                                      borderRadius: 4,
+                                      background: "var(--bo-panel-2)",
+                                      border: "1px solid var(--bo-border)",
+                                      display: "grid",
+                                      placeItems: "center",
+                                      fontSize: 10,
+                                      color: "var(--bo-text-dim)",
+                                    }}
+                                  >
+                                    —
+                                  </div>
+                                )}
+                                <span style={{ fontWeight: 500 }}>{cat.name}</span>
+                              </div>
+                            </td>
+                            <td className="bo-mono muted" style={{ fontSize: 11 }}>
+                              {cat.slug}
+                            </td>
+                            <td>
+                              {cat.isActive ? (
+                                <span className="bo-badge ok">Active</span>
+                              ) : (
+                                <span className="bo-badge neutral">Inactive</span>
+                              )}
+                            </td>
+                            <td className="num">
+                              <div
+                                style={{
+                                  display: "inline-flex",
+                                  gap: 4,
+                                  flexWrap: "wrap",
+                                  justifyContent: "flex-end",
+                                }}
+                              >
+                                <IconButton onClick={() => moveCategory(cat.id, "up")} title="Monter">
+                                  <Icon.ArrowUp />
+                                </IconButton>
+                                <IconButton onClick={() => moveCategory(cat.id, "down")} title="Descendre">
+                                  <Icon.ArrowDown />
+                                </IconButton>
+                                <IconButton
+                                  tone={cat.isActive ? "slate" : "emerald"}
+                                  onClick={() => updateCategory(cat.id, { isActive: !cat.isActive })}
+                                >
+                                  {cat.isActive ? "Désactiver" : "Activer"}
+                                </IconButton>
+                                <IconButton
+                                  onClick={() => {
+                                    const next = prompt("URL de l'image (vide pour retirer)", cat.imageUrl ?? "");
+                                    if (next === null) return;
+                                    void updateCategory(cat.id, { imageUrl: next.trim() || undefined });
+                                  }}
+                                  title="Changer l'image"
+                                >
+                                  <Icon.Edit /> Image
+                                </IconButton>
+                                <IconButton tone="rose" onClick={() => deleteCategory(cat.id)} title="Supprimer">
+                                  <Icon.Trash />
+                                </IconButton>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </Panel>
+            </>
+          )}
+
+          {/* CONTENT */}
+          {section === "content" && <ContentManager flash={flash} />}
+
+          {/* ORDERS */}
+          {section === "orders" && (
+            <div className="bo-grid bo-col-row" style={{ gridTemplateColumns: "1fr minmax(0, 22rem)" }}>
+              <Panel
+                title="Commandes"
+                subtitle={ordersMeta ? `${ordersMeta.total} commande(s)` : ""}
+                actions={
+                  <select
+                    value={ordersStatusFilter}
+                    onChange={(e) => {
+                      setOrdersStatusFilter(e.target.value);
+                      setOrdersPage(1);
+                    }}
+                    className="bo-input compact"
+                    style={{ width: 160 }}
+                  >
+                    <option value="">Tous statuts</option>
+                    <option value="pending">En attente</option>
+                    <option value="processing">En traitement</option>
+                    <option value="shipped">Expédiée</option>
+                    <option value="delivered">Livrée</option>
+                    <option value="cancelled">Annulée</option>
+                  </select>
+                }
+              >
+                {loadingOrders ? (
+                  <p className="bo-muted" style={{ padding: 24, textAlign: "center" }}>
+                    Chargement…
+                  </p>
+                ) : adminOrders.length === 0 ? (
+                  <p className="bo-muted" style={{ padding: 24, textAlign: "center" }}>
+                    Aucune commande.
+                  </p>
+                ) : (
+                  <div style={{ overflowX: "auto" }}>
+                    <table className="bo-data">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Client</th>
+                          <th>Statut</th>
+                          <th className="num">Total</th>
+                          <th className="num">Lignes</th>
+                          <th className="num">Voir</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {adminOrders.map((o) => (
+                          <tr key={o.id}>
+                            <td className="bo-mono muted" style={{ fontSize: 11 }}>
+                              {new Date(o.createdAt).toLocaleString("fr-FR")}
+                            </td>
+                            <td style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis" }}>
+                              {o.customerEmail ?? o.userId.slice(0, 8) + "…"}
+                            </td>
+                            <td>{orderStatusBadge(o.status)}</td>
+                            <td className="num" style={{ fontWeight: 600 }}>
+                              {o.total.toFixed(2)} {o.currency}
+                            </td>
+                            <td className="num muted">{o.lineCount}</td>
+                            <td className="num">
+                              <button
+                                type="button"
+                                onClick={() => void openOrderDetail(o.id)}
+                                className="bo-btn"
+                                style={{ color: "var(--bo-brand)" }}
+                              >
+                                Détail
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                {ordersMeta && ordersMeta.totalPages > 1 ? (
+                  <div
+                    style={{
+                      marginTop: 12,
+                      padding: "10px 14px 0",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      borderTop: "1px solid var(--bo-border)",
+                      fontSize: 11.5,
+                    }}
+                  >
+                    <span className="bo-muted">
+                      Page {ordersMeta.page} / {ordersMeta.totalPages}
+                    </span>
+                    <div className="bo-hstack">
+                      <button
+                        type="button"
+                        disabled={ordersPage <= 1}
+                        onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
+                        className="bo-btn"
+                      >
+                        Précédent
+                      </button>
+                      <button
+                        type="button"
+                        disabled={ordersPage >= ordersMeta.totalPages}
+                        onClick={() => setOrdersPage((p) => p + 1)}
+                        className="bo-btn"
+                      >
+                        Suivant
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </Panel>
+
+              <Panel title="Détail commande" subtitle="Lignes, historique de statut">
+                {loadingOrderDetail ? (
+                  <p className="bo-muted" style={{ padding: 24, textAlign: "center" }}>
+                    Chargement…
+                  </p>
+                ) : !orderDetail ? (
+                  <p className="bo-muted" style={{ padding: 24, textAlign: "center" }}>
+                    Sélectionnez une commande pour afficher le détail.
+                  </p>
+                ) : (
+                  <div className="bo-vstack" style={{ gap: 12 }}>
+                    <div className="bo-hstack" style={{ justifyContent: "space-between" }}>
+                      <span className="bo-mono" style={{ fontSize: 11, color: "var(--bo-text-muted)" }}>
+                        {orderDetail.id}
+                      </span>
+                      {orderStatusBadge(orderDetail.status)}
+                    </div>
+                    <div style={{ fontSize: 18, fontWeight: 600 }} className="bo-num">
+                      {orderDetail.total.toFixed(2)} {orderDetail.currency}
+                    </div>
+                    <div>
+                      <div className="bo-label">Changer le statut</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                        {(["pending", "processing", "shipped", "delivered", "cancelled"] as const).map((st) => (
+                          <button
+                            key={st}
+                            type="button"
+                            disabled={orderDetail.status === st}
+                            onClick={() => void patchOrderStatus(orderDetail.id, st)}
+                            className="bo-btn"
+                          >
+                            {st}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="bo-label">Historique</div>
+                      <ul
+                        style={{
+                          listStyle: "none",
+                          padding: 0,
+                          margin: 0,
+                          maxHeight: 160,
+                          overflowY: "auto",
+                          fontSize: 11.5,
+                        }}
+                      >
+                        {(orderDetail.statusHistory ?? []).map((h, i) => (
+                          <li
+                            key={`${h.at}-${i}`}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              gap: 8,
+                              borderBottom: "1px solid var(--bo-border)",
+                              padding: "4px 0",
+                            }}
+                          >
+                            <span>{orderStatusBadge(h.status)}</span>
+                            <span className="bo-dim bo-mono" style={{ fontSize: 10 }}>
+                              {new Date(h.at).toLocaleString("fr-FR")}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="bo-label">Lignes</div>
+                      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                        {orderDetail.items.map((it) => (
+                          <li
+                            key={it.id}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              gap: 8,
+                              padding: "6px 8px",
+                              fontSize: 11.5,
+                              background: "var(--bo-panel-2)",
+                              borderRadius: 4,
+                              marginBottom: 4,
+                            }}
+                          >
+                            <span style={{ fontWeight: 500, minWidth: 0 }}>{it.productName}</span>
+                            <span className="bo-mono bo-muted" style={{ fontSize: 11 }}>
+                              ×{it.quantity} · {(it.price * it.quantity).toFixed(2)} €
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </Panel>
+            </div>
+          )}
+
+          {/* USERS */}
+          {section === "users" && (
+            <>
+              <div className="bo-grid bo-kpi-row" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+                <KpiCard label="Total" value={users.length} hint="comptes enregistrés" />
+                <KpiCard label="Actifs" value={activeUsers} hint={`${users.length - activeUsers} inactifs`} />
+                <KpiCard label="Administrateurs" value={adminCount} hint={`${users.length - adminCount} clients`} />
+              </div>
+
+              <Panel
+                title="Gestion des utilisateurs"
+                subtitle={`${users.length} compte${users.length > 1 ? "s" : ""}`}
+                actions={
+                  <>
+                    <input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && loadUsers(search)}
+                      placeholder="Rechercher un email…"
+                      className="bo-input compact"
+                      style={{ width: 220 }}
+                    />
+                    <button className="bo-btn primary" type="button" onClick={() => loadUsers(search)}>
+                      Rechercher
+                    </button>
+                  </>
+                }
+              >
+                {loadingUsers ? (
+                  <p className="bo-muted" style={{ padding: 24, textAlign: "center" }}>
+                    Chargement…
+                  </p>
+                ) : users.length === 0 ? (
+                  <p className="bo-muted" style={{ padding: 24, textAlign: "center" }}>
+                    Aucun utilisateur.
+                  </p>
+                ) : (
+                  <div style={{ overflowX: "auto" }}>
+                    <table className="bo-data">
+                      <thead>
+                        <tr>
+                          <th>Utilisateur</th>
+                          <th>Rôle</th>
+                          <th>Statut</th>
+                          <th>Dernière connexion</th>
+                          <th className="num">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {users.map((u) => (
+                          <tr key={u.id}>
+                            <td>
+                              <div className="bo-hstack">
+                                <span
+                                  className="bo-avatar-sm"
+                                  style={{
+                                    background: `oklch(0.65 0.12 ${(u.email.charCodeAt(0) * 5) % 360})`,
+                                  }}
+                                >
+                                  {u.email.slice(0, 2).toUpperCase()}
+                                </span>
+                                <span style={{ fontWeight: 500 }}>{u.email}</span>
+                              </div>
+                            </td>
+                            <td>
+                              {u.role === "admin" ? (
+                                <span className="bo-badge brand">
+                                  <Icon.Shield /> Admin
+                                </span>
+                              ) : (
+                                <span className="bo-badge neutral">Client</span>
+                              )}
+                            </td>
+                            <td>
+                              {u.status === "active" ? (
+                                <span className="bo-badge ok">Actif</span>
+                              ) : u.status === "pending" ? (
+                                <span className="bo-badge warn">En attente</span>
+                              ) : (
+                                <span className="bo-badge danger">Inactif</span>
+                              )}
+                            </td>
+                            <td className="muted" style={{ fontSize: 11 }}>
+                              {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString("fr-FR") : "Jamais"}
+                            </td>
+                            <td className="num">
+                              <div
+                                style={{
+                                  display: "inline-flex",
+                                  gap: 4,
+                                  flexWrap: "wrap",
+                                  justifyContent: "flex-end",
+                                }}
+                              >
+                                <IconButton
+                                  tone={u.isActive ? "slate" : "emerald"}
+                                  onClick={() => runAction(u.id, u.isActive ? "deactivate" : "activate")}
+                                >
+                                  {u.isActive ? "Désactiver" : "Activer"}
+                                </IconButton>
+                                <IconButton
+                                  tone="primary"
+                                  onClick={() => runAction(u.id, u.role === "admin" ? "demote" : "promote")}
+                                >
+                                  <Icon.Shield />
+                                  {u.role === "admin" ? "Retirer" : "Promouvoir"}
+                                </IconButton>
+                                <IconButton onClick={() => runAction(u.id, "reset")} title="Reset mot de passe">
+                                  <Icon.Key />
+                                </IconButton>
+                                <IconButton tone="rose" onClick={() => runAction(u.id, "delete")} title="Supprimer">
+                                  <Icon.Trash />
+                                </IconButton>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </Panel>
+            </>
+          )}
+
+          {/* MESSAGES */}
+          {section === "messages" && (
+            <Panel
+              title="Messages contact"
+              subtitle={`${contactMessages.length} message${contactMessages.length > 1 ? "s" : ""}`}
+              actions={
+                <button className="bo-btn primary" type="button" onClick={loadContactMessages}>
+                  <Icon.Refresh /> Rafraîchir
+                </button>
+              }
+            >
+              {loadingMessages ? (
+                <p className="bo-muted" style={{ padding: 24, textAlign: "center" }}>
+                  Chargement…
+                </p>
+              ) : contactMessages.length === 0 ? (
+                <div style={{ padding: 32, textAlign: "center" }}>
+                  <div
+                    style={{
+                      margin: "0 auto 8px",
+                      width: 36,
+                      height: 36,
+                      display: "grid",
+                      placeItems: "center",
+                      background: "var(--bo-panel-2)",
+                      borderRadius: 8,
+                      color: "var(--bo-text-dim)",
+                    }}
+                  >
+                    <Icon.Messages />
+                  </div>
+                  <p className="bo-muted">Aucun message pour le moment.</p>
+                </div>
+              ) : (
+                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                  {contactMessages
+                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                    .map((msg) => (
+                      <li
+                        key={msg.id}
+                        style={{
+                          padding: "12px 0",
+                          borderTop: "1px solid var(--bo-border)",
+                          display: "flex",
+                          gap: 12,
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <span
+                          className="bo-avatar-sm"
+                          style={{
+                            background: `oklch(0.65 0.12 ${(msg.email.charCodeAt(0) * 7) % 360})`,
+                            flex: "none",
+                            width: 28,
+                            height: 28,
+                          }}
+                        >
+                          {msg.email.slice(0, 2).toUpperCase()}
+                        </span>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              gap: 8,
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <span style={{ fontWeight: 600 }}>{msg.subject}</span>
+                            <span className="bo-dim bo-mono" style={{ fontSize: 10 }}>
+                              {new Date(msg.createdAt).toLocaleString("fr-FR")}
+                            </span>
+                          </div>
+                          <a
+                            href={`mailto:${msg.email}`}
+                            style={{ color: "var(--bo-brand)", fontSize: 11.5 }}
+                          >
+                            {msg.email}
+                          </a>
+                          <p style={{ marginTop: 6, whiteSpace: "pre-wrap" }} className="bo-muted">
+                            {msg.message}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </Panel>
+          )}
+
+          {/* SETTINGS */}
+          {section === "settings" && (
+            <Panel title="Paramètres" subtitle="Configuration de l'instance back office">
+              <div className="bo-vstack" style={{ gap: 12 }}>
+                <div>
+                  <div className="bo-label">Compte connecté</div>
+                  <div className="bo-mono">{user?.email ?? "—"}</div>
+                </div>
+                <div>
+                  <div className="bo-label">Rôle</div>
+                  <span className="bo-badge brand">{user?.role ?? "—"}</span>
+                </div>
+                <div>
+                  <div className="bo-label">Environnement</div>
+                  <span className="bo-badge neutral">PROD</span>
+                </div>
+                <div>
+                  <div className="bo-label">Build</div>
+                  <span className="bo-mono bo-muted">v2.14.3 · a7f9e2</span>
+                </div>
+              </div>
+            </Panel>
+          )}
+        </main>
       </div>
     </div>
   );

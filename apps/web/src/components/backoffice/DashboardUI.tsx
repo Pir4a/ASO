@@ -9,169 +9,174 @@ import { ReactNode } from "react";
 type IconProps = { className?: string };
 
 export const Icon = {
-  Overview: ({ className = "h-5 w-5" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <rect x="3" y="3" width="7" height="9" rx="1.5" />
-      <rect x="14" y="3" width="7" height="5" rx="1.5" />
-      <rect x="14" y="12" width="7" height="9" rx="1.5" />
-      <rect x="3" y="16" width="7" height="5" rx="1.5" />
+  Overview: ({ className = "h-4 w-4" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <rect x="2" y="2" width="5" height="5" rx="1" />
+      <rect x="9" y="2" width="5" height="5" rx="1" />
+      <rect x="2" y="9" width="5" height="5" rx="1" />
+      <rect x="9" y="9" width="5" height="5" rx="1" />
     </svg>
   ),
-  Products: ({ className = "h-5 w-5" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M21 7.5 12 3 3 7.5m18 0L12 12M21 7.5v9L12 21M3 7.5 12 12M3 7.5v9L12 21m0-9v9" />
+  Products: ({ className = "h-4 w-4" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <path d="M2.5 4.5 8 2l5.5 2.5L8 7 2.5 4.5Z" />
+      <path d="M2.5 4.5v7L8 14l5.5-2.5v-7" />
+      <path d="M8 7v7" />
     </svg>
   ),
-  Categories: ({ className = "h-5 w-5" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+  Categories: ({ className = "h-4 w-4" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <path d="M2 4.5a1 1 0 0 1 1-1h3l1.5 1.5h5.5a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-7.5Z" />
     </svg>
   ),
-  Users: ({ className = "h-5 w-5" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="9" cy="8" r="4" />
-      <path d="M2 21a7 7 0 0 1 14 0M17 11a3 3 0 1 0 0-6M22 21a6 6 0 0 0-4-5.7" />
+  Users: ({ className = "h-4 w-4" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <circle cx="6" cy="6" r="2.5" />
+      <path d="M2 13c0-2.2 1.8-4 4-4s4 1.8 4 4" />
+      <circle cx="11.5" cy="6.5" r="1.8" />
+      <path d="M10.5 13c0-1.6 1.4-3.5 3.5-3.5" />
     </svg>
   ),
-  Orders: ({ className = "h-5 w-5" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
-      <path d="M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2z" />
-      <path d="M9 12h6M9 16h4" />
+  Orders: ({ className = "h-4 w-4" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <path d="M2 3h2l1.5 8h7L14 5H5" />
+      <circle cx="6" cy="14" r="1" />
+      <circle cx="12" cy="14" r="1" />
     </svg>
   ),
-  Messages: ({ className = "h-5 w-5" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M21 6.5 12 13 3 6.5" />
-      <rect x="3" y="5" width="18" height="14" rx="2" />
+  Messages: ({ className = "h-4 w-4" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <rect x="2" y="3.5" width="12" height="9" rx="1" />
+      <path d="m2.5 4.5 5.5 4 5.5-4" />
     </svg>
   ),
-  TrendUp: ({ className = "h-4 w-4" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M3 17 9 11l4 4 8-8M14 7h7v7" />
+  Doc: ({ className = "h-4 w-4" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <path d="M4 2h5l3 3v9H4V2Z" />
+      <path d="M9 2v3h3" />
+    </svg>
+  ),
+  Settings: ({ className = "h-4 w-4" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <circle cx="8" cy="8" r="2" />
+      <path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.3 3.3l1.4 1.4M11.3 11.3l1.4 1.4M3.3 12.7l1.4-1.4M11.3 4.7l1.4-1.4" />
+    </svg>
+  ),
+  Bell: ({ className = "h-4 w-4" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <path d="M3.5 11.5V7a4.5 4.5 0 1 1 9 0v4.5M2.5 11.5h11M6.5 13.5a1.5 1.5 0 0 0 3 0" />
     </svg>
   ),
   Search: ({ className = "h-4 w-4" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.5-3.5" />
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <circle cx="7" cy="7" r="4.5" />
+      <path d="m10.5 10.5 3 3" />
     </svg>
   ),
-  Plus: ({ className = "h-4 w-4" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M12 5v14M5 12h14" />
+  Refresh: ({ className = "h-3.5 w-3.5" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <path d="M13.5 3v3h-3M2.5 13v-3h3" />
+      <path d="M13 6a5.5 5.5 0 0 0-9.8-1.2M3 10a5.5 5.5 0 0 0 9.8 1.2" />
     </svg>
   ),
-  Refresh: ({ className = "h-4 w-4" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M20 12a8 8 0 1 1-3-6.3L20 8M20 3v5h-5" />
+  Download: ({ className = "h-3.5 w-3.5" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <path d="M8 2v8m0 0 3-3m-3 3-3-3M3 13h10" />
     </svg>
   ),
-  ArrowUp: ({ className = "h-3.5 w-3.5" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M12 19V5M5 12l7-7 7 7" />
+  Plus: ({ className = "h-3.5 w-3.5" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" className={className}>
+      <path d="M8 3v10M3 8h10" />
     </svg>
   ),
-  ArrowDown: ({ className = "h-3.5 w-3.5" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M12 5v14M5 12l7 7 7-7" />
+  ChevD: ({ className = "h-3 w-3" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <path d="m4 6 4 4 4-4" />
     </svg>
   ),
-  Trash: ({ className = "h-3.5 w-3.5" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m-9 0v14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6" />
+  ChevR: ({ className = "h-3 w-3" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <path d="m6 4 4 4-4 4" />
     </svg>
   ),
-  Edit: ({ className = "h-3.5 w-3.5" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M4 20h4L20 8l-4-4L4 16v4z" />
+  ArrowUp: ({ className = "h-3 w-3" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" className={className}>
+      <path d="M8 13V3m0 0-3 3m3-3 3 3" />
     </svg>
   ),
-  Shield: ({ className = "h-3.5 w-3.5" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M12 2 4 5v6c0 5 3.5 9.3 8 11 4.5-1.7 8-6 8-11V5z" />
+  ArrowDown: ({ className = "h-3 w-3" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" className={className}>
+      <path d="M8 3v10m0 0 3-3m-3 3-3-3" />
     </svg>
   ),
-  Key: ({ className = "h-3.5 w-3.5" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="8" cy="15" r="4" />
-      <path d="m21 2-9.6 9.6M15 6l5 5" />
-    </svg>
-  ),
-  Check: ({ className = "h-3.5 w-3.5" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="m5 12 5 5L20 7" />
+  More: ({ className = "h-3.5 w-3.5" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="currentColor" className={className}>
+      <circle cx="3.5" cy="8" r="1" />
+      <circle cx="8" cy="8" r="1" />
+      <circle cx="12.5" cy="8" r="1" />
     </svg>
   ),
   X: ({ className = "h-3.5 w-3.5" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M6 6l12 12M18 6 6 18" />
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" className={className}>
+      <path d="m4 4 8 8M12 4l-8 8" />
     </svg>
   ),
-  Bell: ({ className = "h-5 w-5" }: IconProps) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5M9 17a3 3 0 0 0 6 0" />
+  Logout: ({ className = "h-3.5 w-3.5" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <path d="M6 2H3v12h3M10 5l3 3-3 3M6 8h7" />
+    </svg>
+  ),
+  Warn: ({ className = "h-3 w-3" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <path d="M8 2.5 14 13H2L8 2.5Z" />
+      <path d="M8 7v3M8 11.5v.5" />
+    </svg>
+  ),
+  Check: ({ className = "h-3.5 w-3.5" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className={className}>
+      <path d="m3 8 3.5 3.5L13 5" />
+    </svg>
+  ),
+  Trash: ({ className = "h-3.5 w-3.5" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <path d="M3 4h10M6 4V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1m-5 0v9a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V4" />
+    </svg>
+  ),
+  Edit: ({ className = "h-3.5 w-3.5" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <path d="M3 13h3L13 6l-3-3L3 10v3z" />
+    </svg>
+  ),
+  Shield: ({ className = "h-3.5 w-3.5" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <path d="M8 1.5 3 3v4c0 3.3 2.3 6.2 5 7 2.7-.8 5-3.7 5-7V3z" />
+    </svg>
+  ),
+  Key: ({ className = "h-3.5 w-3.5" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <circle cx="6" cy="10" r="2.5" />
+      <path d="m13.5 2.5-6 6M10 5l3 3" />
+    </svg>
+  ),
+  TrendUp: ({ className = "h-3 w-3" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" className={className}>
+      <path d="M2 11 6 7l3 3 5-5M9 4h5v5" />
+    </svg>
+  ),
+  Flag: ({ className = "h-4 w-4" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <path d="M4 14V3h7l-1.5 2.5L11 8H4" />
+    </svg>
+  ),
+  Home: ({ className = "h-3.5 w-3.5" }: IconProps) => (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className={className}>
+      <path d="M2.5 7.5 8 3l5.5 4.5V13a1 1 0 0 1-1 1H10v-4H6v4H3.5a1 1 0 0 1-1-1V7.5Z" />
     </svg>
   ),
 };
 
 /* -------------------------------------------------------------------------- */
-/*  Stat Card                                                                  */
-/* -------------------------------------------------------------------------- */
-
-type Tone = "primary" | "emerald" | "amber" | "violet" | "rose" | "sky";
-
-const toneMap: Record<Tone, { bg: string; ring: string; text: string; iconBg: string; iconText: string }> = {
-  primary: { bg: "from-primary to-primary-hover", ring: "ring-primary/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
-  emerald: { bg: "from-success to-success/30", ring: "ring-success/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
-  amber: { bg: "from-warning to-warning/30", ring: "ring-warning/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
-  violet: { bg: "from-primary to-primary", ring: "ring-primary/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
-  rose: { bg: "from-error to-primary", ring: "ring-error/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
-  sky: { bg: "from-primary to-primary", ring: "ring-primary/20", text: "text-white", iconBg: "bg-white/20", iconText: "text-white" },
-};
-
-export function StatCard({
-  label,
-  value,
-  trend,
-  hint,
-  tone = "primary",
-  icon,
-}: {
-  label: string;
-  value: ReactNode;
-  trend?: string;
-  hint?: string;
-  tone?: Tone;
-  icon: ReactNode;
-}) {
-  const s = toneMap[tone];
-  return (
-    <div className={`relative overflow-hidden rounded-2xl bg-linear-to-br ${s.bg} p-5 shadow-lg ring-1 ${s.ring}`}>
-      <div className="relative z-10 flex items-start justify-between">
-        <div>
-          <p className={`text-xs font-semibold uppercase tracking-wider ${s.text}/80 opacity-80`}>{label}</p>
-          <p className={`mt-2 text-3xl font-bold ${s.text}`}>{value}</p>
-          {trend && (
-            <p className={`mt-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold ${s.text}`}>
-              <Icon.TrendUp className="h-3 w-3" />
-              {trend}
-            </p>
-          )}
-          {hint && <p className={`mt-2 text-xs ${s.text} opacity-75`}>{hint}</p>}
-        </div>
-        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${s.iconBg} ${s.iconText}`}>
-          {icon}
-        </div>
-      </div>
-      <div className="absolute -right-6 -bottom-6 h-28 w-28 rounded-full bg-white/10" />
-      <div className="absolute -right-12 -bottom-12 h-40 w-40 rounded-full bg-white/5" />
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Panel (dashboard section)                                                  */
+/*  Panel (used by ContentManager + back-office sections)                      */
 /* -------------------------------------------------------------------------- */
 
 export function Panel({
@@ -188,17 +193,17 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section className={`rounded-2xl bg-white shadow-[0_4px_6px_-1px_rgb(0,0,0,0.08),0_2px_4px_-2px_rgb(0,0,0,0.05)] ${className}`}>
+    <section className={`bo-card ${className}`}>
       {(title || actions) && (
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-foreground/10 px-6 py-4">
+        <header className="bo-card-head">
           <div>
-            {title && <h3 className="text-base font-semibold text-foreground">{title}</h3>}
-            {subtitle && <p className="mt-0.5 text-xs text-foreground/60">{subtitle}</p>}
+            {title && <div className="bo-card-title">{title}</div>}
+            {subtitle && <div className="bo-card-sub">{subtitle}</div>}
           </div>
-          {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+          {actions && <div className="bo-card-actions">{actions}</div>}
         </header>
       )}
-      <div className="p-6">{children}</div>
+      <div className="bo-card-body">{children}</div>
     </section>
   );
 }
@@ -207,31 +212,31 @@ export function Panel({
 /*  Badge                                                                      */
 /* -------------------------------------------------------------------------- */
 
+type BadgeTone = "slate" | "emerald" | "amber" | "rose" | "sky" | "violet";
+
 export function Badge({
   children,
   tone = "slate",
 }: {
   children: ReactNode;
-  tone?: "slate" | "emerald" | "amber" | "rose" | "sky" | "violet";
+  tone?: BadgeTone;
 }) {
-  const map = {
-    slate: "bg-background text-foreground/80 ring-foreground/10",
-    emerald: "bg-success/10 text-success ring-success/30",
-    amber: "bg-warning/10 text-warning ring-warning/30",
-    rose: "bg-error/10 text-error ring-error/30",
-    sky: "bg-primary/10 text-primary ring-primary/30",
-    violet: "bg-primary/10 text-primary ring-primary/30",
-  } as const;
-  return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${map[tone]}`}>
-      {children}
-    </span>
-  );
+  const cls: Record<BadgeTone, string> = {
+    slate: "neutral",
+    emerald: "ok",
+    amber: "warn",
+    rose: "danger",
+    sky: "brand",
+    violet: "brand",
+  };
+  return <span className={`bo-badge ${cls[tone]}`}>{children}</span>;
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Buttons                                                                    */
+/*  IconButton (used by back office tables)                                    */
 /* -------------------------------------------------------------------------- */
+
+type IconBtnTone = "slate" | "rose" | "emerald" | "primary";
 
 export function IconButton({
   children,
@@ -239,27 +244,281 @@ export function IconButton({
   title,
   tone = "slate",
   type = "button",
+  disabled,
 }: {
   children: ReactNode;
   onClick?: () => void;
   title?: string;
-  tone?: "slate" | "rose" | "emerald" | "primary";
+  tone?: IconBtnTone;
   type?: "button" | "submit";
+  disabled?: boolean;
 }) {
-  const map = {
-    slate: "border-foreground/10 text-foreground/70 hover:border-foreground/20 hover:bg-background",
-    rose: "border-error/30 text-error hover:border-error/30 hover:bg-error/10",
-    emerald: "border-success/30 text-success hover:border-success/30 hover:bg-success/10",
-    primary: "border-primary/30 text-primary hover:border-primary hover:bg-primary/5",
-  } as const;
+  const map: Record<IconBtnTone, string> = {
+    slate: "",
+    rose: "danger",
+    emerald: "",
+    primary: "",
+  };
   return (
     <button
       type={type}
       onClick={onClick}
       title={title}
-      className={`inline-flex items-center justify-center gap-1 rounded-lg border bg-white px-2.5 py-1.5 text-xs font-medium transition-colors ${map[tone]}`}
+      disabled={disabled}
+      className={`bo-btn ${map[tone]}`}
+      style={
+        tone === "emerald"
+          ? { color: "var(--bo-ok)", borderColor: "var(--bo-ok-soft)" }
+          : tone === "primary"
+          ? { color: "var(--bo-brand)", borderColor: "var(--bo-brand-soft)" }
+          : undefined
+      }
     >
       {children}
     </button>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  KPI card with sparkline                                                    */
+/* -------------------------------------------------------------------------- */
+
+export type DeltaDir = "up" | "down" | "flat";
+
+export function DeltaChip({ dir, txt }: { dir: DeltaDir; txt: string }) {
+  return (
+    <span className={`bo-delta ${dir}`}>
+      {dir === "up" && <Icon.ArrowUp className="h-2.5 w-2.5" />}
+      {dir === "down" && <Icon.ArrowDown className="h-2.5 w-2.5" />}
+      {txt}
+    </span>
+  );
+}
+
+export function KpiCard({
+  label,
+  value,
+  unit,
+  hint,
+  hintRight,
+  delta,
+  spark,
+}: {
+  label: string;
+  value: ReactNode;
+  unit?: string;
+  hint?: string;
+  hintRight?: string;
+  delta?: { dir: DeltaDir; txt: string };
+  spark?: number[];
+}) {
+  return (
+    <div className="bo-kpi">
+      <div className="bo-kpi-head">
+        <div className="bo-kpi-label">{label}</div>
+        {delta && <DeltaChip dir={delta.dir} txt={delta.txt} />}
+      </div>
+      <div className="bo-kpi-value bo-num">
+        {value}
+        {unit && <span className="unit">{unit}</span>}
+      </div>
+      {(hint || hintRight) && (
+        <div className="bo-kpi-foot">
+          <span>{hint}</span>
+          {hintRight && <span className="bo-dim">{hintRight}</span>}
+        </div>
+      )}
+      {spark && spark.length > 1 && <Sparkline data={spark} color="var(--bo-brand)" />}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Charts                                                                     */
+/* -------------------------------------------------------------------------- */
+
+export function Sparkline({
+  data,
+  color,
+  height = 22,
+  fill = true,
+}: {
+  data: number[];
+  color: string;
+  height?: number;
+  fill?: boolean;
+}) {
+  const w = 100;
+  const h = height;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = Math.max(1, max - min);
+  const step = w / Math.max(1, data.length - 1);
+  const pts = data.map((v, i) => [i * step, h - 2 - ((v - min) / range) * (h - 4)] as const);
+  const d = pts.map((p, i) => (i === 0 ? `M${p[0]},${p[1]}` : `L${p[0]},${p[1]}`)).join(" ");
+  const area = `${d} L${w},${h} L0,${h} Z`;
+  return (
+    <svg className="bo-spark" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
+      {fill && <path d={area} fill={color} opacity="0.12" />}
+      <path d={d} stroke={color} strokeWidth="1.3" fill="none" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+export function BarChart({
+  data,
+  labels,
+  color,
+  height = 200,
+}: {
+  data: number[];
+  labels: string[];
+  color: string;
+  height?: number;
+}) {
+  const w = 400;
+  const h = height;
+  const pad = { l: 28, r: 12, t: 10, b: 22 };
+  const cw = w - pad.l - pad.r;
+  const ch = h - pad.t - pad.b;
+  const max = Math.max(...data, 1);
+  const bw = cw / Math.max(1, data.length);
+  const ticks = [0, Math.ceil(max / 2), Math.ceil(max)];
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} width="100%" height="100%" preserveAspectRatio="none">
+      {ticks.map((t, i) => {
+        const y = pad.t + ch - (t / max) * ch;
+        return (
+          <g key={i}>
+            <line
+              x1={pad.l}
+              x2={w - pad.r}
+              y1={y}
+              y2={y}
+              stroke="var(--bo-border)"
+              strokeDasharray={i === 0 ? "0" : "2 3"}
+            />
+            <text
+              x={pad.l - 6}
+              y={y + 3}
+              fontSize="9"
+              fill="var(--bo-text-dim)"
+              textAnchor="end"
+              fontFamily="JetBrains Mono"
+            >
+              {t}
+            </text>
+          </g>
+        );
+      })}
+      {data.map((v, i) => {
+        const bh = (v / max) * ch;
+        const x = pad.l + i * bw + 4;
+        const y = pad.t + ch - bh;
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={Math.max(1, bw - 8)} height={Math.max(1, bh)} rx="2" fill={color} opacity="0.9" />
+            <text
+              x={x + (bw - 8) / 2}
+              y={h - pad.b + 12}
+              fontSize="9.5"
+              fill="var(--bo-text-dim)"
+              textAnchor="middle"
+              fontFamily="Inter"
+            >
+              {labels[i]}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+export function Donut({
+  segments,
+  size = 160,
+  centerLabel = "TOTAL",
+}: {
+  segments: { label: string; value: number; color: string }[];
+  size?: number;
+  centerLabel?: string;
+}) {
+  const total = segments.reduce((s, seg) => s + seg.value, 0) || 1;
+  const r = size / 2 - 14;
+  const cx = size / 2;
+  const cy = size / 2;
+  const startAngles: number[] = [];
+  segments.reduce((acc, seg) => {
+    startAngles.push(acc);
+    return acc + (seg.value / total) * Math.PI * 2;
+  }, -Math.PI / 2);
+  const arcs = segments.map((seg, i) => {
+    const start = startAngles[i];
+    const ang = (seg.value / total) * Math.PI * 2;
+    const end = start + ang;
+    const x1 = cx + r * Math.cos(start);
+    const y1 = cy + r * Math.sin(start);
+    const x2 = cx + r * Math.cos(end);
+    const y2 = cy + r * Math.sin(end);
+    const large = ang > Math.PI ? 1 : 0;
+    const d = `M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z`;
+    return <path key={i} d={d} fill={seg.color} stroke="var(--bo-panel)" strokeWidth="2" />;
+  });
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size}>
+      {arcs}
+      <circle cx={cx} cy={cy} r={r * 0.55} fill="var(--bo-panel)" />
+      <text
+        x={cx}
+        y={cy - 2}
+        textAnchor="middle"
+        fontSize="20"
+        fontWeight="600"
+        fill="var(--bo-text)"
+        fontFamily="Inter"
+        style={{ fontVariantNumeric: "tabular-nums" }}
+      >
+        {total}
+      </text>
+      <text
+        x={cx}
+        y={cy + 14}
+        textAnchor="middle"
+        fontSize="9.5"
+        fill="var(--bo-text-muted)"
+        fontFamily="Inter"
+        letterSpacing="0.06em"
+      >
+        {centerLabel}
+      </text>
+    </svg>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Legacy alias — kept so older call sites compile, now mapped to KpiCard     */
+/* -------------------------------------------------------------------------- */
+
+export function StatCard({
+  label,
+  value,
+  trend,
+  hint,
+}: {
+  label: string;
+  value: ReactNode;
+  trend?: string;
+  hint?: string;
+  tone?: string;
+  icon?: ReactNode;
+}) {
+  return (
+    <KpiCard
+      label={label}
+      value={value}
+      hint={hint}
+      delta={trend ? { dir: "up", txt: trend } : undefined}
+    />
   );
 }
