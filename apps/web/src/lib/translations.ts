@@ -149,6 +149,9 @@ const translations = {
         "account.settings": "Settings",
         "account.settingsSubtitle": "Language and account preferences.",
 
+        // Orders
+        "orders.searchPlaceholder": "Search for a product",
+
         // Footer
         "footer.rights": "All rights reserved.",
         "footer.cgu": "Terms of Use",
@@ -315,6 +318,9 @@ const translations = {
         "account.settings": "Paramètres",
         "account.settingsSubtitle": "Langue et préférences du compte.",
 
+        // Orders
+        "orders.searchPlaceholder": "Rechercher un produit",
+
         // Footer
         "footer.rights": "Tous droits réservés.",
         "footer.cgu": "CGU",
@@ -480,6 +486,9 @@ const translations = {
         "account.settings": "الإعدادات",
         "account.settingsSubtitle": "اللغة وتفضيلات الحساب.",
 
+        // Orders
+        "orders.searchPlaceholder": "البحث عن منتج",
+
         // Footer
         "footer.rights": "جميع الحقوق محفوظة.",
         "footer.cgu": "شروط الاستخدام",
@@ -644,6 +653,9 @@ const translations = {
         "account.profileSubtitle": "מידע אישי וכתובות.",
         "account.settings": "הגדרות",
         "account.settingsSubtitle": "שפה והעדפות חשבון.",
+
+        // Orders
+        "orders.searchPlaceholder": "חיפוש מוצר",
 
         // Footer
         "footer.rights": "כל הזכויות שמורות.",

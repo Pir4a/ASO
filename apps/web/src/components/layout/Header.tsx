@@ -74,7 +74,7 @@ export function Header({ locale }: HeaderProps) {
               priority
               className="h-10 w-auto"
             />
-            <span className="hidden font-heading text-xl font-semibold leading-none tracking-tight text-foreground sm:inline">
+            <span className="hidden font-heading text-xl font-semibold leading-none tracking-tight text-foreground lg:inline">
               Althea Systems
             </span>
             <span className="sr-only">{t("header.tagline")}</span>

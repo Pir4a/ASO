@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getOrders, type OrderDTO, type OrdersByYear, type OrderStatus } from "@/lib/api";
+import { useT } from "@/context/LocaleContext";
 
 type StatusFilter = "all" | "active" | "completed" | "cancelled";
 
@@ -59,6 +60,7 @@ function uniqueProductTypes(ordersByYear: OrdersByYear): string[] {
 }
 
 export default function OrdersPage() {
+  const t = useT();
   const [data, setData] = useState<OrdersByYear>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -134,7 +136,7 @@ export default function OrdersPage() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher par produit ou date (ex. 2024-01-15)"
+            placeholder={t("orders.searchPlaceholder")}
             className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
           />
         </label>
