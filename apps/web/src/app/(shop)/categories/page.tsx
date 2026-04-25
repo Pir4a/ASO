@@ -45,14 +45,9 @@ export default async function CategoriesPage() {
       />
 
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 className="font-heading text-[22px] font-semibold tracking-tight text-foreground">
-            Toutes les spécialités
-          </h2>
-          <p className="mt-1 text-[13px] text-foreground/55">
-            Ordre d&apos;affichage défini par les administrateurs
-          </p>
-        </div>
+        <h2 className="font-heading text-[22px] font-semibold tracking-tight text-foreground">
+          Toutes les spécialités
+        </h2>
         <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-white px-3 py-1.5 text-[12.5px] text-foreground/75">
           <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-success" />
           <b className="font-semibold text-foreground">{categories.length}</b>
