@@ -210,6 +210,11 @@ const translations = {
         "footer.legal": "Legal Notice",
         "footer.contact": "Contact",
         "footer.support": "Responsive Support",
+        "footer.featuresTitle": "Key Features",
+        "footer.feature.checkout": "Secure checkout",
+        "footer.feature.tracking": "Order tracking",
+        "footer.feature.support": "Dedicated B2B support",
+        "footer.feature.security": "Encrypted data and payments",
 
         // Legal
         "legal.cgu.title": "Terms of Use",
@@ -431,6 +436,11 @@ const translations = {
         "footer.legal": "Mentions légales",
         "footer.contact": "Contact",
         "footer.support": "Support réactif",
+        "footer.featuresTitle": "Fonctionnalités clés",
+        "footer.feature.checkout": "Paiement sécurisé",
+        "footer.feature.tracking": "Suivi des commandes",
+        "footer.feature.support": "Support B2B dédié",
+        "footer.feature.security": "Données et paiements chiffrés",
 
         // Legal
         "legal.cgu.title": "Conditions Générales d'Utilisation",
@@ -651,6 +661,11 @@ const translations = {
         "footer.legal": "إشعار قانوني",
         "footer.contact": "اتصل بنا",
         "footer.support": "دعم سريع الاستجابة",
+        "footer.featuresTitle": "الميزات الأساسية",
+        "footer.feature.checkout": "دفع آمن",
+        "footer.feature.tracking": "تتبع الطلبات",
+        "footer.feature.support": "دعم مخصص للأعمال",
+        "footer.feature.security": "بيانات ومدفوعات مشفرة",
 
         // Legal
         "legal.cgu.title": "شروط الاستخدام",
@@ -871,6 +886,11 @@ const translations = {
         "footer.legal": "הודעה משפטית",
         "footer.contact": "צור קשר",
         "footer.support": "תמיכה מהירה",
+        "footer.featuresTitle": "יכולות מרכזיות",
+        "footer.feature.checkout": "תשלום מאובטח",
+        "footer.feature.tracking": "מעקב הזמנות",
+        "footer.feature.support": "תמיכה ייעודית לעסקים",
+        "footer.feature.security": "נתונים ותשלומים מוצפנים",
 
         // Legal
         "legal.cgu.title": "תנאי שימוש",

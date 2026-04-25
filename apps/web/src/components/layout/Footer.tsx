@@ -6,10 +6,16 @@ import { SocialLinks } from "./SocialLinks";
 
 export function Footer() {
   const t = useT();
+  const featureKeys = [
+    "footer.feature.checkout",
+    "footer.feature.tracking",
+    "footer.feature.support",
+    "footer.feature.security",
+  ] as const;
 
   return (
     <footer className="bg-foreground text-foreground/20 mt-16">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-3 md:items-start">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-4 md:items-start">
         <div className="space-y-3">
           <p className="font-heading text-lg font-semibold text-white">Althea Systems</p>
           <p className="text-sm text-foreground/40">
@@ -22,6 +28,23 @@ export function Footer() {
             />
             <span>{t("footer.support")}</span>
           </div>
+        </div>
+
+        <div className="space-y-3">
+          <span className="text-xs font-semibold uppercase tracking-wide text-white/80">
+            {t("footer.featuresTitle")}
+          </span>
+          <ul className="space-y-2 text-sm text-white/80">
+            {featureKeys.map((key) => (
+              <li key={key} className="flex items-start gap-2">
+                <span
+                  aria-hidden="true"
+                  className="mt-[0.45rem] h-1.5 w-1.5 rounded-full bg-primary-hover"
+                />
+                <span>{t(key)}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Legal links — visible on desktop, hidden on mobile (already in burger menu) */}
