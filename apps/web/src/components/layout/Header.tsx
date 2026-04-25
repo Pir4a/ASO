@@ -69,7 +69,7 @@ export function Header({ locale }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 border-b border-foreground/10 bg-white">
+      <header className="sticky top-0 z-50 border-b border-foreground/10 bg-white">
         {/* ── Utility strip (navy) ── */}
         <div className="bg-foreground text-white/85">
           <div className="mx-auto flex max-w-[1300px] items-center gap-5 px-4 py-2 text-[12.5px] sm:px-6 lg:px-7 2xl:max-w-[1600px]">

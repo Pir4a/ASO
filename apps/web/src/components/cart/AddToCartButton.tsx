@@ -9,13 +9,15 @@ interface AddToCartButtonProps {
     productName?: string;
     className?: string;
     variant?: "primary" | "small";
+    quantity?: number;
 }
 
 export function AddToCartButton({
     productId,
     productName,
     className = "",
-    variant = "primary"
+    variant = "primary",
+    quantity = 1,
 }: AddToCartButtonProps) {
     const { addItem, isLoading } = useCart();
     const { addToast } = useToast();
@@ -26,14 +28,18 @@ export function AddToCartButton({
         e.preventDefault(); // Prevent navigation if inside a Link
         e.stopPropagation();
 
+        const qty = Math.max(1, Math.floor(quantity));
         setIsAdding(true);
         try {
-            await addItem(productId, 1);
+            await addItem(productId, qty);
             setShowSuccess(true);
-            addToast(productName ? `${productName} ajouté au panier` : "Produit ajouté au panier", "success");
+            const name = productName ?? "Produit";
+            const msg = qty > 1 ? `${name} ajouté au panier ×${qty}` : `${name} ajouté au panier`;
+            addToast(msg, "success");
             setTimeout(() => setShowSuccess(false), 2000);
-        } catch (error: any) {
-            addToast(error.message || "Erreur lors de l'ajout au panier", "error");
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : "Erreur lors de l'ajout au panier";
+            addToast(msg, "error");
         } finally {
             setIsAdding(false);
         }
