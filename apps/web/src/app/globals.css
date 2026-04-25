@@ -32,6 +32,17 @@ a {
   color: inherit;
 }
 
+/* Tailwind v4 resets <button> to cursor:default — restore the pointer cursor
+   on enabled interactive controls so every button across the app feels right. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 .card {
   /* Refactor Architect: Kill the borders. Use shadow for depth. */
   border: none;
