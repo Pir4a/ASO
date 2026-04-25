@@ -2,11 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type ComponentType } from "react";
+import {
+  useState,
+  type ComponentType,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import { AuthGuard } from "@/components/guards/AuthGuard";
 import { useAuth } from "@/context/AuthContext";
 import { AddressList } from "@/components/account/AddressList";
 import { PaymentMethodList } from "@/components/account/PaymentMethodList";
+import { authFetch } from "@/lib/auth";
 
 type Section = "profile" | "addresses" | "payments" | "orders" | "security";
 
@@ -281,20 +287,67 @@ function SectionCard({
 
 /* ── Personal info ───────────────────────────────────────────── */
 function PersonalInfoCard() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
+  const [flash, setFlash] = useState<{ kind: "success" | "error"; text: string } | null>(null);
+
+  const flashAndClear = (kind: "success" | "error", text: string) => {
+    setFlash({ kind, text });
+    window.setTimeout(() => setFlash(null), 3500);
+  };
+
+  const save = async (
+    patch: Partial<{ firstName: string; lastName: string; email: string }>,
+  ) => {
+    const res = await authFetch("/profile/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    if (!res.ok) {
+      const message =
+        typeof data?.message === "string" ? data.message : "Mise à jour impossible.";
+      throw new Error(message);
+    }
+    updateUser({
+      firstName: typeof data.firstName === "string" ? data.firstName : undefined,
+      lastName: typeof data.lastName === "string" ? data.lastName : undefined,
+      email: typeof data.email === "string" ? data.email : undefined,
+    });
+    flashAndClear("success", "Informations mises à jour.");
+  };
 
   return (
     <SectionCard
       eyebrow="Informations personnelles"
       title="Vos coordonnées"
-      hint="Utilisées pour vos commandes et notifications."
+      hint="Cliquez sur l'icône crayon pour modifier un champ. Utilisé pour vos commandes et notifications."
     >
       <dl className="grid gap-4 sm:grid-cols-2">
-        <Field label="Nom complet">
-          {[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "—"}
-        </Field>
-        <Field label="Email">{user?.email || "—"}</Field>
-        <Field label="Rôle">
+        <EditableField
+          label="Prénom"
+          value={user?.firstName ?? ""}
+          placeholder="—"
+          onSave={(v) => save({ firstName: v })}
+          onError={(e) => flashAndClear("error", e)}
+        />
+        <EditableField
+          label="Nom"
+          value={user?.lastName ?? ""}
+          placeholder="—"
+          onSave={(v) => save({ lastName: v })}
+          onError={(e) => flashAndClear("error", e)}
+        />
+        <EditableField
+          label="Email"
+          value={user?.email ?? ""}
+          type="email"
+          placeholder="vous@exemple.fr"
+          onSave={(v) => save({ email: v })}
+          onError={(e) => flashAndClear("error", e)}
+          className="sm:col-span-2"
+        />
+        <ReadOnlyField label="Rôle">
           <span
             className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
               user?.role === "admin"
@@ -304,37 +357,167 @@ function PersonalInfoCard() {
           >
             {user?.role === "admin" ? "Administrateur" : "Client"}
           </span>
-        </Field>
-        <Field label="Identifiant">
+        </ReadOnlyField>
+        <ReadOnlyField label="Identifiant">
           <span className="font-mono text-[12px] text-foreground/65">
-            {user?.email?.split("@")[0] ?? "—"}
+            {user?.id?.slice(0, 8) ?? "—"}
           </span>
-        </Field>
+        </ReadOnlyField>
       </dl>
 
-      <div className="mt-6 flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-foreground/15 bg-background/40 px-4 py-3 text-[12.5px] text-foreground/70">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="h-4 w-4 text-primary">
-          <circle cx="8" cy="8" r="6" />
-          <path d="M8 7v4M8 5v.01" />
-        </svg>
-        La modification du nom et de l&apos;email sera bientôt disponible. Pour toute mise à jour
-        urgente, contactez-nous via la page{" "}
-        <Link href="/contact" className="font-semibold text-primary hover:underline">
-          Contact
-        </Link>
-        .
-      </div>
+      {flash && (
+        <div
+          role="status"
+          className={`mt-5 flex items-center gap-2 rounded-lg border px-3.5 py-2.5 text-[13px] ${
+            flash.kind === "success"
+              ? "border-success/30 bg-success/10 text-success"
+              : "border-error/30 bg-error/10 text-error"
+          }`}
+        >
+          {flash.kind === "success" ? (
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="h-3.5 w-3.5">
+              <path d="m3 8 3.5 3.5L13 5" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
+              <circle cx="8" cy="8" r="6" />
+              <path d="m4.5 4.5 7 7" />
+            </svg>
+          )}
+          {flash.text}
+        </div>
+      )}
     </SectionCard>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function ReadOnlyField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="rounded-xl border border-foreground/10 bg-background/30 px-4 py-3.5">
       <dt className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/55">
         {label}
       </dt>
       <dd className="mt-1.5 text-[14px] font-medium text-foreground">{children}</dd>
+    </div>
+  );
+}
+
+function EditableField({
+  label,
+  value,
+  placeholder = "—",
+  type = "text",
+  onSave,
+  onError,
+  className = "",
+}: {
+  label: string;
+  value: string;
+  placeholder?: string;
+  type?: "text" | "email";
+  onSave: (next: string) => Promise<void>;
+  onError: (msg: string) => void;
+  className?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const [saving, setSaving] = useState(false);
+
+  const startEdit = () => {
+    setDraft(value);
+    setEditing(true);
+  };
+
+  const cancel = () => {
+    setEditing(false);
+    setDraft(value);
+  };
+
+  const submit = async (e?: FormEvent) => {
+    e?.preventDefault();
+    const next = draft.trim();
+    if (!next) {
+      onError("Le champ ne peut pas être vide.");
+      return;
+    }
+    if (next === value) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(next);
+      setEditing(false);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Mise à jour impossible.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      className={`group relative rounded-xl border border-foreground/10 bg-background/30 px-4 py-3.5 transition focus-within:border-primary/40 focus-within:bg-white ${className}`}
+    >
+      <dt className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/55">
+        {label}
+      </dt>
+      {editing ? (
+        <form onSubmit={submit} className="mt-1.5 flex items-center gap-2">
+          <input
+            type={type}
+            value={draft}
+            autoFocus
+            disabled={saving}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") cancel();
+            }}
+            className="min-w-0 flex-1 rounded-md border border-foreground/15 bg-white px-2.5 py-1.5 text-[14px] font-medium text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+          />
+          <button
+            type="submit"
+            disabled={saving}
+            aria-label="Enregistrer"
+            style={{ color: "#fff" }}
+            className="grid h-8 w-8 place-items-center rounded-md bg-primary transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {saving ? (
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            ) : (
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="h-3.5 w-3.5">
+                <path d="m3 8 3.5 3.5L13 5" />
+              </svg>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={cancel}
+            disabled={saving}
+            aria-label="Annuler"
+            className="grid h-8 w-8 place-items-center rounded-md border border-foreground/15 bg-white text-foreground/65 transition hover:border-error/30 hover:text-error disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true" className="h-3.5 w-3.5">
+              <path d="M4 4l8 8M12 4 4 12" />
+            </svg>
+          </button>
+        </form>
+      ) : (
+        <dd className="mt-1.5 flex items-center justify-between gap-2 text-[14px] font-medium text-foreground">
+          <span className={value ? "" : "text-foreground/45"}>{value || placeholder}</span>
+          <button
+            type="button"
+            onClick={startEdit}
+            aria-label={`Modifier ${label.toLowerCase()}`}
+            className="grid h-7 w-7 place-items-center rounded-md text-foreground/55 transition hover:bg-primary/10 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
+              <path d="M3 13h3L13 6l-3-3L3 10v3z" />
+              <path d="m9 4 3 3" />
+            </svg>
+          </button>
+        </dd>
+      )}
     </div>
   );
 }
@@ -406,33 +589,18 @@ function SecurityCard() {
     <>
       <SectionCard
         eyebrow="Mot de passe"
-        title="Sécurité du compte"
-        hint="Réinitialisez votre mot de passe par email pour des raisons de sécurité."
+        title="Changer mon mot de passe"
+        hint="Saisissez votre mot de passe actuel pour confirmer la modification."
       >
-        <p className="text-[13.5px] leading-relaxed text-foreground/70">
-          Pour des raisons de sécurité, le changement de mot de passe se fait via un lien à usage
-          unique envoyé à <b className="font-semibold text-foreground">{user?.email ?? "votre email"}</b>.
-          Le lien est valable 24 heures.
+        <ChangePasswordForm />
+        <p className="mt-4 text-[12.5px] text-foreground/60">
+          Vous l&apos;avez oublié ?{" "}
+          <Link href="/forgot-password" className="font-semibold text-primary hover:underline">
+            Recevoir un lien de réinitialisation
+          </Link>{" "}
+          à <b className="font-semibold text-foreground">{user?.email ?? "votre email"}</b> (valable
+          24 h).
         </p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Link
-            href="/forgot-password"
-            style={{ color: "#fff" }}
-            className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-5 text-[14px] font-semibold transition hover:bg-primary-hover"
-          >
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
-              <circle cx="6" cy="10" r="2.5" />
-              <path d="m13.5 2.5-6 6M10 5l3 3" />
-            </svg>
-            Réinitialiser mon mot de passe
-          </Link>
-          <Link
-            href="/contact"
-            className="inline-flex h-11 items-center gap-2 rounded-lg border border-foreground/15 bg-white px-5 text-[14px] font-semibold text-foreground transition hover:border-primary hover:text-primary"
-          >
-            Contacter le support
-          </Link>
-        </div>
       </SectionCard>
 
       <SectionCard
@@ -460,5 +628,176 @@ function SecurityCard() {
         </div>
       </SectionCard>
     </>
+  );
+}
+
+/* ── Change-password form ───────────────────────────────────── */
+function ChangePasswordForm() {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [showNext, setShowNext] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [flash, setFlash] = useState<{ kind: "success" | "error"; text: string } | null>(null);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setFlash(null);
+    if (next.length < 8) {
+      setFlash({ kind: "error", text: "Le nouveau mot de passe doit faire au moins 8 caractères." });
+      return;
+    }
+    if (next !== confirm) {
+      setFlash({ kind: "error", text: "Les deux mots de passe ne correspondent pas." });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await authFetch("/profile/me/password", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: current, newPassword: next }),
+      });
+      const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      if (!res.ok) {
+        const msg =
+          typeof data?.message === "string" ? data.message : "Modification impossible.";
+        throw new Error(msg);
+      }
+      setFlash({ kind: "success", text: "Mot de passe mis à jour." });
+      setCurrent("");
+      setNext("");
+      setConfirm("");
+    } catch (err) {
+      setFlash({
+        kind: "error",
+        text: err instanceof Error ? err.message : "Modification impossible.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const inputCls =
+    "w-full rounded-lg border border-foreground/10 bg-white px-3.5 py-2.5 text-[14px] text-foreground placeholder:text-foreground/45 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15";
+  const labelCls =
+    "mb-1.5 block text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/65";
+
+  return (
+    <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+      <div className="sm:col-span-2">
+        <label htmlFor="pw-current" className={labelCls}>
+          Mot de passe actuel
+        </label>
+        <input
+          id="pw-current"
+          type="password"
+          autoComplete="current-password"
+          required
+          value={current}
+          onChange={(e) => setCurrent(e.target.value)}
+          className={inputCls}
+        />
+      </div>
+
+      <div>
+        <label htmlFor="pw-new" className={labelCls}>
+          Nouveau mot de passe
+        </label>
+        <div className="relative">
+          <input
+            id="pw-new"
+            type={showNext ? "text" : "password"}
+            autoComplete="new-password"
+            required
+            minLength={8}
+            value={next}
+            onChange={(e) => setNext(e.target.value)}
+            className={`${inputCls} pr-10`}
+          />
+          <button
+            type="button"
+            onClick={() => setShowNext((s) => !s)}
+            aria-label={showNext ? "Masquer" : "Afficher"}
+            className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded text-foreground/55 transition hover:bg-background hover:text-primary"
+          >
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="h-3.5 w-3.5">
+              {showNext ? (
+                <>
+                  <path d="M2 2l12 12" />
+                  <path d="M3 8s2-4 5-4M13 8s-2 4-5 4" />
+                </>
+              ) : (
+                <>
+                  <path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8Z" />
+                  <circle cx="8" cy="8" r="2" />
+                </>
+              )}
+            </svg>
+          </button>
+        </div>
+        <p className="mt-1 text-[11px] text-foreground/55">8 caractères minimum.</p>
+      </div>
+
+      <div>
+        <label htmlFor="pw-confirm" className={labelCls}>
+          Confirmer
+        </label>
+        <input
+          id="pw-confirm"
+          type={showNext ? "text" : "password"}
+          autoComplete="new-password"
+          required
+          minLength={8}
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          className={inputCls}
+        />
+      </div>
+
+      {flash && (
+        <div
+          role="status"
+          className={`flex items-center gap-2 rounded-lg border px-3.5 py-2.5 text-[13px] sm:col-span-2 ${
+            flash.kind === "success"
+              ? "border-success/30 bg-success/10 text-success"
+              : "border-error/30 bg-error/10 text-error"
+          }`}
+        >
+          {flash.kind === "success" ? (
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="h-3.5 w-3.5">
+              <path d="m3 8 3.5 3.5L13 5" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
+              <circle cx="8" cy="8" r="6" />
+              <path d="m4.5 4.5 7 7" />
+            </svg>
+          )}
+          {flash.text}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={submitting}
+        style={{ color: "#fff" }}
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-[14px] font-semibold transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2 sm:w-fit"
+      >
+        {submitting ? (
+          <>
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            Mise à jour…
+          </>
+        ) : (
+          <>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
+              <path d="m3 8 3.5 3.5L13 5" />
+            </svg>
+            Mettre à jour le mot de passe
+          </>
+        )}
+      </button>
+    </form>
   );
 }

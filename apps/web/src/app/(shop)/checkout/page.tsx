@@ -7,6 +7,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/context/AuthContext";
 
 // Initialize Stripe outside component
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -24,6 +25,7 @@ type Step = "address" | "payment" | "confirmation";
 
 export default function CheckoutPage() {
   const { refreshCart } = useCart();
+  const { user } = useAuth();
   const [step, setStep] = useState<Step>("address");
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -78,8 +80,8 @@ export default function CheckoutPage() {
       const order = await createOrder(selectedAddressId);
       setOrderResult(order);
 
-      // 2. Create Payment Intent
-      const intent = await createPaymentIntent(order.id);
+      // 2. Create Payment Intent (attach user so saved cards show in PaymentElement)
+      const intent = await createPaymentIntent(order.id, user?.id);
       setClientSecret(intent.clientSecret);
 
       setStep("payment");

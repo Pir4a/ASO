@@ -7,8 +7,29 @@ export const API_URL = typeof window === 'undefined'
   ? (process.env.INTERNAL_API_URL || "http://api:3001/api")
   : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api");
 
+const KNOWN_LOCALES = new Set(["fr", "en", "ar", "he"]);
+
+async function getCurrentLocale(): Promise<string> {
+  if (typeof window !== "undefined") {
+    const m = document.cookie.match(/(?:^|;\s*)locale=([^;]+)/);
+    const v = m ? decodeURIComponent(m[1]) : "fr";
+    return KNOWN_LOCALES.has(v) ? v : "fr";
+  }
+  try {
+    const { cookies } = await import("next/headers");
+    const store = await cookies();
+    const v = store.get("locale")?.value || "fr";
+    return KNOWN_LOCALES.has(v) ? v : "fr";
+  } catch {
+    return "fr";
+  }
+}
+
 async function fetchJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { next: { revalidate: 60 } });
+  const lang = await getCurrentLocale();
+  const sep = path.includes("?") ? "&" : "?";
+  const url = `${API_URL}${path}${sep}lang=${encodeURIComponent(lang)}`;
+  const res = await fetch(url, { next: { revalidate: 60 } });
   if (!res.ok) {
     throw new Error(`API error ${res.status}`);
   }
@@ -462,11 +483,14 @@ export async function confirmOrderPayment(orderId: string, paymentIntentId?: str
   return res.json();
 }
 
-export async function createPaymentIntent(orderId: string): Promise<{ clientSecret: string }> {
+export async function createPaymentIntent(
+  orderId: string,
+  userId?: string,
+): Promise<{ clientSecret: string }> {
   const res = await fetch(`${API_URL}/payment/intent`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ orderId }),
+    body: JSON.stringify(userId ? { orderId, userId } : { orderId }),
   });
 
   if (!res.ok) {
