@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PAYMENT_GATEWAY } from '../../domain/gateways/payment.gateway';
 import { StripePaymentService } from '../services/payment/stripe.service';
 import { CreatePaymentIntentUseCase } from '../../application/use-cases/payment/create-payment-intent.use-case';
@@ -12,7 +12,7 @@ import { OrdersModule } from './orders.module';
 import { UsersModule } from './users.module';
 
 @Module({
-    imports: [CartModule, OrdersModule, UsersModule],
+    imports: [CartModule, forwardRef(() => OrdersModule), UsersModule],
     controllers: [PaymentController],
     providers: [
         {

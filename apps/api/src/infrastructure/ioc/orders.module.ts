@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Order } from '../persistence/typeorm/entities/order.entity';
 import { OrderItem } from '../persistence/typeorm/entities/order-item.entity';
@@ -16,6 +16,8 @@ import { AdminController } from '../controllers/admin/admin.controller';
 import { AddressModule } from './address.module';
 import { UsersModule } from './users.module';
 import { AuthModule } from './auth.module';
+import { ProductsModule } from './products.module';
+import { PaymentModule } from './payment.module';
 import { PdfService } from '../services/pdf.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
@@ -27,6 +29,8 @@ import { RolesGuard } from '../guards/roles.guard';
         UsersModule,
         AddressModule,
         AuthModule,
+        ProductsModule,
+        forwardRef(() => PaymentModule),
     ],
     controllers: [CheckoutController, OrdersController, AdminController],
     providers: [
