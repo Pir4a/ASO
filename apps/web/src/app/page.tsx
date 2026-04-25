@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { Carousel } from "@/components/home/Carousel";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
-import { ProductGridClient } from "@/components/home/ProductGridClient";
+import { TopProducts } from "@/components/home/TopProducts";
 import { getHomepageData } from "@/lib/api";
 import { getLocaleFromCookie } from "@/lib/i18n.server";
 import { getTranslations } from "@/lib/translations";
@@ -10,110 +11,108 @@ export default async function Home() {
   const locale = await getLocaleFromCookie();
   const t = getTranslations(locale);
 
-  const bestSellers = featuredProducts.length > 0 ? featuredProducts : products.slice(0, 8);
+  const topProducts = (featuredProducts.length > 0 ? featuredProducts : products).slice(0, 8);
 
   return (
-    <div className="space-y-10">
-      <section className="py-8 md:py-12">
-        <div className="grid gap-8 md:grid-cols-[2fr,1fr] md:items-center">
-          <div className="space-y-6">
-            <p className="inline-flex rounded-full bg-white px-4 py-1.5 text-sm font-bold text-primary shadow-sm ring-1 ring-foreground/50">
-              {t("home.badge")}
-            </p>
-            <h1 className="text-4xl font-extrabold tracking-tight text-foreground md:text-5xl lg:text-6xl">
-              {t("home.headline")}
-            </h1>
-            <p className="text-lg text-foreground/70 leading-relaxed max-w-2xl">
-              {t("home.description")}
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <span className="rounded-full bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm">
-                {t("home.tag1")}
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-foreground/80 shadow-sm">
-                {t("home.tag2")}
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-foreground/80 shadow-sm">
-                {t("home.tag3")}
-              </span>
-            </div>
-          </div>
-          <div className="rounded-2xl bg-white p-6 shadow-md ring-1 ring-foreground/10">
-            <h3 className="mb-4 font-bold text-foreground">{t("home.whyUs")}</h3>
-            <ul className="space-y-3 text-sm text-foreground/70">
-              <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
-                {t("home.reason1")}
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
-                {t("home.reason2")}
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
-                {t("home.reason3")}
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-success"></span>
-                {t("home.reason4")}
-              </li>
-            </ul>
-          </div>
-        </div>
+    <div className="space-y-12">
+      {/* ─── 3-section hero carousel (admin-editable) ─── */}
+      <section aria-label={t("home.carousel")}>
+        <Carousel slides={slides} />
       </section>
 
-      <section>
-        <Carousel slides={slides} />
-
-        {homepageText && (homepageText.headline || homepageText.body) && (
-          <div className="mt-6 rounded-2xl bg-linear-to-br from-primary/5 to-transparent p-5 ring-1 ring-primary/10">
+      {/* ─── Fixed editable text band (admin-editable) ─── */}
+      {homepageText && (homepageText.headline || homepageText.body) && (
+        <section
+          aria-label={homepageText.headline || "Information"}
+          className="grid items-center gap-5 rounded-xl border border-foreground/10 border-l-4 border-l-primary bg-white p-6 md:grid-cols-[44px_1fr_auto] md:gap-6 md:p-7"
+        >
+          <div
+            aria-hidden="true"
+            className="grid h-11 w-11 place-items-center rounded-xl bg-background text-primary"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+              <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
+            </svg>
+          </div>
+          <div>
             {homepageText.headline && (
-              <p className="text-base font-semibold text-foreground">{homepageText.headline}</p>
+              <p className="font-heading text-base font-semibold text-foreground">
+                {homepageText.headline}
+              </p>
             )}
             {homepageText.body && (
-              <p className="mt-1 text-sm text-foreground/70">{homepageText.body}</p>
+              <p className="mt-1 max-w-3xl text-sm leading-relaxed text-foreground/70">
+                {homepageText.body}
+              </p>
             )}
           </div>
-        )}
-      </section>
+          <ul className="flex justify-around gap-6 border-t border-foreground/10 pt-4 text-center md:border-l md:border-t-0 md:pl-6 md:pt-0">
+            <li>
+              <p className="font-heading text-lg font-semibold text-foreground leading-tight">
+                {products.length}+
+              </p>
+              <p className="text-[11px] uppercase tracking-wide text-foreground/60">Références</p>
+            </li>
+            <li>
+              <p className="font-heading text-lg font-semibold text-foreground leading-tight">48 h</p>
+              <p className="text-[11px] uppercase tracking-wide text-foreground/60">Livraison</p>
+            </li>
+            <li>
+              <p className="font-heading text-lg font-semibold text-foreground leading-tight">24/7</p>
+              <p className="text-[11px] uppercase tracking-wide text-foreground/60">Support</p>
+            </li>
+          </ul>
+        </section>
+      )}
 
-      <section className="card space-y-4 p-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-foreground">{t("home.shopBy")}</h2>
-          <p className="text-sm text-foreground/70">{t("home.shopBySub")}</p>
-        </div>
+      {/* ─── Categories grid (admin-editable order/image/name) ─── */}
+      <section aria-labelledby="cat-title">
+        <header className="mb-5 flex items-end justify-between gap-4">
+          <div>
+            <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
+              <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
+              Explorer par catégorie
+            </p>
+            <h2 id="cat-title" className="font-heading text-2xl font-semibold tracking-tight text-foreground md:text-[26px]">
+              {t("home.shopBy")}
+            </h2>
+          </div>
+          <Link
+            href="/categories"
+            className="hidden items-center gap-1.5 text-sm font-semibold text-primary transition hover:text-primary-hover sm:inline-flex"
+          >
+            Toutes les catégories
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
+              <path d="M3 8h10m-3-3 3 3-3 3" />
+            </svg>
+          </Link>
+        </header>
         <CategoryGrid categories={categories} />
       </section>
 
-      <section className="card space-y-4 p-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-foreground">{t("home.bestSellers")}</h2>
-          <p className="text-sm text-foreground/70">{t("home.bestSellersSub")}</p>
-        </div>
-        <ProductGridClient products={bestSellers} />
-      </section>
-
-      <section className="card p-6">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      {/* ─── Top Produits du moment (admin-curated) ─── */}
+      <section aria-labelledby="top-title">
+        <header className="mb-5 flex items-end justify-between gap-4">
           <div>
-            <p className="text-lg font-bold text-foreground">{t("home.readyOrder")}</p>
-            <p className="text-sm text-foreground/70">{t("home.readyOrderSub")}</p>
+            <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
+              <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
+              Sélection vitrine
+            </p>
+            <h2 id="top-title" className="font-heading text-2xl font-semibold tracking-tight text-foreground md:text-[26px]">
+              Les Top Produits du moment
+            </h2>
           </div>
-          <div className="flex gap-2">
-            <a
-              href="/checkout"
-              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover"
-            >
-              {t("home.checkout")}
-            </a>
-            <a
-              href="/contact"
-              className="rounded-md border border-foreground/10 px-4 py-2 text-sm font-semibold text-foreground hover:border-primary hover:text-primary"
-            >
-              {t("home.talkExpert")}
-            </a>
-          </div>
-        </div>
+          <Link
+            href="/products"
+            className="hidden items-center gap-1.5 text-sm font-semibold text-primary transition hover:text-primary-hover sm:inline-flex"
+          >
+            Voir tout le catalogue
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
+              <path d="M3 8h10m-3-3 3 3-3 3" />
+            </svg>
+          </Link>
+        </header>
+        <TopProducts products={topProducts} />
       </section>
     </div>
   );
