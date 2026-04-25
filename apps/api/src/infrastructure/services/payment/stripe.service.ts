@@ -150,6 +150,50 @@ export class StripePaymentService implements PaymentGateway {
         }
     }
 
+    async retrievePaymentMethod(paymentMethodId: string): Promise<PaymentMethodSummary | null> {
+        if (!this.stripe || !paymentMethodId) return null;
+        try {
+            const pm = await this.stripe.paymentMethods.retrieve(paymentMethodId);
+            return {
+                id: pm.id,
+                brand: pm.card?.brand,
+                last4: pm.card?.last4,
+                expMonth: pm.card?.exp_month,
+                expYear: pm.card?.exp_year,
+            };
+        } catch (error) {
+            console.error('Stripe retrievePaymentMethod failed:', error);
+            return null;
+        }
+    }
+
+    async retrievePaymentIntentCard(paymentIntentId: string): Promise<{
+        paymentMethodId?: string;
+        brand?: string;
+        last4?: string;
+        status: string;
+    }> {
+        if (!this.stripe) return { status: 'unknown' };
+        try {
+            const intent = await this.stripe.paymentIntents.retrieve(paymentIntentId, {
+                expand: ['payment_method'],
+            });
+            const pm = intent.payment_method;
+            const card =
+                pm && typeof pm === 'object' && 'card' in pm ? pm.card ?? undefined : undefined;
+            const pmId = typeof pm === 'string' ? pm : pm?.id;
+            return {
+                status: intent.status,
+                paymentMethodId: pmId,
+                brand: card?.brand,
+                last4: card?.last4,
+            };
+        } catch (error) {
+            console.error('Stripe retrievePaymentIntentCard failed:', error);
+            return { status: 'unknown' };
+        }
+    }
+
     async verifyPayment(paymentId: string): Promise<string> {
         const stripe = this.requireStripe();
         try {
