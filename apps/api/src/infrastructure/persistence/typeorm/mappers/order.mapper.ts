@@ -15,6 +15,9 @@ export class OrderMapper {
             billingAddress: entity.billingAddress ? new DomainAddress(entity.billingAddress) : undefined,
             paymentMethod: entity.paymentMethod,
             paymentId: entity.paymentId,
+            paymentMethodId: entity.paymentMethodId,
+            paymentBrand: entity.paymentBrand,
+            paymentLast4: entity.paymentLast4,
             paymentStatus: entity.paymentStatus,
             statusHistory: entity.statusHistory ?? undefined,
             createdAt: entity.createdAt,
@@ -43,6 +46,9 @@ export class OrderMapper {
         entity.billingAddress = domain.billingAddress;
         entity.paymentMethod = domain.paymentMethod;
         entity.paymentId = domain.paymentId;
+        entity.paymentMethodId = domain.paymentMethodId;
+        entity.paymentBrand = domain.paymentBrand;
+        entity.paymentLast4 = domain.paymentLast4;
         entity.paymentStatus = domain.paymentStatus ?? 'unpaid';
         entity.statusHistory = domain.statusHistory;
         return entity;

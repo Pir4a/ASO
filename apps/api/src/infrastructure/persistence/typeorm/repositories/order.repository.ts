@@ -139,10 +139,16 @@ export class TypeOrmOrderRepository implements OrderRepository {
         paymentId?: string;
         paymentStatus?: string;
         paymentMethod?: string;
+        paymentMethodId?: string;
+        paymentBrand?: string;
+        paymentLast4?: string;
       };
       if (m.paymentId) order.paymentId = m.paymentId;
       if (m.paymentStatus) order.paymentStatus = m.paymentStatus;
       if (m.paymentMethod) order.paymentMethod = m.paymentMethod;
+      if (m.paymentMethodId) order.paymentMethodId = m.paymentMethodId;
+      if (m.paymentBrand) order.paymentBrand = m.paymentBrand;
+      if (m.paymentLast4) order.paymentLast4 = m.paymentLast4;
     }
 
     const savedEntity = await this.repository.save(order);

@@ -36,6 +36,16 @@ export class Order {
     @Column({ nullable: true })
     paymentId?: string;
 
+    /** Stripe payment-method id used (pm_…), so we can look up the card later. */
+    @Column({ nullable: true })
+    paymentMethodId?: string;
+
+    @Column({ nullable: true, length: 32 })
+    paymentBrand?: string;
+
+    @Column({ nullable: true, length: 4 })
+    paymentLast4?: string;
+
     @Column({ default: 'unpaid' })
     paymentStatus: string;
 
