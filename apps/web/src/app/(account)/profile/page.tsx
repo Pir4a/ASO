@@ -21,6 +21,10 @@ import {
   type OrderStatus,
   type OrdersByYear,
 } from "@/lib/api";
+import { useT } from "@/context/LocaleContext";
+import { isPasswordTooWeakApiMessage, firstHttpErrorMessage } from "@/lib/password-api-error";
+import { passwordMeetsPolicy, getPasswordMissingSummary } from "@/lib/password-policy";
+import { PasswordRequirementHints } from "@/components/account/PasswordRequirementHints";
 
 type Section = "profile" | "addresses" | "payments" | "orders" | "security";
 
@@ -1219,6 +1223,7 @@ function MfaCard() {
 
 /* ── Change-password form ───────────────────────────────────── */
 function ChangePasswordForm() {
+  const t = useT();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -1229,8 +1234,11 @@ function ChangePasswordForm() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setFlash(null);
-    if (next.length < 8) {
-      setFlash({ kind: "error", text: "Le nouveau mot de passe doit faire au moins 8 caractères." });
+    if (!passwordMeetsPolicy(next)) {
+      setFlash({
+        kind: "error",
+        text: getPasswordMissingSummary(next, t) || t("auth.password.tooWeak"),
+      });
       return;
     }
     if (next !== confirm) {
@@ -1246,9 +1254,18 @@ function ChangePasswordForm() {
       });
       const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
       if (!res.ok) {
-        const msg =
-          typeof data?.message === "string" ? data.message : "Modification impossible.";
-        throw new Error(msg);
+        if (isPasswordTooWeakApiMessage(data.message)) {
+          setFlash({
+            kind: "error",
+            text: getPasswordMissingSummary(next, t) || t("auth.password.tooWeak"),
+          });
+          return;
+        }
+        setFlash({
+          kind: "error",
+          text: firstHttpErrorMessage(data.message) ?? t("account.passwordChangeErrorGeneric"),
+        });
+        return;
       }
       setFlash({ kind: "success", text: "Mot de passe mis à jour." });
       setCurrent("");
@@ -1257,7 +1274,7 @@ function ChangePasswordForm() {
     } catch (err) {
       setFlash({
         kind: "error",
-        text: err instanceof Error ? err.message : "Modification impossible.",
+        text: err instanceof Error ? err.message : t("account.passwordChangeErrorGeneric"),
       });
     } finally {
       setSubmitting(false);
@@ -1296,7 +1313,6 @@ function ChangePasswordForm() {
             type={showNext ? "text" : "password"}
             autoComplete="new-password"
             required
-            minLength={8}
             value={next}
             onChange={(e) => setNext(e.target.value)}
             className={`${inputCls} pr-10`}
@@ -1322,7 +1338,7 @@ function ChangePasswordForm() {
             </svg>
           </button>
         </div>
-        <p className="mt-1 text-[11px] text-foreground/55">8 caractères minimum.</p>
+        <PasswordRequirementHints password={next} />
       </div>
 
       <div>
@@ -1334,7 +1350,6 @@ function ChangePasswordForm() {
           type={showNext ? "text" : "password"}
           autoComplete="new-password"
           required
-          minLength={8}
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           className={inputCls}

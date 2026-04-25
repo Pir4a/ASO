@@ -23,6 +23,10 @@ import { FindUserByIdUseCase } from '../../application/use-cases/users/find-user
 import { FindUserByEmailUseCase } from '../../application/use-cases/users/find-user-by-email.use-case';
 import { UpdateUserUseCase } from '../../application/use-cases/users/update-user.use-case';
 import { RequestEmailChangeUseCase } from '../../application/use-cases/users/request-email-change.use-case';
+import {
+    PASSWORD_TOO_WEAK_CODE,
+    passwordMeetsPolicy,
+} from '../../lib/password-policy';
 
 interface AuthedRequest {
     user: { sub: string };
@@ -40,8 +44,6 @@ interface ChangePasswordBody {
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MIN_PASSWORD_LENGTH = 8;
-
 @Controller('profile')
 @UseGuards(JwtAuthGuard)
 export class ProfileController {
@@ -140,10 +142,8 @@ export class ProfileController {
         const next = body.newPassword ?? '';
         if (!current)
             throw new BadRequestException('Mot de passe actuel requis.');
-        if (next.length < MIN_PASSWORD_LENGTH)
-            throw new BadRequestException(
-                `Le nouveau mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères.`,
-            );
+        if (!passwordMeetsPolicy(next))
+            throw new BadRequestException(PASSWORD_TOO_WEAK_CODE);
 
         const ok = await bcrypt.compare(current, user.passwordHash);
         if (!ok) throw new UnauthorizedException('Mot de passe actuel incorrect.');

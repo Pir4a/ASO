@@ -24,7 +24,7 @@
 - Catégories : imagerie, bloc opératoire, soins & monitoring.
 - Produits : 3 références (SKU ALT-CT-500, ALT-MON-200, ALT-BLOC-900).
 - Contenu : bloc texte homepage.
-- Utilisateur admin : `admin@althea.local` / `admin123` (hashé, rôle admin).
+- Utilisateur admin : `admin@althea.local` / `AltheaDemo2026!` (hashé, rôle admin).
 
 ## Endpoints principaux
 - `GET /api/health` : ping

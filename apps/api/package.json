@@ -19,6 +19,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "ts-node src/db/seed.ts",
+    "sync-initial-user-passwords": "ts-node src/db/sync-initial-user-passwords.ts",
     "db:migrate": "ts-node ./node_modules/typeorm/cli.js migration:run -d src/db/data-source.ts",
     "db:revert": "ts-node ./node_modules/typeorm/cli.js migration:revert -d src/db/data-source.ts"
   },

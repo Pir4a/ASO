@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { API_URL } from "@/lib/api";
+import { isPasswordTooWeakApiMessage, firstHttpErrorMessage } from "@/lib/password-api-error";
+import { passwordMeetsPolicy, getPasswordMissingSummary } from "@/lib/password-policy";
+import { PasswordRequirementHints } from "@/components/account/PasswordRequirementHints";
 import { useT } from "@/context/LocaleContext";
 
 export default function SignupPage() {
@@ -21,8 +24,8 @@ export default function SignupPage() {
     setError(null);
     setLoading(true);
 
-    if (password.length < 8) {
-      setError(t("signup.errPasswordTooShort"));
+    if (!passwordMeetsPolicy(password)) {
+      setError(getPasswordMissingSummary(password, t) || t("auth.password.tooWeak"));
       setLoading(false);
       return;
     }
@@ -36,15 +39,20 @@ export default function SignupPage() {
         body: JSON.stringify({ email, password, firstName, lastName }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as { message?: unknown };
 
       if (!response.ok) {
-        throw new Error(data.message || t("signup.errGeneric"));
+        if (isPasswordTooWeakApiMessage(data.message)) {
+          setError(getPasswordMissingSummary(password, t) || t("auth.password.tooWeak"));
+          return;
+        }
+        setError(firstHttpErrorMessage(data.message) ?? t("auth.signup.errorRegisterGeneric"));
+        return;
       }
 
-      router.push(`/login?message=${encodeURIComponent(t("signup.successMessage"))}`);
+      router.push("/login?success=signup");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t("common.unexpectedError"));
+      setError(err instanceof Error ? err.message : t("auth.signup.errorUnknown"));
     } finally {
       setLoading(false);
     }
@@ -93,7 +101,7 @@ export default function SignupPage() {
             required
             minLength={8}
           />
-          <p className="text-xs text-foreground/60 mt-1">{t("signup.passwordHint")}</p>
+          <PasswordRequirementHints password={password} />
         </div>
         {error && (
           <p key={error} className="aso-anim-shake text-sm text-error">
