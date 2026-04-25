@@ -5,10 +5,13 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { API_URL } from "@/lib/api";
 
+type VerifyErrorKind = "expired" | "invalid" | "generic";
+
 function VerifyContent() {
     const searchParams = useSearchParams();
     const token = searchParams.get("token");
     const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+    const [errorKind, setErrorKind] = useState<VerifyErrorKind>("generic");
     const router = useRouter();
 
     useEffect(() => {
@@ -20,11 +23,26 @@ function VerifyContent() {
         const verify = async () => {
             try {
                 const res = await fetch(`${API_URL}/auth/verify?token=${token}`);
-                if (!res.ok) throw new Error("Verification failed");
+                if (!res.ok) {
+                    const payload = (await res.json().catch(() => ({}))) as {
+                        message?: string | string[];
+                    };
+                    const message = Array.isArray(payload.message)
+                        ? payload.message[0]
+                        : payload.message;
+                    if (message === "VERIFY_EMAIL_TOKEN_EXPIRED") {
+                        setErrorKind("expired");
+                    } else if (message === "VERIFY_EMAIL_TOKEN_INVALID") {
+                        setErrorKind("invalid");
+                    } else {
+                        setErrorKind("generic");
+                    }
+                    throw new Error("Verification failed");
+                }
                 setStatus("success");
                 // Redirect to login after 3 seconds
                 setTimeout(() => router.push("/login?message=Compte vérifié ! Vous pouvez vous connecter."), 3000);
-            } catch (e) {
+            } catch {
                 setStatus("error");
             }
         };
@@ -66,9 +84,15 @@ function VerifyContent() {
                 </svg>
             </div>
             <h2 className="text-xl font-semibold text-error">Erreur de vérification</h2>
-            <p className="text-foreground/70">Le lien est invalide ou a expiré.</p>
+            <p className="text-foreground/70">
+                {errorKind === "expired"
+                    ? "Ce lien de vérification a expiré. Recréez un compte pour recevoir un nouveau lien."
+                    : errorKind === "invalid"
+                      ? "Ce lien de vérification est invalide."
+                      : "Le lien est invalide ou a expiré."}
+            </p>
             <Link href="/signup" className="inline-block text-primary hover:underline">
-                Retour à l'inscription
+                Retour à l&apos;inscription
             </Link>
         </div>
     );
