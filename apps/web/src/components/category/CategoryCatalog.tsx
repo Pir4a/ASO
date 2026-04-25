@@ -201,16 +201,7 @@ export function CategoryCatalog({
       <div className="min-w-0">
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-foreground/10 bg-white px-4 py-3.5 sm:px-5">
-          <p className="text-[13.5px] font-semibold text-foreground">
-            <span className="font-heading">{sortedProducts.length}</span>{" "}
-            <span className="font-normal text-foreground/55">
-              produit{sortedProducts.length > 1 ? "s" : ""}
-              {query.trim() ? ` correspondant à "${query.trim()}"` : ""}
-            </span>
-          </p>
-          <div className="flex-1" />
-
-          {/* Search */}
+          {/* Search (left) */}
           <label className="flex min-w-[180px] flex-1 items-center gap-2 rounded-lg border border-foreground/10 bg-background/60 px-3 py-1.5 text-[13px] text-foreground/55 sm:max-w-[280px]">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5 flex-none text-primary">
               <circle cx="7" cy="7" r="4.5" />
@@ -224,6 +215,17 @@ export function CategoryCatalog({
               className="min-w-0 flex-1 bg-transparent text-foreground placeholder:text-foreground/55 focus:outline-none"
             />
           </label>
+
+          {/* Product count (right of search) */}
+          <p className="text-[13.5px] font-semibold text-foreground">
+            <span className="font-heading">{sortedProducts.length}</span>{" "}
+            <span className="font-normal text-foreground/55">
+              produit{sortedProducts.length > 1 ? "s" : ""}
+              {query.trim() ? ` correspondant à "${query.trim()}"` : ""}
+            </span>
+          </p>
+
+          <div className="flex-1" />
 
           {/* Sort */}
           <label className="flex items-center gap-2 rounded-lg border border-foreground/10 bg-background/60 px-3 py-1.5 text-[13px] font-medium text-foreground transition hover:border-primary-hover">

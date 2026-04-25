@@ -308,7 +308,7 @@ export function Header({ locale }: HeaderProps) {
 
         {/* ── Bottom nav row ── */}
         <div className="hidden border-t border-foreground/5 md:block">
-          <div className="mx-auto flex max-w-[1300px] items-center gap-1 px-4 sm:px-6 lg:px-7 2xl:max-w-[1600px]">
+          <div className="mx-auto flex max-w-[1300px] items-center gap-3 px-4 sm:px-6 lg:px-7 2xl:max-w-[1600px]">
             <NavTab href="/" active={isActive("/")}>
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-3.5 w-3.5">
                 <path d="M2.5 7.5 8 3l5.5 4.5V13a1 1 0 0 1-1 1H10v-4H6v4H3.5a1 1 0 0 1-1-1V7.5Z" />
@@ -316,17 +316,34 @@ export function Header({ locale }: HeaderProps) {
               Accueil
             </NavTab>
 
-            <nav aria-label={t("header.primaryNav")} className="flex items-center">
-              <NavTab href="/products" active={isActive("/products")}>
-                {t("header.products")}
-              </NavTab>
+            <nav aria-label={t("header.primaryNav")} className="flex items-center gap-1.5">
               <NavTab href="/categories" active={isActive("/categories")}>
                 {t("header.categories")}
+              </NavTab>
+              <NavTab href="/products" active={isActive("/products")}>
+                {t("header.products")}
               </NavTab>
               <NavTab href="/contact" active={isActive("/contact")}>
                 {t("header.contact")}
               </NavTab>
             </nav>
+
+            <Link
+              href="/profile"
+              aria-current={isActive("/profile") ? "page" : undefined}
+              style={isActive("/profile") ? { color: "#fff" } : undefined}
+              className={`ml-auto inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold transition ${
+                isActive("/profile")
+                  ? "bg-foreground hover:bg-[#00253a]"
+                  : "bg-background text-foreground hover:bg-primary/15 hover:text-primary"
+              }`}
+            >
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-3.5 w-3.5">
+                <circle cx="8" cy="6" r="2.8" />
+                <path d="M2.5 14c0-2.8 2.5-5 5.5-5s5.5 2.2 5.5 5" />
+              </svg>
+              Mon profil
+            </Link>
           </div>
         </div>
       </header>
@@ -362,7 +379,7 @@ function NavTab({
   return (
     <Link
       href={href}
-      className="relative my-1.5 inline-flex items-center gap-2 rounded-md px-3.5 py-1.5 text-[13.5px] font-medium text-foreground transition hover:bg-background hover:text-primary"
+      className="relative top-px inline-flex items-center gap-2 self-stretch rounded-t-lg px-4 py-3 text-[13.5px] font-medium text-foreground transition hover:bg-background hover:text-primary"
     >
       {children}
     </Link>
