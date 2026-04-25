@@ -60,12 +60,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const guestCartId = localStorage.getItem("guestCartId");
     if (guestCartId) {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+      const m = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+      const csrfToken = m ? decodeURIComponent(m[1]) : "";
       try {
         await fetch(`${API_URL}/cart/merge`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${newToken}`,
+            ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
           },
           body: JSON.stringify({ guestCartId }),
         });

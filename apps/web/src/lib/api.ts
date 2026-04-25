@@ -324,6 +324,9 @@ function cartAuthHeaders(guestCartId?: string): Record<string, string> {
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("token");
     if (token) headers["Authorization"] = `Bearer ${token}`;
+    const m = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+    const csrf = m ? decodeURIComponent(m[1]) : "";
+    if (csrf) headers["x-csrf-token"] = csrf;
   }
   if (guestCartId) headers["x-guest-cart-id"] = guestCartId;
   return headers;

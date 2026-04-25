@@ -81,11 +81,14 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
         .filter(Boolean);
 
       const token = localStorage.getItem("token");
+      const m = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+      const csrfToken = m ? decodeURIComponent(m[1]) : "";
       const response = await fetch(`${API_URL}/products`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
         },
         body: JSON.stringify({
           name,

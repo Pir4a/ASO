@@ -53,6 +53,20 @@ export function handleUnauthorized(redirect = true) {
   window.location.href = `/login?message=${encodeURIComponent("Session expirée, veuillez vous reconnecter.")}&redirect=${next}`;
 }
 
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const all = document.cookie ? document.cookie.split(";") : [];
+  for (const item of all) {
+    const [k, ...v] = item.trim().split("=");
+    if (k === name) return decodeURIComponent(v.join("="));
+  }
+  return null;
+}
+
+function isSafeMethod(method: string): boolean {
+  return method === "GET" || method === "HEAD" || method === "OPTIONS";
+}
+
 /**
  * Authenticated fetch: attaches Bearer token from localStorage and
  * triggers an automatic logout-and-redirect on 401 responses.
@@ -63,6 +77,11 @@ export async function authFetch(input: string, init: RequestInit = {}): Promise<
   const headers = new Headers(init.headers ?? {});
   if (token) headers.set("Authorization", `Bearer ${token}`);
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  const method = (init.method ?? "GET").toUpperCase();
+  if (!isSafeMethod(method)) {
+    const csrfToken = getCookie("XSRF-TOKEN");
+    if (csrfToken) headers.set("x-csrf-token", csrfToken);
+  }
 
   const url = input.startsWith("http") ? input : `${API_URL}${input.startsWith("/") ? "" : "/"}${input}`;
 

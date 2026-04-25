@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LocalizeInterceptor } from './infrastructure/interceptors/localize.interceptor';
@@ -17,12 +18,19 @@ import { PaymentModule } from './infrastructure/ioc/payment.module';
 import { ContactModule } from './infrastructure/ioc/contact.module';
 import { ChatModule } from './infrastructure/ioc/chat.module';
 import { AppDataSource } from './db/data-source';
+import { CsrfGuard } from './infrastructure/guards/csrf.guard';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: 100,
+      },
+    ]),
     TypeOrmModule.forRoot(AppDataSource.options),
     UsersModule,
     AuthModule,
@@ -39,6 +47,8 @@ import { AppDataSource } from './db/data-source';
   controllers: [AppController],
   providers: [
     AppService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: CsrfGuard },
     { provide: APP_INTERCEPTOR, useClass: LocalizeInterceptor },
   ],
 })
