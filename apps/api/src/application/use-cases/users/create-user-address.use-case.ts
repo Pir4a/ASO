@@ -11,15 +11,32 @@ export class CreateUserAddressUseCase {
         private readonly addressRepository: AddressRepository,
     ) { }
 
-    async execute(userId: string, data: { street: string; city: string; postalCode: string; country: string; phone?: string }): Promise<Address> {
+    async execute(
+        userId: string,
+        data: {
+            firstName?: string;
+            lastName?: string;
+            street: string;
+            address2?: string;
+            city: string;
+            region?: string;
+            postalCode: string;
+            country: string;
+            phone?: string;
+        },
+    ): Promise<Address> {
         const address = new Address({
             id: uuidv4(),
             userId,
+            firstName: data.firstName,
+            lastName: data.lastName,
             street: data.street,
+            address2: data.address2,
             city: data.city,
+            region: data.region,
             postalCode: data.postalCode,
             country: data.country,
-            phone: data.phone
+            phone: data.phone,
         });
         return this.addressRepository.create(address);
     }
