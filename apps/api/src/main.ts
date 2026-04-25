@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { randomBytes } from 'crypto';
+import { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -13,7 +15,8 @@ async function bootstrap() {
     origin: ['http://localhost:3000'],
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Accept, Authorization, x-guest-cart-id',
+    allowedHeaders:
+      'Content-Type, Accept, Authorization, x-guest-cart-id, x-csrf-token',
   });
 
   // Helmet has to come before Swagger so the docs page can load its inline
@@ -24,6 +27,18 @@ async function bootstrap() {
         process.env.NODE_ENV === 'production' ? undefined : false,
     }),
   );
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const raw = req.headers.cookie ?? '';
+    if (!raw.includes('XSRF-TOKEN=')) {
+      const token = randomBytes(24).toString('hex');
+      const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+      res.append(
+        'Set-Cookie',
+        `XSRF-TOKEN=${token}; Path=/; SameSite=Lax${secure}`,
+      );
+    }
+    next();
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
