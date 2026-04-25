@@ -23,6 +23,7 @@ export class Product {
     listPriority: number;
     galleryUrls?: string[];
     specs?: Record<string, string>;
+    translations?: Record<string, { name?: string; description?: string }>;
     categoryId: string;
     category?: Category;
 

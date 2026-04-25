@@ -6,6 +6,7 @@ export class Category {
     imageUrl?: string;
     order: number;
     isActive: boolean;
+    translations?: Record<string, { name?: string; description?: string }>;
 
     constructor(partial: Partial<Category>) {
         Object.assign(this, partial);
