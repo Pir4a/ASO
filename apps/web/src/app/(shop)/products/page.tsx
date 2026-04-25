@@ -5,7 +5,14 @@ import { getTranslations } from "@/lib/translations";
 import { CategoryHero } from "@/components/category/CategoryHero";
 import { CategoryCatalog } from "@/components/category/CategoryCatalog";
 
-export default async function ProductsListPage() {
+export default async function ProductsListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q: rawQ } = await searchParams;
+  const initialQuery = (rawQ ?? "").trim();
+
   const [categories, allProducts, page] = await Promise.all([
     getCategories(),
     getProducts(),
@@ -52,6 +59,7 @@ export default async function ProductsListPage() {
         productCounts={productCounts}
         allHref="/products"
         allCount={page.meta.total}
+        initialQuery={initialQuery}
       />
     </div>
   );

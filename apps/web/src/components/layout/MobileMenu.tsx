@@ -121,7 +121,6 @@ export function MobileMenu({ open, onClose, locale }: MobileMenuProps) {
           {[
             { href: "/categories", key: "header.categories" as const },
             { href: "/products", key: "header.products" as const },
-            { href: "/search", key: "header.search" as const },
             { href: "/contact", key: "header.contact" as const },
           ].map((item) => (
             <Link

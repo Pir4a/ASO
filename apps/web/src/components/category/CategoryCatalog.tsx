@@ -69,6 +69,7 @@ export function CategoryCatalog({
   productCounts,
   allHref,
   allCount,
+  initialQuery = "",
 }: {
   categories: Category[];
   /** Slug of the active category, or `null`/`undefined` when showing all products. */
@@ -79,10 +80,12 @@ export function CategoryCatalog({
   allHref?: string;
   /** Total when `allHref` is provided. Defaults to sum of productCounts. */
   allCount?: number;
+  /** Pre-fills the toolbar search input (e.g. from `?q=` URL param). */
+  initialQuery?: string;
 }) {
   const [view, setView] = useState<ViewMode>("grid");
   const [sortKey, setSortKey] = useState<SortKey>("priority");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
 
   const sortedProducts = useMemo(() => {
     const q = query.trim().toLowerCase();

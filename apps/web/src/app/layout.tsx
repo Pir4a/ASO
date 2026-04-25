@@ -54,7 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <main
                   id="main"
                   tabIndex={-1}
-                  className="mx-auto min-h-screen w-full max-w-[1240px] px-4 py-6 focus:outline-none sm:px-6 lg:px-8"
+                  className="mx-auto min-h-screen w-full max-w-[1440px] px-3 py-6 focus:outline-none sm:px-5 lg:px-6 2xl:max-w-[1600px]"
                 >
                   {children}
                 </main>
