@@ -66,7 +66,7 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const { email, password } = loginDto;
+    const { email, password, rememberMe } = loginDto;
     const user = await this.findUserByEmailUseCase.execute(email);
 
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
@@ -84,8 +84,13 @@ export class AuthService {
     await this.updateUserUseCase.execute(user);
 
     const payload = { sub: user.id, email: user.email, role: user.role };
+    // "Se souvenir de moi" → 7-day token; otherwise the default JWT TTL applies.
+    const access_token = rememberMe
+      ? this.jwtService.sign(payload, { expiresIn: '7d' })
+      : this.jwtService.sign(payload);
+
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token,
       user: { id: user.id, email: user.email, role: user.role },
     };
   }

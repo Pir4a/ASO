@@ -433,6 +433,12 @@ async function seed() {
       payload: {
         headline: 'Premium Medical Equipment, Delivered with Excellence',
         body: 'Your trusted partner for high-quality medical devices and equipment. ISO 13485 certified. Fast delivery across Europe.',
+        translations: {
+          fr: {
+            headline: 'Équipement médical professionnel, livré avec excellence',
+            body: "Votre partenaire de confiance pour les dispositifs et équipements médicaux haut de gamme. Certifié ISO 13485. Livraison rapide partout en Europe.",
+          },
+        },
       },
       order: 1,
     },
@@ -446,6 +452,14 @@ async function seed() {
         href: '/products/digital-x-ray-system-100',
         ctaLabel: 'Discover',
         order: 1,
+        translations: {
+          fr: {
+            title: 'Nouveau · Système de radiographie numérique 100',
+            subtitle:
+              'Radiographie numérique au plafond avec prévisualisation immédiate',
+            ctaLabel: 'Découvrir',
+          },
+        },
       },
       order: 1,
     },
@@ -458,6 +472,13 @@ async function seed() {
         href: '/products/operating-station-900',
         ctaLabel: 'See product',
         order: 2,
+        translations: {
+          fr: {
+            title: 'Station opératoire 900',
+            subtitle: 'Bloc opératoire connecté avec traçabilité en temps réel',
+            ctaLabel: 'Voir le produit',
+          },
+        },
       },
       order: 2,
     },
@@ -470,6 +491,13 @@ async function seed() {
         href: '/contact',
         ctaLabel: 'Contact us',
         order: 3,
+        translations: {
+          fr: {
+            title: 'Support expert & maintenance',
+            subtitle: 'Conseillers dédiés et assistance technique 24/7',
+            ctaLabel: 'Nous contacter',
+          },
+        },
       },
       order: 3,
     },

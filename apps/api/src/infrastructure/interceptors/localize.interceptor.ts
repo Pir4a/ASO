@@ -10,10 +10,24 @@ import { map } from 'rxjs/operators';
 const KNOWN_LOCALES = new Set(['en', 'fr', 'ar', 'he']);
 const DEFAULT_BASE_LOCALE = 'en';
 
+/** Fields we'll override when a matching translation exists. */
+const LOCALIZABLE_KEYS = [
+  'name',
+  'description',
+  'title',
+  'subtitle',
+  'body',
+  'headline',
+  'ctaLabel',
+] as const;
+
 /**
- * Walks the response shape and overrides `name` / `description` on any object
- * that carries a `translations[lang]` block. Locale comes from the `?lang=`
- * query param. Default base locale is English (existing seed text).
+ * Walks the response shape and, on any object that carries a
+ * `translations[lang]` block, overrides the known localizable string fields:
+ * - products / categories: `name`, `description`
+ * - carousel slides:       `title`, `subtitle`, `ctaLabel`
+ * - homepage_text:         `headline`, `body`
+ * Locale comes from the `?lang=` query param. Default base locale is English.
  */
 function localize(value: unknown, lang: string): unknown {
   if (value === null || value === undefined) return value;
@@ -25,19 +39,16 @@ function localize(value: unknown, lang: string): unknown {
   const out: Record<string, unknown> = { ...obj };
 
   const tField = obj.translations as
-    | Record<string, { name?: string; description?: string }>
+    | Record<string, Record<string, unknown>>
     | undefined;
   if (tField && typeof tField === 'object') {
     const localized = tField[lang];
     if (localized && typeof localized === 'object') {
-      if (typeof localized.name === 'string' && localized.name.trim()) {
-        out.name = localized.name;
-      }
-      if (
-        typeof localized.description === 'string' &&
-        localized.description.trim()
-      ) {
-        out.description = localized.description;
+      for (const key of LOCALIZABLE_KEYS) {
+        const v = localized[key];
+        if (typeof v === 'string' && v.trim()) {
+          out[key] = v;
+        }
       }
     }
   }
