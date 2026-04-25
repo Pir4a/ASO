@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { API_URL } from "@/lib/api";
 
@@ -12,10 +12,26 @@ interface Category {
 
 interface ProductFormProps {
   categories: Category[];
-  onCreated?: () => void;
+  product?: {
+    id?: string;
+    name?: string;
+    slug?: string;
+    description?: string;
+    price?: number;
+    stock?: number;
+    categoryId?: string;
+    vatRate?: number;
+    thumbnailUrl?: string;
+    listPriority?: number;
+    galleryUrls?: string[];
+    specs?: Record<string, string>;
+    featured?: boolean;
+  } | null;
+  onSaved?: () => void;
 }
 
-export function ProductForm({ categories, onCreated }: ProductFormProps) {
+export function ProductForm({ categories, product, onSaved }: ProductFormProps) {
+  const isEdit = !!product?.id;
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [useCustomSlug, setUseCustomSlug] = useState(false);
@@ -43,6 +59,44 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
       .replace(/-+/g, "-");
 
   const normalizeSlugInput = (value: string) => generateSlug(value).slice(0, 255);
+
+  useEffect(() => {
+    setName(product?.name ?? "");
+    setSlug(product?.slug ?? "");
+    setUseCustomSlug(!!product?.slug);
+    setDescription(product?.description ?? "");
+    setPrice(
+      typeof product?.price === "number" && Number.isFinite(product.price)
+        ? String(product.price)
+        : "",
+    );
+    setStock(
+      typeof product?.stock === "number" && Number.isFinite(product.stock)
+        ? String(product.stock)
+        : "",
+    );
+    setCategoryId(product?.categoryId ?? "");
+    setVatRate(
+      typeof product?.vatRate === "number" && Number.isFinite(product.vatRate)
+        ? String(product.vatRate)
+        : "20",
+    );
+    setThumbnailUrl(product?.thumbnailUrl ?? "");
+    setListPriority(
+      typeof product?.listPriority === "number" && Number.isFinite(product.listPriority)
+        ? String(product.listPriority)
+        : "",
+    );
+    setGalleryUrlsText(Array.isArray(product?.galleryUrls) ? product.galleryUrls.join("\n") : "");
+    setSpecsJson(
+      product?.specs && typeof product.specs === "object"
+        ? JSON.stringify(product.specs, null, 2)
+        : "",
+    );
+    setFeatured(!!product?.featured);
+    setError(null);
+    setSuccess(null);
+  }, [product]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const next = e.target.value;
@@ -83,8 +137,8 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
       const token = localStorage.getItem("token");
       const m = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
       const csrfToken = m ? decodeURIComponent(m[1]) : "";
-      const response = await fetch(`${API_URL}/products`, {
-        method: "POST",
+      const response = await fetch(isEdit ? `${API_URL}/products/${product.id}` : `${API_URL}/products`, {
+        method: isEdit ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -108,23 +162,28 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Erreur lors de l'ajout du produit.");
+      if (!response.ok) {
+        const message = Array.isArray(data?.message) ? data.message[0] : data?.message;
+        throw new Error(message || (isEdit ? "Erreur lors de la mise à jour du produit." : "Erreur lors de l'ajout du produit."));
+      }
 
-      setSuccess("Produit ajouté avec succès !");
-      setName("");
-      setSlug("");
-      setDescription("");
-      setPrice("");
-      setStock("");
-      setCategoryId("");
-      setVatRate("20");
-      setThumbnailUrl("");
-      setListPriority("");
-      setGalleryUrlsText("");
-      setSpecsJson("");
-      setFeatured(false);
-      setUseCustomSlug(false);
-      onCreated?.();
+      setSuccess(isEdit ? "Produit mis à jour avec succès !" : "Produit ajouté avec succès !");
+      if (!isEdit) {
+        setName("");
+        setSlug("");
+        setDescription("");
+        setPrice("");
+        setStock("");
+        setCategoryId("");
+        setVatRate("20");
+        setThumbnailUrl("");
+        setListPriority("");
+        setGalleryUrlsText("");
+        setSpecsJson("");
+        setFeatured(false);
+        setUseCustomSlug(false);
+      }
+      onSaved?.();
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Une erreur inattendue est survenue.");
@@ -301,7 +360,7 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
           disabled={loading}
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover disabled:opacity-50"
         >
-          {loading ? "Ajout…" : "Ajouter le produit"}
+          {loading ? (isEdit ? "Mise à jour…" : "Ajout…") : isEdit ? "Enregistrer les modifications" : "Ajouter le produit"}
         </button>
       </div>
     </form>

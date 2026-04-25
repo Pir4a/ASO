@@ -33,6 +33,8 @@ type Category = {
 type Product = {
   id: string;
   name?: string;
+  slug?: string;
+  description?: string;
   sku?: string;
   price?: number;
   stock?: number;
@@ -43,6 +45,9 @@ type Product = {
   category?: { id: string; name: string };
   categoryId?: string;
   vatRate?: number;
+  listPriority?: number;
+  galleryUrls?: string[];
+  specs?: Record<string, string>;
 };
 
 type AdminUser = {
@@ -159,6 +164,7 @@ function BackofficeDashboard() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [newCategory, setNewCategory] = useState({ name: "", slug: "", description: "", imageUrl: "" });
   const [showProductForm, setShowProductForm] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
   const flash = (kind: "success" | "error", text: string) => {
     setFeedback({ kind, text });
@@ -436,6 +442,10 @@ function BackofficeDashboard() {
   const lowStockCount = products.filter((p) => (p.stock ?? 0) > 0 && (p.stock ?? 0) < 5).length;
   const outOfStockCount = products.filter((p) => (p.stock ?? 0) === 0).length;
   const activeCategories = categories.filter((c) => c.isActive).length;
+  const editingProduct = useMemo(
+    () => products.find((p) => p.id === editingProductId) ?? null,
+    [products, editingProductId],
+  );
 
   const filteredProducts = products.filter(
     (p) =>
@@ -570,7 +580,7 @@ function BackofficeDashboard() {
   const productStatusBadge = (p: Product) => {
     const stock = p.stock ?? 0;
     if (stock === 0) return <span className="bo-badge danger">Rupture</span>;
-    if (stock < 5) return <span className="bo-badge warn">Faible</span>;
+    if (stock < 5) return <span className="bo-badge warn">Stock faible</span>;
     if (p.status === "new") return <span className="bo-badge brand">Nouveau</span>;
     return <span className="bo-badge ok">En stock</span>;
   };
@@ -1167,20 +1177,33 @@ function BackofficeDashboard() {
 
               {showProductForm && (
                 <Panel
-                  title="Ajouter un produit"
-                  subtitle="Nouveau matériel médical"
+                  title={editingProduct ? "Modifier un produit" : "Ajouter un produit"}
+                  subtitle={
+                    editingProduct
+                      ? "Mettre à jour les informations du produit"
+                      : "Nouveau matériel médical"
+                  }
                   actions={
-                    <button className="bo-btn" type="button" onClick={() => setShowProductForm(false)}>
+                    <button
+                      className="bo-btn"
+                      type="button"
+                      onClick={() => {
+                        setShowProductForm(false);
+                        setEditingProductId(null);
+                      }}
+                    >
                       <Icon.X /> Fermer
                     </button>
                   }
                 >
                   <ProductForm
                     categories={categories}
-                    onCreated={() => {
+                    product={editingProduct}
+                    onSaved={() => {
                       void loadProducts();
                       setShowProductForm(false);
-                      flash("success", "Produit ajouté.");
+                      setEditingProductId(null);
+                      flash("success", editingProduct ? "Produit modifié." : "Produit ajouté.");
                     }}
                   />
                 </Panel>
@@ -1198,7 +1221,14 @@ function BackofficeDashboard() {
                       className="bo-input compact"
                       style={{ width: 200 }}
                     />
-                    <button className="bo-btn primary" type="button" onClick={() => setShowProductForm((v) => !v)}>
+                    <button
+                      className="bo-btn primary"
+                      type="button"
+                      onClick={() => {
+                        setEditingProductId(null);
+                        setShowProductForm((v) => !v);
+                      }}
+                    >
                       <Icon.Plus /> Ajouter
                     </button>
                   </>
@@ -1289,6 +1319,16 @@ function BackofficeDashboard() {
                               </label>
                             </td>
                             <td className="num">
+                              <IconButton
+                                tone="primary"
+                                onClick={() => {
+                                  setEditingProductId(p.id);
+                                  setShowProductForm(true);
+                                }}
+                                title="Modifier"
+                              >
+                                <Icon.Edit />
+                              </IconButton>
                               <IconButton tone="rose" onClick={() => deleteProduct(p.id)} title="Supprimer">
                                 <Icon.Trash />
                               </IconButton>
