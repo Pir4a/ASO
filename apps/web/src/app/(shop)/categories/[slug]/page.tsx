@@ -6,10 +6,14 @@ import { CategoryCatalog } from "@/components/category/CategoryCatalog";
 
 export default async function CategoryDetail({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ q?: string }>;
 }) {
   const { slug } = await params;
+  const { q: rawQ } = await searchParams;
+  const initialQuery = (rawQ ?? "").trim();
 
   const [categories, allProducts, page] = await Promise.all([
     getCategories(),
@@ -61,6 +65,7 @@ export default async function CategoryDetail({
         activeSlug={slug}
         products={products}
         productCounts={productCounts}
+        initialQuery={initialQuery}
       />
     </div>
   );
