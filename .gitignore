@@ -9,3 +9,6 @@ coverage
 .env.development
 .env.production
 
+# SQLite local éventuel (dev)
+apps/api/database.sqlite
+

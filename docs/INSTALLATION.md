@@ -107,7 +107,7 @@ npm run dev --workspace web            # Web : http://localhost:3000
 ```
 
 ### 2.6. Comptes de démo (après `seed`)
-- **Admin** : `admin@althea.local` / `admin123` (rôle `admin`, accès backoffice).
+- **Admin** : `admin@althea.local` / `AltheaDemo2026!` (rôle `admin`, accès backoffice ; mêmes identifiants seed pour les autres comptes démo).
 - **Stripe test cards** : voir `CARDNUMBERTESTSTRIPE.md` à la racine.
 
 ---

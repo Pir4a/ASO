@@ -35,11 +35,13 @@ Ping. Public.
 ### `POST /api/auth/register`
 Crée un compte client.
 
+**Politique mot de passe** : 12 caractères minimum, une majuscule, un chiffre et un symbole (ex. `! ? @ # *`). Plafond technique 128 caractères côté serveur.
+
 **Body** (`RegisterDto`)
 ```json
 {
   "email": "user@example.com",
-  "password": "Password123!",
+  "password": "AltheaDemo2026!",
   "firstName": "Alice",
   "lastName": "Martin"
 }
@@ -51,7 +53,7 @@ Authentifie un utilisateur.
 
 **Body** (`LoginDto`)
 ```json
-{ "email": "admin@althea.local", "password": "admin123" }
+{ "email": "admin@althea.local", "password": "AltheaDemo2026!" }
 ```
 **Réponse 200**
 ```json
@@ -91,7 +93,7 @@ Met à jour `firstName`, `lastName`, `email`. Validation : email unique, formats
 ```json
 { "currentPassword": "...", "newPassword": "..." }
 ```
-Renvoie `{ "success": true }`. `newPassword` ≥ 8 caractères.
+Renvoie `{ "success": true }`. `newPassword` doit respecter la même politique de force que à l'inscription.
 
 ### Adresses
 - `GET /api/profile/addresses` — liste des adresses de l'utilisateur.

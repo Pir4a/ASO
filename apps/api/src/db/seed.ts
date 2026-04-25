@@ -3,10 +3,8 @@ import { AppDataSource } from './data-source';
 import { Category } from '../infrastructure/persistence/typeorm/entities/category.entity';
 import { Product } from '../infrastructure/persistence/typeorm/entities/product.entity';
 import { ContentBlock } from '../infrastructure/persistence/typeorm/entities/content-block.entity';
-import {
-  User,
-  UserRole,
-} from '../infrastructure/persistence/typeorm/entities/user.entity';
+import { User } from '../infrastructure/persistence/typeorm/entities/user.entity';
+import { getInitialSeedUsers } from './seed-initial-users';
 import { Promotion } from '../infrastructure/persistence/typeorm/entities/promotion.entity';
 
 /**
@@ -536,57 +534,32 @@ async function seed() {
   console.log(`✓ ${promotions.length} promotions created`);
 
   /* ── Users ───────────────────────────────────────────────── */
-  type SeedUser = {
-    email: string;
-    password: string;
-    role: UserRole;
-    firstName: string;
-    lastName: string;
-  };
-
-  const userSeed: SeedUser[] = [
-    {
-      email: 'admin@althea.local',
-      password: 'admin123',
-      role: 'admin',
-      firstName: 'Admin',
-      lastName: 'Althea',
-    },
-    {
-      email: 'demo@althea.local',
-      password: 'customer123',
-      role: 'customer',
-      firstName: 'Marie',
-      lastName: 'Dupont',
-    },
-    {
-      email: 'admin@admin.com',
-      password: 'admin123',
-      role: 'admin',
-      firstName: 'Admin',
-      lastName: 'Backoffice',
-    },
-    {
-      email: 'user@user.com',
-      password: 'user123',
-      role: 'customer',
-      firstName: 'Jane',
-      lastName: 'Doe',
-    },
-  ];
+  const userSeed = getInitialSeedUsers();
 
   for (const u of userSeed) {
     const passwordHash = await bcrypt.hash(u.password, 10);
-    await userRepo.save({
-      email: u.email,
-      passwordHash,
-      role: u.role,
-      firstName: u.firstName,
-      lastName: u.lastName,
-      isVerified: true,
-      isActive: true,
-    });
-    console.log(`✓ User created: ${u.email} (${u.role})`);
+    const existing = await userRepo.findOne({ where: { email: u.email } });
+    if (existing) {
+      existing.passwordHash = passwordHash;
+      existing.role = u.role;
+      existing.firstName = u.firstName;
+      existing.lastName = u.lastName;
+      existing.isVerified = true;
+      existing.isActive = true;
+      await userRepo.save(existing);
+      console.log(`✓ User updated: ${u.email} (${u.role})`);
+    } else {
+      await userRepo.save({
+        email: u.email,
+        passwordHash,
+        role: u.role,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        isVerified: true,
+        isActive: true,
+      });
+      console.log(`✓ User created: ${u.email} (${u.role})`);
+    }
   }
 
   console.log('\n🌱 Seed complete!');

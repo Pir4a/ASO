@@ -4,6 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { API_URL } from "@/lib/api";
+import { isPasswordTooWeakApiMessage, firstHttpErrorMessage } from "@/lib/password-api-error";
+import { passwordMeetsPolicy, getPasswordMissingSummary } from "@/lib/password-policy";
+import { PasswordRequirementHints } from "@/components/account/PasswordRequirementHints";
+import { useT } from "@/context/LocaleContext";
 
 export default function SignupPage() {
   const [firstName, setFirstName] = useState("");
@@ -13,14 +17,15 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const t = useT();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    if (password.length < 8) {
-      setError("Le mot de passe doit contenir au moins 8 caractères.");
+    if (!passwordMeetsPolicy(password)) {
+      setError(getPasswordMissingSummary(password, t) || t("auth.password.tooWeak"));
       setLoading(false);
       return;
     }
@@ -34,16 +39,20 @@ export default function SignupPage() {
         body: JSON.stringify({ email, password, firstName, lastName }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as { message?: unknown };
 
       if (!response.ok) {
-        throw new Error(data.message || "Erreur d'inscription");
+        if (isPasswordTooWeakApiMessage(data.message)) {
+          setError(getPasswordMissingSummary(password, t) || t("auth.password.tooWeak"));
+          return;
+        }
+        setError(firstHttpErrorMessage(data.message) ?? t("auth.signup.errorRegisterGeneric"));
+        return;
       }
 
-      // Rediriger vers la page de connexion avec un message de succès
-      router.push("/login?message=Compte créé ! Veuillez vérifier vos emails pour activer votre compte.");
-    } catch (err: any) {
-      setError(err.message || "Une erreur inattendue est survenue.");
+      router.push("/login?success=signup");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t("auth.signup.errorUnknown"));
     } finally {
       setLoading(false);
     }
@@ -52,16 +61,16 @@ export default function SignupPage() {
   return (
     <div className="mx-auto max-w-md space-y-4">
       <div className="card p-6 space-y-2">
-        <h1 className="text-2xl font-semibold text-foreground">Inscription</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{t("auth.signup.title")}</h1>
         <p className="text-sm text-foreground/70">
-          Créez votre compte en quelques secondes.
+          {t("auth.signup.subtitle")}
         </p>
       </div>
       <form onSubmit={handleSubmit} className="card space-y-3 p-6">
         <div className="grid grid-cols-2 gap-4">
           <input
             type="text"
-            placeholder="Prénom"
+            placeholder={t("auth.signup.firstNamePlaceholder")}
             className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
@@ -69,7 +78,7 @@ export default function SignupPage() {
           />
           <input
             type="text"
-            placeholder="Nom"
+            placeholder={t("auth.signup.lastNamePlaceholder")}
             className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
@@ -78,7 +87,7 @@ export default function SignupPage() {
         </div>
         <input
           type="email"
-          placeholder="Email"
+          placeholder={t("auth.signup.emailPlaceholder")}
           className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -87,16 +96,13 @@ export default function SignupPage() {
         <div>
           <input
             type="password"
-            placeholder="Mot de passe"
+            placeholder={t("auth.signup.passwordPlaceholder")}
             className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={8}
           />
-          <p className="text-xs text-foreground/60 mt-1">
-            Au moins 8 caractères.
-          </p>
+          <PasswordRequirementHints password={password} />
         </div>
         {error && <p className="text-sm text-error">{error}</p>}
         <button
@@ -104,10 +110,10 @@ export default function SignupPage() {
           className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover disabled:opacity-50"
           disabled={loading}
         >
-          {loading ? "Création en cours..." : "Créer le compte"}
+          {loading ? t("auth.signup.submitLoading") : t("auth.signup.submit")}
         </button>
         <Link href="/login" className="text-center text-sm text-primary">
-          Déjà inscrit ? Se connecter
+          {t("auth.signup.alreadyHaveAccount")}
         </Link>
       </form>
     </div>
