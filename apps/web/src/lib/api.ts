@@ -518,8 +518,12 @@ export interface OrderItemDTO {
 }
 
 export interface OrderAddressDTO {
+  firstName?: string;
+  lastName?: string;
   street?: string;
+  address2?: string;
   city?: string;
+  region?: string;
   postalCode?: string;
   country?: string;
   phone?: string;
@@ -527,6 +531,8 @@ export interface OrderAddressDTO {
 
 export interface OrderDTO {
   id: string;
+  /** Customer-facing identifier (e.g. ALT-20260425-AB12). */
+  orderNumber?: string;
   status: OrderStatus;
   total: number;
   currency: string;
@@ -534,6 +540,7 @@ export interface OrderDTO {
   shippingAddress?: OrderAddressDTO;
   billingAddress?: OrderAddressDTO;
   paymentMethod?: string;
+  paymentBrand?: string;
   paymentLast4?: string;
   paymentStatus?: string;
   statusHistory?: { status: OrderStatus; at: string }[];
