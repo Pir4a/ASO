@@ -156,6 +156,7 @@ function BackofficeDashboard() {
   const [feedback, setFeedback] = useState<{ kind: "success" | "error"; text: string } | null>(null);
 
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [newCategory, setNewCategory] = useState({ name: "", slug: "", description: "", imageUrl: "" });
   const [showProductForm, setShowProductForm] = useState(false);
 
@@ -445,6 +446,28 @@ function BackofficeDashboard() {
   const filteredCategories = [...categories]
     .filter((c) => c.name.toLowerCase().includes(categorySearch.toLowerCase()))
     .sort((a, b) => a.order - b.order);
+
+  const categoryProductCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const p of products) {
+      const cid = p.category?.id ?? p.categoryId;
+      if (!cid) continue;
+      map.set(cid, (map.get(cid) ?? 0) + 1);
+    }
+    return map;
+  }, [products]);
+
+  const selectedCategory = useMemo(
+    () => categories.find((c) => c.id === selectedCategoryId) ?? null,
+    [categories, selectedCategoryId],
+  );
+
+  const selectedCategoryProducts = useMemo(() => {
+    if (!selectedCategoryId) return [] as Product[];
+    return products
+      .filter((p) => (p.category?.id ?? p.categoryId) === selectedCategoryId)
+      .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+  }, [products, selectedCategoryId]);
 
   const recentMessages = [...contactMessages]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -1335,159 +1358,223 @@ function BackofficeDashboard() {
                 </div>
               </Panel>
 
-              <Panel
-                title="Gestion des catégories"
-                subtitle={`${filteredCategories.length} catégorie${filteredCategories.length > 1 ? "s" : ""} · ${activeCategories} active${activeCategories > 1 ? "s" : ""}`}
-                actions={
-                  <>
-                    <input
-                      value={categorySearch}
-                      onChange={(e) => setCategorySearch(e.target.value)}
-                      placeholder="Filtrer…"
-                      className="bo-input compact"
-                      style={{ width: 180 }}
-                    />
-                    {selectedCategoryIds.length > 0 && (
-                      <>
-                        <span className="bo-muted" style={{ fontSize: 11 }}>
-                          {selectedCategoryIds.length} sélectionnée{selectedCategoryIds.length > 1 ? "s" : ""}
-                        </span>
-                        <IconButton tone="emerald" onClick={() => bulkCategoryAction("activate")}>
-                          <Icon.Check /> Activer
-                        </IconButton>
-                        <IconButton onClick={() => bulkCategoryAction("deactivate")}>
-                          <Icon.X /> Désactiver
-                        </IconButton>
-                        <IconButton tone="rose" onClick={() => bulkCategoryAction("delete")}>
-                          <Icon.Trash /> Supprimer
-                        </IconButton>
-                      </>
-                    )}
-                  </>
-                }
-              >
-                {filteredCategories.length === 0 ? (
-                  <p className="bo-muted" style={{ padding: 24, textAlign: "center" }}>
-                    Aucune catégorie.
-                  </p>
-                ) : (
-                  <div style={{ overflowX: "auto" }}>
-                    <table className="bo-data">
-                      <thead>
-                        <tr>
-                          <th style={{ width: 32 }}></th>
-                          <th>Ordre</th>
-                          <th>Nom</th>
-                          <th>Slug</th>
-                          <th>Statut</th>
-                          <th className="num">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredCategories.map((cat) => (
-                          <tr key={cat.id}>
-                            <td>
-                              <input
-                                type="checkbox"
-                                checked={selectedCategoryIds.includes(cat.id)}
-                                onChange={(e) =>
-                                  setSelectedCategoryIds((prev) =>
-                                    e.target.checked ? [...prev, cat.id] : prev.filter((id) => id !== cat.id),
-                                  )
-                                }
-                              />
-                            </td>
-                            <td className="bo-mono muted" style={{ fontSize: 11 }}>
-                              #{cat.order}
-                            </td>
-                            <td>
-                              <div className="bo-hstack">
-                                {cat.imageUrl ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img
-                                    src={cat.imageUrl}
-                                    alt=""
-                                    style={{
-                                      width: 36,
-                                      height: 28,
-                                      borderRadius: 4,
-                                      objectFit: "cover",
-                                      border: "1px solid var(--bo-border)",
-                                    }}
-                                  />
-                                ) : (
-                                  <div
-                                    style={{
-                                      width: 36,
-                                      height: 28,
-                                      borderRadius: 4,
-                                      background: "var(--bo-panel-2)",
-                                      border: "1px solid var(--bo-border)",
-                                      display: "grid",
-                                      placeItems: "center",
-                                      fontSize: 10,
-                                      color: "var(--bo-text-dim)",
-                                    }}
-                                  >
-                                    —
-                                  </div>
-                                )}
-                                <span style={{ fontWeight: 500 }}>{cat.name}</span>
-                              </div>
-                            </td>
-                            <td className="bo-mono muted" style={{ fontSize: 11 }}>
-                              {cat.slug}
-                            </td>
-                            <td>
-                              {cat.isActive ? (
-                                <span className="bo-badge ok">Active</span>
-                              ) : (
-                                <span className="bo-badge neutral">Inactive</span>
-                              )}
-                            </td>
-                            <td className="num">
-                              <div
-                                style={{
-                                  display: "inline-flex",
-                                  gap: 4,
-                                  flexWrap: "wrap",
-                                  justifyContent: "flex-end",
-                                }}
-                              >
-                                <IconButton onClick={() => moveCategory(cat.id, "up")} title="Monter">
-                                  <Icon.ArrowUp />
-                                </IconButton>
-                                <IconButton onClick={() => moveCategory(cat.id, "down")} title="Descendre">
-                                  <Icon.ArrowDown />
-                                </IconButton>
-                                <IconButton
-                                  tone={cat.isActive ? "slate" : "emerald"}
-                                  onClick={() => updateCategory(cat.id, { isActive: !cat.isActive })}
-                                >
-                                  {cat.isActive ? "Désactiver" : "Activer"}
-                                </IconButton>
-                                <IconButton
-                                  onClick={() => {
-                                    const next = prompt("URL de l'image (vide pour retirer)", cat.imageUrl ?? "");
-                                    if (next === null) return;
-                                    void updateCategory(cat.id, { imageUrl: next.trim() || undefined });
-                                  }}
-                                  title="Changer l'image"
-                                >
-                                  <Icon.Edit /> Image
-                                </IconButton>
-                                <IconButton tone="rose" onClick={() => deleteCategory(cat.id)} title="Supprimer">
-                                  <Icon.Trash />
-                                </IconButton>
-                              </div>
-                            </td>
+              <div className="bo-grid bo-col-row" style={{ gridTemplateColumns: "1fr minmax(0, 22rem)" }}>
+                <Panel
+                  title="Gestion des catégories"
+                  subtitle={`${filteredCategories.length} catégorie${filteredCategories.length > 1 ? "s" : ""} · ${activeCategories} active${activeCategories > 1 ? "s" : ""}`}
+                  actions={
+                    <>
+                      <input
+                        value={categorySearch}
+                        onChange={(e) => setCategorySearch(e.target.value)}
+                        placeholder="Filtrer…"
+                        className="bo-input compact"
+                        style={{ width: 180 }}
+                      />
+                      {selectedCategoryIds.length > 0 && (
+                        <>
+                          <span className="bo-muted" style={{ fontSize: 11 }}>
+                            {selectedCategoryIds.length} sélectionnée{selectedCategoryIds.length > 1 ? "s" : ""}
+                          </span>
+                          <IconButton tone="emerald" onClick={() => bulkCategoryAction("activate")}>
+                            <Icon.Check /> Activer
+                          </IconButton>
+                          <IconButton onClick={() => bulkCategoryAction("deactivate")}>
+                            <Icon.X /> Désactiver
+                          </IconButton>
+                          <IconButton tone="rose" onClick={() => bulkCategoryAction("delete")}>
+                            <Icon.Trash /> Supprimer
+                          </IconButton>
+                        </>
+                      )}
+                    </>
+                  }
+                >
+                  {filteredCategories.length === 0 ? (
+                    <p className="bo-muted" style={{ padding: 24, textAlign: "center" }}>
+                      Aucune catégorie.
+                    </p>
+                  ) : (
+                    <div style={{ overflowX: "auto" }}>
+                      <table className="bo-data">
+                        <thead>
+                          <tr>
+                            <th style={{ width: 32 }}></th>
+                            <th>Ordre</th>
+                            <th>Nom</th>
+                            <th>Slug</th>
+                            <th>Statut</th>
+                            <th className="num">Actions</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </Panel>
+                        </thead>
+                        <tbody>
+                          {filteredCategories.map((cat) => (
+                            <tr
+                              key={cat.id}
+                              style={
+                                selectedCategoryId === cat.id
+                                  ? { background: "color-mix(in oklab, var(--bo-brand) 10%, transparent)" }
+                                  : undefined
+                              }
+                            >
+                              <td>
+                                <input
+                                  type="checkbox"
+                                  checked={selectedCategoryIds.includes(cat.id)}
+                                  onChange={(e) =>
+                                    setSelectedCategoryIds((prev) =>
+                                      e.target.checked ? [...prev, cat.id] : prev.filter((id) => id !== cat.id),
+                                    )
+                                  }
+                                />
+                              </td>
+                              <td className="bo-mono muted" style={{ fontSize: 11 }}>
+                                #{cat.order}
+                              </td>
+                              <td>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedCategoryId(cat.id)}
+                                  style={{ all: "unset", cursor: "pointer", display: "block" }}
+                                  title="Voir le détail de la catégorie"
+                                >
+                                  <div className="bo-hstack">
+                                    {cat.imageUrl ? (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img
+                                        src={cat.imageUrl}
+                                        alt=""
+                                        style={{
+                                          width: 36,
+                                          height: 28,
+                                          borderRadius: 4,
+                                          objectFit: "cover",
+                                          border: "1px solid var(--bo-border)",
+                                        }}
+                                      />
+                                    ) : (
+                                      <div
+                                        style={{
+                                          width: 36,
+                                          height: 28,
+                                          borderRadius: 4,
+                                          background: "var(--bo-panel-2)",
+                                          border: "1px solid var(--bo-border)",
+                                          display: "grid",
+                                          placeItems: "center",
+                                          fontSize: 10,
+                                          color: "var(--bo-text-dim)",
+                                        }}
+                                      >
+                                        —
+                                      </div>
+                                    )}
+                                    <span style={{ fontWeight: 500 }}>{cat.name}</span>
+                                  </div>
+                                </button>
+                              </td>
+                              <td className="bo-mono muted" style={{ fontSize: 11 }}>
+                                {cat.slug}
+                              </td>
+                              <td>
+                                {cat.isActive ? (
+                                  <span className="bo-badge ok">Active</span>
+                                ) : (
+                                  <span className="bo-badge neutral">Inactive</span>
+                                )}
+                              </td>
+                              <td className="num">
+                                <div
+                                  style={{
+                                    display: "inline-flex",
+                                    gap: 4,
+                                    flexWrap: "wrap",
+                                    justifyContent: "flex-end",
+                                  }}
+                                >
+                                  <IconButton onClick={() => setSelectedCategoryId(cat.id)} title="Détail">
+                                    Détail
+                                  </IconButton>
+                                  <IconButton onClick={() => moveCategory(cat.id, "up")} title="Monter">
+                                    <Icon.ArrowUp />
+                                  </IconButton>
+                                  <IconButton onClick={() => moveCategory(cat.id, "down")} title="Descendre">
+                                    <Icon.ArrowDown />
+                                  </IconButton>
+                                  <IconButton
+                                    tone={cat.isActive ? "slate" : "emerald"}
+                                    onClick={() => updateCategory(cat.id, { isActive: !cat.isActive })}
+                                  >
+                                    {cat.isActive ? "Désactiver" : "Activer"}
+                                  </IconButton>
+                                  <IconButton
+                                    onClick={() => {
+                                      const next = prompt("URL de l'image (vide pour retirer)", cat.imageUrl ?? "");
+                                      if (next === null) return;
+                                      void updateCategory(cat.id, { imageUrl: next.trim() || undefined });
+                                    }}
+                                    title="Changer l'image"
+                                  >
+                                    <Icon.Edit /> Image
+                                  </IconButton>
+                                  <IconButton tone="rose" onClick={() => deleteCategory(cat.id)} title="Supprimer">
+                                    <Icon.Trash />
+                                  </IconButton>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </Panel>
+
+                <Panel
+                  title="Détail catégorie"
+                  subtitle={selectedCategory ? selectedCategory.name : "Sélectionnez une catégorie"}
+                >
+                  {!selectedCategory ? (
+                    <p className="bo-muted" style={{ textAlign: "center", padding: 24 }}>
+                      Cliquez sur « Détail » ou le nom d&apos;une catégorie pour le drill-down.
+                    </p>
+                  ) : (
+                    <div style={{ display: "grid", gap: 10 }}>
+                      <div className="bo-card" style={{ padding: 10 }}>
+                        <div className="bo-label">Slug</div>
+                        <div className="bo-mono" style={{ fontSize: 12 }}>{selectedCategory.slug}</div>
+                      </div>
+                      <div className="bo-card" style={{ padding: 10 }}>
+                        <div className="bo-label">Statut</div>
+                        <div>{selectedCategory.isActive ? "Active" : "Inactive"}</div>
+                      </div>
+                      <div className="bo-card" style={{ padding: 10 }}>
+                        <div className="bo-label">Produits rattachés</div>
+                        <div style={{ fontSize: 22, fontWeight: 700 }}>{categoryProductCounts.get(selectedCategory.id) ?? 0}</div>
+                      </div>
+                      <div className="bo-card" style={{ padding: 10 }}>
+                        <div className="bo-label">Description</div>
+                        <div className="bo-muted">{selectedCategory.description?.trim() || "—"}</div>
+                      </div>
+                      <div>
+                        <div className="bo-label" style={{ marginBottom: 6 }}>Produits de la catégorie</div>
+                        {selectedCategoryProducts.length === 0 ? (
+                          <p className="bo-muted">Aucun produit dans cette catégorie.</p>
+                        ) : (
+                          <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 6 }}>
+                            {selectedCategoryProducts.slice(0, 8).map((p) => (
+                              <li key={p.id} className="bo-card" style={{ padding: "7px 9px", display: "flex", justifyContent: "space-between", gap: 8 }}>
+                                <span>{p.name ?? "Produit sans nom"}</span>
+                                <span className="bo-mono muted">{p.sku ?? "—"}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </Panel>
+              </div>
             </>
           )}
 
