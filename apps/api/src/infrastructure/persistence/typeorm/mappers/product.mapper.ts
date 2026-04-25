@@ -23,6 +23,7 @@ export class ProductMapper {
             listPriority: entity.listPriority ?? 0,
             galleryUrls: entity.galleryUrls ?? undefined,
             specs: entity.specs ?? undefined,
+            translations: entity.translations ?? undefined,
             categoryId: entity.categoryId,
             category: entity.category ? CategoryMapper.toDomain(entity.category) : undefined,
         });
@@ -47,6 +48,7 @@ export class ProductMapper {
         entity.listPriority = domain.listPriority ?? 0;
         entity.galleryUrls = domain.galleryUrls;
         entity.specs = domain.specs;
+        entity.translations = domain.translations;
         entity.categoryId = domain.categoryId;
         // Category relation is usually handled by ID, but if full object needed:
         // entity.category = ...

@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { LocalizeInterceptor } from './infrastructure/interceptors/localize.interceptor';
 import { UsersModule } from './infrastructure/ioc/users.module';
 import { AuthModule } from './infrastructure/ioc/auth.module';
 import { ProductsModule } from './infrastructure/ioc/products.module';
@@ -35,7 +37,9 @@ import { AppDataSource } from './db/data-source';
     ChatModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_INTERCEPTOR, useClass: LocalizeInterceptor },
+  ],
 })
-export class AppModule { }
-
+export class AppModule {}

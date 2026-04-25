@@ -1,6 +1,10 @@
 import { Injectable, InternalServerErrorException, ServiceUnavailableException } from '@nestjs/common';
 import Stripe from 'stripe';
-import { PaymentGateway } from '../../../domain/gateways/payment.gateway';
+import {
+    CreatePaymentIntentOptions,
+    PaymentGateway,
+    PaymentMethodSummary,
+} from '../../../domain/gateways/payment.gateway';
 
 function isValidStripeKey(key: string | undefined | null): key is string {
     if (!key) return false;
@@ -37,17 +41,23 @@ export class StripePaymentService implements PaymentGateway {
         return this.stripe;
     }
 
-    async createPaymentIntent(amount: number, currency: string, metadata?: any): Promise<{ clientSecret: string; id: string }> {
+    async createPaymentIntent(
+        amount: number,
+        currency: string,
+        options: CreatePaymentIntentOptions = {},
+    ): Promise<{ clientSecret: string; id: string }> {
         const stripe = this.requireStripe();
         try {
-            const paymentIntent = await stripe.paymentIntents.create({
+            const params: Stripe.PaymentIntentCreateParams = {
                 amount: Math.round(amount * 100), // Stripe expects cents
                 currency,
-                metadata,
-                automatic_payment_methods: {
-                    enabled: true,
-                },
-            });
+                metadata: options.metadata,
+                automatic_payment_methods: { enabled: true },
+            };
+            if (options.customerId) params.customer = options.customerId;
+            if (options.setupFutureUsage) params.setup_future_usage = 'off_session';
+
+            const paymentIntent = await stripe.paymentIntents.create(params);
 
             return {
                 clientSecret: paymentIntent.client_secret!,
@@ -85,19 +95,29 @@ export class StripePaymentService implements PaymentGateway {
         }
     }
 
-    async listPaymentMethods(stripeCustomerId: string): Promise<any[]> {
+    async listPaymentMethods(stripeCustomerId: string): Promise<PaymentMethodSummary[]> {
         if (!this.stripe) return [];
         try {
-            const paymentMethods = await this.stripe.paymentMethods.list({
-                customer: stripeCustomerId,
-                type: 'card',
-            });
-            return paymentMethods.data.map(pm => ({
+            const [paymentMethods, customer] = await Promise.all([
+                this.stripe.paymentMethods.list({
+                    customer: stripeCustomerId,
+                    type: 'card',
+                }),
+                this.stripe.customers.retrieve(stripeCustomerId).catch(() => null),
+            ]);
+            const defaultPmId =
+                customer && !('deleted' in customer)
+                    ? (customer as Stripe.Customer).invoice_settings?.default_payment_method
+                    : null;
+            const defaultId =
+                typeof defaultPmId === 'string' ? defaultPmId : defaultPmId?.id ?? null;
+            return paymentMethods.data.map((pm) => ({
                 id: pm.id,
                 brand: pm.card?.brand,
                 last4: pm.card?.last4,
                 expMonth: pm.card?.exp_month,
                 expYear: pm.card?.exp_year,
+                isDefault: pm.id === defaultId,
             }));
         } catch (error) {
             console.error('Stripe listPaymentMethods failed:', error);
@@ -112,6 +132,21 @@ export class StripePaymentService implements PaymentGateway {
         } catch (error) {
             console.error('Stripe detachPaymentMethod failed:', error);
             throw new InternalServerErrorException('Failed to detach payment method');
+        }
+    }
+
+    async setDefaultPaymentMethod(
+        stripeCustomerId: string,
+        paymentMethodId: string,
+    ): Promise<void> {
+        const stripe = this.requireStripe();
+        try {
+            await stripe.customers.update(stripeCustomerId, {
+                invoice_settings: { default_payment_method: paymentMethodId },
+            });
+        } catch (error) {
+            console.error('Stripe setDefaultPaymentMethod failed:', error);
+            throw new InternalServerErrorException('Failed to set default payment method');
         }
     }
 

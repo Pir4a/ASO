@@ -24,6 +24,10 @@ export class Category {
     @Column({ default: true })
     isActive: boolean;
 
+    /** Localized fields per locale (e.g. { fr: { name, description } }). */
+    @Column({ type: 'jsonb', nullable: true })
+    translations?: Record<string, { name?: string; description?: string }>;
+
     @OneToMany(() => Product, (product) => product.category)
     products: Product[];
 }

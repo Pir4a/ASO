@@ -66,6 +66,10 @@ export class Product {
     @Column({ type: 'jsonb', nullable: true })
     specs?: Record<string, string>;
 
+    /** Localized fields per locale (e.g. { fr: { name, description }, en: { ... } }). */
+    @Column({ type: 'jsonb', nullable: true })
+    translations?: Record<string, { name?: string; description?: string }>;
+
     @Column({ type: 'uuid' })
     categoryId!: string;
 

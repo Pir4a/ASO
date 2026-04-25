@@ -8,10 +8,12 @@ import { GetUserAddressesUseCase } from '../../application/use-cases/users/get-u
 import { CreateUserAddressUseCase } from '../../application/use-cases/users/create-user-address.use-case';
 import { UpdateUserAddressUseCase } from '../../application/use-cases/users/update-user-address.use-case';
 import { DeleteUserAddressUseCase } from '../../application/use-cases/users/delete-user-address.use-case';
+import { UsersModule } from './users.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Address]),
+        UsersModule,
     ],
     controllers: [ProfileController],
     providers: [

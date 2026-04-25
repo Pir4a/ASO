@@ -5,6 +5,7 @@ import { CreatePaymentIntentUseCase } from '../../application/use-cases/payment/
 import { CreateSetupIntentUseCase } from '../../application/use-cases/payment/create-setup-intent.use-case';
 import { GetPaymentMethodsUseCase } from '../../application/use-cases/payment/get-payment-methods.use-case';
 import { DeletePaymentMethodUseCase } from '../../application/use-cases/payment/delete-payment-method.use-case';
+import { SetDefaultPaymentMethodUseCase } from '../../application/use-cases/payment/set-default-payment-method.use-case';
 import { PaymentController } from '../controllers/payment.controller';
 import { CartModule } from './cart.module';
 import { OrdersModule } from './orders.module';
@@ -22,6 +23,7 @@ import { UsersModule } from './users.module';
         CreateSetupIntentUseCase,
         GetPaymentMethodsUseCase,
         DeletePaymentMethodUseCase,
+        SetDefaultPaymentMethodUseCase,
     ],
     exports: [PAYMENT_GATEWAY],
 })

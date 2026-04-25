@@ -11,6 +11,7 @@ export class CategoryMapper {
             imageUrl: entity.imageUrl,
             order: entity.order,
             isActive: entity.isActive,
+            translations: entity.translations ?? undefined,
         });
         return category;
     }
@@ -24,6 +25,7 @@ export class CategoryMapper {
         entity.imageUrl = domain.imageUrl;
         entity.order = domain.order;
         entity.isActive = domain.isActive;
+        entity.translations = domain.translations;
         return entity;
     }
 }
