@@ -147,8 +147,12 @@ export class ProfileController {
         @Request() req: AuthedRequest,
         @Body()
         body: {
+            firstName?: string;
+            lastName?: string;
             street: string;
+            address2?: string;
             city: string;
+            region?: string;
             postalCode: string;
             country: string;
             phone?: string;
@@ -163,8 +167,12 @@ export class ProfileController {
         @Param('id') addressId: string,
         @Body()
         body: {
+            firstName?: string;
+            lastName?: string;
             street?: string;
+            address2?: string;
             city?: string;
+            region?: string;
             postalCode?: string;
             country?: string;
             phone?: string;

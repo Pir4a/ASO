@@ -13,11 +13,23 @@ export class Address {
     @JoinColumn({ name: 'userId' })
     user: User;
 
+    @Column({ nullable: true })
+    firstName?: string;
+
+    @Column({ nullable: true })
+    lastName?: string;
+
     @Column()
     street: string;
 
+    @Column({ nullable: true })
+    address2?: string;
+
     @Column()
     city: string;
+
+    @Column({ nullable: true })
+    region?: string;
 
     @Column()
     postalCode: string;
