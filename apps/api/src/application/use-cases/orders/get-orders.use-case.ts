@@ -2,9 +2,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Order } from '../../../domain/entities/order.entity';
 import { ORDER_REPOSITORY_TOKEN } from '../../../domain/repositories/order.repository.interface';
 import type { OrderRepository, OrderFilters } from '../../../domain/repositories/order.repository.interface';
+import { formatOrderNumber } from './get-order-details.use-case';
+
+export type OrderListItem = Order & { orderNumber: string };
 
 export interface OrdersByYear {
-    [year: string]: Order[];
+    [year: string]: OrderListItem[];
 }
 
 @Injectable()
@@ -19,14 +22,17 @@ export class GetOrdersUseCase {
             ? await this.orderRepository.findByUserIdWithFilters(userId, filters)
             : await this.orderRepository.findAllByUserId(userId);
 
-        // Group orders by year
         const ordersByYear: OrdersByYear = {};
         for (const order of orders) {
             const year = new Date(order.createdAt).getFullYear().toString();
             if (!ordersByYear[year]) {
                 ordersByYear[year] = [];
             }
-            ordersByYear[year].push(order);
+            ordersByYear[year].push(
+                Object.assign(order, {
+                    orderNumber: formatOrderNumber(order.id, order.createdAt),
+                }) as OrderListItem,
+            );
         }
 
         return ordersByYear;

@@ -6,6 +6,8 @@ import type { CartRepository } from '../../../domain/repositories/cart.repositor
 import { CART_REPOSITORY_TOKEN } from '../../../domain/repositories/cart.repository.interface';
 import type { AddressRepository } from '../../../domain/repositories/address.repository.interface';
 import { ADDRESS_REPOSITORY_TOKEN } from '../../../domain/repositories/address.repository.interface';
+import type { ProductRepository } from '../../../domain/repositories/product.repository.interface';
+import { PRODUCT_REPOSITORY_TOKEN } from '../../../domain/repositories/product.repository.interface';
 
 @Injectable()
 export class CreateOrderUseCase {
@@ -16,6 +18,8 @@ export class CreateOrderUseCase {
         private readonly cartRepository: CartRepository,
         @Inject(ADDRESS_REPOSITORY_TOKEN)
         private readonly addressRepository: AddressRepository,
+        @Inject(PRODUCT_REPOSITORY_TOKEN)
+        private readonly productRepository: ProductRepository,
     ) { }
 
     async execute(userId: string, addressId: string): Promise<Order> {
@@ -29,15 +33,26 @@ export class CreateOrderUseCase {
             throw new BadRequestException('Address not found');
         }
 
-        // Calculate total
-        // Note: Real world would verify prices against product repo again
-        const total = cart.items.reduce((sum, item) => {
-            // Assuming item.product is loaded eagerly in repo and mapped
-            // But Domain CartItem might not have the full Product object depending on mapper.
-            // Let's assume for now we use priceAtAdd or would need to fetch.
-            // Simplification: use priceAtAdd if available, else 0 (should be validated)
-            return sum + (item.priceAtAdd || 0) * item.quantity;
-        }, 0);
+        // Resolve product name + SKU + price from the catalog so the order has accurate snapshots.
+        const products = await Promise.all(
+            cart.items.map((item) => this.productRepository.findById(item.productId)),
+        );
+
+        const items = cart.items.map((item, i) => {
+            const product = products[i];
+            const price =
+                product?.price !== undefined ? Number(product.price) : item.priceAtAdd || 0;
+            return new OrderItem({
+                productId: item.productId,
+                quantity: item.quantity,
+                price,
+                productName: product?.name ?? 'Produit',
+                productSku: product?.sku ?? '—',
+                currency: product?.currency ?? 'EUR',
+            });
+        });
+
+        const total = items.reduce((sum, it) => sum + it.price * it.quantity, 0);
 
         const at = new Date().toISOString();
         const order = new Order({
@@ -46,16 +61,9 @@ export class CreateOrderUseCase {
             total,
             currency: 'EUR',
             shippingAddress: address,
+            billingAddress: address,
             statusHistory: [{ status: 'pending', at }],
-            items: cart.items.map(item => new OrderItem({
-                productId: item.productId,
-                quantity: item.quantity,
-                price: item.priceAtAdd || 0,
-                // productName/sku would need fetching from product if not in cart item snapshot
-                productName: 'Product', // Placeholder
-                productSku: 'SKU', // Placeholder
-                currency: 'EUR'
-            }))
+            items,
         });
 
         // Note: the cart is NOT marked as 'ordered' here. It is only cleared once the payment is

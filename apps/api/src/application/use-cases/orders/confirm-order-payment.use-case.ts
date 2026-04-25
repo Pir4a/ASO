@@ -3,11 +3,12 @@ import type { OrderRepository } from '../../../domain/repositories/order.reposit
 import { ORDER_REPOSITORY_TOKEN } from '../../../domain/repositories/order.repository.interface';
 import type { CartRepository } from '../../../domain/repositories/cart.repository.interface';
 import { CART_REPOSITORY_TOKEN } from '../../../domain/repositories/cart.repository.interface';
+import type { PaymentGateway } from '../../../domain/gateways/payment.gateway';
+import { PAYMENT_GATEWAY } from '../../../domain/gateways/payment.gateway';
 
 /**
- * Marks an order as paid and closes the user's active cart.
- * Should be called once the Stripe PaymentIntent has been confirmed client-side
- * (or from a Stripe webhook in production).
+ * Marks an order as paid and closes the user's active cart. Also captures the
+ * Stripe card brand + last4 used so we can show them later on /orders/:id.
  */
 @Injectable()
 export class ConfirmOrderPaymentUseCase {
@@ -16,6 +17,8 @@ export class ConfirmOrderPaymentUseCase {
         private readonly orderRepository: OrderRepository,
         @Inject(CART_REPOSITORY_TOKEN)
         private readonly cartRepository: CartRepository,
+        @Inject(PAYMENT_GATEWAY)
+        private readonly paymentGateway: PaymentGateway,
     ) { }
 
     async execute(
@@ -27,10 +30,25 @@ export class ConfirmOrderPaymentUseCase {
         if (!order) throw new NotFoundException('Order not found');
         if (order.userId !== userId) throw new ForbiddenException('Order does not belong to the current user');
 
-        await this.orderRepository.updateStatus(order.id, 'processing', {
+        const metadata: Record<string, string> = {
             paymentStatus: 'paid',
-            ...(paymentIntentId ? { paymentId: paymentIntentId } : {}),
-        });
+            paymentMethod: 'stripe',
+        };
+        if (paymentIntentId) metadata.paymentId = paymentIntentId;
+
+        // Best-effort: fetch card brand + last4 so the order shows the real card later.
+        if (paymentIntentId) {
+            try {
+                const card = await this.paymentGateway.retrievePaymentIntentCard(paymentIntentId);
+                if (card.paymentMethodId) metadata.paymentMethodId = card.paymentMethodId;
+                if (card.brand) metadata.paymentBrand = card.brand;
+                if (card.last4) metadata.paymentLast4 = card.last4;
+            } catch (e) {
+                console.warn('confirmOrderPayment: failed to fetch Stripe card details', e);
+            }
+        }
+
+        await this.orderRepository.updateStatus(order.id, 'processing', metadata);
 
         const cart = await this.cartRepository.findByUserId(userId);
         if (cart && cart.status === 'active') {
