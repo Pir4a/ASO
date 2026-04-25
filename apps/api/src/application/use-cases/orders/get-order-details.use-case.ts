@@ -2,6 +2,8 @@ import { Inject, Injectable, NotFoundException, ForbiddenException } from '@nest
 import { Order } from '../../../domain/entities/order.entity';
 import { ORDER_REPOSITORY_TOKEN } from '../../../domain/repositories/order.repository.interface';
 import type { OrderRepository } from '../../../domain/repositories/order.repository.interface';
+import { PAYMENT_GATEWAY } from '../../../domain/gateways/payment.gateway';
+import type { PaymentGateway } from '../../../domain/gateways/payment.gateway';
 
 export interface OrderDetailsResponse extends Order {
     /** Customer-facing order number, e.g. ALT-20260425-AB12. */
@@ -26,10 +28,12 @@ export class GetOrderDetailsUseCase {
     constructor(
         @Inject(ORDER_REPOSITORY_TOKEN)
         private readonly orderRepository: OrderRepository,
+        @Inject(PAYMENT_GATEWAY)
+        private readonly paymentGateway: PaymentGateway,
     ) { }
 
     async execute(orderId: string, userId: string): Promise<OrderDetailsResponse> {
-        const order = await this.orderRepository.findOneByIdAndUserId(orderId, userId);
+        let order = await this.orderRepository.findOneByIdAndUserId(orderId, userId);
 
         if (!order) {
             const existingOrder = await this.orderRepository.findById(orderId);
@@ -37,6 +41,30 @@ export class GetOrderDetailsUseCase {
                 throw new ForbiddenException('Vous n\'avez pas accès à cette commande.');
             }
             throw new NotFoundException('Commande introuvable.');
+        }
+
+        // Lazy backfill: orders that captured `paymentMethodId` but missed the
+        // brand/last4 (partial Stripe response) get filled in here on next view.
+        if (
+            order.paymentMethodId &&
+            (!order.paymentBrand || !order.paymentLast4)
+        ) {
+            try {
+                const pm = await this.paymentGateway.retrievePaymentMethod(
+                    order.paymentMethodId,
+                );
+                if (pm?.brand || pm?.last4) {
+                    await this.orderRepository.updateStatus(order.id, order.status, {
+                        ...(pm.brand ? { paymentBrand: pm.brand } : {}),
+                        ...(pm.last4 ? { paymentLast4: pm.last4 } : {}),
+                    });
+                    order =
+                        (await this.orderRepository.findOneByIdAndUserId(orderId, userId)) ??
+                        order;
+                }
+            } catch {
+                // ignore — keep the order as-is if Stripe is unreachable
+            }
         }
 
         return Object.assign(order, {

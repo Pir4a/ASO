@@ -193,11 +193,15 @@ export class PdfService {
             doc.restore();
             doc.fillColor(INK_MUTED).font('Helvetica-Bold').fontSize(8.5)
                 .text('PAIEMENT', margin + 14, y + 12);
+            const brandLabel = (b?: string) =>
+                !b ? 'Carte' : b.charAt(0).toUpperCase() + b.slice(1).toLowerCase();
             const card = order.paymentLast4
-                ? `${(order.paymentBrand ?? 'Carte').toUpperCase()} •••• ${order.paymentLast4}`
-                : order.paymentMethod
-                    ? order.paymentMethod.charAt(0).toUpperCase() + order.paymentMethod.slice(1)
-                    : 'Non renseigné';
+                ? `${brandLabel(order.paymentBrand)} •••• ${order.paymentLast4}`
+                : order.paymentMethod === 'stripe'
+                    ? 'Carte bancaire (Stripe)'
+                    : order.paymentMethod
+                        ? order.paymentMethod.charAt(0).toUpperCase() + order.paymentMethod.slice(1)
+                        : 'Non renseigné';
             doc.fillColor(INK).font('Helvetica-Bold').fontSize(10.5)
                 .text(card, margin + 14, y + 26);
             const status = order.paymentStatus === 'paid'

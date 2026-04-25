@@ -282,6 +282,32 @@ export default function OrderDetailPage({
                   </p>
                 </div>
               </div>
+            ) : order.paymentMethod === "stripe" ? (
+              <div className="flex items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className="grid h-10 w-14 place-items-center rounded-lg bg-foreground text-[10.5px] font-bold uppercase tracking-[0.08em] text-white"
+                  style={{ color: "#fff" }}
+                >
+                  CB
+                </span>
+                <div>
+                  <p className="font-heading text-[14px] font-semibold text-foreground">
+                    Carte bancaire
+                    <span className="ml-1 text-[11.5px] font-normal text-foreground/55">
+                      (Stripe)
+                    </span>
+                  </p>
+                  <p className="mt-0.5 text-[11.5px] text-foreground/60">
+                    Statut ·{" "}
+                    {order.paymentStatus === "paid"
+                      ? "Payée"
+                      : (order.paymentStatus ?? "—")}
+                    {" · "}
+                    Détails de la carte non capturés
+                  </p>
+                </div>
+              </div>
             ) : (
               <p className="text-[13px] text-foreground/60">
                 Information de paiement indisponible.

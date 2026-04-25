@@ -43,6 +43,16 @@ export class ConfirmOrderPaymentUseCase {
                 if (card.paymentMethodId) metadata.paymentMethodId = card.paymentMethodId;
                 if (card.brand) metadata.paymentBrand = card.brand;
                 if (card.last4) metadata.paymentLast4 = card.last4;
+
+                // Some Stripe responses don't include the card block on the expanded
+                // payment_method. Fall back to a direct PaymentMethod retrieve.
+                if (card.paymentMethodId && (!card.brand || !card.last4)) {
+                    const pm = await this.paymentGateway.retrievePaymentMethod(
+                        card.paymentMethodId,
+                    );
+                    if (pm?.brand && !metadata.paymentBrand) metadata.paymentBrand = pm.brand;
+                    if (pm?.last4 && !metadata.paymentLast4) metadata.paymentLast4 = pm.last4;
+                }
             } catch (e) {
                 console.warn('confirmOrderPayment: failed to fetch Stripe card details', e);
             }
