@@ -46,6 +46,7 @@ export default async function ProductsListPage({
       </nav>
 
       <CategoryHero
+        eyebrow="Catalogue"
         name={t("products.catalogTitle")}
         description={t("products.catalogSubtitle")}
         productsTotal={page.meta.total}

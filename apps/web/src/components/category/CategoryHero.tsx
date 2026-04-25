@@ -6,6 +6,8 @@ type CategoryHeroProps = {
   imageUrl?: string;
   productsTotal?: number;
   availableTotal?: number;
+  /** Eyebrow label shown above the title (defaults to "Catégorie"). */
+  eyebrow?: string;
 };
 
 export function CategoryHero({
@@ -14,6 +16,7 @@ export function CategoryHero({
   imageUrl,
   productsTotal,
   availableTotal,
+  eyebrow = "Catégorie",
 }: CategoryHeroProps) {
   return (
     <section className="overflow-hidden rounded-2xl border border-foreground/10 bg-white shadow-[0_8px_28px_rgba(0,61,92,0.08)]">
@@ -47,7 +50,7 @@ export function CategoryHero({
               <path d="M8 1.5C5 1.5 3 3.5 3 6.5c0 3.5 5 8 5 8s5-4.5 5-8c0-3-2-5-5-5Z" />
               <circle cx="8" cy="6" r="1.5" />
             </svg>
-            Catégorie
+            {eyebrow}
           </span>
           <h1 className="font-heading text-3xl font-bold leading-[1.05] tracking-tight text-white drop-shadow-[0_2px_18px_rgba(0,37,58,0.3)] md:text-[40px] lg:text-[44px]">
             {name}
