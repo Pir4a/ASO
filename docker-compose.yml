@@ -29,6 +29,24 @@ services:
     depends_on:
       - postgres
 
+  mongo:
+    image: mongo:7
+    container_name: althea-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-mongo}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-mongo}
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-althea}
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongodata:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   ollama:
     image: ollama/ollama:latest
     container_name: althea-ollama
@@ -65,6 +83,7 @@ services:
       NODE_ENV: production
       PORT: 3001
       DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-althea}
+      MONGODB_URI: mongodb://${MONGO_USER:-mongo}:${MONGO_PASSWORD:-mongo}@mongo:27017/${MONGO_DB:-althea}?authSource=admin
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
@@ -83,6 +102,8 @@ services:
       - "3001:3001"
     depends_on:
       postgres:
+        condition: service_healthy
+      mongo:
         condition: service_healthy
       ollama:
         condition: service_healthy
@@ -112,4 +133,5 @@ services:
 
 volumes:
   pgdata:
+  mongodata:
   ollama_data:

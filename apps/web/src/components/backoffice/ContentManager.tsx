@@ -17,6 +17,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Badge, Icon, IconButton, Panel } from "./DashboardUI";
+import { MediaUpload } from "./MediaUpload";
 import { authFetch } from "@/lib/auth";
 import { API_URL, MAX_CAROUSEL_SLIDES } from "@/lib/api";
 
@@ -315,16 +316,11 @@ export function ContentManager({ flash }: ContentManagerProps) {
                           />
                         </div>
                       </div>
-                      <div>
-                        <label className={labelCls}>URL image</label>
-                        <input
-                          className={inputCls}
-                          value={editDraft.imageUrl ?? ""}
-                          onChange={(e) =>
-                            setEditDraft((d) => ({ ...d, imageUrl: e.target.value }))
-                          }
-                        />
-                      </div>
+                      <MediaUpload
+                        label="Image"
+                        value={editDraft.imageUrl ?? ""}
+                        onChange={(url) => setEditDraft((d) => ({ ...d, imageUrl: url }))}
+                      />
                       <div className="grid gap-3 md:grid-cols-2">
                         <div>
                           <label className={labelCls}>Lien (href)</label>
@@ -400,14 +396,10 @@ export function ContentManager({ flash }: ContentManagerProps) {
               </div>
             </div>
             <div className="mt-3">
-              <label className={labelCls}>URL image</label>
-              <input
-                className={inputCls}
-                placeholder="https://…"
+              <MediaUpload
+                label="Image"
                 value={carouselDraft.imageUrl ?? ""}
-                onChange={(e) =>
-                  setCarouselDraft((d) => ({ ...d, imageUrl: e.target.value }))
-                }
+                onChange={(url) => setCarouselDraft((d) => ({ ...d, imageUrl: url }))}
               />
             </div>
             <div className="mt-3 grid gap-3 md:grid-cols-2">

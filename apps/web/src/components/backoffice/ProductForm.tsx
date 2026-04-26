@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { API_URL } from "@/lib/api";
+import { MediaUpload } from "./MediaUpload";
 
 interface Category {
   id: string;
@@ -177,14 +178,10 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label htmlFor="thumbnailUrl" className={labelCls}>URL miniature</label>
-          <input
-            id="thumbnailUrl"
-            type="url"
-            className={inputCls}
+          <MediaUpload
+            label="Miniature"
             value={thumbnailUrl}
-            onChange={(e) => setThumbnailUrl(e.target.value)}
-            placeholder="https://…"
+            onChange={(url) => setThumbnailUrl(url)}
           />
         </div>
         <div>
@@ -202,15 +199,68 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
       </div>
 
       <div>
-        <label htmlFor="galleryUrls" className={labelCls}>Galerie — une URL par ligne (optionnel)</label>
-        <textarea
-          id="galleryUrls"
-          rows={3}
-          className={inputCls}
-          value={galleryUrlsText}
-          onChange={(e) => setGalleryUrlsText(e.target.value)}
-          placeholder={"https://…\nhttps://…"}
-        />
+        <label className={labelCls} style={{ display: "block", marginBottom: 8 }}>
+          Galerie produit (téléversez plusieurs images)
+        </label>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {galleryUrlsText
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((url, i) => (
+              <div
+                key={`${url}-${i}`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  border: "1px solid var(--bo-border)",
+                  background: "white",
+                  borderRadius: 6,
+                  padding: 6,
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={url}
+                  alt=""
+                  style={{ height: 40, width: 60, objectFit: "cover", borderRadius: 3, border: "1px solid var(--bo-border)" }}
+                />
+                <span
+                  style={{ flex: 1, fontSize: 11, fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                >
+                  {url}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = galleryUrlsText
+                      .split("\n")
+                      .map((l) => l.trim())
+                      .filter(Boolean)
+                      .filter((_, idx) => idx !== i);
+                    setGalleryUrlsText(next.join("\n"));
+                  }}
+                  className="bo-btn"
+                  style={{ padding: "2px 8px", fontSize: 11 }}
+                >
+                  Retirer
+                </button>
+              </div>
+            ))}
+          <MediaUpload
+            label=""
+            value=""
+            onChange={(url) => {
+              if (!url) return;
+              const next = galleryUrlsText.trim()
+                ? `${galleryUrlsText.trim()}\n${url}`
+                : url;
+              setGalleryUrlsText(next);
+            }}
+            previewHeight={70}
+          />
+        </div>
       </div>
 
       <div>

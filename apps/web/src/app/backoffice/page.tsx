@@ -212,6 +212,30 @@ function BackofficeDashboard() {
     setTimeout(() => setFeedback(null), 3500);
   };
 
+  const uploadCategoryImage = (categoryId: string) => {
+    // Lazy-build an in-memory file input so we don't need to render hidden DOM
+    // for every row; one click → one upload → category PATCH.
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      try {
+        const form = new FormData();
+        form.append("file", file);
+        const res = await authFetch(`${API_URL}/admin/media`, { method: "POST", body: form });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = (await res.json()) as { url: string };
+        await updateCategory(categoryId, { imageUrl: `${API_URL}${data.url}` });
+        flash("success", "Image mise à jour.");
+      } catch (e) {
+        flash("error", `Téléversement impossible: ${(e as Error).message}`);
+      }
+    };
+    input.click();
+  };
+
   const downloadCsv = async (path: string, filename: string) => {
     try {
       const res = await authFetch(`${API_URL}${path}`);
@@ -1678,12 +1702,8 @@ function BackofficeDashboard() {
                                   {cat.isActive ? "Désactiver" : "Activer"}
                                 </IconButton>
                                 <IconButton
-                                  onClick={() => {
-                                    const next = prompt("URL de l'image (vide pour retirer)", cat.imageUrl ?? "");
-                                    if (next === null) return;
-                                    void updateCategory(cat.id, { imageUrl: next.trim() || undefined });
-                                  }}
-                                  title="Changer l'image"
+                                  onClick={() => uploadCategoryImage(cat.id)}
+                                  title="Téléverser une image"
                                 >
                                   <Icon.Edit /> Image
                                 </IconButton>

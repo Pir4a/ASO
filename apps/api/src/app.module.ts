@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MongooseModule } from '@nestjs/mongoose';
 import { LoggerModule } from 'nestjs-pino';
 import { randomUUID } from 'crypto';
 import type { IncomingMessage } from 'http';
@@ -21,6 +22,7 @@ import { ContactModule } from './infrastructure/ioc/contact.module';
 import { ChatModule } from './infrastructure/ioc/chat.module';
 import { InvoicesModule } from './infrastructure/ioc/invoices.module';
 import { CreditNotesModule } from './infrastructure/ioc/credit-notes.module';
+import { MediaModule } from './infrastructure/ioc/media.module';
 import { AppDataSource } from './db/data-source';
 
 @Module({
@@ -76,6 +78,13 @@ import { AppDataSource } from './db/data-source';
       },
     }),
     TypeOrmModule.forRoot(AppDataSource.options),
+    MongooseModule.forRootAsync({
+      useFactory: () => ({
+        uri:
+          process.env.MONGODB_URI ||
+          'mongodb://mongo:mongo@mongo:27017/althea?authSource=admin',
+      }),
+    }),
     UsersModule,
     AuthModule,
     ProductsModule,
@@ -89,6 +98,7 @@ import { AppDataSource } from './db/data-source';
     ChatModule,
     InvoicesModule,
     CreditNotesModule,
+    MediaModule,
   ],
   controllers: [AppController],
   providers: [
