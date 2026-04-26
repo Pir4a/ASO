@@ -23,7 +23,7 @@ export default async function Home() {
       {/* ─── Fixed editable text band (admin-editable) ─── */}
       {homepageText && (homepageText.headline || homepageText.body) && (
         <section
-          aria-label={homepageText.headline || "Information"}
+          aria-label={homepageText.headline || t("home.infoFallback")}
           className="grid items-center gap-5 rounded-xl border border-foreground/10 border-l-4 border-l-primary bg-white p-6 md:grid-cols-[44px_1fr_auto] md:gap-6 md:p-7"
         >
           <div
@@ -51,15 +51,15 @@ export default async function Home() {
               <p className="font-heading text-lg font-semibold text-foreground leading-tight">
                 {products.length}+
               </p>
-              <p className="text-[11px] uppercase tracking-wide text-foreground/60">Références</p>
+              <p className="text-[11px] uppercase tracking-wide text-foreground/60">{t("home.statsRefs")}</p>
             </li>
             <li>
               <p className="font-heading text-lg font-semibold text-foreground leading-tight">48 h</p>
-              <p className="text-[11px] uppercase tracking-wide text-foreground/60">Livraison</p>
+              <p className="text-[11px] uppercase tracking-wide text-foreground/60">{t("home.statsDelivery")}</p>
             </li>
             <li>
               <p className="font-heading text-lg font-semibold text-foreground leading-tight">24/7</p>
-              <p className="text-[11px] uppercase tracking-wide text-foreground/60">Support</p>
+              <p className="text-[11px] uppercase tracking-wide text-foreground/60">{t("home.statsSupport")}</p>
             </li>
           </ul>
         </section>
@@ -71,7 +71,7 @@ export default async function Home() {
           <div>
             <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
               <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-              Explorer par catégorie
+              {t("home.exploreByCategory")}
             </p>
             <h2 id="cat-title" className="font-heading text-2xl font-semibold tracking-tight text-foreground md:text-[26px]">
               {t("home.shopBy")}
@@ -81,7 +81,7 @@ export default async function Home() {
             href="/categories"
             className="hidden items-center gap-1.5 text-sm font-semibold text-primary transition hover:text-primary-hover sm:inline-flex"
           >
-            Toutes les catégories
+            {t("home.viewAllCategories")}
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
               <path d="M3 8h10m-3-3 3 3-3 3" />
             </svg>
@@ -96,17 +96,17 @@ export default async function Home() {
           <div>
             <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
               <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-              Sélection vitrine
+              {t("home.showcaseSelection")}
             </p>
             <h2 id="top-title" className="font-heading text-2xl font-semibold tracking-tight text-foreground md:text-[26px]">
-              Les Top Produits du moment
+              {t("home.topProducts")}
             </h2>
           </div>
           <Link
             href="/products"
             className="hidden items-center gap-1.5 text-sm font-semibold text-primary transition hover:text-primary-hover sm:inline-flex"
           >
-            Voir tout le catalogue
+            {t("home.viewFullCatalog")}
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
               <path d="M3 8h10m-3-3 3 3-3 3" />
             </svg>

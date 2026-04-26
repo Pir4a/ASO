@@ -4,8 +4,10 @@ import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { resetPassword } from "@/lib/api";
+import { useT } from "@/context/LocaleContext";
 
 function ResetPasswordContent() {
+    const t = useT();
     const searchParams = useSearchParams();
     const router = useRouter();
     const token = searchParams.get("token") ?? "";
@@ -21,15 +23,15 @@ function ResetPasswordContent() {
         setError(null);
 
         if (!token) {
-            setError("Lien invalide. Demandez un nouveau lien de réinitialisation.");
+            setError(t("reset.errInvalidLink"));
             return;
         }
         if (password.length < 8) {
-            setError("Le mot de passe doit contenir au moins 8 caractères.");
+            setError(t("reset.errPasswordTooShort"));
             return;
         }
         if (password !== confirm) {
-            setError("Les deux mots de passe ne correspondent pas.");
+            setError(t("reset.errPasswordMismatch"));
             return;
         }
 
@@ -38,14 +40,10 @@ function ResetPasswordContent() {
             await resetPassword(token, password);
             setSuccess(true);
             setTimeout(() => {
-                router.push("/login?message=Mot de passe mis à jour. Vous pouvez vous connecter.");
+                router.push(`/login?message=${encodeURIComponent(t("reset.successQueryMsg"))}`);
             }, 2500);
         } catch (e) {
-            setError(
-                e instanceof Error
-                    ? e.message
-                    : "Le lien est invalide ou a expiré. Demandez un nouveau lien.",
-            );
+            setError(e instanceof Error ? e.message : t("reset.errGeneric"));
         } finally {
             setLoading(false);
         }
@@ -55,12 +53,10 @@ function ResetPasswordContent() {
         return (
             <div className="mx-auto max-w-md space-y-4">
                 <div className="card p-6 space-y-3 text-center">
-                    <h1 className="text-2xl font-semibold text-success">Mot de passe mis à jour</h1>
-                    <p className="text-sm text-foreground/70">
-                        Vous allez être redirigé vers la page de connexion.
-                    </p>
+                    <h1 className="text-2xl font-semibold text-success">{t("reset.successTitle")}</h1>
+                    <p className="text-sm text-foreground/70">{t("reset.successBody")}</p>
                     <Link href="/login" className="inline-block text-sm text-primary hover:text-primary-hover">
-                        Aller à la connexion immédiatement
+                        {t("reset.successCta")}
                     </Link>
                 </div>
             </div>
@@ -70,16 +66,14 @@ function ResetPasswordContent() {
     return (
         <div className="mx-auto max-w-md space-y-4">
             <div className="card p-6 space-y-2">
-                <h1 className="text-2xl font-semibold text-foreground">Nouveau mot de passe</h1>
-                <p className="text-sm text-foreground/70">
-                    Choisissez un nouveau mot de passe pour votre compte.
-                </p>
+                <h1 className="text-2xl font-semibold text-foreground">{t("reset.title")}</h1>
+                <p className="text-sm text-foreground/70">{t("reset.subtitle")}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="card space-y-3 p-6">
                 <input
                     type="password"
-                    placeholder="Nouveau mot de passe"
+                    placeholder={t("reset.newPasswordPlaceholder")}
                     className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -88,7 +82,7 @@ function ResetPasswordContent() {
                 />
                 <input
                     type="password"
-                    placeholder="Confirmez le mot de passe"
+                    placeholder={t("reset.confirmPlaceholder")}
                     className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
@@ -105,10 +99,10 @@ function ResetPasswordContent() {
                     disabled={loading || !token}
                     className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover disabled:opacity-60"
                 >
-                    {loading ? "Mise à jour..." : "Mettre à jour le mot de passe"}
+                    {loading ? t("reset.submitting") : t("reset.submit")}
                 </button>
                 <Link href="/login" className="block text-center text-sm text-primary hover:text-primary-hover">
-                    Retour à la connexion
+                    {t("common.backToLogin")}
                 </Link>
             </form>
         </div>
@@ -117,7 +111,7 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div>Loading…</div>}>
             <ResetPasswordContent />
         </Suspense>
     );
