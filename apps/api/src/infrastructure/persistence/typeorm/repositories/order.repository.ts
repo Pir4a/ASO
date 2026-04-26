@@ -188,7 +188,7 @@ export class TypeOrmOrderRepository implements OrderRepository {
     return {
       rows: entities.map((e) => ({
         order: OrderMapper.toDomain(e),
-        customerEmail: mail.get(e.userId) ?? null,
+        customerEmail: e.userId ? mail.get(e.userId) ?? null : null,
       })),
       total,
     };

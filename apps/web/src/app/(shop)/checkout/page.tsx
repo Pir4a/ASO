@@ -98,7 +98,13 @@ export default function CheckoutPage() {
           getCart(cartIdForFetch),
         ]);
         setAddresses(addr);
-        if (addr.length > 0) setSelectedAddressId(addr[0].id);
+        if (addr.length > 0) {
+          setSelectedAddressId(addr[0].id);
+        } else {
+          // No saved addresses yet (new customer or guest) — open the form
+          // straight away so the user doesn't have to click "Ajouter".
+          setShowNewAddress(true);
+        }
         setCartItems(cart.items as CartItem[]);
         setCartSubtotal(cart.subtotal);
         setCartVat(cart.vat);
