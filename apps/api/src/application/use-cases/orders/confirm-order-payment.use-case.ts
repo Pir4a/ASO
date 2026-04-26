@@ -1,10 +1,11 @@
-import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import type { OrderRepository } from '../../../domain/repositories/order.repository.interface';
 import { ORDER_REPOSITORY_TOKEN } from '../../../domain/repositories/order.repository.interface';
 import type { CartRepository } from '../../../domain/repositories/cart.repository.interface';
 import { CART_REPOSITORY_TOKEN } from '../../../domain/repositories/cart.repository.interface';
 import type { PaymentGateway } from '../../../domain/gateways/payment.gateway';
 import { PAYMENT_GATEWAY } from '../../../domain/gateways/payment.gateway';
+import { GenerateInvoiceOnPaymentUseCase } from '../invoices/generate-invoice-on-payment.use-case';
 
 /**
  * Marks an order as paid and closes the user's active cart. Also captures the
@@ -12,6 +13,8 @@ import { PAYMENT_GATEWAY } from '../../../domain/gateways/payment.gateway';
  */
 @Injectable()
 export class ConfirmOrderPaymentUseCase {
+    private readonly logger = new Logger(ConfirmOrderPaymentUseCase.name);
+
     constructor(
         @Inject(ORDER_REPOSITORY_TOKEN)
         private readonly orderRepository: OrderRepository,
@@ -19,6 +22,7 @@ export class ConfirmOrderPaymentUseCase {
         private readonly cartRepository: CartRepository,
         @Inject(PAYMENT_GATEWAY)
         private readonly paymentGateway: PaymentGateway,
+        private readonly generateInvoiceOnPaymentUseCase: GenerateInvoiceOnPaymentUseCase,
     ) { }
 
     async execute(
@@ -58,12 +62,20 @@ export class ConfirmOrderPaymentUseCase {
             }
         }
 
-        await this.orderRepository.updateStatus(order.id, 'processing', metadata);
+        const updatedOrder = await this.orderRepository.updateStatus(order.id, 'processing', metadata);
 
         const cart = await this.cartRepository.findByUserId(userId);
         if (cart && cart.status === 'active') {
             cart.status = 'ordered';
             await this.cartRepository.update(cart);
+        }
+
+        try {
+            await this.generateInvoiceOnPaymentUseCase.execute(updatedOrder ?? order);
+        } catch (e) {
+            this.logger.warn(
+                `Invoice generation failed for order ${order.id}: ${(e as Error).message}`,
+            );
         }
 
         return { ok: true };
