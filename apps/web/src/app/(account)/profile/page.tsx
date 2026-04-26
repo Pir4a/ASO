@@ -409,7 +409,6 @@ function PersonalInfoCard() {
           placeholder="vous@exemple.fr"
           onSave={(v) => save({ email: v })}
           onError={(e) => flashAndClear("error", e)}
-          className="sm:col-span-2"
         />
         {user?.pendingEmail && (
           <div
