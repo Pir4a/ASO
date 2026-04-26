@@ -52,7 +52,7 @@ function ResetPasswordContent() {
     if (success) {
         return (
             <div className="mx-auto max-w-md space-y-4">
-                <div className="card p-6 space-y-3 text-center">
+                <div className="aso-anim-fade-rise card p-6 space-y-3 text-center">
                     <h1 className="text-2xl font-semibold text-success">{t("reset.successTitle")}</h1>
                     <p className="text-sm text-foreground/70">{t("reset.successBody")}</p>
                     <Link href="/login" className="inline-block text-sm text-primary hover:text-primary-hover">
@@ -65,12 +65,12 @@ function ResetPasswordContent() {
 
     return (
         <div className="mx-auto max-w-md space-y-4">
-            <div className="card p-6 space-y-2">
+            <div className="aso-anim-fade-rise card p-6 space-y-2">
                 <h1 className="text-2xl font-semibold text-foreground">{t("reset.title")}</h1>
                 <p className="text-sm text-foreground/70">{t("reset.subtitle")}</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="card space-y-3 p-6">
+            <form onSubmit={handleSubmit} className="aso-anim-fade-rise card space-y-3 p-6" style={{ animationDelay: "60ms" }}>
                 <input
                     type="password"
                     placeholder={t("reset.newPasswordPlaceholder")}
@@ -91,7 +91,9 @@ function ResetPasswordContent() {
                 />
 
                 {error ? (
-                    <p className="text-sm text-error bg-error/10 p-3 rounded-md">{error}</p>
+                    <p key={error} className="aso-anim-shake text-sm text-error bg-error/10 p-3 rounded-md">
+                        {error}
+                    </p>
                 ) : null}
 
                 <button

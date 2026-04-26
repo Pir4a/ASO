@@ -52,11 +52,11 @@ export default function SignupPage() {
 
   return (
     <div className="mx-auto max-w-md space-y-4">
-      <div className="card p-6 space-y-2">
+      <div className="aso-anim-fade-rise card p-6 space-y-2">
         <h1 className="text-2xl font-semibold text-foreground">{t("signup.title")}</h1>
         <p className="text-sm text-foreground/70">{t("signup.subtitle")}</p>
       </div>
-      <form onSubmit={handleSubmit} className="card space-y-3 p-6">
+      <form onSubmit={handleSubmit} className="aso-anim-fade-rise card space-y-3 p-6" style={{ animationDelay: "60ms" }}>
         <div className="grid grid-cols-2 gap-4">
           <input
             type="text"
@@ -95,7 +95,11 @@ export default function SignupPage() {
           />
           <p className="text-xs text-foreground/60 mt-1">{t("signup.passwordHint")}</p>
         </div>
-        {error && <p className="text-sm text-error">{error}</p>}
+        {error && (
+          <p key={error} className="aso-anim-shake text-sm text-error">
+            {error}
+          </p>
+        )}
         <button
           type="submit"
           className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover disabled:opacity-50"

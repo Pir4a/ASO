@@ -24,7 +24,7 @@ export async function ProductCatalogListing({ products }: { products: Product[] 
   return (
     <>
       {/* Mobile: vertical list */}
-      <ul className="flex flex-col gap-3 md:hidden" role="list">
+      <ul className="aso-anim-stagger flex flex-col gap-3 md:hidden" role="list">
         {products.map((product) => {
           const oos = isOutOfStock(product);
           return (
@@ -91,7 +91,7 @@ export async function ProductCatalogListing({ products }: { products: Product[] 
       </ul>
 
       {/* Desktop: grid with image */}
-      <ul className="hidden gap-5 md:grid md:grid-cols-2 xl:grid-cols-3" role="list">
+      <ul className="aso-anim-stagger hidden gap-5 md:grid md:grid-cols-2 xl:grid-cols-3" role="list">
         {products.map((product) => {
           const oos = isOutOfStock(product);
           return (

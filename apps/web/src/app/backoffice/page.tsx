@@ -1728,7 +1728,7 @@ function BackofficeDashboard() {
                 {/* Bulk action toolbar */}
                 {selectedProductIds.size > 0 && (
                   <div
-                    className="bo-hstack"
+                    className="bo-hstack aso-anim-fade-rise"
                     style={{
                       gap: 8,
                       flexWrap: "wrap",
@@ -2072,6 +2072,7 @@ function BackofficeDashboard() {
                   role="dialog"
                   aria-modal="true"
                   aria-label={`Éditer ${editingProduct.name ?? ""}`}
+                  className="aso-anim-modal-backdrop"
                   onClick={(e) => {
                     if (e.target === e.currentTarget) setEditingProduct(null);
                   }}
@@ -2088,6 +2089,7 @@ function BackofficeDashboard() {
                   }}
                 >
                   <div
+                    className="aso-anim-modal-card"
                     style={{
                       width: "100%",
                       maxWidth: 880,
