@@ -13,6 +13,7 @@ import {
   createUserAddress,
   getCart,
   getUserAddresses,
+  type GuestCheckoutAddress,
 } from "@/lib/api";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { AddressForm, type AddressFormData } from "@/components/account/AddressForm";
@@ -60,6 +61,16 @@ export default function CheckoutPage() {
   const [currency, setCurrency] = useState("EUR");
   const [orderResult, setOrderResult] = useState<{ id: string } | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestCartId, setGuestCartId] = useState<string | null>(null);
+  const [guestSignupSent, setGuestSignupSent] = useState(false);
+
+  // Read the guest cart id from localStorage once on mount (only for unauthed sessions).
+  useEffect(() => {
+    if (!isAuthenticated && typeof window !== "undefined") {
+      setGuestCartId(localStorage.getItem("guestCartId"));
+    }
+  }, [isAuthenticated]);
 
   const selectedAddress = useMemo(
     () => addresses.find((a) => a.id === selectedAddressId) ?? null,
@@ -96,10 +107,19 @@ export default function CheckoutPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const created = (await createUserAddress(data)) as Address;
-      setAddresses((prev) => [...prev, created]);
-      setSelectedAddressId(created.id);
-      setShowNewAddress(false);
+      // Guests can't persist addresses (no account yet) — just keep the entry
+      // in memory with a synthetic id so it can be selected for this checkout.
+      if (!isAuthenticated) {
+        const guestAddress: Address = { ...data, id: `guest-${Date.now()}` };
+        setAddresses((prev) => [...prev, guestAddress]);
+        setSelectedAddressId(guestAddress.id);
+        setShowNewAddress(false);
+      } else {
+        const created = (await createUserAddress(data)) as Address;
+        setAddresses((prev) => [...prev, created]);
+        setSelectedAddressId(created.id);
+        setShowNewAddress(false);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur lors de la création.");
     } finally {
@@ -109,10 +129,35 @@ export default function CheckoutPage() {
 
   const handleGoToPayment = async () => {
     if (!selectedAddressId) return;
+    if (!isAuthenticated && !guestEmail.trim()) {
+      setError("Indiquez votre adresse e-mail pour finaliser la commande en invité.");
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
-      const order = await createOrder(selectedAddressId);
+      let order: { id: string };
+      if (!isAuthenticated) {
+        const sel = addresses.find((a) => a.id === selectedAddressId);
+        if (!sel) throw new Error("Adresse introuvable.");
+        const inlineAddress: GuestCheckoutAddress = {
+          firstName: sel.firstName,
+          lastName: sel.lastName,
+          street: sel.street,
+          address2: sel.address2,
+          city: sel.city,
+          region: sel.region,
+          postalCode: sel.postalCode,
+          country: sel.country,
+          phone: sel.phone,
+        };
+        order = await createOrder({
+          address: inlineAddress,
+          guestCartId: guestCartId ?? undefined,
+        });
+      } else {
+        order = await createOrder({ addressId: selectedAddressId });
+      }
       setOrderResult(order);
       const intent = await createPaymentIntent(order.id, user?.id);
       setClientSecret(intent.clientSecret);
@@ -131,7 +176,14 @@ export default function CheckoutPage() {
   const handlePaymentSuccess = async (paymentId: string) => {
     if (orderResult) {
       try {
-        await confirmOrderPayment(orderResult.id, paymentId);
+        await confirmOrderPayment(
+          orderResult.id,
+          paymentId,
+          !isAuthenticated
+            ? { guestEmail: guestEmail.trim().toLowerCase(), guestCartId: guestCartId ?? undefined }
+            : undefined,
+        );
+        if (!isAuthenticated) setGuestSignupSent(true);
       } catch (err) {
         console.error("Failed to finalize order:", err);
       }
@@ -186,6 +238,21 @@ export default function CheckoutPage() {
               Retour à la boutique
             </Link>
           </div>
+          {guestSignupSent && (
+            <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-primary/20 bg-primary/5 p-5 text-left">
+              <p className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
+                  <path d="M2 4h12v8H2zM2 4l6 5 6-5" />
+                </svg>
+                Compte créé
+              </p>
+              <p className="mt-1.5 text-[13.5px] text-foreground">
+                Un compte a été créé pour <span className="font-semibold">{guestEmail}</span>.
+                Consultez votre boîte mail : un lien vous attend pour définir votre
+                mot de passe et retrouver votre commande dans votre espace client.
+              </p>
+            </div>
+          )}
         </section>
       </div>
     );
@@ -255,6 +322,30 @@ export default function CheckoutPage() {
               title="Adresse de facturation et de livraison"
               hint="Choisissez une adresse enregistrée ou ajoutez-en une nouvelle."
             >
+              {!isAuthenticated && (
+                <div className="mb-5 rounded-2xl border border-foreground/10 bg-background/40 p-4">
+                  <label
+                    htmlFor="checkout-guest-email"
+                    className="mb-1.5 block text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/65"
+                  >
+                    Email de contact
+                  </label>
+                  <input
+                    id="checkout-guest-email"
+                    type="email"
+                    required
+                    placeholder="vous@exemple.fr"
+                    autoComplete="email"
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                    className="w-full rounded-lg border border-foreground/10 bg-white px-3.5 py-2.5 text-[14px] text-foreground placeholder:text-foreground/45 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+                  />
+                  <p className="mt-1.5 text-[12px] text-foreground/65">
+                    Nous enverrons votre confirmation de commande et un lien pour
+                    créer votre mot de passe à cette adresse.
+                  </p>
+                </div>
+              )}
               {addresses.length > 0 && !showNewAddress && (
                 <ul className="grid gap-3 sm:grid-cols-2" role="list">
                   {addresses.map((a) => {

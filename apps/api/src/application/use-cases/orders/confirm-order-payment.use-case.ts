@@ -1,4 +1,6 @@
-import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import * as crypto from 'crypto';
+import { BadRequestException, ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { User } from '../../../domain/entities/user.entity';
 import type { OrderRepository } from '../../../domain/repositories/order.repository.interface';
 import { ORDER_REPOSITORY_TOKEN } from '../../../domain/repositories/order.repository.interface';
 import type { CartRepository } from '../../../domain/repositories/cart.repository.interface';
@@ -10,6 +12,17 @@ import { PAYMENT_GATEWAY } from '../../../domain/gateways/payment.gateway';
 import type { EmailGateway } from '../../../domain/gateways/email.gateway';
 import { EMAIL_GATEWAY } from '../../../domain/gateways/email.gateway';
 import { GenerateInvoiceOnPaymentUseCase } from '../invoices/generate-invoice-on-payment.use-case';
+
+export interface ConfirmOrderPaymentInput {
+    orderId: string;
+    /** Authenticated user id, when present. */
+    userId?: string;
+    paymentIntentId?: string;
+    /** Required when the order was placed as a guest. */
+    guestEmail?: string;
+    /** Guest cart key, so we can mark the right cart as ordered. */
+    guestCartId?: string;
+}
 
 /**
  * Marks an order as paid and closes the user's active cart. Also captures the
@@ -33,25 +46,39 @@ export class ConfirmOrderPaymentUseCase {
         private readonly generateInvoiceOnPaymentUseCase: GenerateInvoiceOnPaymentUseCase,
     ) { }
 
-    async execute(
-        orderId: string,
-        userId: string,
-        paymentIntentId?: string,
-    ): Promise<{ ok: true }> {
-        const order = await this.orderRepository.findById(orderId);
+    async execute(input: ConfirmOrderPaymentInput): Promise<{ ok: true }> {
+        const order = await this.orderRepository.findById(input.orderId);
         if (!order) throw new NotFoundException('Order not found');
-        if (order.userId !== userId) throw new ForbiddenException('Order does not belong to the current user');
+
+        const isGuestOrder = !order.userId;
+        let guestSignupToken: string | null = null;
+        let resolvedEmail: string | null = null;
+
+        if (isGuestOrder) {
+            if (!input.guestEmail) {
+                throw new BadRequestException('Guest email required to confirm a guest order.');
+            }
+            const upserted = await this.upsertGuestUser(input.guestEmail);
+            order.userId = upserted.user.id;
+            await this.orderRepository.update(order);
+            guestSignupToken = upserted.signupToken;
+            resolvedEmail = upserted.user.email;
+        } else if (input.userId && order.userId !== input.userId) {
+            throw new ForbiddenException('Order does not belong to the current user');
+        }
+
+        const cartKey = order.userId || input.guestCartId;
 
         const metadata: Record<string, string> = {
             paymentStatus: 'paid',
             paymentMethod: 'stripe',
         };
-        if (paymentIntentId) metadata.paymentId = paymentIntentId;
+        if (input.paymentIntentId) metadata.paymentId = input.paymentIntentId;
 
         // Best-effort: fetch card brand + last4 so the order shows the real card later.
-        if (paymentIntentId) {
+        if (input.paymentIntentId) {
             try {
-                const card = await this.paymentGateway.retrievePaymentIntentCard(paymentIntentId);
+                const card = await this.paymentGateway.retrievePaymentIntentCard(input.paymentIntentId);
                 if (card.paymentMethodId) metadata.paymentMethodId = card.paymentMethodId;
                 if (card.brand) metadata.paymentBrand = card.brand;
                 if (card.last4) metadata.paymentLast4 = card.last4;
@@ -72,10 +99,12 @@ export class ConfirmOrderPaymentUseCase {
 
         const updatedOrder = await this.orderRepository.updateStatus(order.id, 'processing', metadata);
 
-        const cart = await this.cartRepository.findByUserId(userId);
-        if (cart && cart.status === 'active') {
-            cart.status = 'ordered';
-            await this.cartRepository.update(cart);
+        if (cartKey) {
+            const cart = await this.cartRepository.findByUserId(cartKey);
+            if (cart && cart.status === 'active') {
+                cart.status = 'ordered';
+                await this.cartRepository.update(cart);
+            }
         }
 
         const finalOrder = updatedOrder ?? order;
@@ -113,6 +142,58 @@ export class ConfirmOrderPaymentUseCase {
             );
         }
 
+        if (guestSignupToken && resolvedEmail) {
+            try {
+                await this.emailGateway.sendGuestSignupEmail(
+                    resolvedEmail,
+                    guestSignupToken,
+                    finalOrder.id,
+                );
+            } catch (e) {
+                this.logger.warn(
+                    `Guest signup email failed for order ${order.id}: ${(e as Error).message}`,
+                );
+            }
+        }
+
         return { ok: true };
+    }
+
+    /**
+     * Returns the existing user matching the email, or creates a fresh
+     * unverified one with a fresh password-reset token. The returned token
+     * is non-null only when a new user was created (so we email the
+     * "create your password" link exactly once per guest order).
+     */
+    private async upsertGuestUser(
+        email: string,
+    ): Promise<{ user: User; signupToken: string | null }> {
+        const normalized = email.trim().toLowerCase();
+        const existing = await this.userRepository.findByEmail(normalized);
+        if (existing) {
+            return { user: existing, signupToken: null };
+        }
+
+        const signupToken = crypto.randomBytes(32).toString('hex');
+        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        // Random unguessable hash so the account is unusable until the user
+        // sets a password via the reset-password flow.
+        const placeholderHash = crypto.randomBytes(48).toString('hex');
+
+        const created = await this.userRepository.create(
+            new User({
+                email: normalized,
+                passwordHash: placeholderHash,
+                role: 'customer',
+                isVerified: false,
+                isActive: true,
+                passwordResetToken: signupToken,
+                passwordResetTokenExpires: expires,
+                pendingEmail: null,
+                pendingEmailToken: null,
+                pendingEmailExpires: null,
+            }),
+        );
+        return { user: created, signupToken };
     }
 }
