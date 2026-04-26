@@ -4,13 +4,24 @@
 
 | Type de test | Outillage | Status |
 |---|---|---|
-| Unitaires API | **Jest** + `ts-jest` | ⚠️ Squelette présent (`apps/api/src/app.controller.spec.ts`) — couverture à étendre. |
+| Unitaires API | **Jest** + `ts-jest` | ✅ Démarré (tests use-cases auth + products en plus du squelette Nest). |
 | E2E API | **Supertest** + Jest | ⚠️ Squelette (`apps/api/test/app.e2e-spec.ts`, config `jest-e2e.json`) — à compléter. |
 | Unitaires Web | — | **TODO** : aucun framework branché côté `apps/web`. |
 | E2E Web (parcours utilisateur) | — | **TODO** : Playwright recommandé. |
 | Tests fonctionnels manuels | Doc | ⚠️ À documenter par sprint. |
 
-> **TODO majeur** : la couverture de tests est minimale. Cette page documente la **stratégie cible** ; la mise en œuvre complète est un livrable des sprints suivants.
+> **TODO majeur** : la couverture reste partielle. Cette page documente la **stratégie cible** ; la mise en œuvre complète est un livrable progressif.
+
+### Derniers tests ajoutés
+- `apps/api/src/application/use-cases/auth/verify-email.use-case.spec.ts`
+  - token invalide -> code stable `VERIFY_EMAIL_TOKEN_INVALID`
+  - token expiré -> code stable `VERIFY_EMAIL_TOKEN_EXPIRED`
+  - succès -> compte vérifié + token nettoyé
+- `apps/api/src/application/use-cases/products/create-product.use-case.spec.ts`
+  - slug explicite respecté (URL personnalisée SEO)
+  - fallback auto slug si absent
+  - rejet catégorie inexistante
+  - rejet collision slug
 
 ---
 
