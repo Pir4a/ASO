@@ -712,7 +712,7 @@ function BackofficeDashboard() {
     return <span className={`bo-badge ${m.tone}`}>{m.label}</span>;
   };
 
-  const paymentStatusBadge = (status?: string | null, method?: string | null) => {
+  const paymentStatusBadge = (status?: string | null) => {
     const map: Record<string, { tone: "ok" | "warn" | "neutral" | "danger" | "brand"; label: string }> = {
       paid: { tone: "ok", label: "Payé" },
       unpaid: { tone: "warn", label: "En attente" },
@@ -721,12 +721,45 @@ function BackofficeDashboard() {
     };
     const key = (status ?? "unpaid").toLowerCase();
     const m = map[key] ?? { tone: "neutral" as const, label: status ?? "—" };
-    const methodLabel = method ? method.charAt(0).toUpperCase() + method.slice(1) : null;
+    return <span className={`bo-badge ${m.tone}`}>{m.label}</span>;
+  };
+
+  const paymentMethodLabel = (
+    method?: string | null,
+    brand?: string | null,
+    last4?: string | null,
+  ) => {
+    if (!method) {
+      return <span className="bo-muted" style={{ fontSize: 11 }}>—</span>;
+    }
+    const m = method.toLowerCase();
+    const niceMethod =
+      m === "card"
+        ? "Carte"
+        : m === "iban"
+          ? "IBAN"
+          : m === "cash"
+            ? "Espèces"
+            : method.charAt(0).toUpperCase() + method.slice(1);
+    const niceBrand = brand
+      ? brand.charAt(0).toUpperCase() + brand.slice(1).toLowerCase()
+      : null;
     return (
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-        <span className={`bo-badge ${m.tone}`}>{m.label}</span>
-        {methodLabel && (
-          <span className="bo-muted" style={{ fontSize: 10.5 }}>{methodLabel}</span>
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 4,
+          fontSize: 11.5,
+          whiteSpace: "nowrap",
+        }}
+      >
+        <span>{niceMethod}</span>
+        {niceBrand && <span className="bo-muted">· {niceBrand}</span>}
+        {last4 && (
+          <span className="bo-mono bo-muted" style={{ fontSize: 10.5 }}>
+            •••• {last4}
+          </span>
         )}
       </span>
     );
@@ -1200,6 +1233,7 @@ function BackofficeDashboard() {
                           <th>Référence</th>
                           <th>Client</th>
                           <th>Statut</th>
+                          <th>Paiement</th>
                           <th className="num">Montant</th>
                           <th>Reçue</th>
                           <th></th>
@@ -1225,6 +1259,7 @@ function BackofficeDashboard() {
                                 {cust}
                               </td>
                               <td>{orderStatusBadge(o.status)}</td>
+                              <td>{paymentStatusBadge(o.paymentStatus)}</td>
                               <td className="num" style={{ fontWeight: 600 }}>
                                 {o.total.toFixed(2)} {o.currency}
                               </td>
@@ -1834,6 +1869,7 @@ function BackofficeDashboard() {
                           <th>Client</th>
                           <th>Statut</th>
                           <th>Paiement</th>
+                          <th>Mode</th>
                           <th className="num">Total</th>
                           <th className="num">Lignes</th>
                           <th className="num">Voir</th>
@@ -1852,7 +1888,14 @@ function BackofficeDashboard() {
                               {o.customerEmail ?? (o.userId ? o.userId.slice(0, 8) + "…" : "—")}
                             </td>
                             <td>{orderStatusBadge(o.status)}</td>
-                            <td>{paymentStatusBadge(o.paymentStatus, o.paymentMethod)}</td>
+                            <td>{paymentStatusBadge(o.paymentStatus)}</td>
+                            <td>
+                              {paymentMethodLabel(
+                                o.paymentMethod,
+                                o.paymentBrand,
+                                o.paymentLast4,
+                              )}
+                            </td>
                             <td className="num" style={{ fontWeight: 600 }}>
                               {o.total.toFixed(2)} {o.currency}
                             </td>
@@ -1933,17 +1976,18 @@ function BackofficeDashboard() {
                     <div className="bo-vstack" style={{ gap: 4, fontSize: 11.5 }}>
                       <div className="bo-hstack" style={{ justifyContent: "space-between" }}>
                         <span className="bo-muted">Statut paiement</span>
-                        <span>{paymentStatusBadge(orderDetail.paymentStatus, orderDetail.paymentMethod)}</span>
+                        <span>{paymentStatusBadge(orderDetail.paymentStatus)}</span>
                       </div>
-                      {(orderDetail.paymentBrand || orderDetail.paymentLast4) && (
-                        <div className="bo-hstack" style={{ justifyContent: "space-between" }}>
-                          <span className="bo-muted">Carte</span>
-                          <span className="bo-mono">
-                            {(orderDetail.paymentBrand ?? "").toUpperCase()}{" "}
-                            {orderDetail.paymentLast4 ? `•••• ${orderDetail.paymentLast4}` : ""}
-                          </span>
-                        </div>
-                      )}
+                      <div className="bo-hstack" style={{ justifyContent: "space-between" }}>
+                        <span className="bo-muted">Mode</span>
+                        <span>
+                          {paymentMethodLabel(
+                            orderDetail.paymentMethod,
+                            orderDetail.paymentBrand,
+                            orderDetail.paymentLast4,
+                          )}
+                        </span>
+                      </div>
                       {orderDetail.paidAt && (
                         <div className="bo-hstack" style={{ justifyContent: "space-between" }}>
                           <span className="bo-muted">Payé le</span>
