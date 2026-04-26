@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 const FLOURISH_EVENT = "aso:bo-transition";
@@ -91,14 +90,10 @@ export function RouteFlourish() {
           />
         </svg>
         <div className="route-flourish__logo">
-          <Image
-            src="/logo-mark.png"
-            alt=""
-            width={82}
-            height={71}
-            priority
-            unoptimized
-          />
+          {/* The logo PNG has a dark fringe baked into its outer pixels
+              (no clean alpha edge), so we render it as a background image
+              and zoom slightly past the container to crop the fringe out. */}
+          <div className="route-flourish__logo-mark" role="img" aria-label="" />
         </div>
       </div>
     </div>

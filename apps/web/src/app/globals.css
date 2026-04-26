@@ -131,11 +131,15 @@ button:disabled,
   transform-origin: center;
   opacity: 0;
 }
-.route-flourish__logo img {
-  height: clamp(56px, 9vw, 96px);
-  width: auto;
-  user-select: none;
-  filter: drop-shadow(0 4px 12px rgba(15, 118, 110, 0.18));
+.route-flourish__logo-mark {
+  width: clamp(64px, 10vw, 104px);
+  aspect-ratio: 82 / 71;
+  background-image: url("/logo-mark.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 122% 122%;
+  border-radius: 18%;
+  filter: drop-shadow(0 6px 16px rgba(0, 168, 181, 0.22));
 }
 
 /* IN phase — backdrop fades in, line draws across, logo pulses on the QRS. */
