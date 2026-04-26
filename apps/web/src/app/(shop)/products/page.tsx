@@ -4,12 +4,12 @@ import { getLocaleFromCookie } from "@/lib/i18n.server";
 import { getTranslations } from "@/lib/translations";
 import { CategoryHero } from "@/components/category/CategoryHero";
 import { CategoryCatalog } from "@/components/category/CategoryCatalog";
+import { PaginationControls } from "@/components/common/PaginationControls";
 import {
-  PaginationControls,
   PAGE_SIZE_OPTIONS,
   DEFAULT_PAGE_SIZE,
   type PageSize,
-} from "@/components/common/PaginationControls";
+} from "@/components/common/PaginationControls.shared";
 
 export default async function ProductsListPage({
   searchParams,
