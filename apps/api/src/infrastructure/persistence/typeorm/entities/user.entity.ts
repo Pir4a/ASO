@@ -56,6 +56,15 @@ export class User {
     @Column({ nullable: true })
     stripeCustomerId?: string;
 
+    @Column({ name: 'mfa_enabled', type: 'boolean', default: false })
+    mfaEnabled: boolean;
+
+    @Column({ name: 'mfa_secret', type: 'text', nullable: true })
+    mfaSecret: string | null;
+
+    @Column({ name: 'mfa_backup_codes', type: 'jsonb', nullable: true })
+    mfaBackupCodes: string[] | null;
+
     @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
 }

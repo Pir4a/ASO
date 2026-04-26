@@ -17,6 +17,12 @@ export class User {
     pendingEmail: string | null;
     pendingEmailToken: string | null;
     pendingEmailExpires: Date | null;
+    /** TOTP second factor active for this user. */
+    mfaEnabled: boolean;
+    /** Base32-encoded TOTP secret. Returned only during the setup flow. */
+    mfaSecret: string | null;
+    /** Bcrypt-hashed single-use backup codes (8 of them). */
+    mfaBackupCodes: string[] | null;
     stripeCustomerId?: string;
     createdAt?: Date;
 

@@ -70,6 +70,8 @@ export class ProfileController {
             role: user.role,
             isVerified: user.isVerified,
             pendingEmail: user.pendingEmail ?? null,
+            mfaEnabled: user.mfaEnabled === true,
+            mfaBackupCodesRemaining: user.mfaBackupCodes?.length ?? 0,
         };
     }
 

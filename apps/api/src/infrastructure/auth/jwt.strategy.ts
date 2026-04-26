@@ -6,6 +6,8 @@ interface JwtPayload {
     sub: string;
     email: string;
     role: string;
+    /** True when the session has cleared an MFA challenge (#7). */
+    mfa?: boolean;
 }
 
 @Injectable()
@@ -19,6 +21,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: JwtPayload) {
-        return { sub: payload.sub, email: payload.email, role: payload.role };
+        return {
+            sub: payload.sub,
+            email: payload.email,
+            role: payload.role,
+            mfa: payload.mfa === true,
+        };
     }
 }

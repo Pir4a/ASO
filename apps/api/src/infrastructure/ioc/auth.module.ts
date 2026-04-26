@@ -14,6 +14,10 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RequestPasswordResetUseCase } from '../../application/use-cases/auth/request-password-reset.use-case';
 import { ResetPasswordUseCase } from '../../application/use-cases/auth/reset-password.use-case';
 import { ConfirmEmailChangeUseCase } from '../../application/use-cases/auth/confirm-email-change.use-case';
+import { SetupMfaUseCase } from '../../application/use-cases/auth/mfa/setup-mfa.use-case';
+import { VerifyMfaUseCase } from '../../application/use-cases/auth/mfa/verify-mfa.use-case';
+import { DisableMfaUseCase } from '../../application/use-cases/auth/mfa/disable-mfa.use-case';
+import { MfaChallengeUseCase } from '../../application/use-cases/auth/mfa/mfa-challenge.use-case';
 
 @Module({
   imports: [
@@ -39,6 +43,10 @@ import { ConfirmEmailChangeUseCase } from '../../application/use-cases/auth/conf
     RequestPasswordResetUseCase,
     ResetPasswordUseCase,
     ConfirmEmailChangeUseCase,
+    SetupMfaUseCase,
+    VerifyMfaUseCase,
+    DisableMfaUseCase,
+    MfaChallengeUseCase,
     RolesGuard,
     JwtAuthGuard,
   ],

@@ -20,6 +20,9 @@ export class UserMapper {
             pendingEmailToken: entity.pendingEmailToken ?? null,
             pendingEmailExpires: entity.pendingEmailExpires ?? null,
             stripeCustomerId: entity.stripeCustomerId,
+            mfaEnabled: entity.mfaEnabled ?? false,
+            mfaSecret: entity.mfaSecret ?? null,
+            mfaBackupCodes: entity.mfaBackupCodes ?? null,
             lastLoginAt: entity.lastLoginAt,
             createdAt: entity.createdAt,
         });
@@ -44,6 +47,9 @@ export class UserMapper {
         entity.pendingEmailToken = domain.pendingEmailToken ?? null;
         entity.pendingEmailExpires = domain.pendingEmailExpires ?? null;
         entity.stripeCustomerId = domain.stripeCustomerId;
+        entity.mfaEnabled = domain.mfaEnabled ?? false;
+        entity.mfaSecret = domain.mfaSecret ?? null;
+        entity.mfaBackupCodes = domain.mfaBackupCodes ?? null;
         entity.lastLoginAt = domain.lastLoginAt;
         return entity;
     }

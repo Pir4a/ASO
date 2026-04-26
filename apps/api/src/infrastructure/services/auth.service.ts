@@ -84,10 +84,21 @@ export class AuthService {
       throw new UnauthorizedException('Ce compte a été désactivé par un administrateur.');
     }
 
+    // MFA gate: don't issue an access token yet — the client has to post the
+    // TOTP / backup code to /auth/mfa/challenge. The challengeToken is a short-
+    // lived JWT (5 min) carrying the user id and the rememberMe preference.
+    if (user.mfaEnabled) {
+      const challengeToken = this.jwtService.sign(
+        { sub: user.id, purpose: 'mfa-challenge', rememberMe: !!rememberMe },
+        { expiresIn: '5m' },
+      );
+      return { mfaRequired: true as const, challengeToken };
+    }
+
     user.lastLoginAt = new Date();
     await this.updateUserUseCase.execute(user);
 
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = { sub: user.id, email: user.email, role: user.role, mfa: false };
     // "Se souvenir de moi" → 7-day token; otherwise the default JWT TTL applies.
     const access_token = rememberMe
       ? this.jwtService.sign(payload, { expiresIn: '7d' })
@@ -95,7 +106,7 @@ export class AuthService {
 
     return {
       access_token,
-      user: { id: user.id, email: user.email, role: user.role },
+      user: { id: user.id, email: user.email, role: user.role, mfaEnabled: false },
     };
   }
 
