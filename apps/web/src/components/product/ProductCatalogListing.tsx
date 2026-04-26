@@ -19,6 +19,7 @@ export async function ProductCatalogListing({ products }: { products: Product[] 
   };
   const viewDetail = t("products.viewDetail");
   const noImage = t("products.noImage");
+  const featuredLabel = t("products.featuredBadge");
 
   return (
     <>
@@ -67,6 +68,16 @@ export async function ProductCatalogListing({ products }: { products: Product[] 
                     >
                       {statusLabels[product.status]}
                     </span>
+                    {product.featured && (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.04em] text-primary"
+                      >
+                        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="h-2.5 w-2.5">
+                          <path d="M8 1.5l1.95 4.07 4.5.55-3.3 3.04.83 4.43L8 11.4l-3.98 2.19.83-4.43-3.3-3.04 4.5-.55L8 1.5Z" />
+                        </svg>
+                        {featuredLabel}
+                      </span>
+                    )}
                     <span className="text-sm font-bold text-primary">
                       {(product.priceCents / 100).toFixed(2)} {product.currency}
                     </span>
@@ -110,6 +121,17 @@ export async function ProductCatalogListing({ products }: { products: Product[] 
                   {product.category?.name && (
                     <span className="absolute left-3 top-3 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
                       {product.category.name}
+                    </span>
+                  )}
+                  {product.featured && (
+                    <span
+                      className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.04em] text-white shadow-sm"
+                      style={{ color: "#fff" }}
+                    >
+                      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="h-2.5 w-2.5">
+                        <path d="M8 1.5l1.95 4.07 4.5.55-3.3 3.04.83 4.43L8 11.4l-3.98 2.19.83-4.43-3.3-3.04 4.5-.55L8 1.5Z" />
+                      </svg>
+                      {featuredLabel}
                     </span>
                   )}
                 </div>
