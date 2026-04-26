@@ -25,14 +25,25 @@ function VerifyContent() {
                 const res = await fetch(`${API_URL}/auth/verify?token=${token}`);
                 if (!res.ok) {
                     const payload = (await res.json().catch(() => ({}))) as {
+                        code?: string;
                         message?: string | string[];
                     };
-                    const message = Array.isArray(payload.message)
+                    // The use-case throws with `{ message, code }`; Nest's
+                    // exception filter wraps it under `message` (the inner
+                    // object). Normalize either shape so the front-end stays
+                    // tolerant of refactors on the backend.
+                    const messageField = Array.isArray(payload.message)
                         ? payload.message[0]
                         : payload.message;
-                    if (message === "VERIFY_EMAIL_TOKEN_EXPIRED") {
+                    const code =
+                        payload.code ??
+                        (typeof messageField === "object" && messageField !== null
+                            ? (messageField as { code?: string }).code
+                            : undefined) ??
+                        (typeof messageField === "string" ? messageField : undefined);
+                    if (code === "VERIFY_EMAIL_TOKEN_EXPIRED") {
                         setErrorKind("expired");
-                    } else if (message === "VERIFY_EMAIL_TOKEN_INVALID") {
+                    } else if (code === "VERIFY_EMAIL_TOKEN_INVALID") {
                         setErrorKind("invalid");
                     } else {
                         setErrorKind("generic");
