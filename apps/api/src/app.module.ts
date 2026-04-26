@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { LoggerModule } from 'nestjs-pino';
+import { randomUUID } from 'crypto';
+import type { IncomingMessage } from 'http';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LocalizeInterceptor } from './infrastructure/interceptors/localize.interceptor';
@@ -24,6 +27,53 @@ import { AppDataSource } from './db/data-source';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        // Pretty-print in dev, structured JSON in prod.
+        transport:
+          process.env.NODE_ENV === 'production'
+            ? undefined
+            : {
+                target: 'pino-pretty',
+                options: { singleLine: true, translateTime: 'HH:MM:ss.l' },
+              },
+        // Stable request id (echoed back as `x-request-id` for tracing).
+        genReqId: (req: IncomingMessage) => {
+          const incoming = req.headers['x-request-id'];
+          const fromHeader = Array.isArray(incoming) ? incoming[0] : incoming;
+          return fromHeader || randomUUID();
+        },
+        customProps: () => ({ service: 'althea-api' }),
+        // Redact PII / secrets that occasionally show up in request bodies
+        // and serialized objects.
+        redact: {
+          paths: [
+            'req.headers.authorization',
+            'req.headers.cookie',
+            'req.body.password',
+            'req.body.newPassword',
+            'req.body.currentPassword',
+            'req.body.passwordHash',
+            'req.body.token',
+            'req.body.paymentIntentId',
+            'res.headers["set-cookie"]',
+            '*.password',
+            '*.passwordHash',
+            '*.passwordResetToken',
+            '*.verificationToken',
+            '*.pendingEmailToken',
+            '*.paymentMethodId',
+          ],
+          censor: '[redacted]',
+        },
+        // Bump 5xx to ERROR, 4xx to WARN, success to INFO.
+        customLogLevel: (_req, res, err) => {
+          if (err || res.statusCode >= 500) return 'error';
+          if (res.statusCode >= 400) return 'warn';
+          return 'info';
+        },
+      },
     }),
     TypeOrmModule.forRoot(AppDataSource.options),
     UsersModule,
