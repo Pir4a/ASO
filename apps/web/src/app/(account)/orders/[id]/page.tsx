@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import {
+  addToCart,
   downloadOrderInvoice,
   getOrder,
   type OrderDTO,
   type OrderStatus,
 } from "@/lib/api";
+import { useCart } from "@/hooks/useCart";
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   pending: "En attente",
@@ -66,6 +69,10 @@ export default function OrderDetailPage({
   const [error, setError] = useState<string | null>(null);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [invoiceError, setInvoiceError] = useState<string | null>(null);
+  const [reorderLoading, setReorderLoading] = useState(false);
+  const [reorderError, setReorderError] = useState<string | null>(null);
+  const router = useRouter();
+  const { refreshCart } = useCart();
 
   useEffect(() => {
     let cancelled = false;
@@ -99,6 +106,27 @@ export default function OrderDetailPage({
       );
     } finally {
       setInvoiceLoading(false);
+    }
+  };
+
+  const handleReorder = async () => {
+    if (!order || reorderLoading) return;
+    setReorderError(null);
+    setReorderLoading(true);
+    try {
+      // Re-add every line to the active cart, then redirect.
+      for (const item of order.items ?? []) {
+        await addToCart(item.productId, item.quantity);
+      }
+      await refreshCart();
+      router.push("/cart");
+    } catch (e) {
+      setReorderError(
+        e instanceof Error
+          ? e.message
+          : "Impossible d'ajouter les articles au panier.",
+      );
+      setReorderLoading(false);
     }
   };
 
@@ -148,6 +176,27 @@ export default function OrderDetailPage({
             <span aria-hidden="true" className="block h-1.5 w-1.5 rounded-full bg-current" />
             {STATUS_LABELS[order.status] ?? order.status}
           </span>
+          <button
+            type="button"
+            onClick={handleReorder}
+            disabled={reorderLoading || (order.items ?? []).length === 0}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-[12.5px] font-semibold text-primary transition hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
+            title="Re-ajouter les articles dans le panier"
+          >
+            {reorderLoading ? (
+              <>
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                Ajout en cours…
+              </>
+            ) : (
+              <>
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3 w-3">
+                  <path d="M3 8a5 5 0 1 0 1.5-3.5L3 6m0 0V3m0 3h3" />
+                </svg>
+                Renouveler la commande
+              </>
+            )}
+          </button>
           <Link
             href="/orders"
             className="inline-flex items-center gap-1.5 rounded-lg border border-foreground/15 bg-white px-3 py-2 text-[12.5px] font-semibold text-foreground transition hover:border-primary hover:text-primary"
@@ -159,6 +208,14 @@ export default function OrderDetailPage({
           </Link>
         </div>
       </header>
+      {reorderError && (
+        <div
+          role="alert"
+          className="rounded-lg border border-error/30 bg-error/10 px-4 py-2.5 text-[12.5px] text-error"
+        >
+          {reorderError}
+        </div>
+      )}
 
       <div className="grid items-start gap-6 lg:grid-cols-[1.6fr_minmax(0,1fr)]">
         {/* ── Items ──────────────────────────────────────── */}
