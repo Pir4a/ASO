@@ -104,7 +104,7 @@ export async function getProductsSearch(filters: {
   limit?: number;
 }): Promise<{ products: Product[]; meta: ProductSearchMeta; facets: ProductSearchFacets }> {
   const page = Math.max(1, filters.page ?? 1);
-  const limit = Math.min(48, Math.max(1, filters.limit ?? 12));
+  const limit = Math.min(50, Math.max(1, filters.limit ?? 12));
   const sort = PRODUCT_SEARCH_SORT.includes(filters.sort as ProductSearchSortParam)
     ? (filters.sort as ProductSearchSortParam)
     : "relevance";
@@ -159,7 +159,7 @@ export async function getProductsByCategorySlug(
   options?: { page?: number; limit?: number },
 ): Promise<{ products: Product[]; meta: ProductBrowseMeta }> {
   const page = Math.max(1, options?.page ?? 1);
-  const limit = Math.min(48, Math.max(1, options?.limit ?? 12));
+  const limit = Math.min(50, Math.max(1, options?.limit ?? 12));
   const qs = new URLSearchParams({
     categorySlug,
     page: String(page),
@@ -207,7 +207,7 @@ export async function getProductsCatalog(
   options?: { page?: number; limit?: number },
 ): Promise<{ products: Product[]; meta: ProductBrowseMeta }> {
   const page = Math.max(1, options?.page ?? 1);
-  const limit = Math.min(48, Math.max(1, options?.limit ?? 12));
+  const limit = Math.min(50, Math.max(1, options?.limit ?? 12));
   const qs = new URLSearchParams({
     page: String(page),
     limit: String(limit),
