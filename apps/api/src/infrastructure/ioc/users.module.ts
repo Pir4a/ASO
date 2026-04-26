@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User as UserEntity } from '../persistence/typeorm/entities/user.entity';
 import { PostgresUserRepository } from '../persistence/typeorm/repositories/postgres-user.repository';
@@ -13,9 +13,10 @@ import { DeleteUserUseCase } from '../../application/use-cases/users/delete-user
 import { USER_REPOSITORY_TOKEN } from '../../domain/repositories/user.repository.interface';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
+import { AuthModule } from './auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity])],
+  imports: [TypeOrmModule.forFeature([UserEntity]), forwardRef(() => AuthModule)],
   controllers: [UsersController],
   providers: [
     {

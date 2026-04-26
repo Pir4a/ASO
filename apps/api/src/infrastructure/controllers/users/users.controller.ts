@@ -1,9 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { GetUsersUseCase } from '../../../application/use-cases/users/get-users.use-case';
 import { FindUserByIdUseCase } from '../../../application/use-cases/users/find-user-by-id.use-case';
 import { UpdateUserUseCase } from '../../../application/use-cases/users/update-user.use-case';
 import { DeleteUserUseCase } from '../../../application/use-cases/users/delete-user.use-case';
-import { UpdateUserStatusDto, SendAdminEmailDto } from '../../dto/users/admin-user-actions.dto';
+import { RequestPasswordResetUseCase } from '../../../application/use-cases/auth/request-password-reset.use-case';
+import { UpdateUserStatusDto } from '../../dto/users/admin-user-actions.dto';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { RolesGuard } from '../../guards/roles.guard';
 import { Roles } from '../../auth/roles.decorator';
@@ -17,6 +18,7 @@ export class UsersController {
     private readonly findUserByIdUseCase: FindUserByIdUseCase,
     private readonly updateUserUseCase: UpdateUserUseCase,
     private readonly deleteUserUseCase: DeleteUserUseCase,
+    private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
   ) {}
 
   @Get()
@@ -69,25 +71,15 @@ export class UsersController {
     return { success: true };
   }
 
+  /** Triggers the real ticket-#1 reset-password flow (email + 24h token). */
   @Post(':id/reset-password')
   async resetPassword(@Param('id') id: string) {
     const user = await this.findUserByIdUseCase.execute(id);
-    if (!user) return { message: 'Utilisateur introuvable.' };
-    return { success: true, message: `Email de réinitialisation envoyé à ${user.email}` };
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+    await this.requestPasswordResetUseCase.execute(user.email);
+    return { success: true, sentTo: user.email };
   }
 
-  @Post(':id/send-email')
-  async sendEmail(@Param('id') id: string, @Body() body: SendAdminEmailDto) {
-    const user = await this.findUserByIdUseCase.execute(id);
-    if (!user) return { message: 'Utilisateur introuvable.' };
-    return {
-      success: true,
-      to: user.email,
-      subject: body.subject,
-      message: 'Email admin enregistré (mode MVP).',
-    };
-  }
-  
   @Patch(':id/role')
   async updateRole(@Param('id') id: string, @Body() body: { role: 'customer' | 'admin' }) {
     const user = await this.findUserByIdUseCase.execute(id);

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import type { StringValue } from 'ms';
@@ -17,7 +17,7 @@ import { ConfirmEmailChangeUseCase } from '../../application/use-cases/auth/conf
 
 @Module({
   imports: [
-    UsersModule,
+    forwardRef(() => UsersModule),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       useFactory: () => ({
@@ -42,7 +42,7 @@ import { ConfirmEmailChangeUseCase } from '../../application/use-cases/auth/conf
     RolesGuard,
     JwtAuthGuard,
   ],
-  exports: [AuthService, JwtStrategy, PassportModule, EMAIL_GATEWAY],
+  exports: [AuthService, JwtStrategy, PassportModule, EMAIL_GATEWAY, RequestPasswordResetUseCase],
 })
 export class AuthModule { }
 
