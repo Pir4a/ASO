@@ -14,6 +14,8 @@ export class UserMapper {
             isActive: entity.isActive,
             verificationToken: entity.verificationToken,
             verificationTokenExpires: entity.verificationTokenExpires,
+            passwordResetToken: entity.passwordResetToken ?? null,
+            passwordResetTokenExpires: entity.passwordResetTokenExpires ?? null,
             stripeCustomerId: entity.stripeCustomerId,
             lastLoginAt: entity.lastLoginAt,
         });
@@ -32,6 +34,8 @@ export class UserMapper {
         entity.isActive = domain.isActive;
         entity.verificationToken = domain.verificationToken;
         entity.verificationTokenExpires = domain.verificationTokenExpires;
+        entity.passwordResetToken = domain.passwordResetToken ?? null;
+        entity.passwordResetTokenExpires = domain.passwordResetTokenExpires ?? null;
         entity.stripeCustomerId = domain.stripeCustomerId;
         entity.lastLoginAt = domain.lastLoginAt;
         return entity;

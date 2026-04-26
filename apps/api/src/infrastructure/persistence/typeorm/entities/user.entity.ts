@@ -38,6 +38,12 @@ export class User {
     @Column({ nullable: true })
     verificationTokenExpires?: Date;
 
+    @Column({ name: 'password_reset_token', type: 'text', nullable: true })
+    passwordResetToken: string | null;
+
+    @Column({ name: 'password_reset_token_expires', type: 'timestamptz', nullable: true })
+    passwordResetTokenExpires: Date | null;
+
     @Column({ nullable: true })
     stripeCustomerId?: string;
 }

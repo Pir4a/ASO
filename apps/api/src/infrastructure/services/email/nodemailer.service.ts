@@ -76,4 +76,32 @@ export class NodemailerService implements EmailGateway {
       this.logger.log(`Verification link (dev fallback): ${verificationLink}`);
     }
   }
+
+  async sendPasswordResetEmail(to: string, token: string, _locale?: string): Promise<void> {
+    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
+
+    const transporter = await this.getTransporter();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer's Transporter generic defaults to `any`
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM || '"Althea Shop" <no-reply@althea.local>',
+      to,
+      subject: 'Réinitialisation de votre mot de passe Althea',
+      html: `
+                <h1>Réinitialisation de votre mot de passe</h1>
+                <p>Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le lien ci-dessous pour choisir un nouveau mot de passe :</p>
+                <p><a href="${resetLink}">Réinitialiser mon mot de passe</a></p>
+                <p>Ce lien expirera dans 24 heures. Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.</p>
+            `,
+    });
+
+    this.logger.log(`Password reset email sent to ${to}`);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- info is `any` from sendMail; nodemailer accepts it
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      this.logger.log(`Ethereal preview: ${previewUrl}`);
+    } else if (!process.env.SMTP_HOST) {
+      this.logger.log(`Password reset link (dev fallback): ${resetLink}`);
+    }
+  }
 }

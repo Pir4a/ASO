@@ -591,6 +591,33 @@ export async function downloadOrderInvoice(id: string): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
+// ── Auth (password reset) ──────────────────────────────────────────
+
+export async function requestPasswordReset(email: string): Promise<{ ok: true }> {
+  const res = await fetch(`${API_URL}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    throw new Error(`API error ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<{ ok: true }> {
+  const res = await fetch(`${API_URL}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, newPassword }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || `Failed to reset password (${res.status})`);
+  }
+  return res.json();
+}
+
 // ── Chat (Llama) ───────────────────────────────────────────────────
 
 export async function sendChatMessage(
