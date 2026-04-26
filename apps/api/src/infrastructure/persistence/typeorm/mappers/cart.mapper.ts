@@ -21,6 +21,10 @@ export class CartMapper {
                 productThumbnailUrl: item.product?.thumbnailUrl,
                 productPrice: Number(item.product?.price),
                 productCurrency: item.product?.currency,
+                productVatRate:
+                    item.product?.vatRate !== undefined && item.product?.vatRate !== null
+                        ? Number(item.product.vatRate)
+                        : undefined,
             })) : [],
         });
     }

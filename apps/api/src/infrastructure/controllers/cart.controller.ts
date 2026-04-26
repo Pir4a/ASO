@@ -48,9 +48,19 @@ export class CartController {
     @UseGuards(OptionalJwtAuthGuard)
     async getCart(@Request() req: any) {
         const userId = resolveCartOwner(req);
-        if (!userId) return { id: null, items: [], status: 'active' };
+        const empty = {
+            id: null,
+            items: [],
+            status: 'active',
+            currency: 'EUR',
+            subtotalCents: 0,
+            vatCents: 0,
+            totalCents: 0,
+        };
+        if (!userId) return empty;
         const cart = await this.getCartUseCase.execute(userId);
-        return cart ?? { id: null, items: [], status: 'active' };
+        if (!cart) return empty;
+        return { ...cart, ...computeCartTotals(cart) };
     }
 
     @Post('items')
@@ -93,4 +103,52 @@ export class CartController {
     async applyPromoCode(@Body() body: { code: string; orderTotal: number }) {
         return this.applyPromotionUseCase.execute(body.code, body.orderTotal);
     }
+}
+
+interface CartLike {
+    items: {
+        quantity: number;
+        priceAtAdd?: number;
+        productPrice?: number;
+        productCurrency?: string;
+        productVatRate?: number;
+    }[];
+}
+
+/**
+ * Computes per-line VAT in cents using each product's `vatRate` (defaulting
+ * to 20 % when missing). Avoids floating-point loss by working in cents.
+ * Stored prices are TTC; we back-derive HT and VAT.
+ */
+function computeCartTotals(cart: CartLike): {
+    currency: string;
+    subtotalCents: number;
+    vatCents: number;
+    totalCents: number;
+} {
+    let totalCents = 0;
+    let vatCents = 0;
+    let currency = 'EUR';
+
+    for (const item of cart.items ?? []) {
+        const ttc = Number(item.priceAtAdd ?? item.productPrice ?? 0);
+        if (item.productCurrency) currency = item.productCurrency;
+        if (!Number.isFinite(ttc) || ttc <= 0 || !item.quantity) continue;
+        const lineTtcCents = Math.round(ttc * 100) * item.quantity;
+        const rate =
+            item.productVatRate !== undefined && Number.isFinite(item.productVatRate)
+                ? Number(item.productVatRate)
+                : 20;
+        const lineHtCents = Math.round(lineTtcCents / (1 + rate / 100));
+        const lineVatCents = lineTtcCents - lineHtCents;
+        totalCents += lineTtcCents;
+        vatCents += lineVatCents;
+    }
+
+    return {
+        currency,
+        subtotalCents: totalCents - vatCents,
+        vatCents,
+        totalCents,
+    };
 }

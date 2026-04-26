@@ -5,13 +5,15 @@ export class CartItem {
     cartId: string;
     productId: string;
     quantity: number;
-    priceAtAdd?: number; // Snapshot
+    priceAtAdd?: number; // Snapshot (TTC, in major currency unit)
     // Product details helpers for UI
     productName?: string;
     productSlug?: string;
     productThumbnailUrl?: string;
     productPrice?: number;
     productCurrency?: string;
+    /** VAT rate of the product as a percentage (e.g. 20 for 20 %). */
+    productVatRate?: number;
 
     constructor(partial: Partial<CartItem>) {
         Object.assign(this, partial);

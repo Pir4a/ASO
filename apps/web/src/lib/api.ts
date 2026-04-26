@@ -363,10 +363,33 @@ export async function getCart(guestCartId?: string): Promise<{
       thumbnailUrl: item.productThumbnailUrl,
     }));
 
-    const subtotal = items.reduce((sum: number, item: any) => sum + item.priceCents * item.quantity, 0);
-    const vat = Math.round(subtotal * 0.2);
+    // The API now exposes per-line VAT-aware totals (computed from each
+    // product's vatRate). Fall back to a 20 % guess only when the field
+    // is missing, e.g. on legacy clients hitting an older API.
+    const totalCents =
+      typeof cart.totalCents === "number"
+        ? cart.totalCents
+        : items.reduce(
+            (sum: number, item: any) => sum + item.priceCents * item.quantity,
+            0,
+          );
+    const vatCents =
+      typeof cart.vatCents === "number"
+        ? cart.vatCents
+        : Math.round(totalCents - totalCents / 1.2);
+    const subtotalCents =
+      typeof cart.subtotalCents === "number"
+        ? cart.subtotalCents
+        : totalCents - vatCents;
 
-    return { id: cart.id, items, subtotal, vat, total: subtotal + vat, currency: "EUR" };
+    return {
+      id: cart.id,
+      items,
+      subtotal: subtotalCents,
+      vat: vatCents,
+      total: totalCents,
+      currency: cart.currency || "EUR",
+    };
   } catch (error) {
     console.error("Failed to fetch cart:", error);
     return { items: [], subtotal: 0, vat: 0, total: 0, currency: "EUR" };
