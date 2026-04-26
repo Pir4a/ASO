@@ -1,6 +1,7 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Patch, Param, Get, Query, Request, UseGuards, Logger } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Patch, Param, Get, Query, Req, Res, Request, UnauthorizedException, UseGuards, Logger } from '@nestjs/common';
+import type { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { IsString, IsNotEmpty, MaxLength } from 'class-validator';
-import { AuthService } from '../services/auth.service';
+import { AuthService, REFRESH_TOKEN_TTL_DAYS } from '../services/auth.service';
 import { RegisterDto, LoginDto, UpdateUserRoleDto } from '../dto/auth/auth.dto';
 import { ForgotPasswordDto } from '../dto/auth/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/auth/reset-password.dto';
@@ -35,6 +36,8 @@ interface AuthedRequest {
   user?: { sub?: string };
 }
 
+const REFRESH_COOKIE_NAME = 'refresh_token';
+
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
@@ -48,6 +51,32 @@ export class AuthController {
     private readonly mfaChallengeUseCase: MfaChallengeUseCase,
   ) { }
 
+  /** Sets the httpOnly refresh cookie. `persistent` controls whether it
+      survives a browser restart (rememberMe=true) or stays a session cookie. */
+  private setRefreshCookie(res: ExpressResponse, raw: string, persistent: boolean) {
+    res.cookie(REFRESH_COOKIE_NAME, raw, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      // Cookies must be readable on /auth/refresh and /auth/logout, both
+      // mounted under /api/auth — but other routes don't need this cookie,
+      // so scope it.
+      path: '/api/auth',
+      ...(persistent
+        ? { maxAge: REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000 }
+        : {}),
+    });
+  }
+
+  private clearRefreshCookie(res: ExpressResponse) {
+    res.clearCookie(REFRESH_COOKIE_NAME, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/api/auth',
+    });
+  }
+
   @Post('register')
   register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
@@ -55,8 +84,21 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) res: ExpressResponse,
+  ) {
+    const result = await this.authService.login(loginDto);
+    // MFA-required short-circuit — no refresh cookie until the challenge
+    // is cleared by the client.
+    if ('mfaRequired' in result && result.mfaRequired) {
+      return result;
+    }
+    this.setRefreshCookie(res, result.refresh_token, result.rememberMe);
+    return {
+      access_token: result.access_token,
+      user: result.user,
+    };
   }
 
   @Patch('user/:id/role')
@@ -123,8 +165,53 @@ export class AuthController {
   /** #7 — second login step when MFA is enabled (TOTP or backup code). */
   @Post('mfa/challenge')
   @HttpCode(HttpStatus.OK)
-  async mfaChallenge(@Body() body: MfaChallengeDto) {
-    return this.mfaChallengeUseCase.execute(body.challengeToken, body.code);
+  async mfaChallenge(
+    @Body() body: MfaChallengeDto,
+    @Res({ passthrough: true }) res: ExpressResponse,
+  ) {
+    const result = await this.mfaChallengeUseCase.execute(body.challengeToken, body.code);
+    this.setRefreshCookie(res, result.refresh_token, result.rememberMe);
+    return {
+      access_token: result.access_token,
+      user: result.user,
+      ...(('backupCodeUsed' in result && result.backupCodeUsed)
+        ? { backupCodeUsed: true }
+        : {}),
+    };
+  }
+
+  /** #37 — exchange the httpOnly refresh cookie for a fresh 15m access token,
+      rotating the cookie in the process. */
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(
+    @Req() req: ExpressRequest,
+    @Res({ passthrough: true }) res: ExpressResponse,
+  ) {
+    const raw = (req.cookies as Record<string, string> | undefined)?.[REFRESH_COOKIE_NAME];
+    if (!raw) throw new UnauthorizedException('Refresh token manquant.');
+    try {
+      const result = await this.authService.refreshAccessToken(raw);
+      // Rotation always renews maxAge — keeps "logged in" sliding for active users.
+      this.setRefreshCookie(res, result.refresh_token, true);
+      return { access_token: result.access_token, user: result.user };
+    } catch (e) {
+      this.clearRefreshCookie(res);
+      throw e;
+    }
+  }
+
+  /** #37 — best-effort revoke + cookie clear. Always returns 204 so a
+      half-stale cookie doesn't surface a confusing error to the user. */
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async logout(
+    @Req() req: ExpressRequest,
+    @Res({ passthrough: true }) res: ExpressResponse,
+  ) {
+    const raw = (req.cookies as Record<string, string> | undefined)?.[REFRESH_COOKIE_NAME];
+    if (raw) await this.authService.revokeRefreshTokenByRaw(raw);
+    this.clearRefreshCookie(res);
   }
 
   /** #7 — disable MFA (requires a fresh TOTP code as proof of possession). */

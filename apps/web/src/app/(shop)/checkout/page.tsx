@@ -758,6 +758,7 @@ function IdentifyStep({
       const res = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password, rememberMe }),
       });
       const data = await res.json().catch(() => ({}));

@@ -2,13 +2,21 @@ import { BadRequestException, Inject, Injectable, UnauthorizedException } from '
 import { JwtService } from '@nestjs/jwt';
 import { verifySync } from 'otplib';
 import * as bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 import {
     USER_REPOSITORY_TOKEN,
     type UserRepository,
 } from '../../../../domain/repositories/user.repository.interface';
+import {
+    ACCESS_TOKEN_TTL,
+    REFRESH_TOKEN_BYTES,
+    REFRESH_TOKEN_TTL_DAYS,
+} from '../../../../infrastructure/services/auth.service';
 
 export interface MfaChallengeResult {
     access_token: string;
+    refresh_token: string;
+    rememberMe: boolean;
     user: { id: string; email: string; role: string; mfaEnabled: boolean };
 }
 
@@ -76,6 +84,14 @@ export class MfaChallengeUseCase {
         }
 
         user.lastLoginAt = new Date();
+        // #37 — issue a fresh refresh token alongside the MFA-cleared access
+        // token. We mint+hash inline rather than calling AuthService to avoid
+        // the cyclic IoC dependency (AuthService depends on this use case).
+        const rawRefresh = randomBytes(REFRESH_TOKEN_BYTES).toString('hex');
+        user.refreshTokenHash = await bcrypt.hash(rawRefresh, 10);
+        user.refreshTokenExpiresAt = new Date(
+            Date.now() + REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000,
+        );
         await this.userRepository.update(user);
 
         const accessPayload = {
@@ -85,12 +101,12 @@ export class MfaChallengeUseCase {
             mfa: true,
             mfaEnabled: true,
         };
-        const access_token = payload.rememberMe
-            ? this.jwtService.sign(accessPayload, { expiresIn: '7d' })
-            : this.jwtService.sign(accessPayload);
+        const access_token = this.jwtService.sign(accessPayload, { expiresIn: ACCESS_TOKEN_TTL });
 
         return {
             access_token,
+            refresh_token: rawRefresh,
+            rememberMe: !!payload.rememberMe,
             user: {
                 id: user.id,
                 email: user.email,

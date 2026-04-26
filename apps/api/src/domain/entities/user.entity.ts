@@ -23,6 +23,9 @@ export class User {
     mfaSecret: string | null;
     /** Bcrypt-hashed single-use backup codes (8 of them). */
     mfaBackupCodes: string[] | null;
+    /** Bcrypt-hashed refresh token — single slot per user (#37). */
+    refreshTokenHash: string | null;
+    refreshTokenExpiresAt: Date | null;
     stripeCustomerId?: string;
     createdAt?: Date;
 

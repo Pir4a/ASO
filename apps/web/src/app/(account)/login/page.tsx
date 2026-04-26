@@ -44,6 +44,7 @@ function LoginForm() {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password, rememberMe }),
       });
       const data = await response.json();
@@ -70,6 +71,7 @@ function LoginForm() {
       const res = await fetch(`${API_URL}/auth/mfa/challenge`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ challengeToken, code: mfaCode.trim() }),
       });
       const data = await res.json();

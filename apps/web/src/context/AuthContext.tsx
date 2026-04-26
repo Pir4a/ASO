@@ -30,25 +30,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Récupérer la session au chargement (localStorage pour MVP)
-    const storedToken = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-    if (storedToken && storedUser) {
-      try {
-        if (isTokenExpired(storedToken)) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-        } else {
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser));
+    let cancelled = false;
+    const bootstrap = async () => {
+      const storedToken = localStorage.getItem("token");
+      const storedUser = localStorage.getItem("user");
+      if (storedToken && storedUser) {
+        try {
+          if (!isTokenExpired(storedToken)) {
+            if (!cancelled) {
+              setToken(storedToken);
+              setUser(JSON.parse(storedUser));
+            }
+            setLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.error("Erreur lors de la lecture des données utilisateur du localStorage", error);
         }
-      } catch (error) {
-        console.error("Erreur lors de la lecture des données utilisateur du localStorage", error);
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
       }
-    }
-    setLoading(false);
+      // Stored token missing or expired — try the refresh cookie before
+      // treating the user as logged out. (#37 — silent re-auth.)
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+      try {
+        const res = await fetch(`${API_URL}/auth/refresh`, {
+          method: "POST",
+          credentials: "include",
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { access_token?: string; user?: User };
+          if (data.access_token && data.user) {
+            localStorage.setItem("token", data.access_token);
+            localStorage.setItem("user", JSON.stringify(data.user));
+            if (!cancelled) {
+              setToken(data.access_token);
+              setUser(data.user);
+            }
+            setLoading(false);
+            return;
+          }
+        }
+      } catch {
+        /* offline — fall through to logged-out state */
+      }
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setLoading(false);
+    };
+    void bootstrap();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const login = async (newToken: string, newUser: User) => {
@@ -79,6 +110,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    // #37 — best-effort revoke on the server so the refresh cookie + DB hash
+    // are cleared. We don't await because the navigation below would race it.
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+    void fetch(`${API_URL}/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    }).catch(() => {
+      /* offline / network error: cookie still expires server-side eventually */
+    });
     setToken(null);
     setUser(null);
     localStorage.removeItem("token");

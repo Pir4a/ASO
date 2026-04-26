@@ -65,6 +65,12 @@ export class User {
     @Column({ name: 'mfa_backup_codes', type: 'jsonb', nullable: true })
     mfaBackupCodes: string[] | null;
 
+    @Column({ name: 'refresh_token_hash', type: 'text', nullable: true })
+    refreshTokenHash: string | null;
+
+    @Column({ name: 'refresh_token_expires_at', type: 'timestamptz', nullable: true })
+    refreshTokenExpiresAt: Date | null;
+
     @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
 }

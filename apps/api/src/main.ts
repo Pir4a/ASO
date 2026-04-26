@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
@@ -32,6 +33,7 @@ async function bootstrap() {
         process.env.NODE_ENV === 'production' ? undefined : false,
     }),
   );
+  app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

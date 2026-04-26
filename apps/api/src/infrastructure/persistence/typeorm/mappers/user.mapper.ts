@@ -23,6 +23,8 @@ export class UserMapper {
             mfaEnabled: entity.mfaEnabled ?? false,
             mfaSecret: entity.mfaSecret ?? null,
             mfaBackupCodes: entity.mfaBackupCodes ?? null,
+            refreshTokenHash: entity.refreshTokenHash ?? null,
+            refreshTokenExpiresAt: entity.refreshTokenExpiresAt ?? null,
             lastLoginAt: entity.lastLoginAt,
             createdAt: entity.createdAt,
         });
@@ -50,6 +52,8 @@ export class UserMapper {
         entity.mfaEnabled = domain.mfaEnabled ?? false;
         entity.mfaSecret = domain.mfaSecret ?? null;
         entity.mfaBackupCodes = domain.mfaBackupCodes ?? null;
+        entity.refreshTokenHash = domain.refreshTokenHash ?? null;
+        entity.refreshTokenExpiresAt = domain.refreshTokenExpiresAt ?? null;
         entity.lastLoginAt = domain.lastLoginAt;
         return entity;
     }
