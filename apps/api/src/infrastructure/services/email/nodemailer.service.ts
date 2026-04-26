@@ -3,6 +3,7 @@ import nodemailer, { Transporter } from 'nodemailer';
 import {
   EmailGateway,
   SendOrderConfirmationOptions,
+  CreditNoteEmailContext,
 } from '../../../domain/gateways/email.gateway';
 import type { Order } from '../../../domain/entities/order.entity';
 
@@ -337,5 +338,56 @@ export class NodemailerService implements EmailGateway {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+  async sendCreditNoteEmail(
+    to: string,
+    context: CreditNoteEmailContext,
+    pdfBuffer: Buffer,
+  ): Promise<void> {
+    const formatted = new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: context.currency || 'EUR',
+    }).format(context.amountTtc);
+    const issuedDate = new Date(context.issuedAt).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+
+    const transporter = await this.getTransporter();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer's Transporter generic defaults to `any`
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM || '"Althea Shop" <no-reply@althea.local>',
+      to,
+      subject: `Avoir Althea ${context.number}`,
+      html: `
+                <h1>Avoir émis</h1>
+                <p>Bonjour,</p>
+                <p>Nous vous confirmons l'émission d'un avoir <strong>${context.number}</strong> en référence à la facture <strong>${context.invoiceReference}</strong>.</p>
+                <ul>
+                    <li><strong>Date :</strong> ${issuedDate}</li>
+                    <li><strong>Motif :</strong> ${context.reason}</li>
+                    <li><strong>Montant TTC :</strong> ${formatted}</li>
+                </ul>
+                <p>Le document est joint à cet e-mail pour vos archives comptables.</p>
+                <p>L'équipe Althea Systems</p>
+            `,
+      attachments: [
+        {
+          filename: `${context.number}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf',
+        },
+      ],
+    });
+
+    this.logger.log(`Credit note email sent to ${to} for ${context.number}`);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- info is `any` from sendMail; nodemailer accepts it
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      this.logger.log(`Ethereal preview: ${previewUrl}`);
+    }
   }
 }

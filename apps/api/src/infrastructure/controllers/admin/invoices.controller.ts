@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
     HttpCode,
     HttpStatus,
@@ -20,8 +21,10 @@ import { GetInvoiceUseCase } from '../../../application/use-cases/invoices/get-i
 import { GetInvoicePdfUseCase } from '../../../application/use-cases/invoices/get-invoice-pdf.use-case';
 import { ResendInvoiceEmailUseCase } from '../../../application/use-cases/invoices/resend-invoice-email.use-case';
 import { UpdateInvoiceUseCase } from '../../../application/use-cases/invoices/update-invoice.use-case';
+import { CancelInvoiceUseCase } from '../../../application/use-cases/credit-notes/cancel-invoice.use-case';
 import { ListInvoicesQueryDto } from '../../dto/invoices/list-invoices-query.dto';
 import { PatchInvoiceDto, ResendInvoiceEmailDto } from '../../dto/invoices/patch-invoice.dto';
+import { CancelInvoiceDto } from '../../dto/credit-notes/send-credit-note-email.dto';
 
 @Controller('admin/invoices')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -33,6 +36,7 @@ export class AdminInvoicesController {
         private readonly getInvoicePdf: GetInvoicePdfUseCase,
         private readonly resendInvoiceEmail: ResendInvoiceEmailUseCase,
         private readonly updateInvoice: UpdateInvoiceUseCase,
+        private readonly cancelInvoice: CancelInvoiceUseCase,
     ) { }
 
     @Get()
@@ -95,5 +99,19 @@ export class AdminInvoicesController {
     @Patch(':id')
     async patch(@Param('id') id: string, @Body() body: PatchInvoiceDto) {
         return this.updateInvoice.execute(id, body);
+    }
+
+    /**
+     * Soft-cancel an invoice and emit the mirror credit note (AVO-…). The
+     * underlying order is also cancelled best-effort. Returns the credit note.
+     */
+    @Delete(':id')
+    @HttpCode(HttpStatus.OK)
+    async delete(@Param('id') id: string, @Body() body: CancelInvoiceDto) {
+        const creditNote = await this.cancelInvoice.execute({
+            invoiceId: id,
+            reason: body?.reason,
+        });
+        return { ok: true, creditNote };
     }
 }

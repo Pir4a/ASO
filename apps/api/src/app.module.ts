@@ -17,6 +17,7 @@ import { PaymentModule } from './infrastructure/ioc/payment.module';
 import { ContactModule } from './infrastructure/ioc/contact.module';
 import { ChatModule } from './infrastructure/ioc/chat.module';
 import { InvoicesModule } from './infrastructure/ioc/invoices.module';
+import { CreditNotesModule } from './infrastructure/ioc/credit-notes.module';
 import { AppDataSource } from './db/data-source';
 
 @Module({
@@ -37,6 +38,7 @@ import { AppDataSource } from './db/data-source';
     ContactModule,
     ChatModule,
     InvoicesModule,
+    CreditNotesModule,
   ],
   controllers: [AppController],
   providers: [
