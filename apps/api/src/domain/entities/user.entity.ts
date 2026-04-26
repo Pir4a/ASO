@@ -14,6 +14,9 @@ export class User {
     verificationTokenExpires?: Date;
     passwordResetToken: string | null;
     passwordResetTokenExpires: Date | null;
+    pendingEmail: string | null;
+    pendingEmailToken: string | null;
+    pendingEmailExpires: Date | null;
     stripeCustomerId?: string;
 
     constructor(partial: Partial<User>) {

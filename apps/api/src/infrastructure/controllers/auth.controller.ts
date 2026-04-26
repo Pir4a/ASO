@@ -6,12 +6,16 @@ import { ResetPasswordDto } from '../dto/auth/reset-password.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { ConfirmEmailChangeUseCase } from '../../application/use-cases/auth/confirm-email-change.use-case';
 
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
-  constructor(private readonly authService: AuthService) { }
+  constructor(
+    private readonly authService: AuthService,
+    private readonly confirmEmailChangeUseCase: ConfirmEmailChangeUseCase,
+  ) { }
 
   @Post('register')
   register(@Body() registerDto: RegisterDto) {
@@ -56,5 +60,11 @@ export class AuthController {
   async resetPassword(@Body() dto: ResetPasswordDto) {
     await this.authService.resetPassword(dto.token, dto.newPassword);
     return { ok: true };
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Get('confirm-email-change')
+  async confirmEmailChange(@Query('token') token: string) {
+    return this.confirmEmailChangeUseCase.execute(token);
   }
 }

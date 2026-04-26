@@ -9,6 +9,7 @@ interface User {
   role: string;
   firstName?: string;
   lastName?: string;
+  pendingEmail?: string | null;
 }
 
 interface AuthContextType {

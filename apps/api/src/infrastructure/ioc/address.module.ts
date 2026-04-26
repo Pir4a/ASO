@@ -8,12 +8,15 @@ import { GetUserAddressesUseCase } from '../../application/use-cases/users/get-u
 import { CreateUserAddressUseCase } from '../../application/use-cases/users/create-user-address.use-case';
 import { UpdateUserAddressUseCase } from '../../application/use-cases/users/update-user-address.use-case';
 import { DeleteUserAddressUseCase } from '../../application/use-cases/users/delete-user-address.use-case';
+import { RequestEmailChangeUseCase } from '../../application/use-cases/users/request-email-change.use-case';
 import { UsersModule } from './users.module';
+import { AuthModule } from './auth.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Address]),
         UsersModule,
+        AuthModule,
     ],
     controllers: [ProfileController],
     providers: [
@@ -25,6 +28,7 @@ import { UsersModule } from './users.module';
         CreateUserAddressUseCase,
         UpdateUserAddressUseCase,
         DeleteUserAddressUseCase,
+        RequestEmailChangeUseCase,
     ],
     exports: [ADDRESS_REPOSITORY_TOKEN],
 })
