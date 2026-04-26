@@ -10,6 +10,7 @@ import { GetOrdersUseCase } from '../../application/use-cases/orders/get-orders.
 import { GetOrderDetailsUseCase } from '../../application/use-cases/orders/get-order-details.use-case';
 import { GenerateInvoicePdfUseCase } from '../../application/use-cases/orders/generate-invoice-pdf.use-case';
 import { OrderNumberService } from '../../application/use-cases/orders/order-number.service';
+import { CreateAdminOrderUseCase } from '../../application/use-cases/orders/create-admin-order.use-case';
 import { CartModule } from './cart.module';
 import { CheckoutController } from '../controllers/checkout.controller';
 import { OrdersController } from '../controllers/orders/orders.controller';
@@ -48,6 +49,7 @@ import { RolesGuard } from '../guards/roles.guard';
         GetOrderDetailsUseCase,
         GenerateInvoicePdfUseCase,
         OrderNumberService,
+        CreateAdminOrderUseCase,
         PdfService,
         JwtAuthGuard,
         OptionalJwtAuthGuard,

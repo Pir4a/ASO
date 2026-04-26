@@ -4,6 +4,7 @@ import {
     Controller,
     Delete,
     Get,
+    Header,
     Inject,
     NotFoundException,
     Param,
@@ -12,6 +13,7 @@ import {
     Query,
     UseGuards,
 } from '@nestjs/common';
+import { buildCsv } from '../../../lib/csv';
 import { GetProductsUseCase } from '../../../application/use-cases/products/get-products.use-case';
 import { FindProductBySlugUseCase } from '../../../application/use-cases/products/find-product-by-slug.use-case';
 import { CreateProductUseCase } from '../../../application/use-cases/products/create-product.use-case';
@@ -181,6 +183,30 @@ export class ProductsController {
     @Get('admin/all')
     adminFindAll() {
         return this.getProductsUseCase.execute({ includeDrafts: true });
+    }
+
+    /** #26 — admin CSV export of the product catalog (drafts included). */
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin')
+    @Get('admin/export.csv')
+    @Header('Content-Type', 'text/csv; charset=utf-8')
+    @Header('Content-Disposition', 'attachment; filename="products.csv"')
+    async adminExportCsv() {
+        const products = await this.getProductsUseCase.execute({ includeDrafts: true });
+        return buildCsv(products, [
+            { header: 'sku', value: (p) => p.sku },
+            { header: 'slug', value: (p) => p.slug },
+            { header: 'name', value: (p) => p.name },
+            { header: 'category', value: (p) => p.category?.name ?? '' },
+            { header: 'price', value: (p) => Number(p.price ?? 0).toFixed(2) },
+            { header: 'currency', value: (p) => p.currency ?? 'EUR' },
+            { header: 'vatRate', value: (p) => p.vatRate ?? 20 },
+            { header: 'stock', value: (p) => p.stock ?? 0 },
+            { header: 'status', value: (p) => p.status ?? '' },
+            { header: 'published', value: (p) => (p.published === false ? 'false' : 'true') },
+            { header: 'featured', value: (p) => (p.featured ? 'true' : 'false') },
+            { header: 'listPriority', value: (p) => p.listPriority ?? 0 },
+        ]);
     }
 
     @UseGuards(JwtAuthGuard, RolesGuard)

@@ -26,6 +26,7 @@ import { ContentManager } from "@/components/backoffice/ContentManager";
 import { InvoicesPanel } from "@/components/backoffice/InvoicesPanel";
 import { CreditNotesPanel } from "@/components/backoffice/CreditNotesPanel";
 import { ChatPanel } from "@/components/backoffice/ChatPanel";
+import { AdminOrderForm } from "@/components/backoffice/AdminOrderForm";
 import { DashboardCharts, type AdminDashboardData } from "@/components/backoffice/DashboardCharts";
 import {
   BarChart,
@@ -195,6 +196,7 @@ function BackofficeDashboard() {
   const [ordersPage, setOrdersPage] = useState(1);
   const [ordersStatusFilter, setOrdersStatusFilter] = useState<string>("");
   const [ordersPaymentMethodFilter, setOrdersPaymentMethodFilter] = useState<string>("");
+  const [adminOrderModalOpen, setAdminOrderModalOpen] = useState(false);
   const [ordersPaymentStatusFilter, setOrdersPaymentStatusFilter] = useState<string>("");
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [orderDetail, setOrderDetail] = useState<AdminOrderDetail | null>(null);
@@ -208,6 +210,25 @@ function BackofficeDashboard() {
   const flash = (kind: "success" | "error", text: string) => {
     setFeedback({ kind, text });
     setTimeout(() => setFeedback(null), 3500);
+  };
+
+  const downloadCsv = async (path: string, filename: string) => {
+    try {
+      const res = await authFetch(`${API_URL}${path}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      flash("success", `${filename} téléchargé.`);
+    } catch (e) {
+      flash("error", `Export impossible: ${(e as Error).message}`);
+    }
   };
 
   /* ------------------------------- Loaders -------------------------------- */
@@ -1317,6 +1338,14 @@ function BackofficeDashboard() {
                       className="bo-input compact"
                       style={{ width: 200 }}
                     />
+                    <button
+                      className="bo-btn"
+                      type="button"
+                      onClick={() => void downloadCsv("/products/admin/export.csv", "products.csv")}
+                      title="Télécharger en CSV"
+                    >
+                      Export CSV
+                    </button>
                     <button className="bo-btn primary" type="button" onClick={() => setShowProductForm((v) => !v)}>
                       <Icon.Plus /> Ajouter
                     </button>
@@ -1730,7 +1759,31 @@ function BackofficeDashboard() {
                     >
                       <option value="">Tous modes</option>
                       <option value="stripe">Stripe</option>
+                      <option value="manual">Manuel</option>
                     </select>
+                    <button
+                      type="button"
+                      className="bo-btn"
+                      onClick={() => {
+                        const sp = new URLSearchParams();
+                        if (ordersStatusFilter) sp.set("status", ordersStatusFilter);
+                        if (ordersPaymentMethodFilter) sp.set("paymentMethod", ordersPaymentMethodFilter);
+                        if (ordersPaymentStatusFilter) sp.set("paymentStatus", ordersPaymentStatusFilter);
+                        const qs = sp.toString();
+                        void downloadCsv(`/admin/orders/export.csv${qs ? `?${qs}` : ""}`, "orders.csv");
+                      }}
+                      title="Télécharger les commandes filtrées en CSV"
+                    >
+                      Export CSV
+                    </button>
+                    <button
+                      type="button"
+                      className="bo-btn primary"
+                      onClick={() => setAdminOrderModalOpen(true)}
+                      title="Créer une commande pour un client"
+                    >
+                      + Nouvelle commande
+                    </button>
                   </div>
                 }
               >
@@ -1987,6 +2040,14 @@ function BackofficeDashboard() {
                     <button className="bo-btn primary" type="button" onClick={() => loadUsers(search)}>
                       Rechercher
                     </button>
+                    <button
+                      className="bo-btn"
+                      type="button"
+                      onClick={() => void downloadCsv("/admin/users/export.csv", "users.csv")}
+                      title="Télécharger en CSV"
+                    >
+                      Export CSV
+                    </button>
                   </>
                 }
               >
@@ -2228,6 +2289,16 @@ function BackofficeDashboard() {
           )}
         </main>
       </div>
+
+      {adminOrderModalOpen && (
+        <AdminOrderForm
+          flash={flash}
+          onClose={() => setAdminOrderModalOpen(false)}
+          onCreated={() => {
+            void loadAdminOrders(1, ordersStatusFilter, ordersPaymentMethodFilter, ordersPaymentStatusFilter);
+          }}
+        />
+      )}
     </div>
   );
 }
