@@ -21,6 +21,7 @@ export class UserMapper {
             pendingEmailExpires: entity.pendingEmailExpires ?? null,
             stripeCustomerId: entity.stripeCustomerId,
             lastLoginAt: entity.lastLoginAt,
+            createdAt: entity.createdAt,
         });
         return user;
     }

@@ -1,9 +1,17 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, NotFoundException, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { GetUsersUseCase } from '../../../application/use-cases/users/get-users.use-case';
 import { FindUserByIdUseCase } from '../../../application/use-cases/users/find-user-by-id.use-case';
 import { UpdateUserUseCase } from '../../../application/use-cases/users/update-user.use-case';
 import { DeleteUserUseCase } from '../../../application/use-cases/users/delete-user.use-case';
 import { RequestPasswordResetUseCase } from '../../../application/use-cases/auth/request-password-reset.use-case';
+import {
+  ORDER_REPOSITORY_TOKEN,
+  type OrderRepository,
+} from '../../../domain/repositories/order.repository.interface';
+import {
+  ADDRESS_REPOSITORY_TOKEN,
+  type AddressRepository,
+} from '../../../domain/repositories/address.repository.interface';
 import { UpdateUserStatusDto } from '../../dto/users/admin-user-actions.dto';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { RolesGuard } from '../../guards/roles.guard';
@@ -19,6 +27,10 @@ export class UsersController {
     private readonly updateUserUseCase: UpdateUserUseCase,
     private readonly deleteUserUseCase: DeleteUserUseCase,
     private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
+    @Inject(ORDER_REPOSITORY_TOKEN)
+    private readonly orderRepository: OrderRepository,
+    @Inject(ADDRESS_REPOSITORY_TOKEN)
+    private readonly addressRepository: AddressRepository,
   ) {}
 
   @Get()
@@ -43,17 +55,35 @@ export class UsersController {
       return a.email.localeCompare(b.email);
     });
 
-    return filtered.map((u) => ({
-      id: u.id,
-      email: u.email,
-      role: u.role,
-      firstName: u.firstName,
-      lastName: u.lastName,
-      isVerified: u.isVerified,
-      isActive: u.isActive !== false,
-      status: u.isActive === false ? 'inactive' : u.isVerified ? 'active' : 'pending',
-      lastLoginAt: u.lastLoginAt ?? null,
-    }));
+    // Aggregate per-customer order count + revenue (cancelled excluded) and
+    // address counts in two batched queries — much cheaper than N+1.
+    const ids = filtered.map((u) => u.id);
+    const stats = await this.orderRepository.getCustomerStats(ids);
+    const addressCounts = await Promise.all(
+      ids.map(async (id) => [id, (await this.addressRepository.findAllByUserId(id)).length] as const),
+    );
+    const addressMap = new Map(addressCounts);
+
+    return filtered.map((u) => {
+      const s = stats.get(u.id);
+      const fullName = [u.firstName, u.lastName].filter(Boolean).join(' ').trim();
+      return {
+        id: u.id,
+        email: u.email,
+        role: u.role,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        fullName: fullName || null,
+        isVerified: u.isVerified,
+        isActive: u.isActive !== false,
+        status: u.isActive === false ? 'inactive' : u.isVerified ? 'active' : 'pending',
+        lastLoginAt: u.lastLoginAt ?? null,
+        createdAt: u.createdAt ?? null,
+        orderCount: s?.orderCount ?? 0,
+        revenue: s?.revenue ?? 0,
+        addressCount: addressMap.get(u.id) ?? 0,
+      };
+    });
   }
 
   @Patch(':id/status')

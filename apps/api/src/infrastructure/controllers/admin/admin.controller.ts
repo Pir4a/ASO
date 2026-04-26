@@ -52,6 +52,32 @@ export class AdminController {
     return this.orderRepository.getAdminDashboard();
   }
 
+  /** #16 — pie-chart sales by category. */
+  @Get('dashboard/sales-by-category')
+  async salesByCategory(@Query('period') periodStr?: string) {
+    const period = periodStr === '5w' ? '5w' : '7d';
+    const rows = await this.orderRepository.getSalesByCategory(period);
+    const total = rows.reduce((sum, r) => sum + r.revenue, 0);
+    return {
+      period,
+      total,
+      data: rows.map((r) => ({
+        categoryId: r.categoryId,
+        name: r.name,
+        revenue: r.revenue,
+        percentage: total > 0 ? Number(((r.revenue / total) * 100).toFixed(2)) : 0,
+      })),
+    };
+  }
+
+  /** #15 — avg cart per category, bucketed by day (7d) or week (5w). */
+  @Get('dashboard/avg-cart')
+  async avgCart(@Query('period') periodStr?: string) {
+    const period = periodStr === '5w' ? '5w' : '7d';
+    const result = await this.orderRepository.getAvgCartByCategory(period);
+    return { period, ...result };
+  }
+
   @Get('orders')
   async listOrders(
     @Query('page') pageStr?: string,

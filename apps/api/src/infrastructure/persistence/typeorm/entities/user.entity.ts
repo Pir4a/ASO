@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm';
 
 export type UserRole = 'customer' | 'admin';
 
@@ -55,4 +55,7 @@ export class User {
 
     @Column({ nullable: true })
     stripeCustomerId?: string;
+
+    @CreateDateColumn({ type: 'timestamptz' })
+    createdAt: Date;
 }

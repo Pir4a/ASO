@@ -18,6 +18,7 @@ export class User {
     pendingEmailToken: string | null;
     pendingEmailExpires: Date | null;
     stripeCustomerId?: string;
+    createdAt?: Date;
 
     constructor(partial: Partial<User>) {
         Object.assign(this, partial);

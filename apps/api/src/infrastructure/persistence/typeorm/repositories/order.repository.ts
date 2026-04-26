@@ -336,4 +336,170 @@ export class TypeOrmOrderRepository implements OrderRepository {
       categoryShare30d,
     };
   }
+
+  /**
+   * Aggregates per-customer order count + total revenue (paid + delivered) for
+   * a list of user ids. Used by the BO users table to show "Nb commandes" and
+   * "CA total généré". Cancelled orders are excluded.
+   */
+  async getCustomerStats(
+    userIds: string[],
+  ): Promise<Map<string, { orderCount: number; revenue: number }>> {
+    const out = new Map<string, { orderCount: number; revenue: number }>();
+    if (userIds.length === 0) return out;
+    const rows: unknown = await this.repository.manager.query(
+      `SELECT o."userId" AS "userId",
+              COUNT(*)::int AS "orderCount",
+              COALESCE(SUM(o.total), 0)::float AS revenue
+       FROM orders o
+       WHERE o."userId" = ANY($1::uuid[])
+         AND o.status <> 'cancelled'
+       GROUP BY o."userId"`,
+      [userIds],
+    );
+    const list = Array.isArray(rows)
+      ? (rows as { userId: string; orderCount: number; revenue: number }[])
+      : [];
+    for (const r of list) {
+      out.set(r.userId, {
+        orderCount: Number(r.orderCount) || 0,
+        revenue: Number(r.revenue) || 0,
+      });
+    }
+    return out;
+  }
+
+  /**
+   * Revenue per category for a 7-day or 5-week window. Used by the BO
+   * "Camembert ventes / catégorie en CA" (#16).
+   */
+  async getSalesByCategory(
+    period: '7d' | '5w',
+  ): Promise<{ categoryId: string; name: string; revenue: number }[]> {
+    const interval = period === '5w' ? '35 days' : '7 days';
+    const rows: unknown = await this.repository.manager.query(
+      `SELECT c.id AS "categoryId",
+              c.name AS name,
+              COALESCE(SUM(oi.price * oi.quantity), 0)::float AS revenue
+       FROM order_items oi
+       INNER JOIN orders o ON o.id = oi."orderId"
+       INNER JOIN products p ON p.id = oi."productId"
+       INNER JOIN categories c ON c.id = p."categoryId"
+       WHERE o."createdAt" >= CURRENT_TIMESTAMP - INTERVAL '${interval}'
+         AND o.status <> 'cancelled'
+       GROUP BY c.id, c.name
+       HAVING COALESCE(SUM(oi.price * oi.quantity), 0) > 0
+       ORDER BY revenue DESC`,
+    );
+    const list = Array.isArray(rows)
+      ? (rows as { categoryId: string; name: string; revenue: number }[])
+      : [];
+    return list.map((r) => ({
+      categoryId: r.categoryId,
+      name: r.name,
+      revenue: Number(r.revenue) || 0,
+    }));
+  }
+
+  /**
+   * Average cart value per category, bucketed by day (7d) or week (5w).
+   * Returns an array of buckets with `byCategory[catId] = avgCart`. Used by
+   * the BO multi-layer histogram (#15).
+   */
+  async getAvgCartByCategory(period: '7d' | '5w'): Promise<{
+    buckets: { date: string; byCategory: Record<string, number> }[];
+    categories: { id: string; name: string }[];
+  }> {
+    const interval = period === '5w' ? '35 days' : '7 days';
+    const dateExpr =
+      period === '5w'
+        ? `date_trunc('week', o."createdAt")::date::text`
+        : `o."createdAt"::date::text`;
+
+    // First pass: total revenue per category per bucket.
+    const revRows: unknown = await this.repository.manager.query(
+      `SELECT ${dateExpr} AS bucket,
+              c.id AS "categoryId",
+              c.name AS "categoryName",
+              COALESCE(SUM(oi.price * oi.quantity), 0)::float AS revenue
+       FROM order_items oi
+       INNER JOIN orders o ON o.id = oi."orderId"
+       INNER JOIN products p ON p.id = oi."productId"
+       INNER JOIN categories c ON c.id = p."categoryId"
+       WHERE o."createdAt" >= CURRENT_TIMESTAMP - INTERVAL '${interval}'
+         AND o.status <> 'cancelled'
+       GROUP BY bucket, c.id, c.name`,
+    );
+    // Second pass: distinct order count per category per bucket (avg = revenue / count).
+    const cntRows: unknown = await this.repository.manager.query(
+      `SELECT ${dateExpr} AS bucket,
+              c.id AS "categoryId",
+              COUNT(DISTINCT o.id)::int AS "orderCount"
+       FROM order_items oi
+       INNER JOIN orders o ON o.id = oi."orderId"
+       INNER JOIN products p ON p.id = oi."productId"
+       INNER JOIN categories c ON c.id = p."categoryId"
+       WHERE o."createdAt" >= CURRENT_TIMESTAMP - INTERVAL '${interval}'
+         AND o.status <> 'cancelled'
+       GROUP BY bucket, c.id`,
+    );
+
+    type Rev = {
+      bucket: string;
+      categoryId: string;
+      categoryName: string;
+      revenue: number;
+    };
+    type Cnt = { bucket: string; categoryId: string; orderCount: number };
+    const revList = Array.isArray(revRows) ? (revRows as Rev[]) : [];
+    const cntList = Array.isArray(cntRows) ? (cntRows as Cnt[]) : [];
+    const cntKey = (b: string, c: string) => `${b}|${c}`;
+    const cntMap = new Map(
+      cntList.map((r) => [
+        cntKey(r.bucket, r.categoryId),
+        Number(r.orderCount) || 0,
+      ]),
+    );
+
+    const categoriesById = new Map<string, string>();
+    const bucketsByDate = new Map<string, Record<string, number>>();
+    for (const r of revList) {
+      categoriesById.set(r.categoryId, r.categoryName);
+      const orderCount = cntMap.get(cntKey(r.bucket, r.categoryId)) || 0;
+      const avg = orderCount > 0 ? Number(r.revenue) / orderCount : 0;
+      const bucket = bucketsByDate.get(r.bucket) ?? {};
+      bucket[r.categoryId] = Number(avg.toFixed(2));
+      bucketsByDate.set(r.bucket, bucket);
+    }
+
+    // Build the full timeline (fill in missing buckets with empty maps).
+    const labels: string[] = [];
+    if (period === '7d') {
+      for (let i = 6; i >= 0; i -= 1) {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i);
+        labels.push(d.toISOString().slice(0, 10));
+      }
+    } else {
+      for (let i = 4; i >= 0; i -= 1) {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        // Anchor to start of ISO-ish week (Monday).
+        const day = d.getDay() || 7;
+        d.setDate(d.getDate() - (day - 1) - i * 7);
+        labels.push(d.toISOString().slice(0, 10));
+      }
+    }
+
+    const buckets = labels.map((date) => ({
+      date,
+      byCategory: bucketsByDate.get(date) ?? {},
+    }));
+    const categories = [...categoriesById.entries()].map(([id, name]) => ({
+      id,
+      name,
+    }));
+    return { buckets, categories };
+  }
 }

@@ -51,6 +51,21 @@ export interface OrderRepository {
         filters?: AdminOrderListFilters;
     }): Promise<{ rows: { order: Order; customerEmail: string | null }[]; total: number }>;
     getAdminDashboard(): Promise<AdminDashboardSnapshot>;
+    /** Per-customer aggregations for the BO users table (#12). */
+    getCustomerStats(
+        userIds: string[],
+    ): Promise<Map<string, { orderCount: number; revenue: number }>>;
+    /** Revenue by category for #16 camembert. */
+    getSalesByCategory(
+        period: '7d' | '5w',
+    ): Promise<{ categoryId: string; name: string; revenue: number }[]>;
+    /** Avg cart value per category by day (7d) or week (5w) for #15. */
+    getAvgCartByCategory(
+        period: '7d' | '5w',
+    ): Promise<{
+        buckets: { date: string; byCategory: Record<string, number> }[];
+        categories: { id: string; name: string }[];
+    }>;
 }
 
 export const ORDER_REPOSITORY_TOKEN = 'OrderRepository';

@@ -68,10 +68,17 @@ type AdminUser = {
   id: string;
   email: string;
   role: "customer" | "admin";
+  firstName?: string | null;
+  lastName?: string | null;
+  fullName: string | null;
   status: "active" | "inactive" | "pending";
   isActive: boolean;
   isVerified: boolean;
   lastLoginAt: string | null;
+  createdAt: string | null;
+  orderCount: number;
+  revenue: number;
+  addressCount: number;
 };
 
 type ContactMessage = {
@@ -376,6 +383,17 @@ function BackofficeDashboard() {
     userId: string,
     action: "activate" | "deactivate" | "delete" | "promote" | "demote" | "reset",
   ) => {
+    if (action === "delete") {
+      const target = users.find((u) => u.id === userId);
+      const label = target?.fullName ?? target?.email ?? "ce compte";
+      const confirmed = window.confirm(
+        `Supprimer définitivement ${label} ?\n\n` +
+          "Cette action est irréversible. Conformément au RGPD (art. 17 — droit à l'effacement), " +
+          "toutes les données personnelles associées seront supprimées et ne pourront pas être restaurées. " +
+          "Les commandes et factures liées sont conservées pour des raisons comptables et fiscales.",
+      );
+      if (!confirmed) return;
+    }
     try {
       if (action === "activate" || action === "deactivate") {
         await authFetch(`${API_URL}/users/${userId}/status`, {
@@ -1988,7 +2006,11 @@ function BackofficeDashboard() {
                           <th>Utilisateur</th>
                           <th>Rôle</th>
                           <th>Statut</th>
+                          <th>Inscription</th>
                           <th>Dernière connexion</th>
+                          <th className="num">Cmd</th>
+                          <th className="num">CA</th>
+                          <th className="num">Adr.</th>
                           <th className="num">Actions</th>
                         </tr>
                       </thead>
@@ -2005,7 +2027,14 @@ function BackofficeDashboard() {
                                 >
                                   {u.email.slice(0, 2).toUpperCase()}
                                 </span>
-                                <span style={{ fontWeight: 500 }}>{u.email}</span>
+                                <span style={{ display: "flex", flexDirection: "column" }}>
+                                  {u.fullName && (
+                                    <span style={{ fontWeight: 600, fontSize: 12.5 }}>{u.fullName}</span>
+                                  )}
+                                  <span style={{ fontWeight: 500, fontSize: 11.5, opacity: u.fullName ? 0.65 : 1 }}>
+                                    {u.email}
+                                  </span>
+                                </span>
                               </div>
                             </td>
                             <td>
@@ -2027,7 +2056,19 @@ function BackofficeDashboard() {
                               )}
                             </td>
                             <td className="muted" style={{ fontSize: 11 }}>
+                              {u.createdAt ? new Date(u.createdAt).toLocaleDateString("fr-FR") : "—"}
+                            </td>
+                            <td className="muted" style={{ fontSize: 11 }}>
                               {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString("fr-FR") : "Jamais"}
+                            </td>
+                            <td className="num bo-mono" style={{ fontSize: 11 }}>
+                              {u.orderCount}
+                            </td>
+                            <td className="num bo-mono" style={{ fontWeight: 600, fontSize: 11 }}>
+                              {u.revenue.toFixed(0)} €
+                            </td>
+                            <td className="num bo-mono muted" style={{ fontSize: 11 }}>
+                              {u.addressCount}
                             </td>
                             <td className="num">
                               <div
