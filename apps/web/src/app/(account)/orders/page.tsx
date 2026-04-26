@@ -7,14 +7,6 @@ import { useT } from "@/context/LocaleContext";
 
 type StatusFilter = "all" | "active" | "completed" | "cancelled";
 
-const STATUS_LABELS: Record<OrderStatus, string> = {
-  pending: "En attente",
-  processing: "En traitement",
-  shipped: "Expédiée",
-  delivered: "Livrée",
-  cancelled: "Annulée",
-};
-
 function statusTone(status: OrderStatus): string {
   switch (status) {
     case "delivered":
@@ -35,9 +27,9 @@ function statusGroup(status: OrderStatus): StatusFilter {
   return "active";
 }
 
-function formatDate(iso: string): string {
+function formatDate(iso: string, locale: string): string {
   try {
-    return new Date(iso).toLocaleDateString("fr-FR", {
+    return new Date(iso).toLocaleDateString(locale, {
       day: "2-digit",
       month: "long",
       year: "numeric",
@@ -70,6 +62,14 @@ export default function OrdersPage() {
   const [productType, setProductType] = useState<string>("all");
   const [search, setSearch] = useState<string>("");
 
+  const statusLabels: Record<OrderStatus, string> = {
+    pending: t("orders.statusLabel.pending"),
+    processing: t("orders.statusLabel.processing"),
+    shipped: t("orders.statusLabel.shipped"),
+    delivered: t("orders.statusLabel.delivered"),
+    cancelled: t("orders.statusLabel.cancelled"),
+  };
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -83,7 +83,8 @@ export default function OrdersPage() {
         const result = await getOrders(filters);
         if (!cancelled) setData(result);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Erreur inattendue.");
+        if (!cancelled)
+          setError(e instanceof Error ? e.message : t("orders.errorUnexpected"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -91,7 +92,7 @@ export default function OrdersPage() {
     return () => {
       cancelled = true;
     };
-  }, [year, search]);
+  }, [year, search, t]);
 
   const productTypes = useMemo(() => uniqueProductTypes(data), [data]);
 
@@ -121,17 +122,14 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6">
       <div className="card p-6 space-y-2">
-        <h1 className="text-2xl font-semibold text-foreground">Mes commandes</h1>
-        <p className="text-sm text-foreground/70">
-          Retrouvez l&apos;historique de vos commandes, téléchargez vos factures et suivez leur
-          statut.
-        </p>
+        <h1 className="text-2xl font-semibold text-foreground">{t("orders.title")}</h1>
+        <p className="text-sm text-foreground/70">{t("orders.subtitle")}</p>
       </div>
 
       {/* Filters */}
       <div className="card p-4 grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
         <label className="relative block">
-          <span className="sr-only">Rechercher</span>
+          <span className="sr-only">{t("orders.searchAria")}</span>
           <input
             type="search"
             value={search}
@@ -141,13 +139,13 @@ export default function OrdersPage() {
           />
         </label>
         <label className="block">
-          <span className="sr-only">Année</span>
+          <span className="sr-only">{t("orders.yearAria")}</span>
           <select
             value={year}
             onChange={(e) => setYear(e.target.value)}
             className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
           >
-            <option value="all">Toutes les années</option>
+            <option value="all">{t("orders.yearAll")}</option>
             {allYears.map((y) => (
               <option key={y} value={y}>
                 {y}
@@ -156,27 +154,27 @@ export default function OrdersPage() {
           </select>
         </label>
         <label className="block">
-          <span className="sr-only">Statut</span>
+          <span className="sr-only">{t("orders.statusAria")}</span>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as StatusFilter)}
             className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
           >
-            <option value="all">Tous les statuts</option>
-            <option value="active">Actives</option>
-            <option value="completed">Terminées</option>
-            <option value="cancelled">Résiliées</option>
+            <option value="all">{t("orders.statusAll")}</option>
+            <option value="active">{t("orders.statusActive")}</option>
+            <option value="completed">{t("orders.statusCompleted")}</option>
+            <option value="cancelled">{t("orders.statusCancelled")}</option>
           </select>
         </label>
         <label className="block">
-          <span className="sr-only">Produit</span>
+          <span className="sr-only">{t("orders.productAria")}</span>
           <select
             value={productType}
             onChange={(e) => setProductType(e.target.value)}
             className="w-full rounded-md border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none"
             disabled={productTypes.length === 0}
           >
-            <option value="all">Tous les produits</option>
+            <option value="all">{t("orders.productAll")}</option>
             {productTypes.map((p) => (
               <option key={p} value={p}>
                 {p}
@@ -188,22 +186,22 @@ export default function OrdersPage() {
 
       {loading && (
         <div className="card p-6">
-          <p className="text-sm text-foreground/70">Chargement de vos commandes…</p>
+          <p className="text-sm text-foreground/70">{t("orders.loading")}</p>
         </div>
       )}
 
       {error && !loading && (
         <div className="card p-6">
-          <p className="text-sm text-error">Impossible de charger vos commandes : {error}</p>
+          <p className="text-sm text-error">
+            {t("orders.errorPrefix")} {error}
+          </p>
         </div>
       )}
 
       {!loading && !error && totalVisible === 0 && (
         <div className="card p-8 text-center space-y-2">
-          <p className="text-sm font-semibold text-foreground">Aucune commande trouvée.</p>
-          <p className="text-sm text-foreground/70">
-            Essayez de modifier vos filtres ou la recherche.
-          </p>
+          <p className="text-sm font-semibold text-foreground">{t("orders.empty.title")}</p>
+          <p className="text-sm text-foreground/70">{t("orders.empty.subtitle")}</p>
         </div>
       )}
 
@@ -214,7 +212,7 @@ export default function OrdersPage() {
             <ul className="space-y-3">
               {filtered[yr].map((order) => (
                 <li key={order.id}>
-                  <OrderRow order={order} />
+                  <OrderRow order={order} statusLabels={statusLabels} />
                 </li>
               ))}
             </ul>
@@ -224,16 +222,27 @@ export default function OrdersPage() {
   );
 }
 
-function OrderRow({ order }: { order: OrderDTO }) {
+function OrderRow({
+  order,
+  statusLabels,
+}: {
+  order: OrderDTO;
+  statusLabels: Record<OrderStatus, string>;
+}) {
+  const t = useT();
   const items = order.items ?? [];
   const names = items.map((i) => i.productName).filter(Boolean);
+  const otherCount = names.length - 1;
+  const otherWord =
+    otherCount > 1 ? t("orders.summary.otherPlural") : t("orders.summary.otherSingular");
   const summary =
     names.length === 0
-      ? "Commande"
+      ? t("orders.summary.fallback")
       : names.length === 1
         ? names[0]
-        : `${names[0]} + ${names.length - 1} autre${names.length - 1 > 1 ? "s" : ""}`;
+        : `${names[0]} + ${otherCount} ${otherWord}`;
   const qty = items.reduce((sum, it) => sum + (it.quantity ?? 0), 0);
+  const itemWord = qty > 1 ? t("cart.itemPlural") : t("cart.itemSingular");
 
   return (
     <Link
@@ -244,7 +253,7 @@ function OrderRow({ order }: { order: OrderDTO }) {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-foreground">{summary}</p>
           <p className="mt-1 text-xs text-foreground/60">
-            {formatDate(order.createdAt)} · {qty} article{qty > 1 ? "s" : ""} · N°{" "}
+            {formatDate(order.createdAt, "fr-FR")} · {qty} {itemWord} · {t("orders.row.numberPrefix")}{" "}
             <span className="font-mono">{order.id}</span>
           </p>
         </div>
@@ -252,7 +261,7 @@ function OrderRow({ order }: { order: OrderDTO }) {
           <span
             className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusTone(order.status)}`}
           >
-            {STATUS_LABELS[order.status] ?? order.status}
+            {statusLabels[order.status] ?? order.status}
           </span>
           <span className="text-sm font-semibold text-primary">
             {Number(order.total).toFixed(2)} {order.currency}
