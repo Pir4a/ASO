@@ -19,7 +19,7 @@ export async function TopProducts({ products }: { products: Product[] }) {
   const featuredLabel = t("products.featuredBadge");
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="aso-anim-stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {products.map((product) => (
         <Link
           key={product.id}

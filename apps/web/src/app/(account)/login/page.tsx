@@ -93,7 +93,7 @@ function LoginForm() {
 
   if (challengeToken) {
     return (
-      <form onSubmit={handleMfaSubmit} className="space-y-5">
+      <form onSubmit={handleMfaSubmit} className="aso-anim-fade-rise space-y-5">
         <div className="rounded-lg border border-primary/20 bg-primary/5 px-3.5 py-3 text-[13px] text-foreground/80">
           <p className="font-semibold text-foreground">{t("login.mfaTitle")}</p>
           <p className="mt-1 text-[12.5px] text-foreground/65">{t("login.mfaSubtitle")}</p>
@@ -116,7 +116,8 @@ function LoginForm() {
         {error && (
           <div
             role="alert"
-            className="flex items-center gap-2 rounded-lg border border-error/30 bg-error/10 px-3.5 py-2.5 text-[13px] text-error"
+            key={error}
+            className="aso-anim-shake flex items-center gap-2 rounded-lg border border-error/30 bg-error/10 px-3.5 py-2.5 text-[13px] text-error"
           >
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
               <circle cx="8" cy="8" r="6" />
@@ -305,7 +306,7 @@ function LoginPageChrome() {
         <span className="font-semibold text-foreground">{t("login.breadcrumbCurrent")}</span>
       </nav>
 
-      <section className="overflow-hidden rounded-2xl border border-foreground/10 bg-white">
+      <section className="aso-anim-fade-rise overflow-hidden rounded-2xl border border-foreground/10 bg-white">
         <header className="border-b border-foreground/5 px-6 py-5">
           <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
             <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />

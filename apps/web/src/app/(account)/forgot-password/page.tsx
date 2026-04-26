@@ -26,13 +26,13 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="mx-auto max-w-md space-y-4">
-      <div className="card p-6 space-y-2">
+      <div className="aso-anim-fade-rise card p-6 space-y-2">
         <h1 className="text-2xl font-semibold text-foreground">{t("forgot.title")}</h1>
         <p className="text-sm text-foreground/70">{t("forgot.subtitle")}</p>
       </div>
 
       {submitted ? (
-        <div className="card p-6 space-y-3">
+        <div className="aso-anim-fade-rise card p-6 space-y-3">
           <p className="text-sm text-success bg-success/10 p-3 rounded-md">
             {t("forgot.successMessage")}
           </p>
@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
           </Link>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="card space-y-3 p-6">
+        <form onSubmit={handleSubmit} className="aso-anim-fade-rise card space-y-3 p-6" style={{ animationDelay: "60ms" }}>
           <input
             type="email"
             placeholder={t("common.email")}

@@ -201,3 +201,100 @@ button:disabled,
     opacity: 1;
   }
 }
+
+/* ─── Site-wide UI animations ──────────────────────────────────────────────
+   Restrained, single-shot mount animations + tiny press feedback.
+   Pure CSS, opt-in via class names so existing Tailwind transitions
+   keep working untouched. All silenced under prefers-reduced-motion. */
+
+@keyframes aso-fade-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+@keyframes aso-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes aso-scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1);    }
+}
+@keyframes aso-shake {
+  0%, 100%       { transform: translateX(0); }
+  20%, 60%       { transform: translateX(-4px); }
+  40%, 80%       { transform: translateX(4px); }
+}
+
+/* Single-shot mount fade + tiny rise. Use on content blocks that swap in. */
+.aso-anim-fade-rise {
+  animation: aso-fade-rise 280ms cubic-bezier(0.2, 0, 0.2, 1) both;
+}
+.aso-anim-fade-in {
+  animation: aso-fade-in 200ms ease-out both;
+}
+
+/* Modal: backdrop fades, card scales in. Pair them on the same element pair. */
+.aso-anim-modal-backdrop {
+  animation: aso-fade-in 180ms ease-out both;
+}
+.aso-anim-modal-card {
+  animation: aso-scale-in 220ms cubic-bezier(0.2, 0, 0.2, 1) both;
+}
+
+/* Error shake — apply when an error message appears. */
+.aso-anim-shake {
+  animation: aso-shake 360ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* Stagger first ~10 children of a list/grid mount. Pair with .aso-anim-fade-rise
+   on each child (or apply this directly with .aso-anim-stagger to the parent
+   and the children will be staggered if they have a name-based animation). */
+.aso-anim-stagger > * {
+  animation: aso-fade-rise 320ms cubic-bezier(0.2, 0, 0.2, 1) both;
+}
+.aso-anim-stagger > *:nth-child(1)  { animation-delay: 0ms;   }
+.aso-anim-stagger > *:nth-child(2)  { animation-delay: 40ms;  }
+.aso-anim-stagger > *:nth-child(3)  { animation-delay: 80ms;  }
+.aso-anim-stagger > *:nth-child(4)  { animation-delay: 120ms; }
+.aso-anim-stagger > *:nth-child(5)  { animation-delay: 160ms; }
+.aso-anim-stagger > *:nth-child(6)  { animation-delay: 200ms; }
+.aso-anim-stagger > *:nth-child(7)  { animation-delay: 240ms; }
+.aso-anim-stagger > *:nth-child(8)  { animation-delay: 280ms; }
+.aso-anim-stagger > *:nth-child(9)  { animation-delay: 320ms; }
+.aso-anim-stagger > *:nth-child(10) { animation-delay: 360ms; }
+.aso-anim-stagger > *:nth-child(n + 11) { animation-delay: 360ms; }
+
+/* Universal button press feedback — clicks a touch on ANY enabled button
+   so primary CTAs, icon buttons and links-styled-as-buttons all respond.
+   Using transition only on transform so other styles aren't affected. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  transition: transform 80ms ease-out;
+}
+button:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active {
+  transform: scale(0.97);
+}
+/* But don't override transforms on elements that animate on hover already
+   (e.g. cards using -translate-y-X) — keep the press a no-op for those. */
+.no-press:active,
+.no-press button:active,
+a.group:active,
+.group:active {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aso-anim-fade-rise,
+  .aso-anim-fade-in,
+  .aso-anim-modal-backdrop,
+  .aso-anim-modal-card,
+  .aso-anim-shake,
+  .aso-anim-stagger > * {
+    animation: none !important;
+  }
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active {
+    transform: none;
+  }
+}

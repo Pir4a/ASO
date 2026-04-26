@@ -1034,7 +1034,7 @@ function MfaCard() {
 
       {/* SETUP IN PROGRESS — show QR + backup codes + verification input */}
       {setupData && (
-        <div className="space-y-5">
+        <div className="aso-anim-fade-rise space-y-5">
           <div className="grid gap-5 sm:grid-cols-[auto,1fr]">
             <div className="rounded-xl border border-foreground/10 bg-white p-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
