@@ -17,9 +17,9 @@ export class GenerateInvoiceOnPaymentUseCase {
         private readonly pdfService: PdfService,
     ) { }
 
-    async execute(order: Order): Promise<Invoice | null> {
+    async execute(order: Order): Promise<{ invoice: Invoice; pdfBuffer: Buffer | null } | null> {
         const existing = await this.invoiceRepository.findByOrderId(order.id);
-        if (existing) return existing;
+        if (existing) return { invoice: existing, pdfBuffer: null };
 
         const issuedAt = new Date();
         const number = await this.generateNumber(issuedAt);
@@ -43,8 +43,9 @@ export class GenerateInvoiceOnPaymentUseCase {
 
         const saved = await this.invoiceRepository.create(draft);
 
+        let pdfBuffer: Buffer | null = null;
         try {
-            const pdfBuffer = await this.pdfService.generateInvoice(order);
+            pdfBuffer = await this.pdfService.generateInvoice(order);
             const pdfUrl = await this.pdfService.persistInvoicePdf(saved.id, pdfBuffer);
             saved.pdfUrl = pdfUrl;
             await this.invoiceRepository.update(saved);
@@ -54,7 +55,7 @@ export class GenerateInvoiceOnPaymentUseCase {
             );
         }
 
-        return saved;
+        return { invoice: saved, pdfBuffer };
     }
 
     private async generateNumber(issuedAt: Date): Promise<string> {

@@ -1,6 +1,43 @@
 import { Injectable, Logger } from '@nestjs/common';
 import nodemailer, { Transporter } from 'nodemailer';
-import { EmailGateway } from '../../../domain/gateways/email.gateway';
+import {
+  EmailGateway,
+  SendOrderConfirmationOptions,
+} from '../../../domain/gateways/email.gateway';
+import type { Order } from '../../../domain/entities/order.entity';
+
+type Locale = 'fr' | 'en';
+
+const ORDER_CONFIRMATION_T: Record<Locale, Record<string, string>> = {
+  fr: {
+    subject: 'Confirmation de votre commande',
+    greeting: 'Merci pour votre commande !',
+    orderNumber: 'Numéro de commande',
+    invoiceNumber: 'Numéro de facture',
+    items: 'Articles',
+    quantity: 'Qté',
+    unitPrice: 'Prix unitaire',
+    lineTotal: 'Total',
+    shippingAddress: 'Adresse de livraison',
+    total: 'Total TTC',
+    viewOrder: 'Voir ma commande',
+    footer: "Si vous avez des questions, n'hésitez pas à nous contacter.",
+  },
+  en: {
+    subject: 'Your order confirmation',
+    greeting: 'Thank you for your order!',
+    orderNumber: 'Order number',
+    invoiceNumber: 'Invoice number',
+    items: 'Items',
+    quantity: 'Qty',
+    unitPrice: 'Unit price',
+    lineTotal: 'Total',
+    shippingAddress: 'Shipping address',
+    total: 'Total',
+    viewOrder: 'View my order',
+    footer: 'If you have any questions, feel free to contact us.',
+  },
+};
 
 @Injectable()
 export class NodemailerService implements EmailGateway {
@@ -172,5 +209,133 @@ export class NodemailerService implements EmailGateway {
     } else if (!process.env.SMTP_HOST) {
       this.logger.log(`Email-change confirmation link (dev fallback): ${confirmLink}`);
     }
+  }
+
+  async sendOrderConfirmation(
+    to: string,
+    order: Order,
+    options: SendOrderConfirmationOptions = {},
+  ): Promise<void> {
+    const locale = this.resolveOrderLocale(options.locale);
+    const t = ORDER_CONFIRMATION_T[locale];
+    const orderUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/orders/${order.id}`;
+    const html = this.buildOrderConfirmationHtml(order, orderUrl, t, options.invoiceNumber);
+
+    const attachments = options.pdfBuffer
+      ? [
+          {
+            filename: `${options.invoiceNumber || `commande-${order.id.slice(0, 8)}`}.pdf`,
+            content: options.pdfBuffer,
+            contentType: 'application/pdf',
+          },
+        ]
+      : undefined;
+
+    const transporter = await this.getTransporter();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer's Transporter generic defaults to `any`
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM || '"Althea Shop" <no-reply@althea.local>',
+      to,
+      subject: `${t.subject} #${order.id.slice(0, 8)}`,
+      html,
+      attachments,
+    });
+
+    this.logger.log(`Order confirmation sent to ${to} for order ${order.id}`);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- info is `any` from sendMail; nodemailer accepts it
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      this.logger.log(`Ethereal preview: ${previewUrl}`);
+    }
+  }
+
+  private resolveOrderLocale(input?: string): Locale {
+    const candidate = (input || process.env.DEFAULT_LOCALE || 'fr').toLowerCase();
+    return candidate === 'en' ? 'en' : 'fr';
+  }
+
+  private buildOrderConfirmationHtml(
+    order: Order,
+    orderUrl: string,
+    t: Record<string, string>,
+    invoiceNumber?: string,
+  ): string {
+    const currency = order.currency || 'EUR';
+    const formatPrice = (amount: number) =>
+      new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(amount);
+
+    const itemsRows = (order.items || [])
+      .map(
+        (item) => `
+              <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">${this.escapeHtml(item.productName)}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatPrice(item.price)}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatPrice(item.price * item.quantity)}</td>
+              </tr>
+            `,
+      )
+      .join('');
+
+    const addr = order.shippingAddress || ({} as Order['shippingAddress']);
+    const fullName = [addr.firstName, addr.lastName].filter(Boolean).join(' ');
+    const addressLines = [
+      fullName,
+      addr.street,
+      addr.address2,
+      [addr.postalCode, addr.city].filter(Boolean).join(' '),
+      addr.region,
+      addr.country,
+    ]
+      .filter(Boolean)
+      .map((line) => `<div>${this.escapeHtml(String(line))}</div>`)
+      .join('');
+
+    const invoiceBlock = invoiceNumber
+      ? `<p><strong>${t.invoiceNumber} :</strong> ${this.escapeHtml(invoiceNumber)}</p>`
+      : '';
+
+    return `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #222;">
+          <h1>${t.greeting}</h1>
+          <p><strong>${t.orderNumber} :</strong> ${this.escapeHtml(order.id)}</p>
+          ${invoiceBlock}
+          <h2 style="margin-top: 24px;">${t.items}</h2>
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr>
+                <th style="text-align: left; padding: 8px; border-bottom: 2px solid #333;">${t.items}</th>
+                <th style="text-align: center; padding: 8px; border-bottom: 2px solid #333;">${t.quantity}</th>
+                <th style="text-align: right; padding: 8px; border-bottom: 2px solid #333;">${t.unitPrice}</th>
+                <th style="text-align: right; padding: 8px; border-bottom: 2px solid #333;">${t.lineTotal}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsRows}
+            </tbody>
+          </table>
+          <p style="text-align: right; font-size: 16px; margin-top: 16px;">
+            <strong>${t.total} :</strong> ${formatPrice(order.total)}
+          </p>
+          <h2 style="margin-top: 24px;">${t.shippingAddress}</h2>
+          <div>${addressLines}</div>
+          <p style="margin-top: 32px;">
+            <a href="${orderUrl}" style="background: #111; color: #fff; padding: 12px 20px; text-decoration: none; border-radius: 4px;">
+              ${t.viewOrder}
+            </a>
+          </p>
+          <p style="margin-top: 32px; font-size: 12px; color: #666;">${t.footer}</p>
+        </div>
+      `;
+  }
+
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 }

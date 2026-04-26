@@ -3,8 +3,12 @@ import type { OrderRepository } from '../../../domain/repositories/order.reposit
 import { ORDER_REPOSITORY_TOKEN } from '../../../domain/repositories/order.repository.interface';
 import type { CartRepository } from '../../../domain/repositories/cart.repository.interface';
 import { CART_REPOSITORY_TOKEN } from '../../../domain/repositories/cart.repository.interface';
+import type { UserRepository } from '../../../domain/repositories/user.repository.interface';
+import { USER_REPOSITORY_TOKEN } from '../../../domain/repositories/user.repository.interface';
 import type { PaymentGateway } from '../../../domain/gateways/payment.gateway';
 import { PAYMENT_GATEWAY } from '../../../domain/gateways/payment.gateway';
+import type { EmailGateway } from '../../../domain/gateways/email.gateway';
+import { EMAIL_GATEWAY } from '../../../domain/gateways/email.gateway';
 import { GenerateInvoiceOnPaymentUseCase } from '../invoices/generate-invoice-on-payment.use-case';
 
 /**
@@ -20,8 +24,12 @@ export class ConfirmOrderPaymentUseCase {
         private readonly orderRepository: OrderRepository,
         @Inject(CART_REPOSITORY_TOKEN)
         private readonly cartRepository: CartRepository,
+        @Inject(USER_REPOSITORY_TOKEN)
+        private readonly userRepository: UserRepository,
         @Inject(PAYMENT_GATEWAY)
         private readonly paymentGateway: PaymentGateway,
+        @Inject(EMAIL_GATEWAY)
+        private readonly emailGateway: EmailGateway,
         private readonly generateInvoiceOnPaymentUseCase: GenerateInvoiceOnPaymentUseCase,
     ) { }
 
@@ -70,11 +78,38 @@ export class ConfirmOrderPaymentUseCase {
             await this.cartRepository.update(cart);
         }
 
+        const finalOrder = updatedOrder ?? order;
+
+        let invoiceNumber: string | undefined;
+        let pdfBuffer: Buffer | undefined;
         try {
-            await this.generateInvoiceOnPaymentUseCase.execute(updatedOrder ?? order);
+            const invoiceResult = await this.generateInvoiceOnPaymentUseCase.execute(finalOrder);
+            if (invoiceResult) {
+                invoiceNumber = invoiceResult.invoice.number;
+                pdfBuffer = invoiceResult.pdfBuffer ?? undefined;
+            }
         } catch (e) {
             this.logger.warn(
                 `Invoice generation failed for order ${order.id}: ${(e as Error).message}`,
+            );
+        }
+
+        try {
+            const user = await this.userRepository.findById(finalOrder.userId);
+            if (user?.email) {
+                await this.emailGateway.sendOrderConfirmation(user.email, finalOrder, {
+                    locale: (user as unknown as { locale?: string }).locale,
+                    invoiceNumber,
+                    pdfBuffer,
+                });
+            } else {
+                this.logger.warn(
+                    `No email available for order ${finalOrder.id} (user ${finalOrder.userId}); skipping confirmation email.`,
+                );
+            }
+        } catch (e) {
+            this.logger.warn(
+                `Order confirmation email failed for order ${order.id}: ${(e as Error).message}`,
             );
         }
 
