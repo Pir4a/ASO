@@ -1,12 +1,24 @@
-import { Column, Entity, PrimaryGeneratedColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, OneToMany, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
 import { OrderItem } from './order-item.entity';
 
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+
+export type OrderStatusEvent = {
+    status: OrderStatus;
+    at: string;
+    byUserId?: string | null;
+    byEmail?: string | null;
+};
 
 @Entity({ name: 'orders' })
 export class Order {
     @PrimaryGeneratedColumn('uuid')
     id: string;
+
+    /** Customer-facing identifier ALT-YYYYMMDD-XXXX. Nullable to allow backfill on existing rows. */
+    @Index({ unique: true })
+    @Column({ type: 'varchar', length: 32, nullable: true })
+    orderNumber: string | null;
 
     @Column({ type: 'uuid', nullable: true })
     userId: string | null;
@@ -49,8 +61,12 @@ export class Order {
     @Column({ default: 'unpaid' })
     paymentStatus: string;
 
+    /** Set on first transition to a "paid" status (typically `processing`). */
+    @Column({ type: 'timestamptz', nullable: true })
+    paidAt: Date | null;
+
     @Column({ type: 'jsonb', nullable: true })
-    statusHistory?: { status: OrderStatus; at: string }[];
+    statusHistory?: OrderStatusEvent[];
 
     @OneToMany(() => OrderItem, (item) => item.order, { cascade: true, eager: true })
     items: OrderItem[];

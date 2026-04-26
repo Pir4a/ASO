@@ -7,6 +7,7 @@ export class OrderMapper {
     static toDomain(entity: TypeOrmOrder): DomainOrder {
         return new DomainOrder({
             id: entity.id,
+            orderNumber: entity.orderNumber ?? null,
             // The DB stores null for guest orders that haven't been claimed
             // yet; the domain treats '' as the guest sentinel.
             userId: entity.userId ?? '',
@@ -21,6 +22,7 @@ export class OrderMapper {
             paymentBrand: entity.paymentBrand,
             paymentLast4: entity.paymentLast4,
             paymentStatus: entity.paymentStatus,
+            paidAt: entity.paidAt ?? null,
             statusHistory: entity.statusHistory ?? undefined,
             createdAt: entity.createdAt,
             updatedAt: entity.updatedAt,
@@ -40,6 +42,7 @@ export class OrderMapper {
     static toPersistence(domain: DomainOrder): TypeOrmOrder {
         const entity = new TypeOrmOrder();
         entity.id = domain.id;
+        entity.orderNumber = domain.orderNumber ?? null;
         // Map the '' guest sentinel back to null so Postgres accepts the row.
         entity.userId = domain.userId ? domain.userId : null;
         entity.status = domain.status;
@@ -53,6 +56,7 @@ export class OrderMapper {
         entity.paymentBrand = domain.paymentBrand;
         entity.paymentLast4 = domain.paymentLast4;
         entity.paymentStatus = domain.paymentStatus ?? 'unpaid';
+        entity.paidAt = domain.paidAt ?? null;
         entity.statusHistory = domain.statusHistory;
         return entity;
     }

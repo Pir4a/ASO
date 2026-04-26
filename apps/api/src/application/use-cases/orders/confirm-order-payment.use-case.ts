@@ -69,9 +69,25 @@ export class ConfirmOrderPaymentUseCase {
 
         const cartKey = order.userId || input.guestCartId;
 
-        const metadata: Record<string, string> = {
+        // Resolve the customer's email so the status-history event records WHO triggered it.
+        let actorEmail: string | null = null;
+        if (order.userId) {
+            try {
+                const owner = await this.userRepository.findById(order.userId);
+                actorEmail = owner?.email ?? null;
+            } catch {
+                actorEmail = null;
+            }
+        } else if (input.guestEmail) {
+            actorEmail = input.guestEmail;
+        }
+
+        const metadata: Parameters<typeof this.orderRepository.updateStatus>[2] = {
             paymentStatus: 'paid',
             paymentMethod: 'stripe',
+            paidAt: new Date(),
+            byUserId: order.userId || null,
+            byEmail: actorEmail,
         };
         if (input.paymentIntentId) metadata.paymentId = input.paymentIntentId;
 
@@ -124,7 +140,9 @@ export class ConfirmOrderPaymentUseCase {
         }
 
         try {
-            const user = await this.userRepository.findById(finalOrder.userId);
+            const user = finalOrder.userId
+                ? await this.userRepository.findById(finalOrder.userId)
+                : null;
             if (user?.email) {
                 await this.emailGateway.sendOrderConfirmation(user.email, finalOrder, {
                     locale: (user as unknown as { locale?: string }).locale,

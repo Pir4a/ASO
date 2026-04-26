@@ -9,6 +9,7 @@ import type { AddressRepository } from '../../../domain/repositories/address.rep
 import { ADDRESS_REPOSITORY_TOKEN } from '../../../domain/repositories/address.repository.interface';
 import type { ProductRepository } from '../../../domain/repositories/product.repository.interface';
 import { PRODUCT_REPOSITORY_TOKEN } from '../../../domain/repositories/product.repository.interface';
+import { OrderNumberService } from './order-number.service';
 
 export interface GuestAddressInput {
     firstName?: string;
@@ -44,6 +45,7 @@ export class CreateOrderUseCase {
         private readonly addressRepository: AddressRepository,
         @Inject(PRODUCT_REPOSITORY_TOKEN)
         private readonly productRepository: ProductRepository,
+        private readonly orderNumberService: OrderNumberService,
     ) { }
 
     async execute(input: CreateOrderInput): Promise<Order> {
@@ -79,8 +81,11 @@ export class CreateOrderUseCase {
 
         const total = items.reduce((sum, it) => sum + it.price * it.quantity, 0);
 
-        const at = new Date().toISOString();
+        const now = new Date();
+        const orderNumber = await this.orderNumberService.generate(now);
+        const at = now.toISOString();
         const order = new Order({
+            orderNumber,
             // Guests get a sentinel-empty userId; ConfirmOrderPaymentUseCase
             // will create the User and attach them on confirm.
             userId: input.userId ?? '',
@@ -89,7 +94,12 @@ export class CreateOrderUseCase {
             currency: 'EUR',
             shippingAddress,
             billingAddress: shippingAddress,
-            statusHistory: [{ status: 'pending', at }],
+            statusHistory: [{
+                status: 'pending',
+                at,
+                byUserId: input.userId ?? null,
+                byEmail: null,
+            }],
             items,
         });
 

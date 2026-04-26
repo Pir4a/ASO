@@ -113,7 +113,17 @@ export class TypeOrmOrderRepository implements OrderRepository {
   async updateStatus(
     id: string,
     status: string,
-    metadata?: Record<string, any>,
+    metadata?: {
+      paymentId?: string;
+      paymentStatus?: string;
+      paymentMethod?: string;
+      paymentMethodId?: string;
+      paymentBrand?: string;
+      paymentLast4?: string;
+      paidAt?: Date;
+      byUserId?: string | null;
+      byEmail?: string | null;
+    },
   ): Promise<DomainOrder> {
     const order = await this.repository.findOne({
       where: { id },
@@ -129,26 +139,21 @@ export class TypeOrmOrderRepository implements OrderRepository {
       hist.push({
         status: status as TypeOrmOrder['status'],
         at: new Date().toISOString(),
+        byUserId: metadata?.byUserId ?? null,
+        byEmail: metadata?.byEmail ?? null,
       });
       order.statusHistory = hist;
     }
     order.status = status as TypeOrmOrder['status'];
 
     if (metadata) {
-      const m = metadata as {
-        paymentId?: string;
-        paymentStatus?: string;
-        paymentMethod?: string;
-        paymentMethodId?: string;
-        paymentBrand?: string;
-        paymentLast4?: string;
-      };
-      if (m.paymentId) order.paymentId = m.paymentId;
-      if (m.paymentStatus) order.paymentStatus = m.paymentStatus;
-      if (m.paymentMethod) order.paymentMethod = m.paymentMethod;
-      if (m.paymentMethodId) order.paymentMethodId = m.paymentMethodId;
-      if (m.paymentBrand) order.paymentBrand = m.paymentBrand;
-      if (m.paymentLast4) order.paymentLast4 = m.paymentLast4;
+      if (metadata.paymentId) order.paymentId = metadata.paymentId;
+      if (metadata.paymentStatus) order.paymentStatus = metadata.paymentStatus;
+      if (metadata.paymentMethod) order.paymentMethod = metadata.paymentMethod;
+      if (metadata.paymentMethodId) order.paymentMethodId = metadata.paymentMethodId;
+      if (metadata.paymentBrand) order.paymentBrand = metadata.paymentBrand;
+      if (metadata.paymentLast4) order.paymentLast4 = metadata.paymentLast4;
+      if (metadata.paidAt) order.paidAt = metadata.paidAt;
     }
 
     const savedEntity = await this.repository.save(order);
@@ -158,7 +163,11 @@ export class TypeOrmOrderRepository implements OrderRepository {
   async findAllForAdmin(params: {
     skip: number;
     take: number;
-    status?: string;
+    filters?: {
+      status?: string;
+      paymentMethod?: string;
+      paymentStatus?: string;
+    };
   }): Promise<{
     rows: { order: DomainOrder; customerEmail: string | null }[];
     total: number;
@@ -169,8 +178,14 @@ export class TypeOrmOrderRepository implements OrderRepository {
       .orderBy('order.createdAt', 'DESC')
       .skip(params.skip)
       .take(params.take);
-    if (params.status) {
-      qb.andWhere('order.status = :st', { st: params.status });
+    if (params.filters?.status) {
+      qb.andWhere('order.status = :st', { st: params.filters.status });
+    }
+    if (params.filters?.paymentMethod) {
+      qb.andWhere('order.paymentMethod = :pm', { pm: params.filters.paymentMethod });
+    }
+    if (params.filters?.paymentStatus) {
+      qb.andWhere('order.paymentStatus = :ps', { ps: params.filters.paymentStatus });
     }
     const [entities, total] = await qb.getManyAndCount();
     if (entities.length === 0) {

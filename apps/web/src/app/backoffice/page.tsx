@@ -68,11 +68,16 @@ type ContactMessage = {
 
 type AdminOrderListRow = {
   id: string;
-  userId: string;
+  orderNumber: string;
+  userId: string | null;
   status: string;
   total: number;
   currency: string;
+  paymentMethod: string | null;
   paymentStatus?: string;
+  paidAt: string | null;
+  paymentBrand: string | null;
+  paymentLast4: string | null;
   createdAt: string;
   updatedAt: string;
   customerEmail: string | null;
@@ -81,14 +86,23 @@ type AdminOrderListRow = {
 
 type AdminOrderDetail = {
   id: string;
-  userId: string;
+  orderNumber: string;
+  userId: string | null;
   status: string;
   total: number;
   currency: string;
-  paymentMethod?: string;
+  paymentMethod: string | null;
   paymentId?: string;
   paymentStatus?: string;
-  statusHistory: { status: string; at: string }[];
+  paidAt: string | null;
+  paymentBrand: string | null;
+  paymentLast4: string | null;
+  statusHistory: {
+    status: string;
+    at: string;
+    byUserId?: string | null;
+    byEmail?: string | null;
+  }[];
   createdAt: string;
   updatedAt: string;
   shippingAddress?: unknown;
@@ -157,6 +171,8 @@ function BackofficeDashboard() {
   const [ordersMeta, setOrdersMeta] = useState<{ total: number; page: number; totalPages: number } | null>(null);
   const [ordersPage, setOrdersPage] = useState(1);
   const [ordersStatusFilter, setOrdersStatusFilter] = useState<string>("");
+  const [ordersPaymentMethodFilter, setOrdersPaymentMethodFilter] = useState<string>("");
+  const [ordersPaymentStatusFilter, setOrdersPaymentStatusFilter] = useState<string>("");
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [orderDetail, setOrderDetail] = useState<AdminOrderDetail | null>(null);
   const [loadingOrderDetail, setLoadingOrderDetail] = useState(false);
@@ -238,11 +254,18 @@ function BackofficeDashboard() {
     }
   };
 
-  const loadAdminOrders = async (page = ordersPage, status = ordersStatusFilter) => {
+  const loadAdminOrders = async (
+    page = ordersPage,
+    status = ordersStatusFilter,
+    paymentMethod = ordersPaymentMethodFilter,
+    paymentStatus = ordersPaymentStatusFilter,
+  ) => {
     setLoadingOrders(true);
     try {
       const sp = new URLSearchParams({ page: String(page), limit: "20" });
       if (status) sp.set("status", status);
+      if (paymentMethod) sp.set("paymentMethod", paymentMethod);
+      if (paymentStatus) sp.set("paymentStatus", paymentStatus);
       const res = await authFetch(`${API_URL}/admin/orders?${sp.toString()}`);
       if (!res.ok) throw new Error();
       const body = (await res.json()) as {
@@ -298,7 +321,14 @@ function BackofficeDashboard() {
       loadUsers(),
       loadContactMessages(),
       loadDashboard(),
-      section === "orders" ? loadAdminOrders(ordersPage, ordersStatusFilter) : Promise.resolve(),
+      section === "orders"
+        ? loadAdminOrders(
+            ordersPage,
+            ordersStatusFilter,
+            ordersPaymentMethodFilter,
+            ordersPaymentStatusFilter,
+          )
+        : Promise.resolve(),
     ]);
 
   useEffect(() => {
@@ -308,9 +338,20 @@ function BackofficeDashboard() {
 
   useEffect(() => {
     if (section !== "orders") return;
-    void loadAdminOrders(ordersPage, ordersStatusFilter);
+    void loadAdminOrders(
+      ordersPage,
+      ordersStatusFilter,
+      ordersPaymentMethodFilter,
+      ordersPaymentStatusFilter,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [section, ordersPage, ordersStatusFilter]);
+  }, [
+    section,
+    ordersPage,
+    ordersStatusFilter,
+    ordersPaymentMethodFilter,
+    ordersPaymentStatusFilter,
+  ]);
 
   /* ------------------------------- Actions -------------------------------- */
 
@@ -551,6 +592,26 @@ function BackofficeDashboard() {
     };
     const m = map[status] ?? { tone: "neutral" as const, label: status };
     return <span className={`bo-badge ${m.tone}`}>{m.label}</span>;
+  };
+
+  const paymentStatusBadge = (status?: string | null, method?: string | null) => {
+    const map: Record<string, { tone: "ok" | "warn" | "neutral" | "danger" | "brand"; label: string }> = {
+      paid: { tone: "ok", label: "Payé" },
+      unpaid: { tone: "warn", label: "En attente" },
+      failed: { tone: "danger", label: "Échoué" },
+      refunded: { tone: "neutral", label: "Remboursé" },
+    };
+    const key = (status ?? "unpaid").toLowerCase();
+    const m = map[key] ?? { tone: "neutral" as const, label: status ?? "—" };
+    const methodLabel = method ? method.charAt(0).toUpperCase() + method.slice(1) : null;
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+        <span className={`bo-badge ${m.tone}`}>{m.label}</span>
+        {methodLabel && (
+          <span className="bo-muted" style={{ fontSize: 10.5 }}>{methodLabel}</span>
+        )}
+      </span>
+    );
   };
 
   const productStatusBadge = (p: Product) => {
@@ -1020,7 +1081,7 @@ function BackofficeDashboard() {
                       </thead>
                       <tbody>
                         {recentOrdersPreview.map((o) => {
-                          const cust = o.customerEmail ?? o.userId.slice(0, 8) + "…";
+                          const cust = o.customerEmail ?? (o.userId ? o.userId.slice(0, 8) + "…" : "—");
                           return (
                             <tr key={o.id}>
                               <td className="bo-mono" style={{ fontSize: 11.5 }}>
@@ -1510,22 +1571,53 @@ function BackofficeDashboard() {
                 title="Commandes"
                 subtitle={ordersMeta ? `${ordersMeta.total} commande(s)` : ""}
                 actions={
-                  <select
-                    value={ordersStatusFilter}
-                    onChange={(e) => {
-                      setOrdersStatusFilter(e.target.value);
-                      setOrdersPage(1);
-                    }}
-                    className="bo-input compact"
-                    style={{ width: 160 }}
-                  >
-                    <option value="">Tous statuts</option>
-                    <option value="pending">En attente</option>
-                    <option value="processing">En traitement</option>
-                    <option value="shipped">Expédiée</option>
-                    <option value="delivered">Livrée</option>
-                    <option value="cancelled">Annulée</option>
-                  </select>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <select
+                      value={ordersStatusFilter}
+                      onChange={(e) => {
+                        setOrdersStatusFilter(e.target.value);
+                        setOrdersPage(1);
+                      }}
+                      className="bo-input compact"
+                      style={{ width: 150 }}
+                    >
+                      <option value="">Tous statuts</option>
+                      <option value="pending">En attente</option>
+                      <option value="processing">En traitement</option>
+                      <option value="shipped">Expédiée</option>
+                      <option value="delivered">Livrée</option>
+                      <option value="cancelled">Annulée</option>
+                    </select>
+                    <select
+                      value={ordersPaymentStatusFilter}
+                      onChange={(e) => {
+                        setOrdersPaymentStatusFilter(e.target.value);
+                        setOrdersPage(1);
+                      }}
+                      className="bo-input compact"
+                      style={{ width: 150 }}
+                      title="Statut paiement"
+                    >
+                      <option value="">Tous paiements</option>
+                      <option value="paid">Payé</option>
+                      <option value="unpaid">En attente</option>
+                      <option value="failed">Échoué</option>
+                      <option value="refunded">Remboursé</option>
+                    </select>
+                    <select
+                      value={ordersPaymentMethodFilter}
+                      onChange={(e) => {
+                        setOrdersPaymentMethodFilter(e.target.value);
+                        setOrdersPage(1);
+                      }}
+                      className="bo-input compact"
+                      style={{ width: 130 }}
+                      title="Mode paiement"
+                    >
+                      <option value="">Tous modes</option>
+                      <option value="stripe">Stripe</option>
+                    </select>
+                  </div>
                 }
               >
                 {loadingOrders ? (
@@ -1541,9 +1633,11 @@ function BackofficeDashboard() {
                     <table className="bo-data">
                       <thead>
                         <tr>
+                          <th>N°</th>
                           <th>Date</th>
                           <th>Client</th>
                           <th>Statut</th>
+                          <th>Paiement</th>
                           <th className="num">Total</th>
                           <th className="num">Lignes</th>
                           <th className="num">Voir</th>
@@ -1552,13 +1646,17 @@ function BackofficeDashboard() {
                       <tbody>
                         {adminOrders.map((o) => (
                           <tr key={o.id}>
+                            <td className="bo-mono" style={{ fontSize: 11, fontWeight: 600 }}>
+                              {o.orderNumber}
+                            </td>
                             <td className="bo-mono muted" style={{ fontSize: 11 }}>
                               {new Date(o.createdAt).toLocaleString("fr-FR")}
                             </td>
-                            <td style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis" }}>
-                              {o.customerEmail ?? o.userId.slice(0, 8) + "…"}
+                            <td style={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis" }}>
+                              {o.customerEmail ?? (o.userId ? o.userId.slice(0, 8) + "…" : "—")}
                             </td>
                             <td>{orderStatusBadge(o.status)}</td>
+                            <td>{paymentStatusBadge(o.paymentStatus, o.paymentMethod)}</td>
                             <td className="num" style={{ fontWeight: 600 }}>
                               {o.total.toFixed(2)} {o.currency}
                             </td>
@@ -1628,13 +1726,34 @@ function BackofficeDashboard() {
                 ) : (
                   <div className="bo-vstack" style={{ gap: 12 }}>
                     <div className="bo-hstack" style={{ justifyContent: "space-between" }}>
-                      <span className="bo-mono" style={{ fontSize: 11, color: "var(--bo-text-muted)" }}>
-                        {orderDetail.id}
+                      <span className="bo-mono" style={{ fontSize: 12, fontWeight: 600 }}>
+                        {orderDetail.orderNumber}
                       </span>
                       {orderStatusBadge(orderDetail.status)}
                     </div>
                     <div style={{ fontSize: 18, fontWeight: 600 }} className="bo-num">
                       {orderDetail.total.toFixed(2)} {orderDetail.currency}
+                    </div>
+                    <div className="bo-vstack" style={{ gap: 4, fontSize: 11.5 }}>
+                      <div className="bo-hstack" style={{ justifyContent: "space-between" }}>
+                        <span className="bo-muted">Statut paiement</span>
+                        <span>{paymentStatusBadge(orderDetail.paymentStatus, orderDetail.paymentMethod)}</span>
+                      </div>
+                      {(orderDetail.paymentBrand || orderDetail.paymentLast4) && (
+                        <div className="bo-hstack" style={{ justifyContent: "space-between" }}>
+                          <span className="bo-muted">Carte</span>
+                          <span className="bo-mono">
+                            {(orderDetail.paymentBrand ?? "").toUpperCase()}{" "}
+                            {orderDetail.paymentLast4 ? `•••• ${orderDetail.paymentLast4}` : ""}
+                          </span>
+                        </div>
+                      )}
+                      {orderDetail.paidAt && (
+                        <div className="bo-hstack" style={{ justifyContent: "space-between" }}>
+                          <span className="bo-muted">Payé le</span>
+                          <span className="bo-mono">{new Date(orderDetail.paidAt).toLocaleString("fr-FR")}</span>
+                        </div>
+                      )}
                     </div>
                     <div>
                       <div className="bo-label">Changer le statut</div>
@@ -1659,7 +1778,7 @@ function BackofficeDashboard() {
                           listStyle: "none",
                           padding: 0,
                           margin: 0,
-                          maxHeight: 160,
+                          maxHeight: 200,
                           overflowY: "auto",
                           fontSize: 11.5,
                         }}
@@ -1669,16 +1788,23 @@ function BackofficeDashboard() {
                             key={`${h.at}-${i}`}
                             style={{
                               display: "flex",
-                              justifyContent: "space-between",
-                              gap: 8,
+                              flexDirection: "column",
+                              gap: 2,
                               borderBottom: "1px solid var(--bo-border)",
-                              padding: "4px 0",
+                              padding: "5px 0",
                             }}
                           >
-                            <span>{orderStatusBadge(h.status)}</span>
-                            <span className="bo-dim bo-mono" style={{ fontSize: 10 }}>
-                              {new Date(h.at).toLocaleString("fr-FR")}
-                            </span>
+                            <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                              <span>{orderStatusBadge(h.status)}</span>
+                              <span className="bo-dim bo-mono" style={{ fontSize: 10 }}>
+                                {new Date(h.at).toLocaleString("fr-FR")}
+                              </span>
+                            </div>
+                            {h.byEmail && (
+                              <span className="bo-muted" style={{ fontSize: 10.5 }}>
+                                par {h.byEmail}
+                              </span>
+                            )}
                           </li>
                         ))}
                       </ul>

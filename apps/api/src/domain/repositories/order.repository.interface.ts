@@ -19,6 +19,24 @@ export interface OrderFilters {
     search?: string;
 }
 
+export interface UpdateOrderStatusMetadata {
+    paymentId?: string;
+    paymentStatus?: string;
+    paymentMethod?: string;
+    paymentMethodId?: string;
+    paymentBrand?: string;
+    paymentLast4?: string;
+    paidAt?: Date;
+    byUserId?: string | null;
+    byEmail?: string | null;
+}
+
+export interface AdminOrderListFilters {
+    status?: string;
+    paymentMethod?: string;
+    paymentStatus?: string;
+}
+
 export interface OrderRepository {
     findAllByUserId(userId: string): Promise<Order[]>;
     findByUserIdWithFilters(userId: string, filters: OrderFilters): Promise<Order[]>;
@@ -26,11 +44,11 @@ export interface OrderRepository {
     findById(id: string): Promise<Order | null>;
     create(order: Order): Promise<Order>;
     update(order: Order): Promise<Order>;
-    updateStatus(id: string, status: string, metadata?: Record<string, any>): Promise<Order>;
+    updateStatus(id: string, status: string, metadata?: UpdateOrderStatusMetadata): Promise<Order>;
     findAllForAdmin(params: {
         skip: number;
         take: number;
-        status?: string;
+        filters?: AdminOrderListFilters;
     }): Promise<{ rows: { order: Order; customerEmail: string | null }[]; total: number }>;
     getAdminDashboard(): Promise<AdminDashboardSnapshot>;
 }

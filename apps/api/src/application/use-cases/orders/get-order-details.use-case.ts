@@ -68,7 +68,8 @@ export class GetOrderDetailsUseCase {
         }
 
         return Object.assign(order, {
-            orderNumber: formatOrderNumber(order.id, order.createdAt),
+            orderNumber:
+                order.orderNumber ?? formatOrderNumber(order.id, order.createdAt),
         }) as OrderDetailsResponse;
     }
 }
