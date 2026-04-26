@@ -7,6 +7,7 @@ export interface UserRepository {
     findByEmail(email: string): Promise<User | null>;
     findByVerificationToken(token: string): Promise<User | null>;
     findByPasswordResetToken(token: string): Promise<User | null>;
+    findByPendingEmailToken(token: string): Promise<User | null>;
     findAll(): Promise<User[]>;
     create(user: User): Promise<User>;
     update(user: User): Promise<User>;

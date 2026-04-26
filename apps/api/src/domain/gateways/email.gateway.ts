@@ -8,6 +8,7 @@ export interface EmailGateway {
         orderNumber?: string,
         locale?: string,
     ): Promise<void>;
+    sendEmailChangeConfirmation(newEmail: string, token: string, locale?: string): Promise<void>;
 }
 
 export const EMAIL_GATEWAY = 'EMAIL_GATEWAY';

@@ -141,4 +141,36 @@ export class NodemailerService implements EmailGateway {
       this.logger.log(`Ethereal preview: ${previewUrl}`);
     }
   }
+
+  async sendEmailChangeConfirmation(
+    newEmail: string,
+    token: string,
+    _locale?: string,
+  ): Promise<void> {
+    const confirmLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/account/confirm-email-change?token=${token}`;
+
+    const transporter = await this.getTransporter();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer's Transporter generic defaults to `any`
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM || '"Althea Shop" <no-reply@althea.local>',
+      to: newEmail,
+      subject: 'Confirmez votre nouvelle adresse e-mail Althea',
+      html: `
+                <h1>Confirmez votre nouvelle adresse</h1>
+                <p>Vous avez demandé à modifier l'adresse e-mail liée à votre compte Althea. Pour finaliser le changement, cliquez sur le lien ci-dessous :</p>
+                <p><a href="${confirmLink}">Confirmer mon nouvel e-mail</a></p>
+                <p>Ce lien expirera dans 24 heures. Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail.</p>
+            `,
+    });
+
+    this.logger.log(`Email-change confirmation sent to ${newEmail}`);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- info is `any` from sendMail; nodemailer accepts it
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      this.logger.log(`Ethereal preview: ${previewUrl}`);
+    } else if (!process.env.SMTP_HOST) {
+      this.logger.log(`Email-change confirmation link (dev fallback): ${confirmLink}`);
+    }
+  }
 }

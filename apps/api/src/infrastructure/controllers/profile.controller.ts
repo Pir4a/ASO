@@ -22,6 +22,7 @@ import { DeleteUserAddressUseCase } from '../../application/use-cases/users/dele
 import { FindUserByIdUseCase } from '../../application/use-cases/users/find-user-by-id.use-case';
 import { FindUserByEmailUseCase } from '../../application/use-cases/users/find-user-by-email.use-case';
 import { UpdateUserUseCase } from '../../application/use-cases/users/update-user.use-case';
+import { RequestEmailChangeUseCase } from '../../application/use-cases/users/request-email-change.use-case';
 
 interface AuthedRequest {
     user: { sub: string };
@@ -52,6 +53,7 @@ export class ProfileController {
         private readonly findUserByIdUseCase: FindUserByIdUseCase,
         private readonly findUserByEmailUseCase: FindUserByEmailUseCase,
         private readonly updateUserUseCase: UpdateUserUseCase,
+        private readonly requestEmailChangeUseCase: RequestEmailChangeUseCase,
     ) {}
 
     /* ── Personal info ─────────────────────────────────────── */
@@ -67,6 +69,7 @@ export class ProfileController {
             lastName: user.lastName,
             role: user.role,
             isVerified: user.isVerified,
+            pendingEmail: user.pendingEmail ?? null,
         };
     }
 
@@ -87,19 +90,20 @@ export class ProfileController {
                 throw new BadRequestException('Le nom ne peut pas être vide.');
             user.lastName = trimmed;
         }
+
+        let pendingEmail: string | null = user.pendingEmail ?? null;
+        const updated = await this.updateUserUseCase.execute(user);
+
         if (body.email !== undefined) {
             const next = body.email.trim().toLowerCase();
             if (!EMAIL_RE.test(next))
                 throw new BadRequestException("Email invalide.");
-            if (next !== user.email) {
-                const taken = await this.findUserByEmailUseCase.execute(next);
-                if (taken && taken.id !== user.id)
-                    throw new BadRequestException('Cet email est déjà utilisé.');
-                user.email = next;
+            if (next !== updated.email) {
+                const result = await this.requestEmailChangeUseCase.execute(updated.id, next);
+                pendingEmail = result.pendingEmail;
             }
         }
 
-        const updated = await this.updateUserUseCase.execute(user);
         return {
             id: updated.id,
             email: updated.email,
@@ -107,7 +111,19 @@ export class ProfileController {
             lastName: updated.lastName,
             role: updated.role,
             isVerified: updated.isVerified,
+            pendingEmail,
         };
+    }
+
+    @Post('me/resend-email-change')
+    async resendEmailChange(@Request() req: AuthedRequest) {
+        const user = await this.findUserByIdUseCase.execute(req.user.sub);
+        if (!user) throw new NotFoundException('Utilisateur introuvable.');
+        if (!user.pendingEmail) {
+            throw new BadRequestException("Aucun changement d'e-mail en attente.");
+        }
+        const result = await this.requestEmailChangeUseCase.execute(user.id, user.pendingEmail);
+        return { pendingEmail: result.pendingEmail };
     }
 
     @Patch('me/password')

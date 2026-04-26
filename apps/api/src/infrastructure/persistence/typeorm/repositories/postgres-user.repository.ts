@@ -36,6 +36,12 @@ export class PostgresUserRepository implements UserRepository {
         return UserMapper.toDomain(entity);
     }
 
+    async findByPendingEmailToken(token: string): Promise<DomainUser | null> {
+        const entity = await this.repository.findOne({ where: { pendingEmailToken: token } });
+        if (!entity) return null;
+        return UserMapper.toDomain(entity);
+    }
+
     async create(user: DomainUser): Promise<DomainUser> {
         const persistenceEntity = UserMapper.toPersistence(user);
         const newEntity = await this.repository.save(persistenceEntity);

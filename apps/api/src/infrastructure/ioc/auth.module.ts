@@ -13,6 +13,7 @@ import { RolesGuard } from '../guards/roles.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RequestPasswordResetUseCase } from '../../application/use-cases/auth/request-password-reset.use-case';
 import { ResetPasswordUseCase } from '../../application/use-cases/auth/reset-password.use-case';
+import { ConfirmEmailChangeUseCase } from '../../application/use-cases/auth/confirm-email-change.use-case';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { ResetPasswordUseCase } from '../../application/use-cases/auth/reset-pas
     },
     RequestPasswordResetUseCase,
     ResetPasswordUseCase,
+    ConfirmEmailChangeUseCase,
     RolesGuard,
     JwtAuthGuard,
   ],

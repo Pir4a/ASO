@@ -16,6 +16,9 @@ export class UserMapper {
             verificationTokenExpires: entity.verificationTokenExpires,
             passwordResetToken: entity.passwordResetToken ?? null,
             passwordResetTokenExpires: entity.passwordResetTokenExpires ?? null,
+            pendingEmail: entity.pendingEmail ?? null,
+            pendingEmailToken: entity.pendingEmailToken ?? null,
+            pendingEmailExpires: entity.pendingEmailExpires ?? null,
             stripeCustomerId: entity.stripeCustomerId,
             lastLoginAt: entity.lastLoginAt,
         });
@@ -36,6 +39,9 @@ export class UserMapper {
         entity.verificationTokenExpires = domain.verificationTokenExpires;
         entity.passwordResetToken = domain.passwordResetToken ?? null;
         entity.passwordResetTokenExpires = domain.passwordResetTokenExpires ?? null;
+        entity.pendingEmail = domain.pendingEmail ?? null;
+        entity.pendingEmailToken = domain.pendingEmailToken ?? null;
+        entity.pendingEmailExpires = domain.pendingEmailExpires ?? null;
         entity.stripeCustomerId = domain.stripeCustomerId;
         entity.lastLoginAt = domain.lastLoginAt;
         return entity;

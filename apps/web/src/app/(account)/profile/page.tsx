@@ -297,11 +297,37 @@ function SectionCard({
 function PersonalInfoCard() {
   const { user, updateUser } = useAuth();
   const [flash, setFlash] = useState<{ kind: "success" | "error"; text: string } | null>(null);
+  const [resending, setResending] = useState(false);
 
   const flashAndClear = (kind: "success" | "error", text: string) => {
     setFlash({ kind, text });
     window.setTimeout(() => setFlash(null), 3500);
   };
+
+  // Hydrate pendingEmail from /profile/me on mount so the banner appears even after a reload.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await authFetch("/profile/me");
+        if (!res.ok) return;
+        const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+        if (!cancelled) {
+          updateUser({
+            pendingEmail:
+              typeof data.pendingEmail === "string" || data.pendingEmail === null
+                ? (data.pendingEmail as string | null)
+                : undefined,
+          });
+        }
+      } catch {
+        // best-effort hydration only
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [updateUser]);
 
   const save = async (
     patch: Partial<{ firstName: string; lastName: string; email: string }>,
@@ -321,8 +347,38 @@ function PersonalInfoCard() {
       firstName: typeof data.firstName === "string" ? data.firstName : undefined,
       lastName: typeof data.lastName === "string" ? data.lastName : undefined,
       email: typeof data.email === "string" ? data.email : undefined,
+      pendingEmail:
+        typeof data.pendingEmail === "string" || data.pendingEmail === null
+          ? (data.pendingEmail as string | null)
+          : undefined,
     });
-    flashAndClear("success", "Informations mises à jour.");
+    if (typeof data.pendingEmail === "string" && data.pendingEmail) {
+      flashAndClear(
+        "success",
+        `Un e-mail de confirmation a été envoyé à ${data.pendingEmail}.`,
+      );
+    } else {
+      flashAndClear("success", "Informations mises à jour.");
+    }
+  };
+
+  const resendEmailChange = async () => {
+    if (resending) return;
+    setResending(true);
+    try {
+      const res = await authFetch("/profile/me/resend-email-change", { method: "POST" });
+      const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      if (!res.ok) {
+        const message =
+          typeof data?.message === "string" ? data.message : "Renvoi impossible.";
+        throw new Error(message);
+      }
+      flashAndClear("success", "Lien de confirmation renvoyé.");
+    } catch (e) {
+      flashAndClear("error", (e as Error).message);
+    } finally {
+      setResending(false);
+    }
   };
 
   return (
@@ -355,6 +411,24 @@ function PersonalInfoCard() {
           onError={(e) => flashAndClear("error", e)}
           className="sm:col-span-2"
         />
+        {user?.pendingEmail && (
+          <div
+            role="status"
+            className="sm:col-span-2 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-[13px] text-amber-900"
+          >
+            <span>
+              En attente de validation : <b>{user.pendingEmail}</b>. Vérifiez la nouvelle boîte mail pour confirmer le changement.
+            </span>
+            <button
+              type="button"
+              onClick={() => void resendEmailChange()}
+              disabled={resending}
+              className="inline-flex items-center rounded-md border border-amber-400 bg-white px-2.5 py-1 text-[12px] font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-60"
+            >
+              {resending ? "Envoi…" : "Renvoyer"}
+            </button>
+          </div>
+        )}
         <ReadOnlyField label="Rôle">
           <span
             className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${

@@ -44,6 +44,15 @@ export class User {
     @Column({ name: 'password_reset_token_expires', type: 'timestamptz', nullable: true })
     passwordResetTokenExpires: Date | null;
 
+    @Column({ name: 'pending_email', type: 'text', nullable: true })
+    pendingEmail: string | null;
+
+    @Column({ name: 'pending_email_token', type: 'text', nullable: true })
+    pendingEmailToken: string | null;
+
+    @Column({ name: 'pending_email_expires', type: 'timestamptz', nullable: true })
+    pendingEmailExpires: Date | null;
+
     @Column({ nullable: true })
     stripeCustomerId?: string;
 }
