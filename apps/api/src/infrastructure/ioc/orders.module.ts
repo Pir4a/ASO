@@ -21,6 +21,7 @@ import { PaymentModule } from './payment.module';
 import { InvoicesModule } from './invoices.module';
 import { PdfService } from '../services/pdf.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 
 @Module({
@@ -47,6 +48,7 @@ import { RolesGuard } from '../guards/roles.guard';
         GenerateInvoicePdfUseCase,
         PdfService,
         JwtAuthGuard,
+        OptionalJwtAuthGuard,
         RolesGuard,
     ],
     exports: [ORDER_REPOSITORY_TOKEN],

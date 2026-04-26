@@ -1,5 +1,6 @@
 import { Inject, Injectable, BadRequestException } from '@nestjs/common';
 import { Order, OrderItem } from '../../../domain/entities/order.entity';
+import { Address } from '../../../domain/entities/address.entity';
 import type { OrderRepository } from '../../../domain/repositories/order.repository.interface';
 import { ORDER_REPOSITORY_TOKEN } from '../../../domain/repositories/order.repository.interface';
 import type { CartRepository } from '../../../domain/repositories/cart.repository.interface';
@@ -8,6 +9,29 @@ import type { AddressRepository } from '../../../domain/repositories/address.rep
 import { ADDRESS_REPOSITORY_TOKEN } from '../../../domain/repositories/address.repository.interface';
 import type { ProductRepository } from '../../../domain/repositories/product.repository.interface';
 import { PRODUCT_REPOSITORY_TOKEN } from '../../../domain/repositories/product.repository.interface';
+
+export interface GuestAddressInput {
+    firstName?: string;
+    lastName?: string;
+    street: string;
+    address2?: string;
+    city: string;
+    region?: string;
+    postalCode: string;
+    country: string;
+    phone?: string;
+}
+
+export interface CreateOrderInput {
+    /** Authenticated user id, when present. */
+    userId?: string;
+    /** Guest cart key (the `x-guest-cart-id` header on cart endpoints). */
+    guestCartId?: string;
+    /** Saved address id (preferred for logged-in users). */
+    addressId?: string;
+    /** Inline address payload, used by guests with no saved addresses. */
+    address?: GuestAddressInput;
+}
 
 @Injectable()
 export class CreateOrderUseCase {
@@ -22,18 +46,19 @@ export class CreateOrderUseCase {
         private readonly productRepository: ProductRepository,
     ) { }
 
-    async execute(userId: string, addressId: string): Promise<Order> {
-        const cart = await this.cartRepository.findByUserId(userId);
+    async execute(input: CreateOrderInput): Promise<Order> {
+        const cartKey = input.userId ?? input.guestCartId;
+        if (!cartKey) {
+            throw new BadRequestException('Cart owner missing (userId or guestCartId required).');
+        }
+
+        const cart = await this.cartRepository.findByUserId(cartKey);
         if (!cart || cart.items.length === 0) {
             throw new BadRequestException('Cart is empty');
         }
 
-        const address = await this.addressRepository.findById(addressId);
-        if (!address) {
-            throw new BadRequestException('Address not found');
-        }
+        const shippingAddress = await this.resolveAddress(input);
 
-        // Resolve product name + SKU + price from the catalog so the order has accurate snapshots.
         const products = await Promise.all(
             cart.items.map((item) => this.productRepository.findById(item.productId)),
         );
@@ -56,19 +81,42 @@ export class CreateOrderUseCase {
 
         const at = new Date().toISOString();
         const order = new Order({
-            userId,
+            // Guests get a sentinel-empty userId; ConfirmOrderPaymentUseCase
+            // will create the User and attach them on confirm.
+            userId: input.userId ?? '',
             status: 'pending',
             total,
             currency: 'EUR',
-            shippingAddress: address,
-            billingAddress: address,
+            shippingAddress,
+            billingAddress: shippingAddress,
             statusHistory: [{ status: 'pending', at }],
             items,
         });
 
-        // Note: the cart is NOT marked as 'ordered' here. It is only cleared once the payment is
-        // confirmed (see ConfirmPaymentUseCase). This protects the user from losing their cart if
-        // payment fails or is abandoned after order creation.
+        // Cart is closed only on payment confirmation, never here.
         return this.orderRepository.create(order);
+    }
+
+    private async resolveAddress(input: CreateOrderInput): Promise<Address> {
+        if (input.addressId) {
+            const found = await this.addressRepository.findById(input.addressId);
+            if (!found) throw new BadRequestException('Address not found');
+            return found;
+        }
+        if (input.address) {
+            return new Address({
+                userId: input.userId ?? '',
+                firstName: input.address.firstName,
+                lastName: input.address.lastName,
+                street: input.address.street,
+                address2: input.address.address2,
+                city: input.address.city,
+                region: input.address.region,
+                postalCode: input.address.postalCode,
+                country: input.address.country,
+                phone: input.address.phone,
+            });
+        }
+        throw new BadRequestException('A shipping address is required (addressId or address).');
     }
 }

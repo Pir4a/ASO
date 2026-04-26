@@ -458,24 +458,54 @@ export async function createUserAddress(address: any): Promise<any> {
   return res.json();
 }
 
-export async function createOrder(addressId: string): Promise<any> {
+export type GuestCheckoutAddress = {
+  firstName?: string;
+  lastName?: string;
+  street: string;
+  address2?: string;
+  city: string;
+  region?: string;
+  postalCode: string;
+  country: string;
+  phone?: string;
+};
+
+export async function createOrder(
+  input: { addressId?: string; address?: GuestCheckoutAddress; guestCartId?: string },
+): Promise<any> {
   const { authFetch } = await import("./auth");
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (input.guestCartId) headers["x-guest-cart-id"] = input.guestCartId;
+  const body: Record<string, unknown> = {};
+  if (input.addressId) body.addressId = input.addressId;
+  if (input.address) body.address = input.address;
   const res = await authFetch("/checkout", {
     method: "POST",
-    body: JSON.stringify({ addressId }),
+    headers,
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.message || `Failed to create order (${res.status})`);
+    const responseBody = await res.json().catch(() => ({}));
+    throw new Error(responseBody.message || `Failed to create order (${res.status})`);
   }
   return res.json();
 }
 
-export async function confirmOrderPayment(orderId: string, paymentIntentId?: string): Promise<{ ok: true }> {
+export async function confirmOrderPayment(
+  orderId: string,
+  paymentIntentId?: string,
+  opts?: { guestEmail?: string; guestCartId?: string },
+): Promise<{ ok: true }> {
   const { authFetch } = await import("./auth");
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (opts?.guestCartId) headers["x-guest-cart-id"] = opts.guestCartId;
   const res = await authFetch(`/checkout/${orderId}/confirm`, {
     method: "POST",
-    body: JSON.stringify({ paymentIntentId }),
+    headers,
+    body: JSON.stringify({
+      paymentIntentId,
+      ...(opts?.guestEmail ? { guestEmail: opts.guestEmail } : {}),
+    }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

@@ -36,6 +36,12 @@ export interface EmailGateway {
         context: CreditNoteEmailContext,
         pdfBuffer: Buffer,
     ): Promise<void>;
+    sendGuestSignupEmail(
+        to: string,
+        token: string,
+        orderId: string,
+        locale?: string,
+    ): Promise<void>;
 }
 
 export const EMAIL_GATEWAY = 'EMAIL_GATEWAY';

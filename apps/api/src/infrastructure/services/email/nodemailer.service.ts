@@ -390,4 +390,39 @@ export class NodemailerService implements EmailGateway {
       this.logger.log(`Ethereal preview: ${previewUrl}`);
     }
   }
+
+  async sendGuestSignupEmail(
+    to: string,
+    token: string,
+    orderId: string,
+    _locale?: string,
+  ): Promise<void> {
+    const setupLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}&welcome=1`;
+    const orderShort = orderId.slice(0, 8);
+
+    const transporter = await this.getTransporter();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer's Transporter generic defaults to `any`
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM || '"Althea Shop" <no-reply@althea.local>',
+      to,
+      subject: 'Créez votre mot de passe pour suivre votre commande Althea',
+      html: `
+                <h1>Merci pour votre commande !</h1>
+                <p>Votre commande <strong>${orderShort}</strong> a bien été enregistrée.</p>
+                <p>Nous avons créé un compte avec votre adresse e-mail pour que vous puissiez la suivre. Définissez votre mot de passe en cliquant sur le lien ci-dessous :</p>
+                <p><a href="${setupLink}">Créer mon mot de passe</a></p>
+                <p>Ce lien expire dans 24 heures. Si vous n'êtes pas à l'origine de cette commande, ignorez cet e-mail.</p>
+            `,
+    });
+
+    this.logger.log(`Guest signup email sent to ${to} for order ${orderId}`);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- info is `any` from sendMail; nodemailer accepts it
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      this.logger.log(`Ethereal preview: ${previewUrl}`);
+    } else if (!process.env.SMTP_HOST) {
+      this.logger.log(`Guest signup link (dev fallback): ${setupLink}`);
+    }
+  }
 }
