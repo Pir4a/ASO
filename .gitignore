@@ -13,3 +13,6 @@ apps/api/storage/
 # Claude Code agent scratch space (worktrees, settings, transcripts)
 .claude/
 
+# LibreOffice / OpenOffice lock files — created while a doc is open.
+.~lock.*#
+
