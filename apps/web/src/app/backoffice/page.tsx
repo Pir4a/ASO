@@ -54,6 +54,7 @@ type Product = {
   id: string;
   name?: string;
   sku?: string;
+  description?: string;
   price?: number;
   stock?: number;
   status?: "in_stock" | "low_stock" | "out_of_stock" | "new";
@@ -64,6 +65,8 @@ type Product = {
   category?: { id: string; name: string };
   categoryId?: string;
   vatRate?: number;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 type AdminUser = {
@@ -184,6 +187,29 @@ function BackofficeDashboard() {
 
   const [search, setSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
+  // #11 — sortable / filterable / paginated products table.
+  type ProductSortKey =
+    | "name"
+    | "sku"
+    | "category"
+    | "price"
+    | "stock"
+    | "createdAt"
+    | "published";
+  const [productSortBy, setProductSortBy] = useState<ProductSortKey>("createdAt");
+  const [productSortDir, setProductSortDir] = useState<"asc" | "desc">("desc");
+  const [productCategoryFilter, setProductCategoryFilter] = useState<string>("");
+  const [productAvailabilityFilter, setProductAvailabilityFilter] = useState<
+    "all" | "in_stock" | "low_stock" | "out_of_stock"
+  >("all");
+  const [productPublishedFilter, setProductPublishedFilter] = useState<
+    "all" | "published" | "draft"
+  >("all");
+  const [productPriceMin, setProductPriceMin] = useState<string>("");
+  const [productPriceMax, setProductPriceMax] = useState<string>("");
+  const [productPage, setProductPage] = useState<number>(1);
+  const [productPageSize, setProductPageSize] = useState<10 | 25 | 50>(25);
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [categorySearch, setCategorySearch] = useState("");
   const [globalSearch, setGlobalSearch] = useState("");
 
@@ -602,11 +628,193 @@ function BackofficeDashboard() {
   const outOfStockCount = products.filter((p) => (p.stock ?? 0) === 0).length;
   const activeCategories = categories.filter((c) => c.isActive).length;
 
-  const filteredProducts = products.filter(
-    (p) =>
-      (p.name ?? "").toLowerCase().includes(productSearch.toLowerCase()) ||
-      (p.sku ?? "").toLowerCase().includes(productSearch.toLowerCase()),
-  );
+  // #11 — text search + dropdown filters + price range, then sort, then paginate.
+  const filteredProducts = useMemo(() => {
+    const q = productSearch.trim().toLowerCase();
+    const min = productPriceMin === "" ? null : Number(productPriceMin);
+    const max = productPriceMax === "" ? null : Number(productPriceMax);
+    return products.filter((p) => {
+      if (q) {
+        const hay = `${p.name ?? ""} ${p.sku ?? ""} ${p.description ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (productCategoryFilter && (p.category?.id ?? p.categoryId) !== productCategoryFilter) {
+        return false;
+      }
+      if (productAvailabilityFilter !== "all") {
+        const stock = p.stock ?? 0;
+        if (productAvailabilityFilter === "out_of_stock" && stock !== 0) return false;
+        if (productAvailabilityFilter === "low_stock" && (stock === 0 || stock >= 5)) return false;
+        if (productAvailabilityFilter === "in_stock" && stock < 5) return false;
+      }
+      if (productPublishedFilter !== "all") {
+        const pub = p.published !== false; // default published
+        if (productPublishedFilter === "published" && !pub) return false;
+        if (productPublishedFilter === "draft" && pub) return false;
+      }
+      const price = typeof p.price === "number" ? p.price : 0;
+      if (min !== null && !Number.isNaN(min) && price < min) return false;
+      if (max !== null && !Number.isNaN(max) && price > max) return false;
+      return true;
+    });
+  }, [
+    products,
+    productSearch,
+    productCategoryFilter,
+    productAvailabilityFilter,
+    productPublishedFilter,
+    productPriceMin,
+    productPriceMax,
+  ]);
+
+  const sortedProducts = useMemo(() => {
+    const arr = [...filteredProducts];
+    const dir = productSortDir === "asc" ? 1 : -1;
+    arr.sort((a, b) => {
+      const get = (p: Product): string | number => {
+        switch (productSortBy) {
+          case "name":
+            return (p.name ?? "").toLowerCase();
+          case "sku":
+            return (p.sku ?? "").toLowerCase();
+          case "category":
+            return (p.category?.name ?? "").toLowerCase();
+          case "price":
+            return typeof p.price === "number" ? p.price : 0;
+          case "stock":
+            return p.stock ?? 0;
+          case "published":
+            return p.published === false ? 0 : 1;
+          case "createdAt":
+            return p.createdAt ? new Date(p.createdAt).getTime() : 0;
+        }
+      };
+      const av = get(a);
+      const bv = get(b);
+      if (av < bv) return -1 * dir;
+      if (av > bv) return 1 * dir;
+      return 0;
+    });
+    return arr;
+  }, [filteredProducts, productSortBy, productSortDir]);
+
+  const productPageCount = Math.max(1, Math.ceil(sortedProducts.length / productPageSize));
+  const productCurrentPage = Math.min(productPage, productPageCount);
+  const paginatedProducts = useMemo(() => {
+    const start = (productCurrentPage - 1) * productPageSize;
+    return sortedProducts.slice(start, start + productPageSize);
+  }, [sortedProducts, productCurrentPage, productPageSize]);
+
+  const toggleProductSort = (key: ProductSortKey) => {
+    setProductSortBy((prev) => {
+      if (prev === key) {
+        setProductSortDir((d) => (d === "asc" ? "desc" : "asc"));
+        return prev;
+      }
+      // New column: default to ascending for text fields, descending for date/numeric.
+      setProductSortDir(key === "name" || key === "sku" || key === "category" ? "asc" : "desc");
+      return key;
+    });
+  };
+
+  const sortIndicator = (key: ProductSortKey) =>
+    productSortBy === key ? (productSortDir === "asc" ? " ↑" : " ↓") : "";
+
+  const allOnPageSelected =
+    paginatedProducts.length > 0 &&
+    paginatedProducts.every((p) => selectedProductIds.has(p.id));
+
+  const toggleSelectAllOnPage = () => {
+    setSelectedProductIds((prev) => {
+      const next = new Set(prev);
+      if (allOnPageSelected) {
+        paginatedProducts.forEach((p) => next.delete(p.id));
+      } else {
+        paginatedProducts.forEach((p) => next.add(p.id));
+      }
+      return next;
+    });
+  };
+
+  const toggleProductSelected = (id: string) => {
+    setSelectedProductIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const clearProductSelection = () => setSelectedProductIds(new Set());
+
+  // Reset to page 1 whenever the visible set changes shape (filters, search, page size).
+  useEffect(() => {
+    setProductPage(1);
+  }, [
+    productSearch,
+    productCategoryFilter,
+    productAvailabilityFilter,
+    productPublishedFilter,
+    productPriceMin,
+    productPriceMax,
+    productPageSize,
+  ]);
+
+  const bulkDeleteProducts = async () => {
+    const ids = Array.from(selectedProductIds);
+    if (ids.length === 0) return;
+    if (!confirm(`Supprimer ${ids.length} produit${ids.length > 1 ? "s" : ""} ?`)) return;
+    let ok = 0;
+    for (const id of ids) {
+      // eslint-disable-next-line no-await-in-loop
+      const res = await authFetch(`${API_URL}/products/${id}`, { method: "DELETE" });
+      if (res.ok) ok += 1;
+    }
+    clearProductSelection();
+    await loadProducts();
+    if (ok === ids.length) flash("success", `${ok} produit${ok > 1 ? "s" : ""} supprimé${ok > 1 ? "s" : ""}.`);
+    else flash("error", `${ok}/${ids.length} produits supprimés.`);
+  };
+
+  const bulkSetPublished = async (published: boolean) => {
+    const ids = Array.from(selectedProductIds);
+    if (ids.length === 0) return;
+    let ok = 0;
+    for (const id of ids) {
+      // eslint-disable-next-line no-await-in-loop
+      const res = await authFetch(`${API_URL}/products/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ published }),
+      });
+      if (res.ok) ok += 1;
+    }
+    clearProductSelection();
+    await loadProducts();
+    flash(
+      ok === ids.length ? "success" : "error",
+      `${ok}/${ids.length} produits ${published ? "publiés" : "passés en brouillon"}.`,
+    );
+  };
+
+  const bulkSetCategory = async (categoryId: string) => {
+    const ids = Array.from(selectedProductIds);
+    if (ids.length === 0 || !categoryId) return;
+    let ok = 0;
+    for (const id of ids) {
+      // eslint-disable-next-line no-await-in-loop
+      const res = await authFetch(`${API_URL}/products/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ categoryId }),
+      });
+      if (res.ok) ok += 1;
+    }
+    clearProductSelection();
+    await loadProducts();
+    flash(
+      ok === ids.length ? "success" : "error",
+      `${ok}/${ids.length} produits déplacés.`,
+    );
+  };
 
   const filteredCategories = [...categories]
     .filter((c) => c.name.toLowerCase().includes(categorySearch.toLowerCase()))
@@ -1396,7 +1604,7 @@ function BackofficeDashboard() {
 
               <Panel
                 title="Catalogue"
-                subtitle={`${filteredProducts.length} produit${filteredProducts.length > 1 ? "s" : ""}`}
+                subtitle={`${sortedProducts.length} produit${sortedProducts.length > 1 ? "s" : ""}${sortedProducts.length !== products.length ? ` / ${products.length}` : ""}`}
                 actions={
                   <>
                     <input
@@ -1420,11 +1628,171 @@ function BackofficeDashboard() {
                   </>
                 }
               >
+                {/* Filter bar */}
+                <div
+                  className="bo-hstack"
+                  style={{ flexWrap: "wrap", gap: 8, marginBottom: 12 }}
+                >
+                  <select
+                    value={productCategoryFilter}
+                    onChange={(e) => setProductCategoryFilter(e.target.value)}
+                    className="bo-input compact"
+                    style={{ width: 180 }}
+                    title="Filtrer par catégorie"
+                  >
+                    <option value="">Toutes catégories</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={productAvailabilityFilter}
+                    onChange={(e) =>
+                      setProductAvailabilityFilter(
+                        e.target.value as typeof productAvailabilityFilter,
+                      )
+                    }
+                    className="bo-input compact"
+                    style={{ width: 150 }}
+                    title="Filtrer par disponibilité"
+                  >
+                    <option value="all">Toute disponibilité</option>
+                    <option value="in_stock">En stock</option>
+                    <option value="low_stock">Stock faible</option>
+                    <option value="out_of_stock">Rupture</option>
+                  </select>
+                  <select
+                    value={productPublishedFilter}
+                    onChange={(e) =>
+                      setProductPublishedFilter(
+                        e.target.value as typeof productPublishedFilter,
+                      )
+                    }
+                    className="bo-input compact"
+                    style={{ width: 130 }}
+                    title="Filtrer par publication"
+                  >
+                    <option value="all">Tous statuts</option>
+                    <option value="published">Publiés</option>
+                    <option value="draft">Brouillons</option>
+                  </select>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={productPriceMin}
+                    onChange={(e) => setProductPriceMin(e.target.value)}
+                    placeholder="Prix min"
+                    className="bo-input compact"
+                    style={{ width: 110 }}
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={productPriceMax}
+                    onChange={(e) => setProductPriceMax(e.target.value)}
+                    placeholder="Prix max"
+                    className="bo-input compact"
+                    style={{ width: 110 }}
+                  />
+                  {(productCategoryFilter ||
+                    productAvailabilityFilter !== "all" ||
+                    productPublishedFilter !== "all" ||
+                    productPriceMin ||
+                    productPriceMax) && (
+                    <button
+                      type="button"
+                      className="bo-btn"
+                      onClick={() => {
+                        setProductCategoryFilter("");
+                        setProductAvailabilityFilter("all");
+                        setProductPublishedFilter("all");
+                        setProductPriceMin("");
+                        setProductPriceMax("");
+                      }}
+                    >
+                      Réinitialiser
+                    </button>
+                  )}
+                </div>
+
+                {/* Bulk action toolbar */}
+                {selectedProductIds.size > 0 && (
+                  <div
+                    className="bo-hstack"
+                    style={{
+                      gap: 8,
+                      flexWrap: "wrap",
+                      padding: "8px 10px",
+                      marginBottom: 12,
+                      background: "var(--bo-brand-soft)",
+                      border: "1px solid var(--bo-brand)",
+                      borderRadius: 6,
+                    }}
+                  >
+                    <span style={{ fontSize: 12, fontWeight: 600 }}>
+                      {selectedProductIds.size} sélectionné
+                      {selectedProductIds.size > 1 ? "s" : ""}
+                    </span>
+                    <span className="bo-divider-v" />
+                    <button
+                      type="button"
+                      className="bo-btn"
+                      onClick={() => void bulkSetPublished(true)}
+                    >
+                      Publier
+                    </button>
+                    <button
+                      type="button"
+                      className="bo-btn"
+                      onClick={() => void bulkSetPublished(false)}
+                    >
+                      Brouillon
+                    </button>
+                    <select
+                      defaultValue=""
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          void bulkSetCategory(e.target.value);
+                          e.target.value = "";
+                        }
+                      }}
+                      className="bo-input compact"
+                      style={{ width: 180 }}
+                      title="Déplacer vers une catégorie"
+                    >
+                      <option value="">Déplacer vers…</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="bo-btn danger"
+                      onClick={() => void bulkDeleteProducts()}
+                    >
+                      Supprimer
+                    </button>
+                    <span style={{ flex: 1 }} />
+                    <button
+                      type="button"
+                      className="bo-btn"
+                      onClick={clearProductSelection}
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                )}
                 {loadingProducts ? (
                   <p className="bo-muted" style={{ padding: 24, textAlign: "center" }}>
                     Chargement…
                   </p>
-                ) : filteredProducts.length === 0 ? (
+                ) : sortedProducts.length === 0 ? (
                   <p className="bo-muted" style={{ padding: 24, textAlign: "center" }}>
                     Aucun produit trouvé.
                   </p>
@@ -1433,110 +1801,256 @@ function BackofficeDashboard() {
                     <table className="bo-data">
                       <thead>
                         <tr>
-                          <th>Produit</th>
-                          <th>SKU</th>
-                          <th>Catégorie</th>
-                          <th className="num">Prix</th>
+                          <th style={{ width: 28 }}>
+                            <input
+                              type="checkbox"
+                              checked={allOnPageSelected}
+                              onChange={toggleSelectAllOnPage}
+                              aria-label="Sélectionner toute la page"
+                            />
+                          </th>
+                          <th
+                            onClick={() => toggleProductSort("name")}
+                            style={{ cursor: "pointer", userSelect: "none" }}
+                          >
+                            Produit{sortIndicator("name")}
+                          </th>
+                          <th>Description</th>
+                          <th
+                            onClick={() => toggleProductSort("sku")}
+                            style={{ cursor: "pointer", userSelect: "none" }}
+                          >
+                            SKU{sortIndicator("sku")}
+                          </th>
+                          <th
+                            onClick={() => toggleProductSort("category")}
+                            style={{ cursor: "pointer", userSelect: "none" }}
+                          >
+                            Catégorie{sortIndicator("category")}
+                          </th>
+                          <th
+                            className="num"
+                            onClick={() => toggleProductSort("price")}
+                            style={{ cursor: "pointer", userSelect: "none" }}
+                          >
+                            Prix HT{sortIndicator("price")}
+                          </th>
                           <th className="num">TVA</th>
-                          <th className="num">Stock</th>
+                          <th className="num">Prix TTC</th>
+                          <th
+                            className="num"
+                            onClick={() => toggleProductSort("stock")}
+                            style={{ cursor: "pointer", userSelect: "none" }}
+                          >
+                            Stock{sortIndicator("stock")}
+                          </th>
                           <th>Statut</th>
                           <th>Vedette</th>
-                          <th>Publication</th>
+                          <th
+                            onClick={() => toggleProductSort("published")}
+                            style={{ cursor: "pointer", userSelect: "none" }}
+                          >
+                            Publication{sortIndicator("published")}
+                          </th>
+                          <th
+                            onClick={() => toggleProductSort("createdAt")}
+                            style={{ cursor: "pointer", userSelect: "none" }}
+                          >
+                            Créé le{sortIndicator("createdAt")}
+                          </th>
                           <th className="num">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredProducts.map((p) => (
-                          <tr key={p.id}>
-                            <td>
-                              <div className="bo-hstack">
-                                <div
-                                  style={{
-                                    width: 28,
-                                    height: 28,
-                                    borderRadius: 4,
-                                    background: "var(--bo-panel-2)",
-                                    border: "1px solid var(--bo-border)",
-                                    display: "grid",
-                                    placeItems: "center",
-                                    overflow: "hidden",
-                                    fontSize: 10,
-                                    color: "var(--bo-text-muted)",
-                                  }}
-                                >
-                                  {p.thumbnailUrl ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img
-                                      src={p.thumbnailUrl}
-                                      alt=""
-                                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                    />
-                                  ) : (
-                                    initials(p.name ?? "?")
-                                  )}
-                                </div>
-                                <span style={{ fontWeight: 500 }}>{p.name ?? "—"}</span>
-                              </div>
-                            </td>
-                            <td className="bo-mono" style={{ fontSize: 11 }}>
-                              {p.sku ?? "—"}
-                            </td>
-                            <td className="muted">{p.category?.name ?? "—"}</td>
-                            <td className="num" style={{ fontWeight: 600 }}>
-                              {typeof p.price === "number" ? `${p.price.toFixed(2)} €` : "—"}
-                            </td>
-                            <td className="num muted">
-                              {p.vatRate !== undefined && p.vatRate !== null ? `${p.vatRate} %` : "20 %"}
-                            </td>
-                            <td className="num">{p.stock ?? 0}</td>
-                            <td>{productStatusBadge(p)}</td>
-                            <td>
-                              <label className="bo-hstack" style={{ cursor: "pointer", gap: 6 }}>
+                        {paginatedProducts.map((p) => {
+                          const vat = p.vatRate ?? 20;
+                          const ttc =
+                            typeof p.price === "number" ? p.price * (1 + vat / 100) : null;
+                          return (
+                            <tr
+                              key={p.id}
+                              style={{
+                                background: selectedProductIds.has(p.id)
+                                  ? "var(--bo-brand-soft)"
+                                  : undefined,
+                              }}
+                            >
+                              <td>
                                 <input
                                   type="checkbox"
-                                  checked={!!p.featured}
-                                  onChange={() => toggleFeatured(p)}
-                                  aria-label={p.featured ? "Retirer des vedettes" : "Mettre en vedette"}
+                                  checked={selectedProductIds.has(p.id)}
+                                  onChange={() => toggleProductSelected(p.id)}
+                                  aria-label={`Sélectionner ${p.name ?? p.id}`}
                                 />
-                                {p.featured ? (
-                                  <span className="bo-badge brand">★ #{(p.featuredOrder ?? 0) + 1}</span>
-                                ) : (
-                                  <span className="bo-dim">—</span>
-                                )}
-                              </label>
-                            </td>
-                            <td>
-                              {p.published === false ? (
-                                <span className="bo-badge warn">Brouillon</span>
-                              ) : (
-                                <span className="bo-badge ok">Publié</span>
-                              )}
-                            </td>
-                            <td className="num">
-                              <div
+                              </td>
+                              <td>
+                                <div className="bo-hstack">
+                                  <div
+                                    style={{
+                                      width: 28,
+                                      height: 28,
+                                      borderRadius: 4,
+                                      background: "var(--bo-panel-2)",
+                                      border: "1px solid var(--bo-border)",
+                                      display: "grid",
+                                      placeItems: "center",
+                                      overflow: "hidden",
+                                      fontSize: 10,
+                                      color: "var(--bo-text-muted)",
+                                    }}
+                                  >
+                                    {p.thumbnailUrl ? (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img
+                                        src={p.thumbnailUrl}
+                                        alt=""
+                                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                      />
+                                    ) : (
+                                      initials(p.name ?? "?")
+                                    )}
+                                  </div>
+                                  <span style={{ fontWeight: 500 }}>{p.name ?? "—"}</span>
+                                </div>
+                              </td>
+                              <td
+                                className="muted"
                                 style={{
-                                  display: "inline-flex",
-                                  gap: 4,
-                                  flexWrap: "wrap",
-                                  justifyContent: "flex-end",
+                                  maxWidth: 220,
+                                  fontSize: 11.5,
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
                                 }}
+                                title={p.description ?? ""}
                               >
-                                <IconButton
-                                  tone={p.published === false ? "emerald" : "slate"}
-                                  onClick={() => togglePublished(p)}
-                                  title={p.published === false ? "Publier" : "Passer en brouillon"}
+                                {p.description
+                                  ? p.description.length > 80
+                                    ? `${p.description.slice(0, 80)}…`
+                                    : p.description
+                                  : "—"}
+                              </td>
+                              <td className="bo-mono" style={{ fontSize: 11 }}>
+                                {p.sku ?? "—"}
+                              </td>
+                              <td className="muted">{p.category?.name ?? "—"}</td>
+                              <td className="num" style={{ fontWeight: 600 }}>
+                                {typeof p.price === "number" ? `${p.price.toFixed(2)} €` : "—"}
+                              </td>
+                              <td className="num muted">{`${vat} %`}</td>
+                              <td className="num muted">
+                                {ttc !== null ? `${ttc.toFixed(2)} €` : "—"}
+                              </td>
+                              <td className="num">{p.stock ?? 0}</td>
+                              <td>{productStatusBadge(p)}</td>
+                              <td>
+                                <label className="bo-hstack" style={{ cursor: "pointer", gap: 6 }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={!!p.featured}
+                                    onChange={() => toggleFeatured(p)}
+                                    aria-label={p.featured ? "Retirer des vedettes" : "Mettre en vedette"}
+                                  />
+                                  {p.featured ? (
+                                    <span className="bo-badge brand">★ #{(p.featuredOrder ?? 0) + 1}</span>
+                                  ) : (
+                                    <span className="bo-dim">—</span>
+                                  )}
+                                </label>
+                              </td>
+                              <td>
+                                {p.published === false ? (
+                                  <span className="bo-badge warn">Brouillon</span>
+                                ) : (
+                                  <span className="bo-badge ok">Publié</span>
+                                )}
+                              </td>
+                              <td className="muted" style={{ fontSize: 11 }}>
+                                {p.createdAt
+                                  ? new Date(p.createdAt).toLocaleDateString("fr-FR")
+                                  : "—"}
+                              </td>
+                              <td className="num">
+                                <div
+                                  style={{
+                                    display: "inline-flex",
+                                    gap: 4,
+                                    flexWrap: "wrap",
+                                    justifyContent: "flex-end",
+                                  }}
                                 >
-                                  {p.published === false ? "Publier" : "Brouillon"}
-                                </IconButton>
-                                <IconButton tone="rose" onClick={() => deleteProduct(p.id)} title="Supprimer">
-                                  <Icon.Trash />
-                                </IconButton>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                                  <IconButton
+                                    tone={p.published === false ? "emerald" : "slate"}
+                                    onClick={() => togglePublished(p)}
+                                    title={p.published === false ? "Publier" : "Passer en brouillon"}
+                                  >
+                                    {p.published === false ? "Publier" : "Brouillon"}
+                                  </IconButton>
+                                  <IconButton tone="rose" onClick={() => deleteProduct(p.id)} title="Supprimer">
+                                    <Icon.Trash />
+                                  </IconButton>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
+                  </div>
+                )}
+
+                {/* Pagination footer */}
+                {sortedProducts.length > 0 && (
+                  <div
+                    className="bo-hstack"
+                    style={{
+                      gap: 8,
+                      flexWrap: "wrap",
+                      padding: "10px 4px 0",
+                      borderTop: "1px solid var(--bo-border)",
+                      marginTop: 8,
+                    }}
+                  >
+                    <span style={{ fontSize: 11.5 }} className="bo-muted">
+                      {sortedProducts.length === 0
+                        ? "0"
+                        : `${(productCurrentPage - 1) * productPageSize + 1}–${Math.min(productCurrentPage * productPageSize, sortedProducts.length)}`}
+                      {" "}sur {sortedProducts.length}
+                    </span>
+                    <span className="bo-divider-v" />
+                    <select
+                      value={productPageSize}
+                      onChange={(e) =>
+                        setProductPageSize(Number(e.target.value) as 10 | 25 | 50)
+                      }
+                      className="bo-input compact"
+                      style={{ width: 80 }}
+                      title="Lignes par page"
+                    >
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                    </select>
+                    <span style={{ flex: 1 }} />
+                    <button
+                      type="button"
+                      className="bo-btn"
+                      disabled={productCurrentPage <= 1}
+                      onClick={() => setProductPage((p) => Math.max(1, p - 1))}
+                    >
+                      ← Précédent
+                    </button>
+                    <span style={{ fontSize: 11.5 }} className="bo-mono">
+                      {productCurrentPage} / {productPageCount}
+                    </span>
+                    <button
+                      type="button"
+                      className="bo-btn"
+                      disabled={productCurrentPage >= productPageCount}
+                      onClick={() => setProductPage((p) => Math.min(productPageCount, p + 1))}
+                    >
+                      Suivant →
+                    </button>
                   </div>
                 )}
               </Panel>

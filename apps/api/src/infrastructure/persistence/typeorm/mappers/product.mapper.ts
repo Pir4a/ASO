@@ -27,6 +27,8 @@ export class ProductMapper {
             translations: entity.translations ?? undefined,
             categoryId: entity.categoryId,
             category: entity.category ? CategoryMapper.toDomain(entity.category) : undefined,
+            createdAt: entity.createdAt,
+            updatedAt: entity.updatedAt,
         });
         return product;
     }

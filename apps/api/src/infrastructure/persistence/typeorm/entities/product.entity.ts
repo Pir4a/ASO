@@ -1,10 +1,12 @@
 import {
     Column,
+    CreateDateColumn,
     Entity,
     JoinColumn,
     ManyToOne,
     PrimaryGeneratedColumn,
     Index,
+    UpdateDateColumn,
 } from 'typeorm';
 import { Category } from '../entities/category.entity';
 
@@ -80,4 +82,10 @@ export class Product {
     @ManyToOne(() => Category, (category) => category.products, { eager: true })
     @JoinColumn({ name: 'categoryId' })
     category!: Category;
+
+    @CreateDateColumn({ type: 'timestamptz' })
+    createdAt!: Date;
+
+    @UpdateDateColumn({ type: 'timestamptz' })
+    updatedAt!: Date;
 }
