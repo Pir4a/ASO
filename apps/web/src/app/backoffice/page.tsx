@@ -778,7 +778,23 @@ function BackofficeDashboard() {
             />
             <kbd>⌘K</kbd>
           </div>
-          <Link href="/" className="bo-btn" title="Retour au site">
+          <Link
+            href="/"
+            className="bo-back-pill"
+            title="Retour au site"
+            onClick={(e) => {
+              // Use the View Transitions API (Chrome/Edge 111+) for a native
+              // crossfade between the BO and the storefront. Falls through to
+              // the default Link navigation in browsers that lack support.
+              const doc = document as Document & {
+                startViewTransition?: (cb: () => void) => void;
+              };
+              if (typeof doc.startViewTransition === "function") {
+                e.preventDefault();
+                doc.startViewTransition(() => router.push("/"));
+              }
+            }}
+          >
             <Icon.Home /> Retour au site
           </Link>
           <button className="bo-icon-btn" title="Notifications" type="button">

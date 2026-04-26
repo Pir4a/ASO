@@ -84,3 +84,17 @@ button:disabled,
 .animate-pulse-success {
   animation: pulse-success 0.3s ease-in-out;
 }
+
+/* View Transitions API — tune the cross-fade between storefront and BO.
+   Triggered explicitly from BO "Retour au site" and Header "Backoffice". */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 220ms;
+  animation-timing-function: ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0ms;
+  }
+}
