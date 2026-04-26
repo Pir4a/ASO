@@ -21,6 +21,7 @@ export class ProductMapper {
             featured: entity.featured ?? false,
             featuredOrder: entity.featuredOrder ?? 0,
             listPriority: entity.listPriority ?? 0,
+            published: entity.published ?? true,
             galleryUrls: entity.galleryUrls ?? undefined,
             specs: entity.specs ?? undefined,
             translations: entity.translations ?? undefined,
@@ -46,6 +47,7 @@ export class ProductMapper {
         entity.featured = domain.featured ?? false;
         entity.featuredOrder = domain.featuredOrder ?? 0;
         entity.listPriority = domain.listPriority ?? 0;
+        entity.published = domain.published ?? true;
         entity.galleryUrls = domain.galleryUrls;
         entity.specs = domain.specs;
         entity.translations = domain.translations;

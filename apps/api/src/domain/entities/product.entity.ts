@@ -21,6 +21,8 @@ export class Product {
     featured: boolean;
     featuredOrder: number;
     listPriority: number;
+    /** When false, the product is a draft and hidden from the public catalog. */
+    published: boolean;
     galleryUrls?: string[];
     specs?: Record<string, string>;
     translations?: Record<string, { name?: string; description?: string }>;

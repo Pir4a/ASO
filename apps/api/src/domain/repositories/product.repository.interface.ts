@@ -5,6 +5,8 @@ export interface ProductBrowseParams {
     categorySlug?: string;
     page: number;
     pageSize: number;
+    /** When true, exclude drafts (`published = false`). Public endpoints set this. */
+    publishedOnly?: boolean;
 }
 
 export interface ProductBrowseResult {
@@ -31,6 +33,8 @@ export interface ProductSearchParams {
     sort: ProductSearchSort;
     page: number;
     pageSize: number;
+    /** When true, exclude drafts (`published = false`). Public endpoints set this. */
+    publishedOnly?: boolean;
 }
 
 export interface ProductSearchFacetCategory {
@@ -50,7 +54,7 @@ export interface ProductSearchResult {
 }
 
 export interface ProductRepository {
-    findAll(): Promise<Product[]>;
+    findAll(opts?: { publishedOnly?: boolean }): Promise<Product[]>;
     findById(id: string): Promise<Product | null>;
     findOneBySlug(slug: string): Promise<Product | null>;
     create(product: Product): Promise<Product>;

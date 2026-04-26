@@ -10,7 +10,9 @@ export class GetProductsUseCase {
         private readonly productRepository: ProductRepository,
     ) { }
 
-    async execute(): Promise<Product[]> {
-        return this.productRepository.findAll();
+    async execute(opts?: { includeDrafts?: boolean }): Promise<Product[]> {
+        return this.productRepository.findAll({
+            publishedOnly: !opts?.includeDrafts,
+        });
     }
 }

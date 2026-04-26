@@ -58,6 +58,10 @@ export class Product {
     @Column({ type: 'int', default: 0, nullable: false })
     listPriority!: number;
 
+    /** Public visibility — drafts (false) are hidden from the public catalog. */
+    @Column({ type: 'boolean', default: true, nullable: false })
+    published!: boolean;
+
     /** Extra product images for gallery (main visual may stay in thumbnailUrl). */
     @Column({ type: 'jsonb', nullable: true })
     galleryUrls?: string[];

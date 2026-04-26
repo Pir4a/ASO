@@ -98,6 +98,7 @@ export class ProductsController {
             sort,
             page,
             pageSize,
+            publishedOnly: true,
         });
 
         const totalPages = Math.max(1, Math.ceil(result.total / pageSize));
@@ -140,6 +141,7 @@ export class ProductsController {
                 categoryId: categoryId ?? undefined,
                 page,
                 pageSize,
+                publishedOnly: true,
             });
             const totalPages = Math.max(1, Math.ceil(total / pageSize));
             return {
@@ -171,6 +173,14 @@ export class ProductsController {
     @Get(':slug')
     findOne(@Param('slug') slug: string) {
         return this.findProductBySlugUseCase.execute(slug);
+    }
+
+    /** Admin listing — returns drafts too. */
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin')
+    @Get('admin/all')
+    adminFindAll() {
+        return this.getProductsUseCase.execute({ includeDrafts: true });
     }
 
     @UseGuards(JwtAuthGuard, RolesGuard)

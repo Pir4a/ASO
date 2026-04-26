@@ -1,6 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import {
+  DndContext,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Badge, Icon, IconButton, Panel } from "./DashboardUI";
 import { authFetch } from "@/lib/auth";
 import { API_URL, MAX_CAROUSEL_SLIDES } from "@/lib/api";
@@ -136,13 +151,20 @@ export function ContentManager({ flash }: ContentManagerProps) {
     }
   };
 
-  const moveSlide = async (id: string, direction: "up" | "down") => {
-    const idx = carouselBlocks.findIndex((b) => b.id === id);
-    if (idx < 0) return;
-    const target = direction === "up" ? idx - 1 : idx + 1;
-    if (target < 0 || target >= carouselBlocks.length) return;
-    const next = [...carouselBlocks];
-    [next[idx], next[target]] = [next[target], next[idx]];
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+
+  const handleSlideDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = carouselBlocks.findIndex((b) => b.id === active.id);
+    const newIndex = carouselBlocks.findIndex((b) => b.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const next = arrayMove(carouselBlocks, oldIndex, newIndex);
+    // Optimistic: write the new order locally so the list doesn't snap back.
+    setBlocks((prev) => {
+      const others = prev.filter((b) => b.type !== "carousel");
+      return [...others, ...next.map((b, i) => ({ ...b, order: i }))];
+    });
     try {
       await authFetch(`${API_URL}/content/reorder/list`, {
         method: "PATCH",
@@ -151,6 +173,7 @@ export function ContentManager({ flash }: ContentManagerProps) {
       await load();
     } catch {
       flash("error", "Réordonnancement impossible.");
+      await load();
     }
   };
 
@@ -212,63 +235,65 @@ export function ContentManager({ flash }: ContentManagerProps) {
         ) : carouselBlocks.length === 0 ? (
           <p className="py-6 text-center text-sm text-foreground/50">Aucune diapositive.</p>
         ) : (
-          <ul className="space-y-3">
-            {carouselBlocks.map((block) => {
-              const p = (block.payload ?? {}) as CarouselPayload;
-              const isEditing = editing === block.id;
-              return (
-                <li
-                  key={block.id}
-                  className="rounded-xl border border-foreground/10 bg-white p-3"
-                >
-                  {!isEditing ? (
-                    <div className="flex items-start gap-3">
-                      {p.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={p.imageUrl}
-                          alt={p.title ?? ""}
-                          className="h-16 w-24 shrink-0 rounded-lg object-cover"
-                        />
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleSlideDragEnd}
+          >
+            <SortableContext
+              items={carouselBlocks.map((b) => b.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <ul className="space-y-3">
+                {carouselBlocks.map((block) => {
+                  const p = (block.payload ?? {}) as CarouselPayload;
+                  const isEditing = editing === block.id;
+                  return (
+                    <SortableSlideRow
+                      key={block.id}
+                      id={block.id}
+                      disabled={isEditing}
+                    >
+                      {!isEditing ? (
+                        <div className="flex items-start gap-3">
+                          {p.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={p.imageUrl}
+                              alt={p.title ?? ""}
+                              className="h-16 w-24 shrink-0 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="h-16 w-24 shrink-0 rounded-lg bg-background" />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <Badge tone="violet">#{block.order + 1}</Badge>
+                              <p className="truncate text-sm font-semibold text-foreground">
+                                {p.title || "(sans titre)"}
+                              </p>
+                            </div>
+                            {p.subtitle && (
+                              <p className="mt-0.5 truncate text-xs text-foreground/60">{p.subtitle}</p>
+                            )}
+                            {p.href && (
+                              <p className="mt-1 truncate font-mono text-[11px] text-primary">
+                                → {p.href}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex shrink-0 flex-col gap-1">
+                            <div className="flex gap-1">
+                              <IconButton onClick={() => startEditing(block)} title="Éditer">
+                                <Icon.Edit />
+                              </IconButton>
+                              <IconButton tone="rose" onClick={() => deleteBlock(block.id)} title="Supprimer">
+                                <Icon.Trash />
+                              </IconButton>
+                            </div>
+                          </div>
+                        </div>
                       ) : (
-                        <div className="h-16 w-24 shrink-0 rounded-lg bg-background" />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <Badge tone="violet">#{block.order + 1}</Badge>
-                          <p className="truncate text-sm font-semibold text-foreground">
-                            {p.title || "(sans titre)"}
-                          </p>
-                        </div>
-                        {p.subtitle && (
-                          <p className="mt-0.5 truncate text-xs text-foreground/60">{p.subtitle}</p>
-                        )}
-                        {p.href && (
-                          <p className="mt-1 truncate font-mono text-[11px] text-primary">
-                            → {p.href}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex shrink-0 flex-col gap-1">
-                        <div className="flex gap-1">
-                          <IconButton onClick={() => moveSlide(block.id, "up")} title="Monter">
-                            <Icon.ArrowUp />
-                          </IconButton>
-                          <IconButton onClick={() => moveSlide(block.id, "down")} title="Descendre">
-                            <Icon.ArrowDown />
-                          </IconButton>
-                        </div>
-                        <div className="flex gap-1">
-                          <IconButton onClick={() => startEditing(block)} title="Éditer">
-                            <Icon.Edit />
-                          </IconButton>
-                          <IconButton tone="rose" onClick={() => deleteBlock(block.id)} title="Supprimer">
-                            <Icon.Trash />
-                          </IconButton>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
                     <div className="space-y-3">
                       <div className="grid gap-3 md:grid-cols-2">
                         <div>
@@ -341,10 +366,12 @@ export function ContentManager({ flash }: ContentManagerProps) {
                       </div>
                     </div>
                   )}
-                </li>
-              );
-            })}
-          </ul>
+                </SortableSlideRow>
+                  );
+                })}
+              </ul>
+            </SortableContext>
+          </DndContext>
         )}
 
         {carouselBlocks.length < MAX_CAROUSEL_SLIDES && (
@@ -452,5 +479,57 @@ export function ContentManager({ flash }: ContentManagerProps) {
         </div>
       </Panel>
     </div>
+  );
+}
+
+/**
+ * Sortable wrapper for a carousel slide row. The drag handle is a small
+ * grip rendered at the left edge; the rest of the row stays interactive
+ * (edit / delete / inputs in edit mode).
+ */
+function SortableSlideRow({
+  id,
+  disabled,
+  children,
+}: {
+  id: string;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id, disabled });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className="flex items-stretch gap-2 rounded-xl border border-foreground/10 bg-white p-3"
+    >
+      <button
+        type="button"
+        aria-label="Glisser pour réordonner"
+        title="Glisser pour réordonner"
+        disabled={disabled}
+        {...attributes}
+        {...listeners}
+        className="flex w-7 cursor-grab items-center justify-center rounded-md text-foreground/35 transition hover:bg-foreground/5 hover:text-foreground/70 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-30"
+      >
+        <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+          <circle cx="6" cy="3" r="1.2" />
+          <circle cx="10" cy="3" r="1.2" />
+          <circle cx="6" cy="8" r="1.2" />
+          <circle cx="10" cy="8" r="1.2" />
+          <circle cx="6" cy="13" r="1.2" />
+          <circle cx="10" cy="13" r="1.2" />
+        </svg>
+      </button>
+      <div className="min-w-0 flex-1">{children}</div>
+    </li>
   );
 }

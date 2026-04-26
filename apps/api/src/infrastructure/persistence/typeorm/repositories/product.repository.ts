@@ -113,12 +113,15 @@ export class TypeOrmProductRepository implements ProductRepository {
     this.repository = dataSource.getRepository(TypeOrmProduct);
   }
 
-  async findAll(): Promise<DomainProduct[]> {
-    const entities = await this.repository.find({ relations: ['category'] });
+  async findAll(opts?: { publishedOnly?: boolean }): Promise<DomainProduct[]> {
+    const where = opts?.publishedOnly ? { published: true } : undefined;
+    const entities = await this.repository.find({ where, relations: ['category'] });
     return entities.map((e) => ProductMapper.toDomain(e));
   }
 
   async findOneBySlug(slug: string): Promise<DomainProduct | null> {
+    // Returns drafts too — admin slug-clash checks rely on this. Public
+    // callers (e.g. /products/:slug) enforce `published = true` themselves.
     const entity = await this.repository.findOne({
       where: { slug },
       relations: ['category'],
@@ -158,7 +161,7 @@ export class TypeOrmProductRepository implements ProductRepository {
 
   async findFeatured(limit: number): Promise<DomainProduct[]> {
     const entities = await this.repository.find({
-      where: { featured: true },
+      where: { featured: true, published: true },
       order: { featuredOrder: 'ASC' },
       take: limit,
       relations: ['category'],
@@ -180,6 +183,10 @@ export class TypeOrmProductRepository implements ProductRepository {
       qb.andWhere('c.slug = :cslug', { cslug: categorySlug });
     }
 
+    if (params.publishedOnly) {
+      qb.andWhere('p.published = true');
+    }
+
     qb.orderBy('p.listPriority', 'DESC')
       .addOrderBy('CASE WHEN p.stock > 0 THEN 0 ELSE 1 END', 'ASC')
       .addOrderBy('p.name', 'ASC')
@@ -195,13 +202,13 @@ export class TypeOrmProductRepository implements ProductRepository {
     limit: number,
   ): Promise<DomainProduct[]> {
     const current = await this.repository.findOne({
-      where: { slug },
+      where: { slug, published: true },
       relations: ['category'],
     });
     if (!current) return [];
 
     const siblings = await this.repository.find({
-      where: { categoryId: current.categoryId },
+      where: { categoryId: current.categoryId, published: true },
       relations: ['category'],
     });
 
@@ -225,6 +232,7 @@ export class TypeOrmProductRepository implements ProductRepository {
       | 'inStockOnly'
       | 'categoryId'
       | 'categorySlug'
+      | 'publishedOnly'
     >,
     omitCategory: boolean,
   ): void {
@@ -236,6 +244,9 @@ export class TypeOrmProductRepository implements ProductRepository {
       qb.andWhere('c.slug = :searchCslug', {
         searchCslug: filters.categorySlug,
       });
+    }
+    if (filters.publishedOnly) {
+      qb.andWhere('p.published = true');
     }
     if (filters.minPrice !== undefined && !Number.isNaN(filters.minPrice)) {
       qb.andWhere('p.price >= :searchMinP', { searchMinP: filters.minPrice });
@@ -290,6 +301,7 @@ export class TypeOrmProductRepository implements ProductRepository {
       inStockOnly: params.inStockOnly,
       categoryId: params.categoryId,
       categorySlug: params.categorySlug,
+      publishedOnly: params.publishedOnly,
     };
 
     const facetQb = this.repository

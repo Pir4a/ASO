@@ -11,6 +11,9 @@ export class FindProductBySlugUseCase {
     ) { }
 
     async execute(slug: string): Promise<Product | null> {
-        return this.productRepository.findOneBySlug(slug);
+        const product = await this.productRepository.findOneBySlug(slug);
+        // Hide drafts from the public product page.
+        if (!product || product.published === false) return null;
+        return product;
     }
 }

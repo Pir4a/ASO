@@ -3,6 +3,21 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  DndContext,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import "./backoffice.css";
 
 import { AuthGuard } from "@/components/guards/AuthGuard";
@@ -43,6 +58,7 @@ type Product = {
   thumbnailUrl?: string;
   featured?: boolean;
   featuredOrder?: number;
+  published?: boolean;
   category?: { id: string; name: string };
   categoryId?: string;
   vatRate?: number;
@@ -217,7 +233,8 @@ function BackofficeDashboard() {
   const loadProducts = async () => {
     setLoadingProducts(true);
     try {
-      const res = await fetch(`${API_URL}/products`);
+      // Admin endpoint returns drafts too (the public /products filters them out).
+      const res = await authFetch(`${API_URL}/products/admin/all`);
       if (!res.ok) throw new Error();
       setProducts(await res.json());
     } catch {
@@ -418,6 +435,21 @@ function BackofficeDashboard() {
     }
   };
 
+  const togglePublished = async (p: Product) => {
+    const next = !(p.published ?? true);
+    try {
+      const res = await authFetch(`${API_URL}/products/${p.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ published: next }),
+      });
+      if (!res.ok) throw new Error();
+      await loadProducts();
+      flash("success", next ? "Produit publié." : "Produit passé en brouillon.");
+    } catch {
+      flash("error", "Mise à jour impossible.");
+    }
+  };
+
   const deleteProduct = async (id: string) => {
     if (!confirm("Supprimer ce produit ?")) return;
     try {
@@ -444,20 +476,42 @@ function BackofficeDashboard() {
     flash("success", "Catégorie supprimée.");
   };
 
-  const moveCategory = async (id: string, direction: "up" | "down") => {
+  const categoryDndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+  );
+
+  const handleCategoryDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
     const sorted = [...categories].sort((a, b) => a.order - b.order);
-    const idx = sorted.findIndex((c) => c.id === id);
-    if (idx < 0) return;
-    const targetIdx = direction === "up" ? idx - 1 : idx + 1;
-    if (targetIdx < 0 || targetIdx >= sorted.length) return;
-    const temp = sorted[idx].order;
-    sorted[idx].order = sorted[targetIdx].order;
-    sorted[targetIdx].order = temp;
-    await authFetch(`${API_URL}/categories/reorder/list`, {
-      method: "PATCH",
-      body: JSON.stringify({ items: sorted.map((c, i) => ({ id: c.id, order: i })) }),
+    const oldIndex = sorted.findIndex((c) => c.id === active.id);
+    const newIndex = sorted.findIndex((c) => c.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const next = arrayMove(sorted, oldIndex, newIndex);
+    await reorderCategories(next.map((c) => c.id));
+  };
+
+  const reorderCategories = async (orderedIds: string[]) => {
+    // Optimistic local reorder so the row doesn't jump back during the request.
+    setCategories((prev) => {
+      const byId = new Map(prev.map((c) => [c.id, c]));
+      return orderedIds
+        .map((id, i) => {
+          const c = byId.get(id);
+          return c ? { ...c, order: i } : null;
+        })
+        .filter((c): c is NonNullable<typeof c> => c !== null);
     });
-    await loadCategories();
+    try {
+      await authFetch(`${API_URL}/categories/reorder/list`, {
+        method: "PATCH",
+        body: JSON.stringify({ items: orderedIds.map((id, i) => ({ id, order: i })) }),
+      });
+      await loadCategories();
+    } catch {
+      flash("error", "Réordonnancement impossible.");
+      await loadCategories();
+    }
   };
 
   const bulkCategoryAction = async (action: "activate" | "deactivate" | "delete") => {
@@ -1272,6 +1326,7 @@ function BackofficeDashboard() {
                           <th className="num">Stock</th>
                           <th>Statut</th>
                           <th>Vedette</th>
+                          <th>Publication</th>
                           <th className="num">Actions</th>
                         </tr>
                       </thead>
@@ -1335,10 +1390,33 @@ function BackofficeDashboard() {
                                 )}
                               </label>
                             </td>
+                            <td>
+                              {p.published === false ? (
+                                <span className="bo-badge warn">Brouillon</span>
+                              ) : (
+                                <span className="bo-badge ok">Publié</span>
+                              )}
+                            </td>
                             <td className="num">
-                              <IconButton tone="rose" onClick={() => deleteProduct(p.id)} title="Supprimer">
-                                <Icon.Trash />
-                              </IconButton>
+                              <div
+                                style={{
+                                  display: "inline-flex",
+                                  gap: 4,
+                                  flexWrap: "wrap",
+                                  justifyContent: "flex-end",
+                                }}
+                              >
+                                <IconButton
+                                  tone={p.published === false ? "emerald" : "slate"}
+                                  onClick={() => togglePublished(p)}
+                                  title={p.published === false ? "Publier" : "Passer en brouillon"}
+                                >
+                                  {p.published === false ? "Publier" : "Brouillon"}
+                                </IconButton>
+                                <IconButton tone="rose" onClick={() => deleteProduct(p.id)} title="Supprimer">
+                                  <Icon.Trash />
+                                </IconButton>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -1442,9 +1520,27 @@ function BackofficeDashboard() {
                   </p>
                 ) : (
                   <div style={{ overflowX: "auto" }}>
+                    {categorySearch.trim() && (
+                      <p
+                        className="bo-muted"
+                        style={{ fontSize: 11, marginBottom: 8, fontStyle: "italic" }}
+                      >
+                        Le réordonnancement est désactivé tant qu'un filtre de recherche est actif.
+                      </p>
+                    )}
+                    <DndContext
+                      sensors={categoryDndSensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleCategoryDragEnd}
+                    >
+                      <SortableContext
+                        items={filteredCategories.map((c) => c.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
                     <table className="bo-data">
                       <thead>
                         <tr>
+                          <th style={{ width: 28 }}></th>
                           <th style={{ width: 32 }}></th>
                           <th>Ordre</th>
                           <th>Nom</th>
@@ -1455,7 +1551,11 @@ function BackofficeDashboard() {
                       </thead>
                       <tbody>
                         {filteredCategories.map((cat) => (
-                          <tr key={cat.id}>
+                          <SortableCategoryRow
+                            key={cat.id}
+                            id={cat.id}
+                            disabled={categorySearch.trim().length > 0}
+                          >
                             <td>
                               <input
                                 type="checkbox"
@@ -1524,12 +1624,6 @@ function BackofficeDashboard() {
                                   justifyContent: "flex-end",
                                 }}
                               >
-                                <IconButton onClick={() => moveCategory(cat.id, "up")} title="Monter">
-                                  <Icon.ArrowUp />
-                                </IconButton>
-                                <IconButton onClick={() => moveCategory(cat.id, "down")} title="Descendre">
-                                  <Icon.ArrowDown />
-                                </IconButton>
                                 <IconButton
                                   tone={cat.isActive ? "slate" : "emerald"}
                                   onClick={() => updateCategory(cat.id, { isActive: !cat.isActive })}
@@ -1551,10 +1645,12 @@ function BackofficeDashboard() {
                                 </IconButton>
                               </div>
                             </td>
-                          </tr>
+                          </SortableCategoryRow>
                         ))}
                       </tbody>
                     </table>
+                      </SortableContext>
+                    </DndContext>
                   </div>
                 )}
               </Panel>
@@ -2100,5 +2196,65 @@ export default function BackofficePage() {
     <AuthGuard requiredRole="admin">
       <BackofficeDashboard />
     </AuthGuard>
+  );
+}
+
+/**
+ * Sortable wrapper for a categories table row. Renders a drag handle in
+ * the leading cell that drives the row's position via @dnd-kit.
+ */
+function SortableCategoryRow({
+  id,
+  disabled,
+  children,
+}: {
+  id: string;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id, disabled });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.65 : 1,
+    background: isDragging ? "var(--bo-panel-2)" : undefined,
+  };
+
+  return (
+    <tr ref={setNodeRef} style={style}>
+      <td style={{ padding: "0 4px" }}>
+        <button
+          type="button"
+          aria-label="Glisser pour réordonner"
+          title="Glisser pour réordonner"
+          disabled={disabled}
+          {...attributes}
+          {...listeners}
+          style={{
+            display: "grid",
+            placeItems: "center",
+            width: 22,
+            height: 22,
+            border: "none",
+            background: "transparent",
+            color: "var(--bo-text-dim)",
+            cursor: disabled ? "not-allowed" : "grab",
+            opacity: disabled ? 0.3 : 1,
+          }}
+        >
+          <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14" aria-hidden="true">
+            <circle cx="6" cy="3" r="1.2" />
+            <circle cx="10" cy="3" r="1.2" />
+            <circle cx="6" cy="8" r="1.2" />
+            <circle cx="10" cy="8" r="1.2" />
+            <circle cx="6" cy="13" r="1.2" />
+            <circle cx="10" cy="13" r="1.2" />
+          </svg>
+        </button>
+      </td>
+      {children}
+    </tr>
   );
 }
