@@ -1,9 +1,10 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CreditNoteOrm } from '../persistence/typeorm/entities/credit-note.entity';
 import { InvoiceOrm } from '../persistence/typeorm/entities/invoice.entity';
 import { Order } from '../persistence/typeorm/entities/order.entity';
 import { OrderItem } from '../persistence/typeorm/entities/order-item.entity';
+import { User } from '../persistence/typeorm/entities/user.entity';
 import { CreditNoteOrmRepository } from '../persistence/typeorm/repositories/credit-note.repository';
 import { TypeOrmInvoiceRepository } from '../persistence/typeorm/repositories/invoice.repository';
 import { TypeOrmOrderRepository } from '../persistence/typeorm/repositories/order.repository';
@@ -24,7 +25,7 @@ import { AuthModule } from './auth.module';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([CreditNoteOrm, InvoiceOrm, Order, OrderItem]),
+        TypeOrmModule.forFeature([CreditNoteOrm, InvoiceOrm, Order, OrderItem, User]),
         UsersModule,
         AuthModule,
     ],
