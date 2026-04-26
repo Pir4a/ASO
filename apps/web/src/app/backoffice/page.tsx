@@ -54,6 +54,7 @@ type Product = {
   id: string;
   name?: string;
   sku?: string;
+  slug?: string;
   description?: string;
   price?: number;
   stock?: number;
@@ -65,6 +66,9 @@ type Product = {
   category?: { id: string; name: string };
   categoryId?: string;
   vatRate?: number;
+  listPriority?: number;
+  galleryUrls?: string[];
+  specs?: Record<string, string>;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -233,6 +237,8 @@ function BackofficeDashboard() {
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [newCategory, setNewCategory] = useState({ name: "", slug: "", description: "", imageUrl: "" });
   const [showProductForm, setShowProductForm] = useState(false);
+  // #11 follow-up — full edit modal pre-fills the same form in PATCH mode.
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const flash = (kind: "success" | "error", text: string) => {
     setFeedback({ kind, text });
@@ -1980,6 +1986,12 @@ function BackofficeDashboard() {
                                   }}
                                 >
                                   <IconButton
+                                    onClick={() => setEditingProduct(p)}
+                                    title="Éditer le produit"
+                                  >
+                                    Éditer
+                                  </IconButton>
+                                  <IconButton
                                     tone={p.published === false ? "emerald" : "slate"}
                                     onClick={() => togglePublished(p)}
                                     title={p.published === false ? "Publier" : "Passer en brouillon"}
@@ -2054,6 +2066,79 @@ function BackofficeDashboard() {
                   </div>
                 )}
               </Panel>
+
+              {editingProduct && (
+                <div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={`Éditer ${editingProduct.name ?? ""}`}
+                  onClick={(e) => {
+                    if (e.target === e.currentTarget) setEditingProduct(null);
+                  }}
+                  style={{
+                    position: "fixed",
+                    inset: 0,
+                    background: "rgba(15, 23, 42, 0.55)",
+                    backdropFilter: "blur(2px)",
+                    zIndex: 80,
+                    display: "grid",
+                    placeItems: "start center",
+                    overflowY: "auto",
+                    padding: "5vh 16px",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "100%",
+                      maxWidth: 880,
+                      background: "white",
+                      borderRadius: 12,
+                      boxShadow: "0 18px 40px rgba(15, 23, 42, 0.25)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 12,
+                        padding: "14px 18px",
+                        borderBottom: "1px solid var(--bo-border)",
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>
+                          Éditer le produit
+                        </div>
+                        <div className="bo-muted" style={{ fontSize: 11.5 }}>
+                          {editingProduct.name ?? editingProduct.sku ?? editingProduct.id}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="bo-btn"
+                        onClick={() => setEditingProduct(null)}
+                        aria-label="Fermer"
+                      >
+                        <Icon.X />
+                      </button>
+                    </div>
+                    <div style={{ padding: 18 }}>
+                      <ProductForm
+                        categories={categories}
+                        product={editingProduct}
+                        onSaved={() => {
+                          void loadProducts();
+                          setEditingProduct(null);
+                          flash("success", "Produit mis à jour.");
+                        }}
+                        onCancel={() => setEditingProduct(null)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
 

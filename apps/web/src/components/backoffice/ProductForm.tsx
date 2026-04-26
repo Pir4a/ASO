@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { API_URL } from "@/lib/api";
 import { MediaUpload } from "./MediaUpload";
@@ -11,28 +11,105 @@ interface Category {
   slug: string;
 }
 
+/** Slim product shape consumed by the edit form. Mirrors the fields the BO
+    admin listing endpoint returns; anything unset is treated as the API
+    default at create time and untouched on edit. */
+export interface EditableProduct {
+  id: string;
+  name?: string;
+  slug?: string;
+  description?: string;
+  price?: number;
+  stock?: number;
+  categoryId?: string;
+  category?: { id: string };
+  vatRate?: number;
+  thumbnailUrl?: string;
+  listPriority?: number;
+  galleryUrls?: string[];
+  specs?: Record<string, string>;
+  featured?: boolean;
+  featuredOrder?: number;
+}
+
 interface ProductFormProps {
   categories: Category[];
+  /** When provided, the form switches to edit mode and PATCHes /products/:id. */
+  product?: EditableProduct;
+  /** Fires after a successful create or edit. */
+  onSaved?: () => void;
+  /** Optional cancel handler — when present, renders a Cancel button. */
+  onCancel?: () => void;
+  /** @deprecated kept for backwards-compat with existing call sites. */
   onCreated?: () => void;
 }
 
-export function ProductForm({ categories, onCreated }: ProductFormProps) {
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [stock, setStock] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [vatRate, setVatRate] = useState("20");
-  const [thumbnailUrl, setThumbnailUrl] = useState("");
-  const [listPriority, setListPriority] = useState("");
-  const [galleryUrlsText, setGalleryUrlsText] = useState("");
-  const [specsJson, setSpecsJson] = useState("");
-  const [featured, setFeatured] = useState(false);
+export function ProductForm({
+  categories,
+  product,
+  onSaved,
+  onCancel,
+  onCreated,
+}: ProductFormProps) {
+  const isEdit = !!product;
+  const [name, setName] = useState(product?.name ?? "");
+  const [slug, setSlug] = useState(product?.slug ?? "");
+  const [description, setDescription] = useState(product?.description ?? "");
+  const [price, setPrice] = useState(
+    product?.price !== undefined ? String(product.price) : "",
+  );
+  const [stock, setStock] = useState(
+    product?.stock !== undefined ? String(product.stock) : "",
+  );
+  const [categoryId, setCategoryId] = useState(
+    product?.categoryId ?? product?.category?.id ?? "",
+  );
+  const [vatRate, setVatRate] = useState(
+    product?.vatRate !== undefined ? String(product.vatRate) : "20",
+  );
+  const [thumbnailUrl, setThumbnailUrl] = useState(product?.thumbnailUrl ?? "");
+  const [listPriority, setListPriority] = useState(
+    product?.listPriority !== undefined ? String(product.listPriority) : "",
+  );
+  const [galleryUrlsText, setGalleryUrlsText] = useState(
+    (product?.galleryUrls ?? []).join("\n"),
+  );
+  const [specsJson, setSpecsJson] = useState(
+    product?.specs && Object.keys(product.specs).length > 0
+      ? JSON.stringify(product.specs, null, 2)
+      : "",
+  );
+  const [featured, setFeatured] = useState(!!product?.featured);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  // If the parent swaps the product (e.g. clicks Edit on a different row while
+  // the modal is mounted), refresh the inputs from the new source.
+  useEffect(() => {
+    if (!product) return;
+    setName(product.name ?? "");
+    setSlug(product.slug ?? "");
+    setDescription(product.description ?? "");
+    setPrice(product.price !== undefined ? String(product.price) : "");
+    setStock(product.stock !== undefined ? String(product.stock) : "");
+    setCategoryId(product.categoryId ?? product.category?.id ?? "");
+    setVatRate(product.vatRate !== undefined ? String(product.vatRate) : "20");
+    setThumbnailUrl(product.thumbnailUrl ?? "");
+    setListPriority(
+      product.listPriority !== undefined ? String(product.listPriority) : "",
+    );
+    setGalleryUrlsText((product.galleryUrls ?? []).join("\n"));
+    setSpecsJson(
+      product.specs && Object.keys(product.specs).length > 0
+        ? JSON.stringify(product.specs, null, 2)
+        : "",
+    );
+    setFeatured(!!product.featured);
+    setError(null);
+    setSuccess(null);
+  }, [product]);
 
   const generateSlug = (productName: string) =>
     productName
@@ -45,7 +122,9 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const next = e.target.value;
     setName(next);
-    setSlug(generateSlug(next));
+    // In create mode the slug auto-tracks the name; in edit mode we leave
+    // the slug alone to avoid breaking existing public URLs.
+    if (!isEdit) setSlug(generateSlug(next));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,45 +156,67 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
         .filter(Boolean);
 
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/products`, {
-        method: "POST",
+      const url = isEdit
+        ? `${API_URL}/products/${product!.id}`
+        : `${API_URL}/products`;
+      const method = isEdit ? "PATCH" : "POST";
+      const body: Record<string, unknown> = {
+        name,
+        slug,
+        description,
+        price: parseFloat(price),
+        stock: parseInt(stock, 10),
+        categoryId,
+        vatRate: Number.parseFloat(vatRate),
+        thumbnailUrl: thumbnailUrl.trim() || undefined,
+        listPriority:
+          listPriority.trim() === ""
+            ? undefined
+            : Math.max(0, parseInt(listPriority, 10) || 0),
+        galleryUrls: galleryUrls.length ? galleryUrls : undefined,
+        specs,
+        featured,
+      };
+      // featuredOrder default is only meaningful at create time; on edit we
+      // preserve whatever the row already has unless the user is toggling
+      // featured on for the first time.
+      if (!isEdit) body.featuredOrder = 0;
+      else if (featured && !product!.featured) {
+        body.featuredOrder = product!.featuredOrder ?? 0;
+      }
+
+      const response = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({
-          name,
-          slug,
-          description,
-          price: parseFloat(price),
-          stock: parseInt(stock, 10),
-          categoryId,
-          vatRate: Number.parseFloat(vatRate),
-          thumbnailUrl: thumbnailUrl.trim() || undefined,
-          listPriority: listPriority.trim() === "" ? undefined : Math.max(0, parseInt(listPriority, 10) || 0),
-          galleryUrls: galleryUrls.length ? galleryUrls : undefined,
-          specs,
-          featured,
-          featuredOrder: 0,
-        }),
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Erreur lors de l'ajout du produit.");
+      if (!response.ok) {
+        throw new Error(
+          data.message || (isEdit ? "Mise à jour impossible." : "Erreur lors de l'ajout du produit."),
+        );
+      }
 
-      setSuccess("Produit ajouté avec succès !");
-      setName("");
-      setSlug("");
-      setDescription("");
-      setPrice("");
-      setStock("");
-      setCategoryId("");
-      setVatRate("20");
-      setThumbnailUrl("");
-      setListPriority("");
-      setGalleryUrlsText("");
-      setSpecsJson("");
-      setFeatured(false);
+      setSuccess(isEdit ? "Produit mis à jour." : "Produit ajouté avec succès !");
+      if (!isEdit) {
+        setName("");
+        setSlug("");
+        setDescription("");
+        setPrice("");
+        setStock("");
+        setCategoryId("");
+        setVatRate("20");
+        setThumbnailUrl("");
+        setListPriority("");
+        setGalleryUrlsText("");
+        setSpecsJson("");
+        setFeatured(false);
+      }
+      onSaved?.();
       onCreated?.();
       router.refresh();
     } catch (err: unknown) {
@@ -299,12 +400,27 @@ export function ProductForm({ categories, onCreated }: ProductFormProps) {
       )}
 
       <div className="flex items-center justify-end gap-2 pt-2">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="inline-flex items-center gap-2 rounded-lg border border-foreground/10 bg-white px-4 py-2 text-sm font-semibold text-foreground/70 shadow-sm transition hover:bg-foreground/5"
+          >
+            Annuler
+          </button>
+        )}
         <button
           type="submit"
           disabled={loading}
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover disabled:opacity-50"
         >
-          {loading ? "Ajout…" : "Ajouter le produit"}
+          {loading
+            ? isEdit
+              ? "Enregistrement…"
+              : "Ajout…"
+            : isEdit
+              ? "Enregistrer"
+              : "Ajouter le produit"}
         </button>
       </div>
     </form>
