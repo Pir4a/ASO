@@ -22,6 +22,7 @@ const translations = {
         "header.search": "Search",
         "header.searchPlaceholder": "Search for a product, category, SKU…",
         "header.contact": "Contact",
+        "header.about": "About",
         "header.cart": "Cart",
         "header.orders": "My orders",
         "header.login": "Log in",
@@ -191,6 +192,7 @@ const translations = {
         "header.search": "Recherche",
         "header.searchPlaceholder": "Rechercher un produit, une catégorie, une référence…",
         "header.contact": "Contact",
+        "header.about": "À propos",
         "header.cart": "Panier",
         "header.orders": "Mes commandes",
         "header.login": "Connexion",
@@ -360,6 +362,7 @@ const translations = {
         "header.search": "بحث",
         "header.searchPlaceholder": "ابحث عن منتج أو فئة أو رقم SKU…",
         "header.contact": "اتصل بنا",
+        "header.about": "حول",
         "header.cart": "السلة",
         "header.orders": "طلباتي",
         "header.login": "تسجيل الدخول",
@@ -528,6 +531,7 @@ const translations = {
         "header.search": "חיפוש",
         "header.searchPlaceholder": "חפש מוצר, קטגוריה או מק״ט…",
         "header.contact": "צור קשר",
+        "header.about": "אודות",
         "header.cart": "עגלה",
         "header.orders": "ההזמנות שלי",
         "header.login": "התחברות",
@@ -685,3 +689,88 @@ export function t(locale: Locale, key: TranslationKey): string {
 export function getTranslations(locale: Locale) {
     return (key: TranslationKey) => t(locale, key);
 }
+
+type AboutCopy = {
+    pageTitle: string;
+    intro: string;
+    missionTitle: string;
+    missionBody: string;
+    teamTitle: string;
+    teamBody: string;
+    valuesTitle: string;
+    valuesBody: string;
+    contactTitle: string;
+    contactBody: string;
+    contactCta: string;
+};
+
+export const aboutTranslations: Record<Locale, AboutCopy> = {
+    fr: {
+        pageTitle: "À propos d'Althea Systems",
+        intro:
+            "Althea Systems est une société française spécialisée en e-commerce de matériel médical. Nous accompagnons professionnels de santé et particuliers avec des solutions fiables, certifiées et accessibles.",
+        missionTitle: "Notre mission",
+        missionBody:
+            "Rendre le matériel médical de pointe accessible au plus grand nombre, en garantissant qualité, traçabilité et conseil expert à chaque étape.",
+        teamTitle: "Notre équipe",
+        teamBody:
+            "Une équipe pluridisciplinaire composée d'ingénieurs, de pharmaciens et d'experts logistiques, engagés dans le service client et l'innovation.",
+        valuesTitle: "Nos valeurs",
+        valuesBody:
+            "Excellence, intégrité, écoute et innovation guident chacune de nos décisions, du choix de nos fournisseurs à la livraison finale.",
+        contactTitle: "Contact",
+        contactBody: "Une question ? Notre équipe est à votre disposition.",
+        contactCta: "Nous contacter",
+    },
+    en: {
+        pageTitle: "About Althea Systems",
+        intro:
+            "Althea Systems is a French company specialised in e-commerce of medical equipment. We support healthcare professionals and individuals with reliable, certified and accessible solutions.",
+        missionTitle: "Our mission",
+        missionBody:
+            "Make state-of-the-art medical equipment accessible to all, while guaranteeing quality, traceability and expert advice at every step.",
+        teamTitle: "Our team",
+        teamBody:
+            "A multidisciplinary team of engineers, pharmacists and logistics experts, committed to customer service and innovation.",
+        valuesTitle: "Our values",
+        valuesBody:
+            "Excellence, integrity, attentiveness and innovation guide every decision we make, from sourcing to final delivery.",
+        contactTitle: "Contact",
+        contactBody: "Got a question? Our team is here to help.",
+        contactCta: "Contact us",
+    },
+    ar: {
+        pageTitle: "حول Althea Systems",
+        intro:
+            "Althea Systems شركة فرنسية متخصصة في التجارة الإلكترونية للمعدات الطبية. نرافق المهنيين الصحيين والأفراد بحلول موثوقة ومعتمدة وفي المتناول.",
+        missionTitle: "مهمتنا",
+        missionBody:
+            "إتاحة أحدث المعدات الطبية لأكبر عدد ممكن من الأشخاص، مع ضمان الجودة وقابلية التتبع والمشورة المتخصصة في كل خطوة.",
+        teamTitle: "فريقنا",
+        teamBody:
+            "فريق متعدد التخصصات من المهندسين والصيادلة وخبراء الخدمات اللوجستية، ملتزم بخدمة العملاء والابتكار.",
+        valuesTitle: "قيمنا",
+        valuesBody:
+            "التميز والنزاهة والإصغاء والابتكار توجه كل قراراتنا، من اختيار مورّدينا إلى التسليم النهائي.",
+        contactTitle: "اتصل بنا",
+        contactBody: "هل لديك سؤال؟ فريقنا في خدمتك.",
+        contactCta: "تواصل معنا",
+    },
+    he: {
+        pageTitle: "אודות Althea Systems",
+        intro:
+            "Althea Systems היא חברה צרפתית המתמחה במסחר אלקטרוני של ציוד רפואי. אנו מלווים אנשי מקצוע בתחום הבריאות ולקוחות פרטיים בפתרונות אמינים, מאושרים ונגישים.",
+        missionTitle: "המשימה שלנו",
+        missionBody:
+            "להנגיש ציוד רפואי מתקדם לכמה שיותר אנשים, תוך הבטחת איכות, יכולת מעקב וייעוץ מקצועי בכל שלב.",
+        teamTitle: "הצוות שלנו",
+        teamBody:
+            "צוות רב-תחומי של מהנדסים, רוקחים ומומחי לוגיסטיקה, המחויבים לשירות לקוחות ולחדשנות.",
+        valuesTitle: "הערכים שלנו",
+        valuesBody:
+            "מצוינות, יושרה, הקשבה וחדשנות מנחות כל החלטה שלנו, מבחירת הספקים ועד למשלוח הסופי.",
+        contactTitle: "צור קשר",
+        contactBody: "יש לך שאלה? הצוות שלנו זמין עבורך.",
+        contactCta: "צור קשר",
+    },
+};

@@ -329,6 +329,9 @@ export function Header({ locale }: HeaderProps) {
               <NavTab href="/contact" active={isActive("/contact")}>
                 {t("header.contact")}
               </NavTab>
+              <NavTab href="/about" active={isActive("/about")}>
+                {t("header.about")}
+              </NavTab>
             </nav>
 
             <Link
