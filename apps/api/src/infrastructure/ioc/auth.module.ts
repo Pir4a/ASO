@@ -40,7 +40,7 @@ import { ResetPasswordUseCase } from '../../application/use-cases/auth/reset-pas
     RolesGuard,
     JwtAuthGuard,
   ],
-  exports: [AuthService, JwtStrategy, PassportModule],
+  exports: [AuthService, JwtStrategy, PassportModule, EMAIL_GATEWAY],
 })
 export class AuthModule { }
 

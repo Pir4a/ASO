@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { promises as fs } from 'fs';
+import { dirname, join, resolve } from 'path';
 import PDFDocument from 'pdfkit';
 import { Order } from '../../domain/entities/order.entity';
 import { formatOrderNumber } from '../../application/use-cases/orders/get-order-details.use-case';
+
+const INVOICE_STORAGE_DIR = resolve(process.cwd(), 'storage/invoices');
 
 const NAVY = '#003d5c';
 const TEAL = '#00a8b5';
@@ -225,6 +229,22 @@ export class PdfService {
 
             doc.end();
         });
+    }
+
+    async persistInvoicePdf(invoiceId: string, buffer: Buffer): Promise<string> {
+        const filePath = join(INVOICE_STORAGE_DIR, `${invoiceId}.pdf`);
+        await fs.mkdir(dirname(filePath), { recursive: true });
+        await fs.writeFile(filePath, buffer);
+        return `storage/invoices/${invoiceId}.pdf`;
+    }
+
+    async readPersistedInvoicePdf(relativePath: string): Promise<Buffer | null> {
+        try {
+            const abs = resolve(process.cwd(), relativePath);
+            return await fs.readFile(abs);
+        } catch {
+            return null;
+        }
     }
 
     private formatPrice(amount: number, currency: string): string {

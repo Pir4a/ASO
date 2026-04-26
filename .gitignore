@@ -8,4 +8,5 @@ coverage
 .env.local
 .env.development
 .env.production
+apps/api/storage/
 

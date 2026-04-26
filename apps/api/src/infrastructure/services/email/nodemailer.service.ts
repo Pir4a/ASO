@@ -104,4 +104,41 @@ export class NodemailerService implements EmailGateway {
       this.logger.log(`Password reset link (dev fallback): ${resetLink}`);
     }
   }
+
+  async sendInvoiceEmail(
+    to: string,
+    invoiceNumber: string,
+    pdfBuffer: Buffer,
+    orderNumber?: string,
+    _locale?: string,
+  ): Promise<void> {
+    const transporter = await this.getTransporter();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer's Transporter generic defaults to `any`
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM || '"Althea Shop" <no-reply@althea.local>',
+      to,
+      subject: `Votre facture Althea ${invoiceNumber}`,
+      html: `
+                <h1>Votre facture est disponible</h1>
+                <p>Merci pour votre commande${orderNumber ? ` <strong>${orderNumber}</strong>` : ''}.</p>
+                <p>Vous trouverez votre facture <strong>${invoiceNumber}</strong> en pièce jointe à cet e-mail.</p>
+                <p>L'équipe Althea Systems</p>
+            `,
+      attachments: [
+        {
+          filename: `facture-${invoiceNumber}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf',
+        },
+      ],
+    });
+
+    this.logger.log(`Invoice email sent to ${to} for ${invoiceNumber}`);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- info is `any` from sendMail; nodemailer accepts it
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      this.logger.log(`Ethereal preview: ${previewUrl}`);
+    }
+  }
 }

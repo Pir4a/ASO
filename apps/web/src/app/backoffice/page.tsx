@@ -8,6 +8,7 @@ import "./backoffice.css";
 import { AuthGuard } from "@/components/guards/AuthGuard";
 import { ProductForm } from "@/components/backoffice/ProductForm";
 import { ContentManager } from "@/components/backoffice/ContentManager";
+import { InvoicesPanel } from "@/components/backoffice/InvoicesPanel";
 import { DashboardCharts, type AdminDashboardData } from "@/components/backoffice/DashboardCharts";
 import {
   BarChart,
@@ -108,6 +109,7 @@ type Section =
   | "categories"
   | "content"
   | "orders"
+  | "invoices"
   | "users"
   | "messages"
   | "settings";
@@ -121,6 +123,7 @@ const SECTION_LABEL: Record<Section, string> = {
   categories: "Catégories",
   content: "Contenu",
   orders: "Commandes",
+  invoices: "Factures",
   users: "Utilisateurs",
   messages: "Messages",
   settings: "Paramètres",
@@ -522,6 +525,7 @@ function BackofficeDashboard() {
       label: "Opérations",
       items: [
         { id: "orders", name: "Commandes", icon: "Orders", count: counts.orders },
+        { id: "invoices", name: "Factures", icon: "Doc" },
         { id: "users", name: "Utilisateurs", icon: "Users", count: counts.users },
         { id: "messages", name: "Messages", icon: "Messages", dot: counts.messages > 0 },
       ],
@@ -1704,6 +1708,9 @@ function BackofficeDashboard() {
               </Panel>
             </div>
           )}
+
+          {/* INVOICES */}
+          {section === "invoices" && <InvoicesPanel flash={flash} />}
 
           {/* USERS */}
           {section === "users" && (

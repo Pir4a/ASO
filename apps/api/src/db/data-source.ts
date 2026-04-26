@@ -11,6 +11,7 @@ import { Order } from '../infrastructure/persistence/typeorm/entities/order.enti
 import { OrderItem } from '../infrastructure/persistence/typeorm/entities/order-item.entity';
 import { Promotion } from '../infrastructure/persistence/typeorm/entities/promotion.entity';
 import { ContactMessage } from '../infrastructure/persistence/typeorm/entities/contact-message.entity';
+import { InvoiceOrm } from '../infrastructure/persistence/typeorm/entities/invoice.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -27,6 +28,7 @@ export const AppDataSource = new DataSource({
     OrderItem,
     Promotion,
     ContactMessage,
+    InvoiceOrm,
   ],
   migrations: ['src/migrations/*.ts'],
   synchronize: true,
