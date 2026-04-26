@@ -18,14 +18,18 @@ export class RolesGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
-    const user = request.user as { role?: UserRole; mfa?: boolean } | undefined;
+    const user = request.user as
+      | { role?: UserRole; mfa?: boolean; mfaEnabled?: boolean }
+      | undefined;
     if (!user?.role || !requiredRoles.includes(user.role)) return false;
 
-    // CDC §XVI.9 — admin endpoints require an MFA-cleared session. The JWT
-    // carries `mfa: true` only after a successful /auth/mfa/challenge, so an
-    // admin who hasn't enrolled MFA yet still gets a customer-grade token
-    // and is rejected here with a clear "MFA required" hint.
-    if (requiredRoles.includes('admin') && user.mfa !== true) {
+    // CDC §XVI.9 — admin endpoints require an MFA-cleared session. We enforce
+    // it only for admins who have already enrolled MFA: an unenrolled admin
+    // still needs to reach the BO to enable it. Once mfaEnabled flips to true
+    // (after /auth/mfa/setup + /verify), the gate becomes mandatory for that
+    // user's subsequent sessions and the front-end is expected to walk them
+    // through the second-step challenge at login.
+    if (requiredRoles.includes('admin') && user.mfaEnabled === true && user.mfa !== true) {
       throw new ForbiddenException({
         message: 'MFA required for admin operations.',
         code: 'MFA_REQUIRED',

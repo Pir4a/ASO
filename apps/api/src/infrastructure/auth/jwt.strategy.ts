@@ -8,6 +8,8 @@ interface JwtPayload {
     role: string;
     /** True when the session has cleared an MFA challenge (#7). */
     mfa?: boolean;
+    /** Whether the user has MFA enrolled — drives the soft gate in RolesGuard. */
+    mfaEnabled?: boolean;
 }
 
 @Injectable()
@@ -26,6 +28,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             email: payload.email,
             role: payload.role,
             mfa: payload.mfa === true,
+            mfaEnabled: payload.mfaEnabled === true,
         };
     }
 }

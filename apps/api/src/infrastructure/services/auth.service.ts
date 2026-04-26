@@ -98,7 +98,13 @@ export class AuthService {
     user.lastLoginAt = new Date();
     await this.updateUserUseCase.execute(user);
 
-    const payload = { sub: user.id, email: user.email, role: user.role, mfa: false };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      mfa: false,
+      mfaEnabled: false,
+    };
     // "Se souvenir de moi" → 7-day token; otherwise the default JWT TTL applies.
     const access_token = rememberMe
       ? this.jwtService.sign(payload, { expiresIn: '7d' })

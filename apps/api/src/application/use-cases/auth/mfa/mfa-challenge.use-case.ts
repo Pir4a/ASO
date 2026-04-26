@@ -83,6 +83,7 @@ export class MfaChallengeUseCase {
             email: user.email,
             role: user.role,
             mfa: true,
+            mfaEnabled: true,
         };
         const access_token = payload.rememberMe
             ? this.jwtService.sign(accessPayload, { expiresIn: '7d' })
