@@ -1,24 +1,27 @@
-import { IsString, IsNotEmpty, IsOptional, IsArray, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsEmail, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
-class ChatHistoryItemDto {
+export class StartChatSessionDto {
+  @IsEmail()
+  @IsNotEmpty()
+  @MaxLength(160)
+  email: string;
+
   @IsString()
   @IsNotEmpty()
-  role: string;
-
-  @IsString()
-  @IsNotEmpty()
-  content: string;
+  @MaxLength(160)
+  subject: string;
 }
 
 export class ChatMessageDto {
   @IsString()
   @IsNotEmpty()
-  message: string;
+  @MaxLength(4000)
+  content: string;
+}
 
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ChatHistoryItemDto)
-  history?: ChatHistoryItemDto[];
+export class ChatAdminReplyDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(4000)
+  content: string;
 }

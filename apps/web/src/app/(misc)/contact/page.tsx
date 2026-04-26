@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { sendChatMessage } from "@/lib/api";
+import { sendChatMessage, startChatSession } from "@/lib/api";
 import { useT } from "@/context/LocaleContext";
 import { CategoryHero } from "@/components/category/CategoryHero";
 
@@ -224,6 +224,7 @@ function ChatPanel() {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -237,11 +238,23 @@ function ChatPanel() {
     setInput("");
     setIsLoading(true);
     try {
-      const history = messages
-        .filter((m) => m.id !== "welcome")
-        .map((m) => ({ role: m.role, content: m.content }));
-      const { reply } = await sendChatMessage(msg, history);
-      setMessages((p) => [...p, { id: `a-${Date.now()}`, role: "assistant", content: reply }]);
+      // Lazily start a persisted session on first send. The /contact page
+      // collects a real email through the ContactForm tab; this inline chat
+      // tab uses a synthetic anonymous identifier so admins can still see
+      // the conversation history if they ever need to.
+      let activeId = sessionId;
+      if (!activeId) {
+        const subject = msg.length > 80 ? `${msg.slice(0, 77)}…` : msg;
+        const synthEmail = `anonymous-${Date.now()}@contact.althea.local`;
+        const started = await startChatSession(synthEmail, subject);
+        activeId = started.sessionId;
+        setSessionId(activeId);
+      }
+      const res = await sendChatMessage(activeId, msg);
+      setMessages((p) => [
+        ...p,
+        { id: res.messageId, role: "assistant", content: res.reply },
+      ]);
     } catch {
       setMessages((p) => [
         ...p,

@@ -1,14 +1,24 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { sendChatMessage } from "@/lib/api";
+import {
+    sendChatMessage,
+    startChatSession,
+    escalateChatSession,
+    type ChatSessionStatus,
+} from "@/lib/api";
 import { useT } from "@/context/LocaleContext";
 
 interface Message {
     id: string;
-    role: "user" | "assistant";
+    role: "user" | "assistant" | "admin";
     content: string;
 }
+
+const SESSION_KEY = "althea.chat.sessionId";
+const STATUS_KEY = "althea.chat.sessionStatus";
+const SUBJECT_KEY = "althea.chat.subject";
+const EMAIL_KEY = "althea.chat.email";
 
 export function ChatWidget() {
     const [open, setOpen] = useState(false);
@@ -19,18 +29,68 @@ export function ChatWidget() {
     const [isLoading, setIsLoading] = useState(false);
     const endRef = useRef<HTMLDivElement>(null);
 
-    // Initialize welcome message only once
+    // Pre-chat form state
+    const [sessionId, setSessionId] = useState<string | null>(null);
+    const [sessionStatus, setSessionStatus] = useState<ChatSessionStatus>("open");
+    const [storedEmail, setStoredEmail] = useState<string>("");
+    const [storedSubject, setStoredSubject] = useState<string>("");
+    const [emailDraft, setEmailDraft] = useState("");
+    const [subjectDraft, setSubjectDraft] = useState("");
+    const [startError, setStartError] = useState<string | null>(null);
+    const [startingSession, setStartingSession] = useState(false);
+
+    // Hydrate session from localStorage on mount.
     useEffect(() => {
+        if (typeof window === "undefined") return;
+        const id = localStorage.getItem(SESSION_KEY);
+        const status = localStorage.getItem(STATUS_KEY) as ChatSessionStatus | null;
+        const subj = localStorage.getItem(SUBJECT_KEY) ?? "";
+        const mail = localStorage.getItem(EMAIL_KEY) ?? "";
+        if (id) setSessionId(id);
+        if (status) setSessionStatus(status);
+        if (subj) setStoredSubject(subj);
+        if (mail) setStoredEmail(mail);
+        // Welcome bubble (persisted intro for the conversation).
         setMessages([{ id: "welcome", role: "assistant", content: t("chat.welcome") }]);
+        // We intentionally hydrate once on mount; t() is stable per locale.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
         endRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    const startSession = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (startingSession) return;
+        setStartError(null);
+        const trimmedEmail = emailDraft.trim().toLowerCase();
+        const trimmedSubject = subjectDraft.trim();
+        if (!trimmedEmail || !trimmedSubject) {
+            setStartError("Email et sujet sont requis.");
+            return;
+        }
+        setStartingSession(true);
+        try {
+            const res = await startChatSession(trimmedEmail, trimmedSubject);
+            setSessionId(res.sessionId);
+            setSessionStatus(res.status);
+            setStoredEmail(trimmedEmail);
+            setStoredSubject(res.subject);
+            localStorage.setItem(SESSION_KEY, res.sessionId);
+            localStorage.setItem(STATUS_KEY, res.status);
+            localStorage.setItem(SUBJECT_KEY, res.subject);
+            localStorage.setItem(EMAIL_KEY, trimmedEmail);
+        } catch (err) {
+            setStartError(err instanceof Error ? err.message : "Erreur");
+        } finally {
+            setStartingSession(false);
+        }
+    };
+
     const send = async (text?: string) => {
         const msg = text || input.trim();
-        if (!msg || isLoading) return;
+        if (!msg || isLoading || !sessionId) return;
 
         const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: msg };
         setMessages((prev) => [...prev, userMsg]);
@@ -38,15 +98,13 @@ export function ChatWidget() {
         setIsLoading(true);
 
         try {
-            const history = messages
-                .filter((m) => m.id !== "welcome")
-                .map((m) => ({ role: m.role, content: m.content }));
-
-            const { reply } = await sendChatMessage(msg, history);
+            const res = await sendChatMessage(sessionId, msg);
             setMessages((prev) => [
                 ...prev,
-                { id: `a-${Date.now()}`, role: "assistant", content: reply },
+                { id: res.messageId, role: "assistant", content: res.reply },
             ]);
+            setSessionStatus(res.sessionStatus);
+            localStorage.setItem(STATUS_KEY, res.sessionStatus);
         } catch {
             setMessages((prev) => [
                 ...prev,
@@ -57,10 +115,50 @@ export function ChatWidget() {
         }
     };
 
+    const escalate = async () => {
+        if (!sessionId || sessionStatus === "escalated") return;
+        try {
+            const res = await escalateChatSession(sessionId);
+            setSessionStatus(res.status);
+            localStorage.setItem(STATUS_KEY, res.status);
+            setMessages((prev) => [
+                ...prev,
+                {
+                    id: `esc-${Date.now()}`,
+                    role: "assistant",
+                    content:
+                        "Votre demande a été transférée à un agent. Vous recevrez une réponse par e-mail.",
+                },
+            ]);
+        } catch {
+            setMessages((prev) => [
+                ...prev,
+                { id: `e-${Date.now()}`, role: "assistant", content: t("chat.error") },
+            ]);
+        }
+    };
+
+    const resetSession = () => {
+        setSessionId(null);
+        setSessionStatus("open");
+        setStoredEmail("");
+        setStoredSubject("");
+        setEmailDraft("");
+        setSubjectDraft("");
+        setMessages([{ id: "welcome", role: "assistant", content: t("chat.welcome") }]);
+        if (typeof window !== "undefined") {
+            localStorage.removeItem(SESSION_KEY);
+            localStorage.removeItem(STATUS_KEY);
+            localStorage.removeItem(SUBJECT_KEY);
+            localStorage.removeItem(EMAIL_KEY);
+        }
+    };
+
     const suggestions = [
         t("chat.suggestion1"), t("chat.suggestion2"), t("chat.suggestion3"), t("chat.suggestion4"),
     ];
-    const showSuggestions = messages.length <= 1 && !isLoading;
+    const showSuggestions = sessionId !== null && messages.length <= 1 && !isLoading;
+    const canEscalate = sessionId !== null && sessionStatus !== "escalated";
 
     return (
         <>
@@ -93,7 +191,7 @@ export function ChatWidget() {
                 <div
                     style={{
                         position: "fixed", bottom: 92, right: 24, zIndex: 50,
-                        width: 370, maxHeight: "70vh", borderRadius: 20,
+                        width: 370, maxHeight: "78vh", borderRadius: 20,
                         background: "white", boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
                         display: "flex", flexDirection: "column", overflow: "hidden",
                         animation: "chatSlideUp 0.25s ease-out",
@@ -102,75 +200,223 @@ export function ChatWidget() {
                     {/* Header */}
                     <div style={{ padding: "16px 20px", background: "var(--foreground)", color: "white" }}>
                         <p style={{ fontSize: 15, fontWeight: 700 }}>{t("chat.title")}</p>
-                        <p style={{ fontSize: 11, opacity: 0.7 }}>{t("chat.subtitle")}</p>
+                        <p style={{ fontSize: 11, opacity: 0.7 }}>
+                            {storedSubject || t("chat.subtitle")}
+                        </p>
                     </div>
 
-                    {/* Messages */}
-                    <div style={{ flex: 1, overflowY: "auto", padding: "14px 14px 6px", display: "flex", flexDirection: "column", gap: 10, background: "var(--background)", maxHeight: 320 }}>
-                        {messages.map((m) => (
-                            <div key={m.id} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
-                                <div style={{
-                                    maxWidth: "80%", padding: "8px 14px", fontSize: 13, lineHeight: 1.5,
-                                    whiteSpace: "pre-wrap", wordBreak: "break-word",
-                                    borderRadius: m.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                                    background: m.role === "user" ? "var(--primary)" : "white",
-                                    color: m.role === "user" ? "white" : "var(--foreground)",
-                                    boxShadow: m.role === "user" ? "none" : "0 1px 4px rgba(0,0,0,0.06)",
-                                }}>{m.content}</div>
-                            </div>
-                        ))}
-                        {isLoading && (
-                            <div style={{ display: "flex" }}>
-                                <div style={{ padding: "8px 18px", borderRadius: "14px 14px 14px 4px", background: "white", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", display: "flex", gap: 4, alignItems: "center" }}>
-                                    <span className="chat-dot" style={{ animationDelay: "0s" }} />
-                                    <span className="chat-dot" style={{ animationDelay: "0.15s" }} />
-                                    <span className="chat-dot" style={{ animationDelay: "0.3s" }} />
-                                </div>
-                            </div>
-                        )}
-                        <div ref={endRef} />
-                    </div>
-
-                    {/* Suggestions */}
-                    {showSuggestions && (
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, padding: "8px 14px", background: "var(--background)" }}>
-                            {suggestions.map((s) => (
-                                <button key={s} onClick={() => send(s)} style={{
-                                    padding: "4px 10px", borderRadius: 16, border: "1px solid var(--background)", background: "white",
-                                    color: "var(--primary)", fontSize: 11, fontWeight: 500, cursor: "pointer",
-                                }}>{s}</button>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Input */}
-                    <div style={{ padding: "10px 14px", borderTop: "1px solid color-mix(in srgb, var(--foreground) 10%, transparent)", background: "white", display: "flex", gap: 8, alignItems: "center" }}>
-                        <input
-                            id="chat-widget-input"
-                            type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && send()}
-                            placeholder={t("chat.placeholder")}
-                            disabled={isLoading}
-                            style={{ flex: 1, padding: "8px 14px", borderRadius: 20, border: "1px solid color-mix(in srgb, var(--foreground) 10%, transparent)", outline: "none", fontSize: 13, color: "var(--foreground)", background: "var(--background)" }}
-                            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--primary)")}
-                            onBlur={(e) => (e.currentTarget.style.borderColor = "color-mix(in srgb, var(--foreground) 10%, transparent)")}
-                        />
-                        <button
-                            id="chat-widget-send"
-                            onClick={() => send()}
-                            disabled={!input.trim() || isLoading}
+                    {/* Pre-chat form */}
+                    {!sessionId && (
+                        <form
+                            onSubmit={startSession}
                             style={{
-                                width: 36, height: 36, borderRadius: "50%", border: "none", flexShrink: 0,
-                                background: input.trim() && !isLoading ? "var(--primary)" : "color-mix(in srgb, var(--foreground) 10%, transparent)",
-                                cursor: input.trim() && !isLoading ? "pointer" : "default",
-                                display: "flex", alignItems: "center", justifyContent: "center",
+                                padding: "16px 18px",
+                                background: "var(--background)",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 10,
                             }}
                         >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
-                        </button>
-                    </div>
+                            <p style={{ fontSize: 12, color: "var(--foreground)", opacity: 0.75 }}>
+                                Avant de démarrer, indiquez votre email et le sujet de votre demande.
+                            </p>
+                            <input
+                                type="email"
+                                required
+                                placeholder="vous@exemple.fr"
+                                value={emailDraft}
+                                onChange={(e) => setEmailDraft(e.target.value)}
+                                disabled={startingSession}
+                                style={{
+                                    padding: "8px 12px",
+                                    borderRadius: 8,
+                                    border: "1px solid color-mix(in srgb, var(--foreground) 12%, transparent)",
+                                    fontSize: 13,
+                                    background: "white",
+                                    color: "var(--foreground)",
+                                }}
+                            />
+                            <input
+                                type="text"
+                                required
+                                maxLength={160}
+                                placeholder="Sujet (ex. Question sur une commande)"
+                                value={subjectDraft}
+                                onChange={(e) => setSubjectDraft(e.target.value)}
+                                disabled={startingSession}
+                                style={{
+                                    padding: "8px 12px",
+                                    borderRadius: 8,
+                                    border: "1px solid color-mix(in srgb, var(--foreground) 12%, transparent)",
+                                    fontSize: 13,
+                                    background: "white",
+                                    color: "var(--foreground)",
+                                }}
+                            />
+                            {startError && (
+                                <p style={{ fontSize: 12, color: "var(--error, #c0392b)" }}>{startError}</p>
+                            )}
+                            <button
+                                type="submit"
+                                disabled={startingSession || !emailDraft.trim() || !subjectDraft.trim()}
+                                style={{
+                                    padding: "9px 16px",
+                                    border: "none",
+                                    borderRadius: 8,
+                                    background: "var(--primary)",
+                                    color: "white",
+                                    fontSize: 13,
+                                    fontWeight: 600,
+                                    cursor:
+                                        startingSession || !emailDraft.trim() || !subjectDraft.trim()
+                                            ? "default"
+                                            : "pointer",
+                                    opacity:
+                                        startingSession || !emailDraft.trim() || !subjectDraft.trim() ? 0.6 : 1,
+                                }}
+                            >
+                                {startingSession ? "Connexion…" : "Démarrer la conversation"}
+                            </button>
+                        </form>
+                    )}
+
+                    {/* Active session UI */}
+                    {sessionId && (
+                        <>
+                            {/* Escalated banner */}
+                            {sessionStatus === "escalated" && (
+                                <div
+                                    role="status"
+                                    style={{
+                                        padding: "8px 14px",
+                                        background: "color-mix(in srgb, var(--primary) 14%, transparent)",
+                                        color: "var(--primary)",
+                                        fontSize: 12,
+                                        fontWeight: 600,
+                                        borderBottom: "1px solid color-mix(in srgb, var(--primary) 30%, transparent)",
+                                    }}
+                                >
+                                    {`Un agent vous répondra par e-mail à ${storedEmail || "votre adresse"}.`}
+                                </div>
+                            )}
+
+                            {/* Messages */}
+                            <div style={{ flex: 1, overflowY: "auto", padding: "14px 14px 6px", display: "flex", flexDirection: "column", gap: 10, background: "var(--background)", maxHeight: 320 }}>
+                                {messages.map((m) => (
+                                    <div key={m.id} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
+                                        <div style={{
+                                            maxWidth: "80%", padding: "8px 14px", fontSize: 13, lineHeight: 1.5,
+                                            whiteSpace: "pre-wrap", wordBreak: "break-word",
+                                            borderRadius: m.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+                                            background: m.role === "user" ? "var(--primary)" : "white",
+                                            color: m.role === "user" ? "white" : "var(--foreground)",
+                                            boxShadow: m.role === "user" ? "none" : "0 1px 4px rgba(0,0,0,0.06)",
+                                        }}>{m.content}</div>
+                                    </div>
+                                ))}
+                                {isLoading && (
+                                    <div style={{ display: "flex" }}>
+                                        <div style={{ padding: "8px 18px", borderRadius: "14px 14px 14px 4px", background: "white", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", display: "flex", gap: 4, alignItems: "center" }}>
+                                            <span className="chat-dot" style={{ animationDelay: "0s" }} />
+                                            <span className="chat-dot" style={{ animationDelay: "0.15s" }} />
+                                            <span className="chat-dot" style={{ animationDelay: "0.3s" }} />
+                                        </div>
+                                    </div>
+                                )}
+                                <div ref={endRef} />
+                            </div>
+
+                            {/* Suggestions */}
+                            {showSuggestions && (
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, padding: "8px 14px", background: "var(--background)" }}>
+                                    {suggestions.map((s) => (
+                                        <button key={s} onClick={() => send(s)} style={{
+                                            padding: "4px 10px", borderRadius: 16, border: "1px solid var(--background)", background: "white",
+                                            color: "var(--primary)", fontSize: 11, fontWeight: 500, cursor: "pointer",
+                                        }}>{s}</button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Action row: human escalation + reset */}
+                            <div
+                                style={{
+                                    display: "flex",
+                                    gap: 6,
+                                    padding: "6px 14px",
+                                    background: "var(--background)",
+                                    borderTop: "1px solid color-mix(in srgb, var(--foreground) 6%, transparent)",
+                                }}
+                            >
+                                {canEscalate && (
+                                    <button
+                                        type="button"
+                                        onClick={escalate}
+                                        title="Demander un humain"
+                                        style={{
+                                            padding: "5px 10px",
+                                            borderRadius: 14,
+                                            border: "1px solid color-mix(in srgb, var(--primary) 35%, transparent)",
+                                            background: "white",
+                                            color: "var(--primary)",
+                                            fontSize: 11,
+                                            fontWeight: 600,
+                                            cursor: "pointer",
+                                        }}
+                                    >
+                                        Parler à un humain
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={resetSession}
+                                    title="Nouvelle conversation"
+                                    style={{
+                                        marginLeft: "auto",
+                                        padding: "5px 10px",
+                                        borderRadius: 14,
+                                        border: "1px solid color-mix(in srgb, var(--foreground) 12%, transparent)",
+                                        background: "white",
+                                        color: "var(--foreground)",
+                                        fontSize: 11,
+                                        opacity: 0.75,
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    Nouvelle conversation
+                                </button>
+                            </div>
+
+                            {/* Input */}
+                            <div style={{ padding: "10px 14px", borderTop: "1px solid color-mix(in srgb, var(--foreground) 10%, transparent)", background: "white", display: "flex", gap: 8, alignItems: "center" }}>
+                                <input
+                                    id="chat-widget-input"
+                                    type="text"
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    onKeyDown={(e) => e.key === "Enter" && send()}
+                                    placeholder={t("chat.placeholder")}
+                                    disabled={isLoading || sessionStatus === "escalated"}
+                                    style={{ flex: 1, padding: "8px 14px", borderRadius: 20, border: "1px solid color-mix(in srgb, var(--foreground) 10%, transparent)", outline: "none", fontSize: 13, color: "var(--foreground)", background: "var(--background)" }}
+                                    onFocus={(e) => (e.currentTarget.style.borderColor = "var(--primary)")}
+                                    onBlur={(e) => (e.currentTarget.style.borderColor = "color-mix(in srgb, var(--foreground) 10%, transparent)")}
+                                />
+                                <button
+                                    id="chat-widget-send"
+                                    onClick={() => send()}
+                                    disabled={!input.trim() || isLoading || sessionStatus === "escalated"}
+                                    style={{
+                                        width: 36, height: 36, borderRadius: "50%", border: "none", flexShrink: 0,
+                                        background: input.trim() && !isLoading && sessionStatus !== "escalated" ? "var(--primary)" : "color-mix(in srgb, var(--foreground) 10%, transparent)",
+                                        cursor: input.trim() && !isLoading && sessionStatus !== "escalated" ? "pointer" : "default",
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                    }}
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
 

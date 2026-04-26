@@ -648,20 +648,55 @@ export async function resetPassword(token: string, newPassword: string): Promise
   return res.json();
 }
 
-// ── Chat (Llama) ───────────────────────────────────────────────────
+// ── Chat (persisted session + Llama) ──────────────────────────────
 
-export async function sendChatMessage(
-  message: string,
-  history?: { role: string; content: string }[],
-): Promise<{ reply: string }> {
-  const res = await fetch(`${API_URL}/chat`, {
+export type ChatSessionStatus = "open" | "closed" | "escalated";
+
+export async function startChatSession(
+  email: string,
+  subject: string,
+): Promise<{ sessionId: string; status: ChatSessionStatus; subject: string }> {
+  const res = await fetch(`${API_URL}/chat/start`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, history }),
+    body: JSON.stringify({ email, subject }),
   });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || `Failed to start chat session (${res.status})`);
+  }
+  return res.json();
+}
 
+export async function sendChatMessage(
+  sessionId: string,
+  content: string,
+): Promise<{
+  reply: string;
+  messageId: string;
+  createdAt: string;
+  sessionStatus: ChatSessionStatus;
+}> {
+  const res = await fetch(`${API_URL}/chat/${sessionId}/message`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content }),
+  });
   if (!res.ok) {
     throw new Error("Failed to get chat response");
+  }
+  return res.json();
+}
+
+export async function escalateChatSession(
+  sessionId: string,
+): Promise<{ sessionId: string; status: ChatSessionStatus; escalatedAt: string | null }> {
+  const res = await fetch(`${API_URL}/chat/${sessionId}/escalate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) {
+    throw new Error("Failed to escalate chat");
   }
   return res.json();
 }

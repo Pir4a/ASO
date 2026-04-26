@@ -13,6 +13,8 @@ import { Promotion } from '../infrastructure/persistence/typeorm/entities/promot
 import { ContactMessage } from '../infrastructure/persistence/typeorm/entities/contact-message.entity';
 import { InvoiceOrm } from '../infrastructure/persistence/typeorm/entities/invoice.entity';
 import { CreditNoteOrm } from '../infrastructure/persistence/typeorm/entities/credit-note.entity';
+import { ChatSessionOrm } from '../infrastructure/persistence/typeorm/entities/chat-session.entity';
+import { ChatMessageOrm } from '../infrastructure/persistence/typeorm/entities/chat-message.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -31,6 +33,8 @@ export const AppDataSource = new DataSource({
     ContactMessage,
     InvoiceOrm,
     CreditNoteOrm,
+    ChatSessionOrm,
+    ChatMessageOrm,
   ],
   migrations: ['src/migrations/*.ts'],
   synchronize: true,

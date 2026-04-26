@@ -10,6 +10,7 @@ import { ProductForm } from "@/components/backoffice/ProductForm";
 import { ContentManager } from "@/components/backoffice/ContentManager";
 import { InvoicesPanel } from "@/components/backoffice/InvoicesPanel";
 import { CreditNotesPanel } from "@/components/backoffice/CreditNotesPanel";
+import { ChatPanel } from "@/components/backoffice/ChatPanel";
 import { DashboardCharts, type AdminDashboardData } from "@/components/backoffice/DashboardCharts";
 import {
   BarChart,
@@ -113,6 +114,7 @@ type Section =
   | "invoices"
   | "users"
   | "messages"
+  | "chat"
   | "settings";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
@@ -127,6 +129,7 @@ const SECTION_LABEL: Record<Section, string> = {
   invoices: "Factures & Avoirs",
   users: "Utilisateurs",
   messages: "Messages",
+  chat: "Chat",
   settings: "Paramètres",
 };
 
@@ -529,6 +532,7 @@ function BackofficeDashboard() {
         { id: "invoices", name: "Factures & Avoirs", icon: "Doc" },
         { id: "users", name: "Utilisateurs", icon: "Users", count: counts.users },
         { id: "messages", name: "Messages", icon: "Messages", dot: counts.messages > 0 },
+        { id: "chat", name: "Chat", icon: "Messages" },
       ],
     },
     {
@@ -1932,6 +1936,9 @@ function BackofficeDashboard() {
               )}
             </Panel>
           )}
+
+          {/* CHAT */}
+          {section === "chat" && <ChatPanel flash={flash} />}
 
           {/* SETTINGS */}
           {section === "settings" && (

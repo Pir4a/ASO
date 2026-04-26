@@ -425,4 +425,36 @@ export class NodemailerService implements EmailGateway {
       this.logger.log(`Guest signup link (dev fallback): ${setupLink}`);
     }
   }
+
+  async sendChatReply(to: string, subject: string, content: string): Promise<void> {
+    const escaped = content
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br/>');
+
+    const transporter = await this.getTransporter();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer's Transporter generic defaults to `any`
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM || '"Althea Shop" <no-reply@althea.local>',
+      to,
+      subject: `Re: ${subject}`,
+      html: `
+                <p>Bonjour,</p>
+                <p>Notre équipe support a répondu à votre demande&nbsp;:</p>
+                <blockquote style="border-left:3px solid #ccc;padding:8px 12px;color:#333;">
+                    ${escaped}
+                </blockquote>
+                <p>Bien cordialement,<br/>L'équipe Althea Systems</p>
+            `,
+    });
+
+    this.logger.log(`Chat reply email sent to ${to}`);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- info is `any` from sendMail; nodemailer accepts it
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      this.logger.log(`Ethereal preview: ${previewUrl}`);
+    }
+  }
 }

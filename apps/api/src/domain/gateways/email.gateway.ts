@@ -42,6 +42,7 @@ export interface EmailGateway {
         orderId: string,
         locale?: string,
     ): Promise<void>;
+    sendChatReply(to: string, subject: string, content: string): Promise<void>;
 }
 
 export const EMAIL_GATEWAY = 'EMAIL_GATEWAY';
