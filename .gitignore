@@ -10,3 +10,6 @@ coverage
 .env.production
 apps/api/storage/
 
+# Claude Code agent scratch space (worktrees, settings, transcripts)
+.claude/
+

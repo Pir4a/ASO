@@ -86,9 +86,16 @@ export default function CheckoutPage() {
   useEffect(() => {
     void (async () => {
       try {
+        // For guests, the cart is keyed by the x-guest-cart-id header.
+        // Read straight from localStorage so we don't race the separate
+        // setGuestCartId effect.
+        const cartIdForFetch =
+          !isAuthenticated && typeof window !== "undefined"
+            ? localStorage.getItem("guestCartId") ?? undefined
+            : undefined;
         const [addr, cart] = await Promise.all([
           isAuthenticated ? getUserAddresses() : Promise.resolve([]),
-          getCart(),
+          getCart(cartIdForFetch),
         ]);
         setAddresses(addr);
         if (addr.length > 0) setSelectedAddressId(addr[0].id);
