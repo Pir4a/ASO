@@ -68,7 +68,7 @@ export class ProductsController {
     ) {
         const page = Math.max(1, Number.parseInt(pageStr ?? '1', 10) || 1);
         const pageSize = Math.min(
-            48,
+            50,
             Math.max(1, Number.parseInt(limitStr ?? '12', 10) || 12),
         );
         const minPrice =
@@ -132,7 +132,7 @@ export class ProductsController {
         if (paginate) {
             const page = Math.max(1, Number.parseInt(pageStr ?? '1', 10) || 1);
             const pageSize = Math.min(
-                48,
+                50,
                 Math.max(1, Number.parseInt(limitStr ?? '12', 10) || 12),
             );
             const { items, total } = await this.productRepository.browse({

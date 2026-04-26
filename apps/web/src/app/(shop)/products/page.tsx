@@ -4,19 +4,31 @@ import { getLocaleFromCookie } from "@/lib/i18n.server";
 import { getTranslations } from "@/lib/translations";
 import { CategoryHero } from "@/components/category/CategoryHero";
 import { CategoryCatalog } from "@/components/category/CategoryCatalog";
+import {
+  PaginationControls,
+  PAGE_SIZE_OPTIONS,
+  DEFAULT_PAGE_SIZE,
+  type PageSize,
+} from "@/components/common/PaginationControls";
 
 export default async function ProductsListPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; size?: string }>;
 }) {
-  const { q: rawQ } = await searchParams;
+  const { q: rawQ, page: pageStr, size: sizeStr } = await searchParams;
   const initialQuery = (rawQ ?? "").trim();
+
+  const requestedSize = Number(sizeStr);
+  const size: PageSize = (PAGE_SIZE_OPTIONS as readonly number[]).includes(requestedSize)
+    ? (requestedSize as PageSize)
+    : DEFAULT_PAGE_SIZE;
+  const requestedPage = Math.max(1, Number.parseInt(pageStr ?? "1", 10) || 1);
 
   const [categories, allProducts, page] = await Promise.all([
     getCategories(),
     getProducts(),
-    getProductsCatalog({ page: 1, limit: 48 }),
+    getProductsCatalog({ page: requestedPage, limit: size }),
   ]);
 
   const products = page.products;
@@ -61,6 +73,12 @@ export default async function ProductsListPage({
         allHref="/products"
         allCount={page.meta.total}
         initialQuery={initialQuery}
+      />
+
+      <PaginationControls
+        totalItems={page.meta.total}
+        currentPage={page.meta.page}
+        pageSize={size}
       />
     </div>
   );
