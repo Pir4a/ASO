@@ -17,6 +17,8 @@ import { UserRole } from '../../domain/entities/user.entity';
 import { EMAIL_GATEWAY } from '../../domain/gateways/email.gateway';
 import type { EmailGateway } from '../../domain/gateways/email.gateway';
 import { VerifyEmailUseCase } from '../../application/use-cases/auth/verify-email.use-case';
+import { RequestPasswordResetUseCase } from '../../application/use-cases/auth/request-password-reset.use-case';
+import { ResetPasswordUseCase } from '../../application/use-cases/auth/reset-password.use-case';
 import { randomBytes } from 'crypto';
 
 @Injectable()
@@ -29,6 +31,8 @@ export class AuthService {
     private readonly updateUserUseCase: UpdateUserUseCase,
     @Inject(EMAIL_GATEWAY) private readonly emailGateway: EmailGateway,
     private readonly verifyEmailUseCase: VerifyEmailUseCase,
+    private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
+    private readonly resetPasswordUseCase: ResetPasswordUseCase,
   ) { }
 
   async register(registerDto: RegisterDto) {
@@ -93,6 +97,14 @@ export class AuthService {
       access_token,
       user: { id: user.id, email: user.email, role: user.role },
     };
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    await this.requestPasswordResetUseCase.execute(email);
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    await this.resetPasswordUseCase.execute(token, newPassword);
   }
 
   async updateUserRole(userId: string, newRole: string) {

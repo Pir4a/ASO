@@ -12,6 +12,8 @@ export class User {
     lastLoginAt?: Date;
     verificationToken?: string;
     verificationTokenExpires?: Date;
+    passwordResetToken: string | null;
+    passwordResetTokenExpires: Date | null;
     stripeCustomerId?: string;
 
     constructor(partial: Partial<User>) {

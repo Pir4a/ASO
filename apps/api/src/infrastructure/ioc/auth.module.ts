@@ -11,6 +11,8 @@ import { NodemailerService } from '../services/email/nodemailer.service';
 import { EMAIL_GATEWAY } from '../../domain/gateways/email.gateway';
 import { RolesGuard } from '../guards/roles.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { RequestPasswordResetUseCase } from '../../application/use-cases/auth/request-password-reset.use-case';
+import { ResetPasswordUseCase } from '../../application/use-cases/auth/reset-password.use-case';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
       provide: EMAIL_GATEWAY,
       useClass: NodemailerService,
     },
+    RequestPasswordResetUseCase,
+    ResetPasswordUseCase,
     RolesGuard,
     JwtAuthGuard,
   ],
