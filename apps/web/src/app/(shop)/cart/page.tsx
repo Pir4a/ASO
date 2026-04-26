@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LocaleContext";
 import { useCart, type CartItem } from "@/hooks/useCart";
 
 function isUnavailable(item: CartItem) {
@@ -16,6 +17,7 @@ function formatPrice(cents: number, currency: string) {
 }
 
 export default function CartPage() {
+  const t = useT();
   const {
     items,
     subtotal,
@@ -89,11 +91,9 @@ export default function CartPage() {
             </svg>
           </div>
           <h1 className="mt-5 font-heading text-[26px] font-semibold tracking-tight text-foreground md:text-[30px]">
-            Votre panier est vide
+            {t("cart.empty.title")}
           </h1>
-          <p className="mt-2 text-sm text-foreground/65">
-            Ajoutez des produits pour commencer vos achats.
-          </p>
+          <p className="mt-2 text-sm text-foreground/65">{t("cart.empty.subtitle")}</p>
           <Link
             href="/products"
             style={{ color: "#fff" }}
@@ -102,7 +102,7 @@ export default function CartPage() {
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
               <path d="M3 8h10m-3-3 3 3-3 3" />
             </svg>
-            Parcourir le catalogue
+            {t("cart.empty.cta")}
           </Link>
         </section>
       </div>
@@ -118,13 +118,13 @@ export default function CartPage() {
         <div>
           <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
             <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-            Panier
+            {t("cart.eyebrow")}
           </p>
           <h1 className="font-heading text-[26px] font-semibold tracking-tight text-foreground md:text-[30px]">
-            Récapitulatif de votre commande
+            {t("cart.title")}
           </h1>
           <p className="mt-1 text-[13px] text-foreground/60">
-            {itemCount} article{itemCount > 1 ? "s" : ""} · total mis à jour automatiquement
+            {itemCount} {itemCount > 1 ? t("cart.itemPlural") : t("cart.itemSingular")} · {t("cart.autoUpdated")}
           </p>
         </div>
         <Link
@@ -134,7 +134,7 @@ export default function CartPage() {
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
             <path d="M13 8H3m3-3-3 3 3 3" />
           </svg>
-          Continuer mes achats
+          {t("cart.continueShopping")}
         </Link>
       </header>
 
@@ -153,7 +153,7 @@ export default function CartPage() {
           <button
             type="button"
             onClick={clearError}
-            aria-label="Fermer"
+            aria-label={t("cart.errorClose")}
             className="text-error/80 transition hover:text-error"
           >
             ✕
@@ -169,8 +169,8 @@ export default function CartPage() {
               <path d="M2.5 14c0-2.6 2.4-4.6 5.5-4.6s5.5 2 5.5 4.6" />
             </svg>
             <span>
-              <b className="font-semibold">Connectez-vous</b> ou créez un compte pour sauvegarder
-              votre panier — vous pouvez aussi continuer en invité.
+              <b className="font-semibold">{t("cart.guestNoticeStrong")}</b>{" "}
+              {t("cart.guestNoticeBody")}
             </span>
           </span>
           <span className="flex flex-wrap gap-2">
@@ -178,14 +178,14 @@ export default function CartPage() {
               href="/login"
               className="inline-flex h-9 items-center gap-1.5 rounded-md border border-primary/30 bg-white px-3 text-[12.5px] font-semibold text-primary transition hover:border-primary"
             >
-              Connexion
+              {t("cart.loginCta")}
             </Link>
             <Link
               href="/signup"
               style={{ color: "#fff" }}
               className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3 text-[12.5px] font-semibold transition hover:bg-primary-hover"
             >
-              Créer un compte
+              {t("cart.signupCta")}
             </Link>
           </span>
         </div>
@@ -240,7 +240,7 @@ export default function CartPage() {
                       {item.name ?? item.productId}
                     </p>
                     <p className="mt-0.5 text-[12.5px] text-foreground/60">
-                      Prix unitaire ·{" "}
+                      {t("cart.unitPrice")} ·{" "}
                       <span className="font-medium text-foreground/80 tabular-nums">
                         {formatPrice(item.priceCents, item.currency)}
                       </span>
@@ -251,7 +251,7 @@ export default function CartPage() {
                           <circle cx="8" cy="8" r="6" />
                           <path d="m4.5 4.5 7 7" />
                         </svg>
-                        Indisponible — retirez ou remplacez ce produit
+                        {t("cart.itemUnavailable")}
                       </p>
                     )}
                     {stockExceeded && (
@@ -260,7 +260,10 @@ export default function CartPage() {
                           <path d="M8 2.5 14 13H2L8 2.5Z" />
                           <path d="M8 7v3M8 11.5v.5" />
                         </svg>
-                        Stock limité — {item.stock} disponible{(item.stock ?? 0) > 1 ? "s" : ""}
+                        {t("cart.stockLimit")} — {item.stock}{" "}
+                        {(item.stock ?? 0) > 1
+                          ? t("cart.stockAvailablePlural")
+                          : t("cart.stockAvailableSingle")}
                       </p>
                     )}
                   </div>
@@ -269,7 +272,7 @@ export default function CartPage() {
                   <div
                     className="flex h-10 items-stretch overflow-hidden rounded-lg border border-foreground/15 bg-white"
                     role="group"
-                    aria-label={`Quantité de ${item.name ?? "ce produit"}`}
+                    aria-label={`${t("cart.qtyOf")} ${item.name ?? t("cart.thisProduct")}`}
                   >
                     <button
                       type="button"
@@ -277,7 +280,7 @@ export default function CartPage() {
                         handleQuantityChange(item.productId, item.quantity - 1)
                       }
                       disabled={isBusy || oos}
-                      aria-label="Diminuer"
+                      aria-label={t("cart.qtyDecrease")}
                       className="grid w-9 place-items-center text-foreground transition hover:bg-background hover:text-primary disabled:cursor-not-allowed disabled:text-foreground/30 disabled:hover:bg-transparent"
                     >
                       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true" className="h-3 w-3">
@@ -293,7 +296,7 @@ export default function CartPage() {
                         handleQuantityChange(item.productId, item.quantity + 1)
                       }
                       disabled={isBusy || oos}
-                      aria-label="Augmenter"
+                      aria-label={t("cart.qtyIncrease")}
                       className="grid w-9 place-items-center text-foreground transition hover:bg-background hover:text-primary disabled:cursor-not-allowed disabled:text-foreground/30 disabled:hover:bg-transparent"
                     >
                       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true" className="h-3 w-3">
@@ -318,7 +321,7 @@ export default function CartPage() {
                     type="button"
                     onClick={() => removeItem(item.productId)}
                     disabled={isBusy}
-                    aria-label="Retirer du panier"
+                    aria-label={t("cart.removeAria")}
                     className="grid h-9 w-9 place-items-center rounded-md text-foreground/55 transition hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-4 w-4">
@@ -337,22 +340,22 @@ export default function CartPage() {
             <header className="border-b border-foreground/5 px-6 py-5">
               <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
                 <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-                Récapitulatif
+                {t("cart.summaryEyebrow")}
               </p>
               <h2 className="font-heading text-[18px] font-semibold tracking-tight text-foreground">
-                Total à payer
+                {t("cart.summaryTitle")}
               </h2>
             </header>
             <div className="space-y-4 px-6 py-5">
               <dl className="space-y-2 text-[13.5px]">
                 <div className="flex justify-between">
-                  <dt className="text-foreground/65">Sous-total</dt>
+                  <dt className="text-foreground/65">{t("cart.subtotal")}</dt>
                   <dd className="tabular-nums text-foreground">
                     {formatPrice(subtotal, currency)}
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-foreground/65">TVA</dt>
+                  <dt className="text-foreground/65">{t("cart.vat")}</dt>
                   <dd className="tabular-nums text-foreground">
                     {formatPrice(vat, currency)}
                   </dd>
@@ -360,7 +363,7 @@ export default function CartPage() {
                 {discount > 0 && (
                   <div className="flex justify-between text-success">
                     <dt>
-                      Réduction{" "}
+                      {t("cart.discount")}{" "}
                       <span className="font-mono text-[12px] text-success/80">
                         ({promoCode})
                       </span>
@@ -374,7 +377,7 @@ export default function CartPage() {
 
               <div className="flex items-baseline justify-between border-t border-foreground/10 pt-4">
                 <span className="font-heading text-[14px] font-semibold text-foreground">
-                  Total TTC
+                  {t("cart.totalIncludingVat")}
                 </span>
                 <span className="font-heading text-[22px] font-bold tabular-nums text-foreground">
                   {formatPrice(total, currency)}
@@ -387,7 +390,7 @@ export default function CartPage() {
                   htmlFor="promo-input"
                   className="mb-1.5 block text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/60"
                 >
-                  Code promo
+                  {t("cart.promoLabel")}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -404,7 +407,7 @@ export default function CartPage() {
                     disabled={promoLoading || !promoInput.trim()}
                     className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-foreground/15 bg-white px-3 text-[13px] font-semibold text-foreground transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {promoLoading ? "…" : "Appliquer"}
+                    {promoLoading ? "…" : t("cart.promoApply")}
                   </button>
                 </div>
               </div>
@@ -416,8 +419,7 @@ export default function CartPage() {
                     <path d="M8 2.5 14 13H2L8 2.5Z" />
                     <path d="M8 7v3M8 11.5v.5" />
                   </svg>
-                  Un ou plusieurs articles sont indisponibles. Retirez-les ou remplacez-les
-                  pour continuer.
+                  {t("cart.blockedByOos")}
                 </div>
               )}
 
@@ -428,7 +430,7 @@ export default function CartPage() {
                   aria-disabled="true"
                   className="inline-flex h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-foreground/10 px-5 text-[15px] font-semibold text-foreground/55"
                 >
-                  Passer à la caisse
+                  {t("cart.checkout")}
                 </button>
               ) : (
                 <Link
@@ -436,7 +438,7 @@ export default function CartPage() {
                   style={{ color: "#fff" }}
                   className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 text-[15px] font-semibold transition hover:bg-primary-hover"
                 >
-                  Passer à la caisse
+                  {t("cart.checkout")}
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true" className="h-3.5 w-3.5">
                     <path d="M3 8h10m-3-3 3 3-3 3" />
                   </svg>
@@ -450,21 +452,21 @@ export default function CartPage() {
                     <circle cx="5" cy="16" r="1.5" />
                     <circle cx="17" cy="16" r="1.5" />
                   </svg>
-                  Livraison 48 h
+                  {t("cart.perkDelivery")}
                 </li>
                 <li className="flex flex-col items-center gap-1.5">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-4 w-4 text-primary">
                     <rect x="3" y="11" width="18" height="11" rx="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
-                  Paiement sécurisé
+                  {t("cart.perkSecurePayment")}
                 </li>
                 <li className="flex flex-col items-center gap-1.5">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-4 w-4 text-primary">
                     <path d="M12 2 4 7v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-5z" />
                     <path d="m9 12 2 2 4-4" />
                   </svg>
-                  Garantie 2 ans
+                  {t("cart.perkWarranty")}
                 </li>
               </ul>
             </div>
@@ -476,18 +478,19 @@ export default function CartPage() {
 }
 
 function Breadcrumb() {
+  const t = useT();
   return (
     <nav
-      aria-label="Fil d'Ariane"
+      aria-label="Breadcrumb"
       className="flex flex-wrap items-center gap-2 text-sm text-foreground/60"
     >
       <Link href="/" className="hover:text-primary">
-        Accueil
+        {t("common.home")}
       </Link>
       <span aria-hidden="true" className="text-foreground/25">
         /
       </span>
-      <span className="font-semibold text-foreground">Panier</span>
+      <span className="font-semibold text-foreground">{t("cart.breadcrumb")}</span>
     </nav>
   );
 }
