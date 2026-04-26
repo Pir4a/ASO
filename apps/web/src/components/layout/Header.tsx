@@ -11,6 +11,7 @@ import { useT } from "@/context/LocaleContext";
 import { useCart } from "@/hooks/useCart";
 import type { Locale } from "@/lib/i18n.shared";
 import { MobileMenu } from "./MobileMenu";
+import { triggerBoTransition } from "./RouteFlourish";
 
 const API_URL =
   (typeof window !== "undefined" ? process.env.NEXT_PUBLIC_API_URL : undefined) ||
@@ -119,15 +120,8 @@ export function Header({ locale }: HeaderProps) {
                         style={{ color: "#fff" }}
                         className="hidden items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-[11.5px] font-semibold uppercase tracking-[0.06em] transition hover:bg-primary-hover md:inline-flex"
                         onClick={(e) => {
-                          // Native crossfade between storefront and BO (Chrome/Edge 111+).
-                          // Falls back to a plain Link navigation otherwise.
-                          const doc = document as Document & {
-                            startViewTransition?: (cb: () => void) => void;
-                          };
-                          if (typeof doc.startViewTransition === "function") {
-                            e.preventDefault();
-                            doc.startViewTransition(() => router.push("/backoffice"));
-                          }
+                          e.preventDefault();
+                          triggerBoTransition("/backoffice");
                         }}
                       >
                         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3 w-3">

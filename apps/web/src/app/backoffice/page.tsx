@@ -21,6 +21,7 @@ import { CSS } from "@dnd-kit/utilities";
 import "./backoffice.css";
 
 import { AuthGuard } from "@/components/guards/AuthGuard";
+import { triggerBoTransition } from "@/components/layout/RouteFlourish";
 import { ProductForm } from "@/components/backoffice/ProductForm";
 import { ContentManager } from "@/components/backoffice/ContentManager";
 import { InvoicesPanel } from "@/components/backoffice/InvoicesPanel";
@@ -783,16 +784,8 @@ function BackofficeDashboard() {
             className="bo-back-pill"
             title="Retour au site"
             onClick={(e) => {
-              // Use the View Transitions API (Chrome/Edge 111+) for a native
-              // crossfade between the BO and the storefront. Falls through to
-              // the default Link navigation in browsers that lack support.
-              const doc = document as Document & {
-                startViewTransition?: (cb: () => void) => void;
-              };
-              if (typeof doc.startViewTransition === "function") {
-                e.preventDefault();
-                doc.startViewTransition(() => router.push("/"));
-              }
+              e.preventDefault();
+              triggerBoTransition("/");
             }}
           >
             <Icon.Home /> Retour au site

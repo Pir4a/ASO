@@ -10,6 +10,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/hooks/useCart";
 import { ToastProvider } from "@/components/ui/Toast";
 import { ChatWidget } from "@/components/chat/ChatWidget";
+import { RouteFlourish } from "@/components/layout/RouteFlourish";
 import { LocaleProvider } from "@/context/LocaleContext";
 
 const poppins = Poppins({
@@ -60,6 +61,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </main>
                 <Footer />
                 <ChatWidget />
+                <RouteFlourish />
               </ToastProvider>
             </CartProvider>
           </AuthProvider>
