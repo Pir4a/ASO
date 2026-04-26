@@ -847,6 +847,8 @@ function SecurityCard() {
         </p>
       </SectionCard>
 
+      <MfaCard />
+
       <SectionCard
         eyebrow="Sessions"
         title="Vos appareils connectés"
@@ -872,6 +874,346 @@ function SecurityCard() {
         </div>
       </SectionCard>
     </>
+  );
+}
+
+/* ── MFA enrollment & disable ────────────────────────────────── */
+type MfaStatus = "loading" | "disabled" | "enabled";
+interface MfaSetupPayload {
+  qrDataUrl: string;
+  otpauthUrl: string;
+  secret: string;
+  backupCodes: string[];
+}
+
+function MfaCard() {
+  const [status, setStatus] = useState<MfaStatus>("loading");
+  const [backupRemaining, setBackupRemaining] = useState<number>(0);
+  const [setupData, setSetupData] = useState<MfaSetupPayload | null>(null);
+  const [code, setCode] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [flash, setFlash] = useState<{ kind: "success" | "error"; text: string } | null>(null);
+
+  const refresh = async () => {
+    try {
+      const res = await authFetch("/profile/me");
+      if (!res.ok) throw new Error();
+      const data = (await res.json()) as {
+        mfaEnabled?: boolean;
+        mfaBackupCodesRemaining?: number;
+      };
+      setStatus(data.mfaEnabled ? "enabled" : "disabled");
+      setBackupRemaining(data.mfaBackupCodesRemaining ?? 0);
+    } catch {
+      setStatus("disabled");
+    }
+  };
+
+  useEffect(() => {
+    void refresh();
+  }, []);
+
+  const startSetup = async () => {
+    setFlash(null);
+    setSubmitting(true);
+    try {
+      const res = await authFetch("/auth/mfa/setup", { method: "POST" });
+      const data = (await res.json().catch(() => ({}))) as Partial<MfaSetupPayload> & {
+        message?: string;
+      };
+      if (!res.ok) throw new Error(data.message ?? "Initialisation impossible.");
+      if (!data.qrDataUrl || !data.secret || !data.backupCodes) throw new Error("Réponse invalide.");
+      setSetupData(data as MfaSetupPayload);
+      setCode("");
+    } catch (err) {
+      setFlash({
+        kind: "error",
+        text: err instanceof Error ? err.message : "Initialisation impossible.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const confirmSetup = async (e: FormEvent) => {
+    e.preventDefault();
+    setFlash(null);
+    setSubmitting(true);
+    try {
+      const res = await authFetch("/auth/mfa/verify", {
+        method: "POST",
+        body: JSON.stringify({ code: code.trim() }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { message?: string };
+      if (!res.ok) throw new Error(data.message ?? "Code incorrect.");
+      setFlash({
+        kind: "success",
+        text:
+          "MFA activée. Une connexion future demandera votre code à 6 chiffres ou un code de secours.",
+      });
+      setSetupData(null);
+      setCode("");
+      await refresh();
+    } catch (err) {
+      setFlash({
+        kind: "error",
+        text: err instanceof Error ? err.message : "Vérification impossible.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const disable = async (e: FormEvent) => {
+    e.preventDefault();
+    setFlash(null);
+    setSubmitting(true);
+    try {
+      const res = await authFetch("/auth/mfa/disable", {
+        method: "POST",
+        body: JSON.stringify({ code: code.trim() }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { message?: string };
+      if (!res.ok) throw new Error(data.message ?? "Code incorrect.");
+      setFlash({ kind: "success", text: "MFA désactivée." });
+      setCode("");
+      await refresh();
+    } catch (err) {
+      setFlash({
+        kind: "error",
+        text: err instanceof Error ? err.message : "Désactivation impossible.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const downloadBackupCodes = (codes: string[]) => {
+    const body = [
+      "Codes de secours Althea Systems",
+      "Chaque code est utilisable une seule fois.",
+      "",
+      ...codes,
+    ].join("\n");
+    const blob = new Blob([body], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "althea-backup-codes.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const inputCls =
+    "w-full rounded-lg border border-foreground/10 bg-white px-3.5 py-2.5 text-[14px] text-foreground placeholder:text-foreground/45 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15";
+  const labelCls =
+    "mb-1.5 block text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/65";
+
+  return (
+    <SectionCard
+      eyebrow="Authentification à deux facteurs"
+      title="MFA — Application d'authentification"
+      hint="Une couche de sécurité supplémentaire à la connexion : votre mot de passe + un code à 6 chiffres généré par Google Authenticator, Authy, 1Password, etc."
+    >
+      {flash && (
+        <div
+          role={flash.kind === "error" ? "alert" : "status"}
+          className={`mb-4 rounded-lg border px-3.5 py-2.5 text-[13px] ${
+            flash.kind === "success"
+              ? "border-success/30 bg-success/10 text-success"
+              : "border-error/30 bg-error/10 text-error"
+          }`}
+        >
+          {flash.text}
+        </div>
+      )}
+
+      {status === "loading" && (
+        <p className="text-[13px] text-foreground/55">Chargement…</p>
+      )}
+
+      {/* SETUP IN PROGRESS — show QR + backup codes + verification input */}
+      {setupData && (
+        <div className="space-y-5">
+          <div className="grid gap-5 sm:grid-cols-[auto,1fr]">
+            <div className="rounded-xl border border-foreground/10 bg-white p-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={setupData.qrDataUrl}
+                alt="QR code MFA"
+                width={180}
+                height={180}
+                className="h-[180px] w-[180px]"
+              />
+            </div>
+            <div className="space-y-3 text-[13px] text-foreground/75">
+              <p className="font-semibold text-foreground">
+                Étape 1 — Scannez le QR code
+              </p>
+              <p>
+                Ouvrez votre application d&apos;authentification (Google Authenticator,
+                Authy, 1Password…) puis scannez ce QR code.
+              </p>
+              <div className="rounded-lg border border-foreground/10 bg-background/40 px-3 py-2">
+                <p className="mb-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/55">
+                  Saisie manuelle
+                </p>
+                <code className="block break-all font-mono text-[12px] text-foreground/85">
+                  {setupData.secret}
+                </code>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-warning/30 bg-warning/5 px-4 py-3.5">
+            <p className="mb-2 text-[13px] font-semibold text-foreground">
+              Étape 2 — Conservez vos codes de secours
+            </p>
+            <p className="mb-3 text-[12.5px] text-foreground/70">
+              Ces 8 codes vous permettent de vous connecter si vous perdez l&apos;accès à
+              votre application. <b>Ils ne seront affichés qu&apos;une seule fois.</b>{" "}
+              Téléchargez-les ou copiez-les avant de continuer.
+            </p>
+            <div className="grid gap-2 font-mono text-[12.5px] sm:grid-cols-2">
+              {setupData.backupCodes.map((c) => (
+                <code
+                  key={c}
+                  className="rounded-md border border-foreground/10 bg-white px-2.5 py-1.5 text-foreground/85"
+                >
+                  {c}
+                </code>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => downloadBackupCodes(setupData.backupCodes)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-foreground/10 bg-white px-3 py-1.5 text-[12.5px] font-semibold text-foreground/75 hover:bg-foreground/5"
+              >
+                Télécharger (.txt)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard.writeText(setupData.backupCodes.join("\n"));
+                  setFlash({ kind: "success", text: "Codes copiés dans le presse-papiers." });
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-foreground/10 bg-white px-3 py-1.5 text-[12.5px] font-semibold text-foreground/75 hover:bg-foreground/5"
+              >
+                Copier
+              </button>
+            </div>
+          </div>
+
+          <form onSubmit={confirmSetup} className="space-y-3">
+            <div>
+              <label htmlFor="mfa-setup-code" className={labelCls}>
+                Étape 3 — Code à 6 chiffres
+              </label>
+              <input
+                id="mfa-setup-code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="123 456"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className={`${inputCls} font-mono tracking-[0.2em]`}
+                required
+                autoFocus
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="submit"
+                disabled={submitting}
+                style={{ color: "#fff" }}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-[13px] font-semibold transition hover:bg-primary-hover disabled:opacity-60"
+              >
+                {submitting ? "Vérification…" : "Activer la MFA"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSetupData(null);
+                  setCode("");
+                  setFlash(null);
+                }}
+                className="rounded-lg border border-foreground/10 bg-white px-4 py-2 text-[13px] font-semibold text-foreground/70 hover:bg-foreground/5"
+              >
+                Annuler
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* DISABLED, NO SETUP IN PROGRESS — show CTA */}
+      {!setupData && status === "disabled" && (
+        <div className="space-y-3">
+          <p className="text-[13px] text-foreground/70">
+            La MFA n&apos;est pas activée sur votre compte.
+          </p>
+          <button
+            type="button"
+            onClick={() => void startSetup()}
+            disabled={submitting}
+            style={{ color: "#fff" }}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-[13px] font-semibold transition hover:bg-primary-hover disabled:opacity-60"
+          >
+            {submitting ? "Initialisation…" : "Activer la MFA"}
+          </button>
+        </div>
+      )}
+
+      {/* ENABLED — show status + disable form */}
+      {!setupData && status === "enabled" && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-success/30 bg-success/10 px-4 py-3">
+            <span className="grid h-9 w-9 place-items-center rounded-lg bg-success/15 text-success">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+                <path d="m3 8 3.5 3.5L13 5" />
+              </svg>
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[13.5px] font-semibold text-foreground">
+                MFA activée
+              </p>
+              <p className="text-[11.5px] text-foreground/65">
+                {backupRemaining} code{backupRemaining > 1 ? "s" : ""} de secours restant
+                {backupRemaining > 1 ? "s" : ""}
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={disable} className="space-y-3">
+            <div>
+              <label htmlFor="mfa-disable-code" className={labelCls}>
+                Désactiver — saisir un code à 6 chiffres pour confirmer
+              </label>
+              <input
+                id="mfa-disable-code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="123 456"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className={`${inputCls} font-mono tracking-[0.2em]`}
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="inline-flex items-center gap-2 rounded-lg border border-error/30 bg-error/5 px-4 py-2 text-[13px] font-semibold text-error transition hover:bg-error/10 disabled:opacity-60"
+            >
+              {submitting ? "Désactivation…" : "Désactiver la MFA"}
+            </button>
+          </form>
+        </div>
+      )}
+    </SectionCard>
   );
 }
 
