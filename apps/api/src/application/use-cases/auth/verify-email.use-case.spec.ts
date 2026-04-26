@@ -31,7 +31,7 @@ describe('VerifyEmailUseCase', () => {
       NotFoundException,
     );
     await expect(useCase.execute('missing-token')).rejects.toMatchObject({
-      response: { message: VERIFY_EMAIL_TOKEN_INVALID_CODE },
+      response: { code: VERIFY_EMAIL_TOKEN_INVALID_CODE },
     });
   });
 
@@ -52,7 +52,7 @@ describe('VerifyEmailUseCase', () => {
       BadRequestException,
     );
     await expect(useCase.execute('expired')).rejects.toMatchObject({
-      response: { message: VERIFY_EMAIL_TOKEN_EXPIRED_CODE },
+      response: { code: VERIFY_EMAIL_TOKEN_EXPIRED_CODE },
     });
   });
 
