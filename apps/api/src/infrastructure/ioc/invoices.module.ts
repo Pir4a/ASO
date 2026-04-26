@@ -20,12 +20,14 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { UsersModule } from './users.module';
 import { AuthModule } from './auth.module';
+import { CreditNotesModule } from './credit-notes.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([InvoiceOrm, User, Order, OrderItem]),
         UsersModule,
         AuthModule,
+        CreditNotesModule,
     ],
     controllers: [AdminInvoicesController],
     providers: [

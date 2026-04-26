@@ -9,6 +9,7 @@ import { AuthGuard } from "@/components/guards/AuthGuard";
 import { ProductForm } from "@/components/backoffice/ProductForm";
 import { ContentManager } from "@/components/backoffice/ContentManager";
 import { InvoicesPanel } from "@/components/backoffice/InvoicesPanel";
+import { CreditNotesPanel } from "@/components/backoffice/CreditNotesPanel";
 import { DashboardCharts, type AdminDashboardData } from "@/components/backoffice/DashboardCharts";
 import {
   BarChart,
@@ -123,7 +124,7 @@ const SECTION_LABEL: Record<Section, string> = {
   categories: "Catégories",
   content: "Contenu",
   orders: "Commandes",
-  invoices: "Factures",
+  invoices: "Factures & Avoirs",
   users: "Utilisateurs",
   messages: "Messages",
   settings: "Paramètres",
@@ -525,7 +526,7 @@ function BackofficeDashboard() {
       label: "Opérations",
       items: [
         { id: "orders", name: "Commandes", icon: "Orders", count: counts.orders },
-        { id: "invoices", name: "Factures", icon: "Doc" },
+        { id: "invoices", name: "Factures & Avoirs", icon: "Doc" },
         { id: "users", name: "Utilisateurs", icon: "Users", count: counts.users },
         { id: "messages", name: "Messages", icon: "Messages", dot: counts.messages > 0 },
       ],
@@ -1709,8 +1710,13 @@ function BackofficeDashboard() {
             </div>
           )}
 
-          {/* INVOICES */}
-          {section === "invoices" && <InvoicesPanel flash={flash} />}
+          {/* INVOICES + CREDIT NOTES */}
+          {section === "invoices" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <InvoicesPanel flash={flash} />
+              <CreditNotesPanel flash={flash} />
+            </div>
+          )}
 
           {/* USERS */}
           {section === "users" && (

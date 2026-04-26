@@ -6,17 +6,14 @@ import { Panel, Icon } from "@/components/backoffice/DashboardUI";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
-type AdminInvoice = {
+type AdminCreditNote = {
     id: string;
     number: string;
-    orderId: string;
+    invoiceId: string;
     userId: string | null;
-    customerEmail: string | null;
-    totalHtCents: number;
-    totalTvaCents: number;
-    totalTtcCents: number;
+    amountTtcCents: number;
     currency: string;
-    status: "paid" | "cancelled";
+    reason: "cancellation" | "refund" | "error";
     issuedAt: string;
     pdfUrl: string | null;
 };
@@ -25,7 +22,13 @@ type ListResponse = {
     page: number;
     pageSize: number;
     total: number;
-    invoices: AdminInvoice[];
+    creditNotes: AdminCreditNote[];
+};
+
+const REASON_LABELS: Record<AdminCreditNote["reason"], string> = {
+    cancellation: "Annulation",
+    refund: "Remboursement",
+    error: "Correction",
 };
 
 const formatMoney = (cents: number, currency: string) =>
@@ -36,12 +39,12 @@ const formatMoney = (cents: number, currency: string) =>
 
 const formatDate = (iso: string) => new Date(iso).toLocaleDateString("fr-FR");
 
-export function InvoicesPanel({ flash }: { flash?: (kind: "success" | "error", text: string) => void }) {
-    const [invoices, setInvoices] = useState<AdminInvoice[]>([]);
+export function CreditNotesPanel({ flash }: { flash?: (kind: "success" | "error", text: string) => void }) {
+    const [creditNotes, setCreditNotes] = useState<AdminCreditNote[]>([]);
     const [page, setPage] = useState(1);
     const [pageSize] = useState(25);
     const [total, setTotal] = useState(0);
-    const [statusFilter, setStatusFilter] = useState<"" | "paid" | "cancelled">("");
+    const [reasonFilter, setReasonFilter] = useState<"" | AdminCreditNote["reason"]>("");
     const [loading, setLoading] = useState(false);
     const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -49,33 +52,33 @@ export function InvoicesPanel({ flash }: { flash?: (kind: "success" | "error", t
         setLoading(true);
         try {
             const sp = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
-            if (statusFilter) sp.set("status", statusFilter);
-            const res = await authFetch(`${API_URL}/admin/invoices?${sp.toString()}`);
+            if (reasonFilter) sp.set("reason", reasonFilter);
+            const res = await authFetch(`${API_URL}/admin/credit-notes?${sp.toString()}`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data: ListResponse = await res.json();
-            setInvoices(data.invoices);
+            setCreditNotes(data.creditNotes);
             setTotal(data.total);
         } catch (e) {
-            flash?.("error", `Impossible de charger les factures: ${(e as Error).message}`);
+            flash?.("error", `Impossible de charger les avoirs: ${(e as Error).message}`);
         } finally {
             setLoading(false);
         }
-    }, [page, pageSize, statusFilter, flash]);
+    }, [page, pageSize, reasonFilter, flash]);
 
     useEffect(() => {
         void load();
     }, [load]);
 
-    const downloadPdf = async (invoice: AdminInvoice) => {
-        setBusyId(invoice.id);
+    const downloadPdf = async (cn: AdminCreditNote) => {
+        setBusyId(cn.id);
         try {
-            const res = await authFetch(`${API_URL}/admin/invoices/${invoice.id}/pdf`);
+            const res = await authFetch(`${API_URL}/admin/credit-notes/${cn.id}/pdf`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `facture-${invoice.number}.pdf`;
+            a.download = `${cn.number}.pdf`;
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -87,47 +90,20 @@ export function InvoicesPanel({ flash }: { flash?: (kind: "success" | "error", t
         }
     };
 
-    const resendEmail = async (invoice: AdminInvoice) => {
-        if (!confirm(`Renvoyer la facture ${invoice.number} par e-mail ?`)) return;
-        setBusyId(invoice.id);
+    const resendEmail = async (cn: AdminCreditNote) => {
+        if (!confirm(`Envoyer l'avoir ${cn.number} par e-mail au client ?`)) return;
+        setBusyId(cn.id);
         try {
-            const res = await authFetch(`${API_URL}/admin/invoices/${invoice.id}/email`, {
+            const res = await authFetch(`${API_URL}/admin/credit-notes/${cn.id}/email`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({}),
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = (await res.json()) as { sentTo: string };
-            flash?.("success", `Facture envoyée à ${data.sentTo}`);
+            flash?.("success", `Avoir envoyé à ${data.sentTo}`);
         } catch (e) {
             flash?.("error", `Envoi e-mail impossible: ${(e as Error).message}`);
-        } finally {
-            setBusyId(null);
-        }
-    };
-
-    const cancelInvoice = async (invoice: AdminInvoice) => {
-        if (invoice.status === "cancelled") return;
-        if (!confirm(`Annuler la facture ${invoice.number} ? Un avoir sera émis automatiquement.`)) return;
-        setBusyId(invoice.id);
-        try {
-            const res = await authFetch(`${API_URL}/admin/invoices/${invoice.id}`, {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ reason: "cancellation" }),
-            });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = (await res.json()) as { creditNote?: { number?: string } };
-            const avo = data.creditNote?.number;
-            flash?.(
-                "success",
-                avo
-                    ? `Facture ${invoice.number} annulée — avoir ${avo} émis`
-                    : `Facture ${invoice.number} annulée`,
-            );
-            await load();
-        } catch (e) {
-            flash?.("error", `Annulation impossible: ${(e as Error).message}`);
         } finally {
             setBusyId(null);
         }
@@ -136,19 +112,20 @@ export function InvoicesPanel({ flash }: { flash?: (kind: "success" | "error", t
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
     return (
-        <Panel title="Factures" subtitle={`${total} facture${total > 1 ? "s" : ""}`}>
+        <Panel title="Avoirs" subtitle={`${total} avoir${total > 1 ? "s" : ""}`}>
             <div className="bo-toolbar" style={{ marginBottom: 12 }}>
                 <select
                     className="bo-select"
-                    value={statusFilter}
+                    value={reasonFilter}
                     onChange={(e) => {
-                        setStatusFilter(e.target.value as "" | "paid" | "cancelled");
+                        setReasonFilter(e.target.value as "" | AdminCreditNote["reason"]);
                         setPage(1);
                     }}
                 >
-                    <option value="">Tous statuts</option>
-                    <option value="paid">Payées</option>
-                    <option value="cancelled">Annulées</option>
+                    <option value="">Tous motifs</option>
+                    <option value="cancellation">Annulation</option>
+                    <option value="refund">Remboursement</option>
+                    <option value="error">Correction</option>
                 </select>
                 <button className="bo-btn" type="button" onClick={() => void load()} disabled={loading}>
                     <Icon.Refresh /> {loading ? "Chargement…" : "Rafraîchir"}
@@ -160,63 +137,49 @@ export function InvoicesPanel({ flash }: { flash?: (kind: "success" | "error", t
                     <thead>
                         <tr>
                             <th>Numéro</th>
-                            <th>Client</th>
+                            <th>Facture</th>
                             <th>Date</th>
-                            <th>Total TTC</th>
-                            <th>Statut</th>
+                            <th>Motif</th>
+                            <th>Montant TTC</th>
                             <th style={{ textAlign: "right" }}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {invoices.length === 0 && !loading ? (
+                        {creditNotes.length === 0 && !loading ? (
                             <tr>
                                 <td colSpan={6} className="bo-muted" style={{ textAlign: "center", padding: 24 }}>
-                                    Aucune facture
+                                    Aucun avoir
                                 </td>
                             </tr>
                         ) : (
-                            invoices.map((inv) => (
-                                <tr key={inv.id}>
-                                    <td className="bo-mono">{inv.number}</td>
-                                    <td>{inv.customerEmail ?? <span className="bo-muted">—</span>}</td>
-                                    <td>{formatDate(inv.issuedAt)}</td>
-                                    <td className="bo-mono">{formatMoney(inv.totalTtcCents, inv.currency)}</td>
+                            creditNotes.map((cn) => (
+                                <tr key={cn.id}>
+                                    <td className="bo-mono">{cn.number}</td>
+                                    <td className="bo-mono bo-muted">{cn.invoiceId.slice(0, 8)}…</td>
+                                    <td>{formatDate(cn.issuedAt)}</td>
                                     <td>
-                                        {inv.status === "paid" ? (
-                                            <span className="bo-badge ok">Payée</span>
-                                        ) : (
-                                            <span className="bo-badge danger">Annulée</span>
-                                        )}
+                                        <span className="bo-badge">{REASON_LABELS[cn.reason]}</span>
                                     </td>
+                                    <td className="bo-mono">{formatMoney(cn.amountTtcCents, cn.currency)}</td>
                                     <td style={{ textAlign: "right" }}>
                                         <div className="bo-row-actions">
                                             <button
                                                 className="bo-btn"
                                                 type="button"
-                                                disabled={busyId === inv.id}
-                                                onClick={() => void downloadPdf(inv)}
+                                                disabled={busyId === cn.id}
+                                                onClick={() => void downloadPdf(cn)}
                                             >
                                                 PDF
                                             </button>
                                             <button
                                                 className="bo-btn"
                                                 type="button"
-                                                disabled={busyId === inv.id || !inv.customerEmail}
-                                                onClick={() => void resendEmail(inv)}
-                                                title={inv.customerEmail ? "Renvoyer par e-mail" : "Pas de destinataire"}
+                                                disabled={busyId === cn.id || !cn.userId}
+                                                onClick={() => void resendEmail(cn)}
+                                                title={cn.userId ? "Envoyer par e-mail au client" : "Aucun client lié"}
                                             >
                                                 E-mail
                                             </button>
-                                            {inv.status === "paid" && (
-                                                <button
-                                                    className="bo-btn danger"
-                                                    type="button"
-                                                    disabled={busyId === inv.id}
-                                                    onClick={() => void cancelInvoice(inv)}
-                                                >
-                                                    Annuler
-                                                </button>
-                                            )}
                                         </div>
                                     </td>
                                 </tr>

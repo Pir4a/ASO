@@ -6,6 +6,15 @@ export interface SendOrderConfirmationOptions {
     pdfBuffer?: Buffer;
 }
 
+export interface CreditNoteEmailContext {
+    number: string;
+    invoiceReference: string;
+    amountTtc: number;
+    currency: string;
+    reason: string;
+    issuedAt: Date;
+}
+
 export interface EmailGateway {
     sendVerificationEmail(to: string, token: string): Promise<void>;
     sendPasswordResetEmail(to: string, token: string, locale?: string): Promise<void>;
@@ -21,6 +30,11 @@ export interface EmailGateway {
         to: string,
         order: Order,
         options?: SendOrderConfirmationOptions,
+    ): Promise<void>;
+    sendCreditNoteEmail(
+        to: string,
+        context: CreditNoteEmailContext,
+        pdfBuffer: Buffer,
     ): Promise<void>;
 }
 
