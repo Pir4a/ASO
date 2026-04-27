@@ -7,6 +7,13 @@ export const API_URL = typeof window === 'undefined'
   ? (process.env.INTERNAL_API_URL || "http://api:3001/api")
   : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api");
 
+function getServerApiCandidates(): string[] {
+  const configured = process.env.INTERNAL_API_URL?.trim();
+  if (configured) return [configured];
+  // In local (non-docker) SSR, "api" hostname is often unreachable.
+  return ["http://api:3001/api", "http://localhost:3001/api"];
+}
+
 const KNOWN_LOCALES = new Set(["fr", "en", "ar", "he"]);
 
 async function getCurrentLocale(): Promise<string> {
@@ -28,12 +35,30 @@ async function getCurrentLocale(): Promise<string> {
 async function fetchJson<T>(path: string): Promise<T> {
   const lang = await getCurrentLocale();
   const sep = path.includes("?") ? "&" : "?";
-  const url = `${API_URL}${path}${sep}lang=${encodeURIComponent(lang)}`;
-  const res = await fetch(url, { next: { revalidate: 60 } });
-  if (!res.ok) {
-    throw new Error(`API error ${res.status}`);
+  if (typeof window !== "undefined") {
+    const url = `${API_URL}${path}${sep}lang=${encodeURIComponent(lang)}`;
+    const res = await fetch(url, { next: { revalidate: 60 } });
+    if (!res.ok) {
+      throw new Error(`API error ${res.status}`);
+    }
+    return res.json();
   }
-  return res.json();
+
+  const candidates = getServerApiCandidates();
+  let lastError: unknown = null;
+  for (const base of candidates) {
+    try {
+      const url = `${base}${path}${sep}lang=${encodeURIComponent(lang)}`;
+      const res = await fetch(url, { next: { revalidate: 60 } });
+      if (!res.ok) {
+        throw new Error(`API error ${res.status}`);
+      }
+      return res.json();
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError ?? new Error("API unavailable");
 }
 
 function mapProduct(p: any): Product {

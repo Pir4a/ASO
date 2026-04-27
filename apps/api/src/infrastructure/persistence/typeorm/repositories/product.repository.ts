@@ -130,6 +130,19 @@ export class TypeOrmProductRepository implements ProductRepository {
     return ProductMapper.toDomain(entity);
   }
 
+  async findOneBySlugPrefix(slugPrefix: string): Promise<DomainProduct | null> {
+    const entity = await this.repository
+      .createQueryBuilder('p')
+      .leftJoinAndSelect('p.category', 'c')
+      .where('p.slug = :slugPrefix', { slugPrefix })
+      .orWhere('p.slug LIKE :slugLike', { slugLike: `${slugPrefix}-%` })
+      .orderBy('LENGTH(p.slug)', 'ASC')
+      .addOrderBy('p.slug', 'ASC')
+      .getOne();
+    if (!entity) return null;
+    return ProductMapper.toDomain(entity);
+  }
+
   async findById(id: string): Promise<DomainProduct | null> {
     const entity = await this.repository.findOne({
       where: { id },
@@ -187,8 +200,9 @@ export class TypeOrmProductRepository implements ProductRepository {
       qb.andWhere('p.published = true');
     }
 
-    qb.orderBy('p.listPriority', 'DESC')
-      .addOrderBy('CASE WHEN p.stock > 0 THEN 0 ELSE 1 END', 'ASC')
+    qb.addSelect('CASE WHEN p.stock > 0 THEN 0 ELSE 1 END', 'stock_rank')
+      .orderBy('p.listPriority', 'DESC')
+      .addOrderBy('stock_rank', 'ASC')
       .addOrderBy('p.name', 'ASC')
       .skip((page - 1) * pageSize)
       .take(pageSize);

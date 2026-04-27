@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CategoryIndexHero } from "@/components/category/CategoryIndexHero";
 import { CategoryPagination } from "@/components/category/CategoryPagination";
 import { ProductCatalogListing } from "@/components/product/ProductCatalogListing";
+import { SearchQueryInput } from "@/components/search/SearchQueryInput";
 import {
   PRODUCT_SEARCH_SORT,
   type ProductSearchFacets,
@@ -121,7 +122,7 @@ export default async function SearchPage({
                 {t("search.queryLabel")}
               </label>
               <p className="mb-1 text-[11px] text-foreground/60">{t("search.queryHint")}</p>
-              <input
+              <SearchQueryInput
                 id="search-q"
                 name="q"
                 defaultValue={qDefault}

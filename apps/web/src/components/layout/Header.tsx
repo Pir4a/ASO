@@ -10,6 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/context/LocaleContext";
 import { useCart } from "@/hooks/useCart";
 import type { Locale } from "@/lib/i18n.shared";
+import { SEARCH_KEYWORDS } from "@/lib/searchKeywords";
 import { MobileMenu } from "./MobileMenu";
 import { triggerBoTransition } from "./RouteFlourish";
 
@@ -19,6 +20,21 @@ const API_URL =
 
 interface HeaderProps {
   locale: Locale;
+}
+
+type HeaderSuggestion = {
+  kind: "keyword" | "product";
+  id: string;
+  label: string;
+  query: string;
+  slug?: string;
+  stock?: number;
+  status?: string;
+};
+
+function toCompactProductSlug(slug: string): string {
+  const m = slug.match(/^([a-z]+-\d+)(?:-|$)/i);
+  return m?.[1] ?? slug;
 }
 
 export function Header({ locale }: HeaderProps) {
@@ -35,6 +51,9 @@ export function Header({ locale }: HeaderProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [query, setQuery] = useState("");
   const [searchSlug, setSearchSlug] = useState("");
+  const [suggestions, setSuggestions] = useState<HeaderSuggestion[]>([]);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState<number>(-1);
 
   useEffect(() => {
     let aborted = false;
@@ -48,6 +67,93 @@ export function Header({ locale }: HeaderProps) {
       aborted = true;
     };
   }, []);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 1) {
+      setSuggestions([]);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      fetch(
+        `${API_URL}/products/search?q=${encodeURIComponent(q)}&page=1&limit=6&sort=relevance&inStockOnly=1`,
+      )
+        .then((r) => (r.ok ? r.json() : null))
+        .then((body) => {
+          const data = Array.isArray(body?.data) ? body.data : [];
+          const qlc = q.toLowerCase();
+          const keywordSuggestions: HeaderSuggestion[] = SEARCH_KEYWORDS
+            .filter((kw) => kw.includes(qlc))
+            .sort((a, b) => {
+              const aStarts = a.startsWith(qlc) ? 0 : 1;
+              const bStarts = b.startsWith(qlc) ? 0 : 1;
+              if (aStarts !== bStarts) return aStarts - bStarts;
+              const aIdx = a.indexOf(qlc);
+              const bIdx = b.indexOf(qlc);
+              if (aIdx !== bIdx) return aIdx - bIdx;
+              return a.localeCompare(b);
+            })
+            .slice(0, 5)
+            .map((kw) => ({
+              kind: "keyword" as const,
+              id: `kw:${kw}`,
+              label: kw,
+              query: kw,
+            }));
+
+          const productSuggestions: HeaderSuggestion[] = data
+            .map((p: any) => ({
+              kind: "product" as const,
+              id: String(p.id ?? ""),
+              label: String(p.name ?? ""),
+              query: String(p.name ?? ""),
+              slug: String(p.slug ?? ""),
+              stock: Number(p.stock ?? 0),
+              status: String(p.status ?? ""),
+            }))
+            .filter((p: HeaderSuggestion) => {
+              if (!p.id || !p.label || !p.slug) return false;
+              const inStock =
+                Number(p.stock ?? 0) > 0 && (p.status ?? "").toLowerCase() !== "out_of_stock";
+              return inStock && p.label.toLowerCase().includes(qlc);
+            })
+            .sort((a: HeaderSuggestion, b: HeaderSuggestion) => {
+              const an = a.label.toLowerCase();
+              const bn = b.label.toLowerCase();
+              const aStarts = an.startsWith(qlc) ? 0 : 1;
+              const bStarts = bn.startsWith(qlc) ? 0 : 1;
+              if (aStarts !== bStarts) return aStarts - bStarts;
+              const aIdx = an.indexOf(qlc);
+              const bIdx = bn.indexOf(qlc);
+              if (aIdx !== bIdx) return aIdx - bIdx;
+              return an.localeCompare(bn);
+            })
+            .slice(0, 5);
+          setSuggestions([...keywordSuggestions, ...productSuggestions]);
+        })
+        .catch(() => setSuggestions([]));
+    }, 180);
+
+    return () => window.clearTimeout(timer);
+  }, [query]);
+
+  useEffect(() => {
+    setActiveSuggestionIndex(-1);
+  }, [suggestions]);
+
+  const applySuggestion = (s: HeaderSuggestion) => {
+    setQuery(s.query);
+    setSuggestionsOpen(false);
+    setActiveSuggestionIndex(-1);
+    if (s.kind === "product" && s.slug) {
+      router.push(`/products/${toCompactProductSlug(s.slug)}`);
+      return;
+    }
+    router.push(`/search?q=${encodeURIComponent(s.query)}`);
+  };
+
+  const productSuggestions = suggestions.filter((s) => s.kind === "product");
+  const keywordSuggestions = suggestions.filter((s) => s.kind === "keyword");
 
   const itemCount = items.reduce((sum, it) => sum + it.quantity, 0);
   const totalLabel = new Intl.NumberFormat("fr-FR", {
@@ -63,11 +169,21 @@ export function Header({ locale }: HeaderProps) {
   const onSearch = (e: FormEvent) => {
     e.preventDefault();
     const trimmed = query.trim();
-    const qPart = trimmed ? `?q=${encodeURIComponent(trimmed)}` : "";
+    const exactProduct = suggestions.find(
+      (s) => s.kind === "product" && s.slug && s.label.toLowerCase() === trimmed.toLowerCase(),
+    );
+    if (exactProduct?.slug) {
+      router.push(`/products/${toCompactProductSlug(exactProduct.slug)}`);
+      return;
+    }
+    const params = new URLSearchParams();
+    if (trimmed) params.set("q", trimmed);
+    if (searchSlug) params.set("categorySlug", searchSlug);
+    const queryString = params.toString();
     if (searchSlug) {
-      router.push(`/categories/${searchSlug}${qPart}`);
+      router.push(`/search${queryString ? `?${queryString}` : ""}`);
     } else {
-      router.push(`/products${qPart}`);
+      router.push(`/search${queryString ? `?${queryString}` : ""}`);
     }
   };
 
@@ -205,7 +321,7 @@ export function Header({ locale }: HeaderProps) {
           <form
             role="search"
             onSubmit={onSearch}
-            className="flex h-11 min-w-0 flex-1 items-stretch overflow-hidden rounded-[10px] border-[1.5px] border-foreground/10 bg-white transition focus-within:border-primary focus-within:shadow-[0_0_0_4px_rgba(0,168,181,0.12)]"
+            className="relative flex h-11 min-w-0 flex-1 items-stretch overflow-visible rounded-[10px] border-[1.5px] border-foreground/10 bg-white transition focus-within:border-primary focus-within:shadow-[0_0_0_4px_rgba(0,168,181,0.12)]"
           >
             {/* Category prefix */}
             <label className="relative hidden min-w-0 items-center border-r border-foreground/10 bg-background/60 transition hover:bg-background sm:inline-flex">
@@ -235,6 +351,35 @@ export function Header({ locale }: HeaderProps) {
                 name="q"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => setSuggestionsOpen(true)}
+                onBlur={() => setTimeout(() => setSuggestionsOpen(false), 120)}
+                onKeyDown={(e) => {
+                  if (!suggestionsOpen || suggestions.length === 0) {
+                    return;
+                  }
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setActiveSuggestionIndex((prev) => (prev + 1) % suggestions.length);
+                    return;
+                  }
+                  if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setActiveSuggestionIndex((prev) =>
+                      prev <= 0 ? suggestions.length - 1 : prev - 1,
+                    );
+                    return;
+                  }
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    setSuggestionsOpen(false);
+                    setActiveSuggestionIndex(-1);
+                    return;
+                  }
+                  if (e.key === "Enter" && activeSuggestionIndex >= 0) {
+                    e.preventDefault();
+                    applySuggestion(suggestions[activeSuggestionIndex]);
+                  }
+                }}
                 placeholder={t("header.searchPlaceholder")}
                 aria-label={t("header.search")}
                 className="min-w-0 flex-1 border-0 bg-transparent text-sm text-foreground placeholder:text-foreground/55 focus:outline-none"
@@ -254,6 +399,61 @@ export function Header({ locale }: HeaderProps) {
                 <path d="m21 21-4.3-4.3" />
               </svg>
             </button>
+            {suggestionsOpen && suggestions.length > 0 ? (
+              <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-[80] overflow-hidden rounded-xl border border-foreground/10 bg-white shadow-xl">
+                <ul className="max-h-72 overflow-y-auto py-1">
+                  {keywordSuggestions.length > 0 ? (
+                    <li className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-foreground/55">
+                      Recherches
+                    </li>
+                  ) : null}
+                  {suggestions
+                    .map((s, idx) => ({ s, idx }))
+                    .filter(({ s }) => s.kind === "keyword")
+                    .map(({ s, idx }) => (
+                      <li key={s.id}>
+                        <button
+                          type="button"
+                          className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm text-foreground hover:bg-foreground/5 ${
+                            idx === activeSuggestionIndex ? "bg-foreground/5" : ""
+                          }`}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onMouseEnter={() => setActiveSuggestionIndex(idx)}
+                          onClick={() => applySuggestion(s)}
+                        >
+                          <span className="truncate">{s.label}</span>
+                          <span className="text-xs text-foreground/55">Recherche</span>
+                        </button>
+                      </li>
+                    ))}
+
+                  {productSuggestions.length > 0 ? (
+                    <li className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-foreground/55">
+                      Produits
+                    </li>
+                  ) : null}
+                  {suggestions
+                    .map((s, idx) => ({ s, idx }))
+                    .filter(({ s }) => s.kind === "product")
+                    .map(({ s, idx }) => (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm text-foreground hover:bg-foreground/5 ${
+                          idx === activeSuggestionIndex ? "bg-foreground/5" : ""
+                        }`}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onMouseEnter={() => setActiveSuggestionIndex(idx)}
+                        onClick={() => applySuggestion(s)}
+                      >
+                        <span className="truncate">{s.label}</span>
+                        <span className="text-xs text-foreground/55">Produit</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </form>
 
           {/* Cart pill */}

@@ -11,7 +11,12 @@ export class FindProductBySlugUseCase {
     ) { }
 
     async execute(slug: string): Promise<Product | null> {
-        const product = await this.productRepository.findOneBySlug(slug);
+        let product = await this.productRepository.findOneBySlug(slug);
+        if (!product) {
+            // Accept compact slugs like `ct-500` and resolve to full canonical slugs
+            // such as `ct-500-high-resolution-scanner`.
+            product = await this.productRepository.findOneBySlugPrefix(slug);
+        }
         // Hide drafts from the public product page.
         if (!product || product.published === false) return null;
         return product;

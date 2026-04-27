@@ -57,6 +57,7 @@ export interface ProductRepository {
     findAll(opts?: { publishedOnly?: boolean }): Promise<Product[]>;
     findById(id: string): Promise<Product | null>;
     findOneBySlug(slug: string): Promise<Product | null>;
+    findOneBySlugPrefix(slugPrefix: string): Promise<Product | null>;
     create(product: Product): Promise<Product>;
     update(product: Product): Promise<Product>;
     delete(id: string): Promise<void>;
