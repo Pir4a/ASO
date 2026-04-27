@@ -43,6 +43,11 @@ export function getStoredToken(): string | null {
   return token;
 }
 
+function getStoredTokenRaw(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("token");
+}
+
 export function handleUnauthorized(redirect = true) {
   if (typeof window === "undefined") return;
   clearSession();
@@ -82,10 +87,17 @@ async function refreshAccessToken(): Promise<string | null> {
   if (refreshInFlight) return refreshInFlight;
   refreshInFlight = (async () => {
     try {
+      // Keep the previous token (even if expired) so the API can carry
+      // MFA-cleared session state through /auth/refresh.
+      const previousAccessToken = getStoredTokenRaw();
+      const headers: Record<string, string> = {
+        ...csrfHeader(),
+        ...(previousAccessToken ? { Authorization: `Bearer ${previousAccessToken}` } : {}),
+      };
       const res = await fetch(`${API_URL}/auth/refresh`, {
         method: "POST",
         credentials: "include",
-        headers: csrfHeader(),
+        headers,
       });
       if (!res.ok) return null;
       const data = (await res.json()) as { access_token?: string; user?: unknown };
