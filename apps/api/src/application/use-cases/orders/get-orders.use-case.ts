@@ -30,7 +30,8 @@ export class GetOrdersUseCase {
             }
             ordersByYear[year].push(
                 Object.assign(order, {
-                    orderNumber: formatOrderNumber(order.id, order.createdAt),
+                    orderNumber:
+                        order.orderNumber ?? formatOrderNumber(order.id, order.createdAt),
                 }) as OrderListItem,
             );
         }

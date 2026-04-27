@@ -243,6 +243,7 @@ function OrderRow({
         : `${names[0]} + ${otherCount} ${otherWord}`;
   const qty = items.reduce((sum, it) => sum + (it.quantity ?? 0), 0);
   const itemWord = qty > 1 ? t("cart.itemPlural") : t("cart.itemSingular");
+  const orderNumber = order.orderNumber ?? `ALT-${order.id.slice(0, 8).toUpperCase()}`;
 
   return (
     <Link
@@ -254,7 +255,7 @@ function OrderRow({
           <p className="truncate text-sm font-semibold text-foreground">{summary}</p>
           <p className="mt-1 text-xs text-foreground/60">
             {formatDate(order.createdAt, "fr-FR")} · {qty} {itemWord} · {t("orders.row.numberPrefix")}{" "}
-            <span className="font-mono">{order.id}</span>
+            <span className="font-mono">{orderNumber}</span>
           </p>
         </div>
         <div className="flex items-center gap-3">

@@ -51,7 +51,7 @@ export class TypeOrmOrderRepository implements OrderRepository {
 
     if (filters.search) {
       qb.andWhere(
-        '(order.id::text ILIKE :search OR EXISTS (SELECT 1 FROM order_items oi WHERE oi."orderId" = order.id AND oi."productName" ILIKE :search))',
+        '(order.id::text ILIKE :search OR order."orderNumber" ILIKE :search OR EXISTS (SELECT 1 FROM order_items oi WHERE oi."orderId" = order.id AND oi."productName" ILIKE :search))',
         { search: `%${filters.search}%` },
       );
     }
