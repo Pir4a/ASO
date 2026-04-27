@@ -235,6 +235,8 @@ function BackofficeDashboard() {
   const [feedback, setFeedback] = useState<{ kind: "success" | "error"; text: string } | null>(null);
 
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  // #29 — single category selected for the drill-down side panel.
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [newCategory, setNewCategory] = useState({ name: "", slug: "", description: "", imageUrl: "" });
   const [showProductForm, setShowProductForm] = useState(false);
   // #11 follow-up — full edit modal pre-fills the same form in PATCH mode.
@@ -825,6 +827,30 @@ function BackofficeDashboard() {
   const filteredCategories = [...categories]
     .filter((c) => c.name.toLowerCase().includes(categorySearch.toLowerCase()))
     .sort((a, b) => a.order - b.order);
+
+  // #29 — drill-down derived data: per-category product counts + selected
+  // category resolution + first 8 products attached to the selection.
+  const categoryProductCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const p of products) {
+      const cid = p.category?.id ?? p.categoryId;
+      if (!cid) continue;
+      map.set(cid, (map.get(cid) ?? 0) + 1);
+    }
+    return map;
+  }, [products]);
+
+  const selectedCategory = useMemo(
+    () => categories.find((c) => c.id === selectedCategoryId) ?? null,
+    [categories, selectedCategoryId],
+  );
+
+  const selectedCategoryProducts = useMemo(() => {
+    if (!selectedCategoryId) return [] as Product[];
+    return products
+      .filter((p) => (p.category?.id ?? p.categoryId) === selectedCategoryId)
+      .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+  }, [products, selectedCategoryId]);
 
   const recentMessages = [...contactMessages]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -2341,6 +2367,12 @@ function BackofficeDashboard() {
                                 }}
                               >
                                 <IconButton
+                                  onClick={() => setSelectedCategoryId(cat.id)}
+                                  title="Voir le détail de la catégorie"
+                                >
+                                  Détail
+                                </IconButton>
+                                <IconButton
                                   tone={cat.isActive ? "slate" : "emerald"}
                                   onClick={() => updateCategory(cat.id, { isActive: !cat.isActive })}
                                 >
@@ -2363,6 +2395,64 @@ function BackofficeDashboard() {
                     </table>
                       </SortableContext>
                     </DndContext>
+                  </div>
+                )}
+              </Panel>
+
+              <Panel
+                title="Détail catégorie"
+                subtitle={selectedCategory ? selectedCategory.name : "Sélectionnez une catégorie"}
+              >
+                {!selectedCategory ? (
+                  <p className="bo-muted" style={{ textAlign: "center", padding: 24 }}>
+                    Cliquez sur « Détail » pour le drill-down.
+                  </p>
+                ) : (
+                  <div style={{ display: "grid", gap: 10 }}>
+                    <div className="bo-card" style={{ padding: 10 }}>
+                      <div className="bo-label">Slug</div>
+                      <div className="bo-mono" style={{ fontSize: 12 }}>{selectedCategory.slug}</div>
+                    </div>
+                    <div className="bo-card" style={{ padding: 10 }}>
+                      <div className="bo-label">Statut</div>
+                      <div>{selectedCategory.isActive ? "Active" : "Inactive"}</div>
+                    </div>
+                    <div className="bo-card" style={{ padding: 10 }}>
+                      <div className="bo-label">Produits rattachés</div>
+                      <div style={{ fontSize: 22, fontWeight: 700 }}>
+                        {categoryProductCounts.get(selectedCategory.id) ?? 0}
+                      </div>
+                    </div>
+                    <div className="bo-card" style={{ padding: 10 }}>
+                      <div className="bo-label">Description</div>
+                      <div className="bo-muted">{selectedCategory.description?.trim() || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="bo-label" style={{ marginBottom: 6 }}>
+                        Produits de la catégorie
+                      </div>
+                      {selectedCategoryProducts.length === 0 ? (
+                        <p className="bo-muted">Aucun produit dans cette catégorie.</p>
+                      ) : (
+                        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 6 }}>
+                          {selectedCategoryProducts.slice(0, 8).map((p) => (
+                            <li
+                              key={p.id}
+                              className="bo-card"
+                              style={{
+                                padding: "7px 9px",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                gap: 8,
+                              }}
+                            >
+                              <span>{p.name ?? "Produit sans nom"}</span>
+                              <span className="bo-mono muted">{p.sku ?? "—"}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
                 )}
               </Panel>
