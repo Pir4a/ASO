@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { randomUUID } from 'crypto';
 import type { IncomingMessage } from 'http';
@@ -77,6 +78,12 @@ import { AppDataSource } from './db/data-source';
         },
       },
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: 100,
+      },
+    ]),
     TypeOrmModule.forRoot(AppDataSource.options),
     MongooseModule.forRootAsync({
       useFactory: () => ({
@@ -103,6 +110,7 @@ import { AppDataSource } from './db/data-source';
   controllers: [AppController],
   providers: [
     AppService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: LocalizeInterceptor },
   ],
 })
