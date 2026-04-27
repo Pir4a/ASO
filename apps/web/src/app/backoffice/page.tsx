@@ -1008,7 +1008,7 @@ function BackofficeDashboard() {
   const productStatusBadge = (p: Product) => {
     const stock = p.stock ?? 0;
     if (stock === 0) return <span className="bo-badge danger">Rupture</span>;
-    if (stock < 5) return <span className="bo-badge warn">Faible</span>;
+    if (stock < 5) return <span className="bo-badge warn">Stock faible</span>;
     if (p.status === "new") return <span className="bo-badge brand">Nouveau</span>;
     return <span className="bo-badge ok">En stock</span>;
   };
@@ -1340,7 +1340,7 @@ function BackofficeDashboard() {
                             </span>
                           ) : (
                             <span className="bo-badge warn">
-                              <Icon.Warn /> Faible
+                              <Icon.Warn /> Stock faible
                             </span>
                           )}
                         </div>
