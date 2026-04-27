@@ -30,6 +30,12 @@ export const ACCESS_TOKEN_TTL = '15m';
 export const REFRESH_TOKEN_TTL_DAYS = 30;
 export const REFRESH_TOKEN_BYTES = 48;
 
+interface RefreshCarryPayload {
+  sub?: string;
+  mfa?: boolean;
+  mfaEnabled?: boolean;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -139,7 +145,7 @@ export class AuthService {
   /** Validates a raw refresh token from the cookie, rotates it, and issues a
       fresh access token. Throws UnauthorizedException for any failure path so
       the controller can blanket-catch and clear the cookie. */
-  async refreshAccessToken(rawRefresh: string) {
+  async refreshAccessToken(rawRefresh: string, previousAccessToken?: string) {
     if (!rawRefresh) throw new UnauthorizedException('Refresh token manquant.');
     // Single-slot rotation — we have no embedded user id, so we have to scan.
     // For the school project's scale this is fine; a real impl would split
@@ -158,13 +164,14 @@ export class AuthService {
     }
     const newRefresh = await this.rotateRefreshToken(user);
     await this.updateUserUseCase.execute(user);
+    const keepMfaFromPreviousAccess = this.extractPreviousMfaState(previousAccessToken, user.id);
     const payload = {
       sub: user.id,
       email: user.email,
       role: user.role,
       // Carry the prior session's MFA verdict — refreshing must not silently
       // upgrade a non-MFA-cleared session.
-      mfa: false,
+      mfa: user.mfaEnabled === true ? keepMfaFromPreviousAccess : false,
       mfaEnabled: user.mfaEnabled === true,
     };
     const access_token = this.jwtService.sign(payload, { expiresIn: ACCESS_TOKEN_TTL });
@@ -206,6 +213,22 @@ export class AuthService {
 
   private async findUsersWithRefreshHash() {
     return (await this.userRepository.findAll()).filter((u) => !!u.refreshTokenHash);
+  }
+
+  /**
+   * Keep MFA=true across refresh only when the previously issued access token
+   * (possibly expired) was validly signed by us and belongs to this user.
+   */
+  private extractPreviousMfaState(previousAccessToken: string | undefined, userId: string): boolean {
+    if (!previousAccessToken) return false;
+    try {
+      const previous = this.jwtService.verify<RefreshCarryPayload>(previousAccessToken, {
+        ignoreExpiration: true,
+      });
+      return previous.sub === userId && previous.mfaEnabled === true && previous.mfa === true;
+    } catch {
+      return false;
+    }
   }
 
   async requestPasswordReset(email: string): Promise<void> {

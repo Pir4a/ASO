@@ -192,8 +192,13 @@ export class AuthController {
   ) {
     const raw = (req.cookies as Record<string, string> | undefined)?.[REFRESH_COOKIE_NAME];
     if (!raw) throw new UnauthorizedException('Refresh token manquant.');
+    const bearer = req.headers.authorization;
+    const previousAccessToken =
+      typeof bearer === 'string' && bearer.startsWith('Bearer ')
+        ? bearer.slice('Bearer '.length).trim()
+        : undefined;
     try {
-      const result = await this.authService.refreshAccessToken(raw);
+      const result = await this.authService.refreshAccessToken(raw, previousAccessToken);
       // Rotation always renews maxAge — keeps "logged in" sliding for active users.
       this.setRefreshCookie(res, result.refresh_token, true);
       return { access_token: result.access_token, user: result.user };
