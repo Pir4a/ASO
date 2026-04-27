@@ -146,7 +146,7 @@ describe('AuthController (e2e)', () => {
   it('POST /api/auth/login → 200 avec credentials valides', () => {
     return request(app.getHttpServer())
       .post('/api/auth/login')
-      .send({ email: 'admin@althea.local', password: 'admin123' })
+      .send({ email: 'admin@althea.local', password: 'AltheaDemo2026!' })
       .expect(200)
       .expect((res) => {
         expect(res.body.accessToken).toBeDefined();
@@ -217,7 +217,7 @@ Pour chaque release, exécuter au minimum :
 - [ ] Liste commandes filtrable par année/statut.
 
 ### Backoffice (admin)
-- [ ] Login `admin@althea.local` / `admin123`.
+- [ ] Login `admin@althea.local` / `AltheaDemo2026!`.
 - [ ] Dashboard stats charge.
 - [ ] CRUD catégories (création, modification, désactivation, reorder).
 - [ ] CRUD produits + recherche admin.
@@ -231,7 +231,7 @@ Pour chaque release, exécuter au minimum :
 - [ ] Endpoint auth → 401 sans token.
 - [ ] CORS depuis origine non listée → bloqué.
 - [ ] Rate limit (TODO une fois activé) : 100 req/min.
-- [ ] Mot de passe < 8 caractères → rejeté.
+- [ ] Mot de passe inscription / changement ne respectant pas la politique (12+ car., majuscule, chiffre, symbole) → rejeté.
 
 ---
 

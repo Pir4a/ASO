@@ -148,7 +148,11 @@ Après `npm run seed` :
 
 | Compte | Email | Mot de passe | Rôle |
 |---|---|---|---|
-| Admin | `admin@althea.local` | `admin123` | `admin` (accès `/backoffice`) |
+| Admin | `admin@althea.local` | `AltheaDemo2026!` | `admin` (accès `/backoffice`) |
+
+Les autres comptes créés par le seed (`demo@althea.local`, `admin@admin.com`, `user@user.com`) utilisent le **même** mot de passe initial `AltheaDemo2026!` (conforme à la politique de force — à personnaliser en prod).
+
+Si la base existe déjà et que tu as changé la politique / les hashes sans vouloir relancer tout le seed : `cd apps/api && npm run sync-initial-user-passwords` (avec `DATABASE_URL` vers Postgres **joignable depuis ta machine**, en général `127.0.0.1`, pas le hostname Docker `postgres`).
 
 **Cartes de test Stripe** (mode test, voir [`CARDNUMBERTESTSTRIPE.md`](./CARDNUMBERTESTSTRIPE.md)) :
 - Succès : `4242 4242 4242 4242`

@@ -16,3 +16,6 @@ apps/api/storage/
 # LibreOffice / OpenOffice lock files — created while a doc is open.
 .~lock.*#
 
+# SQLite local éventuel (dev)
+apps/api/database.sqlite
+
