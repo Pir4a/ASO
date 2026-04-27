@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { isTokenExpired } from "@/lib/auth";
+import { csrfHeader, isTokenExpired } from "@/lib/auth";
 
 interface User {
   id: string;
@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const res = await fetch(`${API_URL}/auth/refresh`, {
           method: "POST",
           credentials: "include",
+          headers: csrfHeader(),
         });
         if (res.ok) {
           const data = (await res.json()) as { access_token?: string; user?: User };
@@ -116,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void fetch(`${API_URL}/auth/logout`, {
       method: "POST",
       credentials: "include",
+      headers: csrfHeader(),
     }).catch(() => {
       /* offline / network error: cookie still expires server-side eventually */
     });
