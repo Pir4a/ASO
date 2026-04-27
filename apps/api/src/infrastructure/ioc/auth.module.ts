@@ -11,6 +11,7 @@ import { NodemailerService } from '../services/email/nodemailer.service';
 import { EMAIL_GATEWAY } from '../../domain/gateways/email.gateway';
 import { RolesGuard } from '../guards/roles.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { CsrfGuard } from '../guards/csrf.guard';
 import { RequestPasswordResetUseCase } from '../../application/use-cases/auth/request-password-reset.use-case';
 import { ResetPasswordUseCase } from '../../application/use-cases/auth/reset-password.use-case';
 import { ConfirmEmailChangeUseCase } from '../../application/use-cases/auth/confirm-email-change.use-case';
@@ -49,6 +50,7 @@ import { MfaChallengeUseCase } from '../../application/use-cases/auth/mfa/mfa-ch
     MfaChallengeUseCase,
     RolesGuard,
     JwtAuthGuard,
+    CsrfGuard,
   ],
   exports: [AuthService, JwtStrategy, PassportModule, EMAIL_GATEWAY, RequestPasswordResetUseCase],
 })

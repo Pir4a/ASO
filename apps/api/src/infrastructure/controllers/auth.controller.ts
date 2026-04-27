@@ -7,6 +7,7 @@ import { ForgotPasswordDto } from '../dto/auth/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/auth/reset-password.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
+import { CsrfGuard } from '../guards/csrf.guard';
 import { Roles } from '../auth/roles.decorator';
 import { ConfirmEmailChangeUseCase } from '../../application/use-cases/auth/confirm-email-change.use-case';
 import { SetupMfaUseCase } from '../../application/use-cases/auth/mfa/setup-mfa.use-case';
@@ -184,6 +185,7 @@ export class AuthController {
       rotating the cookie in the process. */
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(CsrfGuard)
   async refresh(
     @Req() req: ExpressRequest,
     @Res({ passthrough: true }) res: ExpressResponse,
@@ -205,6 +207,7 @@ export class AuthController {
       half-stale cookie doesn't surface a confusing error to the user. */
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(CsrfGuard)
   async logout(
     @Req() req: ExpressRequest,
     @Res({ passthrough: true }) res: ExpressResponse,

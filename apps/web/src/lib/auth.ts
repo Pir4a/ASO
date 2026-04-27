@@ -53,6 +53,25 @@ export function handleUnauthorized(redirect = true) {
   window.location.href = `/login?message=${encodeURIComponent("Session expirée, veuillez vous reconnecter.")}&redirect=${next}`;
 }
 
+export function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const all = document.cookie ? document.cookie.split(";") : [];
+  for (const item of all) {
+    const [k, ...v] = item.trim().split("=");
+    if (k === name) return decodeURIComponent(v.join("="));
+  }
+  return null;
+}
+
+/** Build the CSRF header to send alongside cookie-auth requests
+    (/auth/refresh and /auth/logout). Returns an empty object if no
+    XSRF-TOKEN cookie is set yet — the guard will then short-circuit
+    because there is no refresh cookie to protect either. */
+export function csrfHeader(): Record<string, string> {
+  const token = getCookie("XSRF-TOKEN");
+  return token ? { "x-csrf-token": token } : {};
+}
+
 /** #37 — exchange the httpOnly refresh cookie for a fresh access token.
     Returns the new token (also stored in localStorage), or null on failure. */
 let refreshInFlight: Promise<string | null> | null = null;
@@ -66,6 +85,7 @@ async function refreshAccessToken(): Promise<string | null> {
       const res = await fetch(`${API_URL}/auth/refresh`, {
         method: "POST",
         credentials: "include",
+        headers: csrfHeader(),
       });
       if (!res.ok) return null;
       const data = (await res.json()) as { access_token?: string; user?: unknown };
