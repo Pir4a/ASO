@@ -1,5 +1,6 @@
 import { categories as mockCategories, slides as mockSlides, topProducts as mockProducts } from "@/data/mock";
 import type { Category, Product, CarouselSlide, HomepageText } from "@bootstrap/types";
+import type { Locale } from "@/lib/i18n.shared";
 
 export const MAX_CAROUSEL_SLIDES = 3;
 
@@ -8,6 +9,38 @@ export const API_URL = typeof window === 'undefined'
   : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api");
 
 const KNOWN_LOCALES = new Set(["fr", "en", "ar", "he"]);
+const CATEGORY_NAME_BY_SLUG: Record<string, Partial<Record<Locale, string>>> = {
+  "imaging-diagnostics": {
+    en: "Imaging & Diagnostics",
+    fr: "Imagerie & Diagnostics",
+    ar: "التصوير والتشخيص",
+    he: "הדמיה ואבחון",
+  },
+  "surgical-operating-room": {
+    en: "Surgical & Operating Room",
+    fr: "Bloc opératoire",
+    ar: "الجراحة وغرفة العمليات",
+    he: "כירורגיה וחדר ניתוח",
+  },
+  "patient-monitoring": {
+    en: "Patient Monitoring",
+    fr: "Monitoring patient",
+    ar: "مراقبة المرضى",
+    he: "ניטור מטופלים",
+  },
+  "protective-equipment": {
+    en: "Protective Equipment",
+    fr: "Équipements de protection",
+    ar: "معدات الوقاية",
+    he: "ציוד מגן",
+  },
+  "mobility-rehabilitation": {
+    en: "Mobility & Rehabilitation",
+    fr: "Mobilité & Rééducation",
+    ar: "الحركة وإعادة التأهيل",
+    he: "ניידות ושיקום",
+  },
+};
 
 async function getCurrentLocale(): Promise<string> {
   if (typeof window !== "undefined") {
@@ -23,6 +56,13 @@ async function getCurrentLocale(): Promise<string> {
   } catch {
     return "fr";
   }
+}
+
+function localizeCategoryName(category: Category, locale: string): Category {
+  const key = locale as Locale;
+  const localized = CATEGORY_NAME_BY_SLUG[category.slug]?.[key];
+  if (!localized) return category;
+  return { ...category, name: localized };
 }
 
 async function fetchJson<T>(path: string): Promise<T> {
@@ -295,7 +335,9 @@ export async function getHomepageData(): Promise<{
 
 export async function getCategories(): Promise<Category[]> {
   try {
-    return await fetchJson<Category[]>("/categories");
+    const locale = await getCurrentLocale();
+    const categories = await fetchJson<Category[]>("/categories");
+    return categories.map((c) => localizeCategoryName(c, locale));
   } catch {
     return mockCategories;
   }

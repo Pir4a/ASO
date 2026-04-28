@@ -5,6 +5,14 @@ import type { NextConfig } from "next";
 // refuses private IPs. Bypass the optimizer in that case — the browser
 // fetches the media directly (CORP on /api/media/* allows it).
 const isLocalApi = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api").includes("localhost");
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
+const apiOrigin = (() => {
+  try {
+    return new URL(apiUrl);
+  } catch {
+    return null;
+  }
+})();
 
 const nextConfig: NextConfig = {
   output: 'standalone',
@@ -23,6 +31,17 @@ const nextConfig: NextConfig = {
         port: "3001",
         pathname: "/api/media/**",
       },
+      // Hosted API media endpoint, derived from NEXT_PUBLIC_API_URL.
+      ...(apiOrigin
+        ? [
+            {
+              protocol: apiOrigin.protocol.replace(":", "") as "http" | "https",
+              hostname: apiOrigin.hostname,
+              port: apiOrigin.port || undefined,
+              pathname: "/api/media/**",
+            },
+          ]
+        : []),
     ],
   },
 };

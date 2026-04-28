@@ -28,6 +28,7 @@ export interface EditableProduct {
   listPriority?: number;
   galleryUrls?: string[];
   specs?: Record<string, string>;
+  translations?: Record<string, { name?: string; description?: string }>;
   featured?: boolean;
   featuredOrder?: number;
 }
@@ -103,6 +104,11 @@ export function ProductForm({
   const [specRows, setSpecRows] = useState<SpecRow[]>(() =>
     specsToRows(product?.specs),
   );
+  const [translationsJson, setTranslationsJson] = useState(
+    product?.translations && Object.keys(product.translations).length > 0
+      ? JSON.stringify(product.translations, null, 2)
+      : "",
+  );
   const [featured, setFeatured] = useState(!!product?.featured);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -126,6 +132,11 @@ export function ProductForm({
     );
     setGalleryUrlsText((product.galleryUrls ?? []).join("\n"));
     setSpecRows(specsToRows(product.specs));
+    setTranslationsJson(
+      product.translations && Object.keys(product.translations).length > 0
+        ? JSON.stringify(product.translations, null, 2)
+        : "",
+    );
     setFeatured(!!product.featured);
     setUseCustomSlug(true);
     setError(null);
@@ -158,6 +169,7 @@ export function ProductForm({
     setLoading(true);
 
     try {
+      let translations: Record<string, { name?: string; description?: string }> | undefined;
       // Build the specs object from the row editor. Empty keys are dropped;
       // when the same key appears twice the last row wins (we surface a
       // warning rather than blocking — the form already trims/dedups before
@@ -177,6 +189,35 @@ export function ProductForm({
       }
       const specs: Record<string, string> | undefined =
         cleaned.length > 0 ? Object.fromEntries(cleaned.map((r) => [r.key, r.value])) : undefined;
+
+      if (translationsJson.trim()) {
+        try {
+          const parsed = JSON.parse(translationsJson) as unknown;
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+            translations = Object.fromEntries(
+              Object.entries(parsed as Record<string, unknown>).map(([locale, value]) => {
+                if (!value || typeof value !== "object" || Array.isArray(value)) {
+                  throw new Error("Format de traduction invalide.");
+                }
+                const row = value as Record<string, unknown>;
+                return [
+                  locale,
+                  {
+                    ...(typeof row.name === "string" ? { name: row.name } : {}),
+                    ...(typeof row.description === "string" ? { description: row.description } : {}),
+                  },
+                ];
+              }),
+            );
+          } else {
+            throw new Error("Le JSON de traductions doit être un objet.");
+          }
+        } catch {
+          throw new Error(
+            "Traductions invalides : JSON attendu (ex. {\"en\":{\"name\":\"...\",\"description\":\"...\"}}).",
+          );
+        }
+      }
 
       const galleryUrls = galleryUrlsText
         .split("\n")
@@ -203,6 +244,7 @@ export function ProductForm({
             : Math.max(0, parseInt(listPriority, 10) || 0),
         galleryUrls: galleryUrls.length ? galleryUrls : undefined,
         specs,
+        translations,
         featured,
       };
       // featuredOrder default is only meaningful at create time; on edit we
@@ -242,6 +284,7 @@ export function ProductForm({
         setListPriority("");
         setGalleryUrlsText("");
         setSpecRows([]);
+        setTranslationsJson("");
         setFeatured(false);
         setUseCustomSlug(false);
       }
@@ -516,6 +559,20 @@ export function ProductForm({
           </svg>
           Ajouter une caractéristique
         </button>
+      </div>
+
+      <div>
+        <label htmlFor="translationsJson" className={labelCls}>
+          Traductions produit (JSON objet par locale)
+        </label>
+        <textarea
+          id="translationsJson"
+          rows={5}
+          className={`${inputCls} font-mono text-xs`}
+          value={translationsJson}
+          onChange={(e) => setTranslationsJson(e.target.value)}
+          placeholder='{"en":{"name":"Ultrasound probe","description":"Portable diagnostic probe"},"ar":{"name":"...","description":"..."}}'
+        />
       </div>
 
       <div className="flex items-end">

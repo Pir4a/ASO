@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ext .ts,.tsx --max-warnings=0"
+    "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
+    "i18n:check": "node ./scripts/check-translations.mjs"
   },
   "dependencies": {
     "@bootstrap/config": "file:../../packages/config",

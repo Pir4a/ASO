@@ -7,6 +7,7 @@ import { BuyNowButton } from "@/components/product/BuyNowButton";
 import { ProductImageGallery } from "@/components/product/ProductImageGallery";
 import { ProductSpecs } from "@/components/product/ProductSpecs";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
+import { useT } from "@/context/LocaleContext";
 import type { Category, Product } from "@bootstrap/types";
 
 interface ProductDetailClientProps {
@@ -31,6 +32,7 @@ export function ProductDetailClient({
   category,
   relatedProducts,
 }: ProductDetailClientProps) {
+  const t = useT();
   const images = buildGalleryImages(product);
   const outOfStock =
     product.status === "out_of_stock" || (product.stock !== undefined && product.stock <= 0);
@@ -46,15 +48,15 @@ export function ProductDetailClient({
     <div className="space-y-10">
       {/* Breadcrumb */}
       <nav
-        aria-label="Fil d'Ariane"
+        aria-label={t("auth.login.breadcrumbLabel")}
         className="flex flex-wrap items-center gap-2 text-sm text-foreground/60"
       >
         <Link href="/" className="hover:text-primary">
-          Accueil
+          {t("common.home")}
         </Link>
         <span aria-hidden="true" className="text-foreground/25">/</span>
         <Link href="/products" className="hover:text-primary">
-          Catalogue
+          {t("products.catalogTitle")}
         </Link>
         {category && (
           <>
@@ -98,7 +100,7 @@ export function ProductDetailClient({
               </p>
               <p className="text-base font-medium text-foreground/55">{product.currency}</p>
               {product.vatRate !== undefined && product.vatRate !== null && (
-                <p className="text-[12px] text-foreground/55">TVA {product.vatRate}%</p>
+                <p className="text-[12px] text-foreground/55">{t("cart.vat")} {product.vatRate}%</p>
               )}
             </div>
 
@@ -110,7 +112,7 @@ export function ProductDetailClient({
                     <circle cx="8" cy="8" r="6" />
                     <path d="m4.5 4.5 7 7" />
                   </svg>
-                  En rupture de stock
+                  {t("products.status.out_of_stock")}
                 </span>
               ) : lowStock ? (
                 <span className="inline-flex items-center gap-2 rounded-full bg-warning/10 px-3 py-1.5 text-[13px] font-semibold text-warning">
@@ -118,14 +120,14 @@ export function ProductDetailClient({
                     <path d="M8 2.5 14 13H2L8 2.5Z" />
                     <path d="M8 7v3M8 11.5v.5" />
                   </svg>
-                  Stock limité — derniers exemplaires
+                  {t("products.status.low_stock")}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1.5 text-[13px] font-semibold text-success">
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="h-3.5 w-3.5">
                     <path d="m3 8 3.5 3.5L13 5" />
                   </svg>
-                  En stock · Expédié sous 48 h
+                  {t("products.status.in_stock")}
                 </span>
               )}
             </div>
@@ -150,7 +152,7 @@ export function ProductDetailClient({
                     <circle cx="8" cy="8" r="6" />
                     <path d="m4.5 4.5 7 7" />
                   </svg>
-                  En rupture de stock
+                  {t("products.status.out_of_stock")}
                 </button>
               ) : (
                 <>
@@ -158,13 +160,13 @@ export function ProductDetailClient({
                     <div
                       className="flex h-12 items-stretch overflow-hidden rounded-lg border border-foreground/15 bg-white"
                       role="group"
-                      aria-label="Quantité"
+                      aria-label={t("cart.qtyOf")}
                     >
                       <button
                         type="button"
                         onClick={() => setQuantity((q) => clamp(q - 1))}
                         disabled={quantity <= 1}
-                        aria-label="Diminuer la quantité"
+                        aria-label={t("cart.qtyDecrease")}
                         className="grid w-11 place-items-center text-foreground transition hover:bg-background hover:text-primary disabled:cursor-not-allowed disabled:text-foreground/30 disabled:hover:bg-transparent"
                       >
                         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true" className="h-3.5 w-3.5">
@@ -187,14 +189,14 @@ export function ProductDetailClient({
                           const n = Number.parseInt(e.target.value, 10);
                           setQuantity(Number.isFinite(n) ? clamp(n) : 1);
                         }}
-                        aria-label="Quantité"
+                        aria-label={t("cart.qtyOf")}
                         className="w-12 border-x border-foreground/10 bg-transparent text-center font-heading text-[15px] font-semibold text-foreground tabular-nums focus:outline-none focus:bg-background/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                       />
                       <button
                         type="button"
                         onClick={() => setQuantity((q) => clamp(q + 1))}
                         disabled={quantity >= stockCap}
-                        aria-label="Augmenter la quantité"
+                        aria-label={t("cart.qtyIncrease")}
                         className="grid w-11 place-items-center text-foreground transition hover:bg-background hover:text-primary disabled:cursor-not-allowed disabled:text-foreground/30 disabled:hover:bg-transparent"
                       >
                         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true" className="h-3.5 w-3.5">
@@ -221,7 +223,7 @@ export function ProductDetailClient({
                   <rect x="2" y="3.5" width="12" height="9" rx="1" />
                   <path d="m2.5 4.5 5.5 4 5.5-4" />
                 </svg>
-                Demander un devis personnalisé
+                {t("contact.formSend")}
               </Link>
             </div>
 
@@ -233,21 +235,21 @@ export function ProductDetailClient({
                   <circle cx="5" cy="16" r="1.5" />
                   <circle cx="17" cy="16" r="1.5" />
                 </svg>
-                Livraison 48 h
+                {t("cart.perkDelivery")}
               </li>
               <li className="flex flex-col items-center gap-1.5 text-[11.5px] font-medium text-foreground/70">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-5 w-5 text-primary">
                   <path d="M12 2 4 7v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-5z" />
                   <path d="m9 12 2 2 4-4" />
                 </svg>
-                Garantie 2 ans
+                {t("cart.perkWarranty")}
               </li>
               <li className="flex flex-col items-center gap-1.5 text-[11.5px] font-medium text-foreground/70">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-5 w-5 text-primary">
                   <rect x="3" y="11" width="18" height="11" rx="2" />
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
-                Paiement sécurisé
+                {t("cart.perkSecurePayment")}
               </li>
             </ul>
           </div>

@@ -158,7 +158,7 @@ export function Header({ locale }: HeaderProps) {
   };
 
   const itemCount = items.reduce((sum, it) => sum + it.quantity, 0);
-  const totalLabel = new Intl.NumberFormat("fr-FR", {
+  const totalLabel = new Intl.NumberFormat(locale, {
     style: "currency",
     currency: currency || "EUR",
   }).format((total || 0) / 100);
@@ -200,21 +200,21 @@ export function Header({ locale }: HeaderProps) {
                   <circle cx="5" cy="16" r="1.5" />
                   <circle cx="17" cy="16" r="1.5" />
                 </svg>
-                Livraison <b className="font-semibold text-white">48 h</b> en France
+                {t("header.deliveryFrance")}
               </li>
               <li className="hidden items-center gap-1.5 whitespace-nowrap font-medium lg:inline-flex">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-3 w-3 text-primary-hover">
                   <path d="M12 2 4 7v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-5z" />
                   <path d="m9 12 2 2 4-4" />
                 </svg>
-                Garantie <b className="font-semibold text-white">2 ans</b>
+                {t("header.utilityWarranty")}
               </li>
               <li className="hidden items-center gap-1.5 whitespace-nowrap font-medium xl:inline-flex">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-3 w-3 text-primary-hover">
                   <rect x="3" y="11" width="18" height="11" rx="2" />
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
-                Paiement sécurisé
+                {t("header.utilityPaymentSecure")}
               </li>
             </ul>
 
@@ -246,7 +246,7 @@ export function Header({ locale }: HeaderProps) {
                           <rect x="2" y="9" width="5" height="5" rx="1" />
                           <rect x="9" y="9" width="5" height="5" rx="1" />
                         </svg>
-                        Backoffice
+                        {t("header.admin")}
                       </Link>
                     </>
                   )}
@@ -312,7 +312,7 @@ export function Header({ locale }: HeaderProps) {
                 Althea Systems
               </span>
               <span className="mt-1 text-[10.5px] font-medium uppercase tracking-[0.06em] text-foreground/55">
-                Matériel médical
+                {t("header.tagline")}
               </span>
             </div>
           </Link>
@@ -325,13 +325,13 @@ export function Header({ locale }: HeaderProps) {
           >
             {/* Category prefix */}
             <label className="relative hidden min-w-0 items-center border-r border-foreground/10 bg-background/60 transition hover:bg-background sm:inline-flex">
-              <span className="sr-only">Catégorie</span>
+              <span className="sr-only">{t("search.category")}</span>
               <select
                 value={searchSlug}
                 onChange={(e) => setSearchSlug(e.target.value)}
                 className="appearance-none border-0 bg-transparent py-0 pl-3.5 pr-7 text-[13px] font-semibold text-foreground focus:outline-none"
               >
-                <option value="">Toutes catégories</option>
+                <option value="">{t("search.categoryAll")}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.slug}>
                     {c.name}
@@ -406,7 +406,7 @@ export function Header({ locale }: HeaderProps) {
                     const isFirstOfKind =
                       idx === 0 || suggestions[idx - 1].kind !== s.kind;
                     const sectionLabel =
-                      s.kind === "keyword" ? "Recherches" : "Produits";
+                      s.kind === "keyword" ? t("header.search") : t("header.products");
                     return (
                       <li key={s.key}>
                         {isFirstOfKind ? (
@@ -427,7 +427,7 @@ export function Header({ locale }: HeaderProps) {
                         >
                           <span className="truncate">{s.label}</span>
                           <span className="text-xs text-foreground/55">
-                            {s.kind === "keyword" ? "Recherche" : "Produit"}
+                            {s.kind === "keyword" ? t("header.search") : t("header.products")}
                           </span>
                         </button>
                       </li>
@@ -503,7 +503,7 @@ export function Header({ locale }: HeaderProps) {
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-3.5 w-3.5">
                 <path d="M2.5 7.5 8 3l5.5 4.5V13a1 1 0 0 1-1 1H10v-4H6v4H3.5a1 1 0 0 1-1-1V7.5Z" />
               </svg>
-              Accueil
+              {t("common.home")}
             </NavTab>
 
             <nav aria-label={t("header.primaryNav")} className="flex items-center gap-1.5">
@@ -535,7 +535,7 @@ export function Header({ locale }: HeaderProps) {
                 <circle cx="8" cy="6" r="2.8" />
                 <path d="M2.5 14c0-2.8 2.5-5 5.5-5s5.5 2.2 5.5 5" />
               </svg>
-              Mon profil
+              {t("header.profileButton")}
             </Link>
           </div>
         </div>

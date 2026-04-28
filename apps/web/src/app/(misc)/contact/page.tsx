@@ -22,25 +22,25 @@ export default function ContactPage() {
     <div className="space-y-7">
       {/* Breadcrumb */}
       <nav
-        aria-label="Fil d'Ariane"
+        aria-label={t("auth.login.breadcrumbLabel")}
         className="flex flex-wrap items-center gap-2 text-sm text-foreground/60"
       >
         <Link href="/" className="hover:text-primary">
-          Accueil
+          {t("common.home")}
         </Link>
         <span aria-hidden="true" className="text-foreground/25">/</span>
-        <span className="font-semibold text-foreground">Contact</span>
+        <span className="font-semibold text-foreground">{t("header.contact")}</span>
       </nav>
 
       {/* Hero */}
       <CategoryHero
-        eyebrow="Support"
+        eyebrow={t("footer.support")}
         name={t("contact.title")}
         description={t("contact.subtitle")}
         stats={[
-          { value: "< 2 h", label: "Réponse moyenne" },
-          { value: "24/7", label: "Assistant IA" },
-          { value: "FR", label: "Support local" },
+          { value: "< 2 h", label: t("contact.avgResponse") },
+          { value: "24/7", label: t("contact.aiAssistantStat") },
+          { value: "FR", label: t("contact.localSupport") },
         ]}
       />
 
@@ -70,7 +70,7 @@ export default function ContactPage() {
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-4 w-4">
                 <path d="M2.5 3.5h11a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H7l-3 2.5V11.5H2.5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Z" />
               </svg>
-              Chat IA
+              {t("contact.tabChat")}
             </button>
             <button
               type="button"
@@ -90,7 +90,7 @@ export default function ContactPage() {
                 <rect x="2" y="3.5" width="12" height="9" rx="1" />
                 <path d="m2.5 4.5 5.5 4 5.5-4" />
               </svg>
-              Formulaire
+              {t("contact.tabForm")}
             </button>
           </div>
 
@@ -103,16 +103,16 @@ export default function ContactPage() {
             <header className="border-b border-foreground/5 px-5 py-4">
               <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
                 <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-                Contact direct
+                {t("contact.directContact")}
               </p>
               <h2 className="font-heading text-[18px] font-semibold tracking-tight text-foreground">
-                Joindre l&apos;équipe Althea
+                {t("contact.reachTeam")}
               </h2>
             </header>
             <ul className="divide-y divide-foreground/5" role="list">
               <ContactRow
                 href="mailto:contact@althea.fr"
-                label="Email"
+                label={t("contact.infoEmail")}
                 value="contact@althea.fr"
                 icon={
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-5 w-5">
@@ -123,7 +123,7 @@ export default function ContactPage() {
               />
               <ContactRow
                 href="tel:+33184801200"
-                label="Téléphone"
+                label={t("contact.infoPhone")}
                 value="+33 1 84 80 12 00"
                 icon={
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-5 w-5">
@@ -132,8 +132,8 @@ export default function ContactPage() {
                 }
               />
               <ContactRow
-                label="Adresse"
-                value="12 rue de la Santé, 75013 Paris"
+                label={t("contact.infoAddress")}
+                value={t("contact.infoAddressValue")}
                 icon={
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-5 w-5">
                     <path d="M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7Z" />
@@ -142,8 +142,8 @@ export default function ContactPage() {
                 }
               />
               <ContactRow
-                label="Horaires"
-                value="Lun – Ven · 9 h – 18 h"
+                label={t("contact.infoHours")}
+                value={t("contact.infoHoursValue")}
                 icon={
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-5 w-5">
                     <circle cx="12" cy="12" r="9" />
@@ -157,11 +157,10 @@ export default function ContactPage() {
           <section className="overflow-hidden rounded-2xl border-l-4 border-primary border-y border-r border-foreground/10 bg-white px-5 py-4">
             <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
               <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-              Garanties
+              {t("contact.guaranteesTitle")}
             </p>
             <p className="text-[13.5px] leading-relaxed text-foreground/75">
-              Tous nos équipements sont certifiés CE médical, conformes ISO 13485, et accompagnés
-              d&apos;une garantie constructeur avec maintenance assurée par nos techniciens.
+              {t("contact.guaranteesBody")}
             </p>
           </section>
         </aside>
@@ -288,11 +287,11 @@ function ChatPanel() {
         </span>
         <div className="min-w-0">
           <p className="font-heading text-[14.5px] font-semibold leading-tight text-foreground">
-            Assistant Althea
+            {t("chat.title")}
           </p>
           <p className="mt-0.5 inline-flex items-center gap-1.5 text-[11.5px] text-foreground/55">
             <span aria-hidden="true" className="block h-1.5 w-1.5 rounded-full bg-success shadow-[0_0_0_3px_rgba(16,185,129,0.18)]" />
-            En ligne · Réponses instantanées
+            {t("chat.subtitle")}
           </p>
         </div>
       </header>
@@ -358,7 +357,7 @@ function ChatPanel() {
           type="button"
           onClick={() => send()}
           disabled={!input.trim() || isLoading}
-          aria-label="Envoyer le message"
+          aria-label={t("contact.formSend")}
           style={input.trim() && !isLoading ? { color: "#fff" } : undefined}
           className={`grid h-11 w-11 flex-none place-items-center rounded-full transition ${
             input.trim() && !isLoading
@@ -409,7 +408,7 @@ function ContactForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ subject, email, message }),
       });
-      if (!res.ok) throw new Error("Impossible d'envoyer votre message.");
+      if (!res.ok) throw new Error(t("common.unexpectedError"));
       setSubject("");
       setEmail("");
       setMessage("");
@@ -417,7 +416,7 @@ function ContactForm() {
     } catch (error) {
       setFeedback({
         kind: "error",
-        text: error instanceof Error ? error.message : "Erreur inattendue.",
+        text: error instanceof Error ? error.message : t("common.unexpectedError"),
       });
     } finally {
       setLoading(false);
@@ -449,7 +448,7 @@ function ContactForm() {
           maxLength={120}
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
-          placeholder="Demande d'information"
+          placeholder={t("contact.formSubject")}
           className={inputCls}
         />
       </div>
@@ -464,7 +463,7 @@ function ContactForm() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="vous@exemple.fr"
+          placeholder={t("auth.login.emailPlaceholder")}
           className={inputCls}
         />
       </div>
@@ -480,7 +479,7 @@ function ContactForm() {
           maxLength={2000}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Détaillez votre demande…"
+          placeholder={t("contact.formMessage")}
           rows={6}
           className={`${inputCls} resize-y`}
         />

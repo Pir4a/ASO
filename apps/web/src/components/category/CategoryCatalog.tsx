@@ -4,17 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useT } from "@/context/LocaleContext";
 import type { Category, Product } from "@bootstrap/types";
 
 type SortKey = "priority" | "name" | "price-asc" | "price-desc";
 type ViewMode = "grid" | "list";
-
-const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "priority", label: "Pertinence" },
-  { value: "name", label: "Nom A→Z" },
-  { value: "price-asc", label: "Prix croissant" },
-  { value: "price-desc", label: "Prix décroissant" },
-];
 
 function isOutOfStock(p: Product) {
   return p.status === "out_of_stock" || (p.stock !== undefined && p.stock <= 0);
@@ -25,7 +19,17 @@ function formatPrice(p: Product) {
   return value >= 1000 ? value.toLocaleString("fr-FR") : value.toFixed(2);
 }
 
-function StockBadge({ out, variant = "card" }: { out: boolean; variant?: "card" | "row" }) {
+function StockBadge({
+  out,
+  inStockLabel,
+  outOfStockLabel,
+  variant = "card",
+}: {
+  out: boolean;
+  inStockLabel: string;
+  outOfStockLabel: string;
+  variant?: "card" | "row";
+}) {
   const base =
     variant === "row"
       ? "inline-flex items-center gap-1.5 text-[12.5px] font-medium"
@@ -37,7 +41,7 @@ function StockBadge({ out, variant = "card" }: { out: boolean; variant?: "card" 
           <circle cx="8" cy="8" r="6" />
           <path d="m4.5 4.5 7 7" />
         </svg>
-        En rupture de stock
+        {outOfStockLabel}
       </span>
     );
   }
@@ -46,7 +50,7 @@ function StockBadge({ out, variant = "card" }: { out: boolean; variant?: "card" 
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="h-3 w-3">
         <path d="m3 8 3.5 3.5L13 5" />
       </svg>
-      En stock
+      {inStockLabel}
     </span>
   );
 }
@@ -84,6 +88,7 @@ export function CategoryCatalog({
   /** Pre-fills the toolbar search input (e.g. from `?q=` URL param). */
   initialQuery?: string;
 }) {
+  const t = useT();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -91,6 +96,12 @@ export function CategoryCatalog({
   const [sortKey, setSortKey] = useState<SortKey>("priority");
   const [query, setQuery] = useState(initialQuery);
   const isProductsCatalogPage = allHref === "/products" && !activeSlug;
+  const sortOptions: { value: SortKey; label: string }[] = [
+    { value: "priority", label: t("search.sort.relevance") },
+    { value: "name", label: "A→Z" },
+    { value: "price-asc", label: t("search.sort.price_asc") },
+    { value: "price-desc", label: t("search.sort.price_desc") },
+  ];
 
   // Tracks the value we last pushed to the URL ourselves. Lets us tell
   // apart "URL changed because we navigated" (skip prop sync) from "URL
@@ -170,7 +181,7 @@ export function CategoryCatalog({
         <div className="overflow-hidden rounded-xl border border-foreground/10 bg-white p-1.5">
           <div className="px-3.5 py-3">
             <p className="mb-2.5 flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.16em] text-foreground/55">
-              Catégorie
+              {t("search.category")}
               <span aria-hidden="true" className="h-px flex-1 bg-foreground/10" />
             </p>
             <ul className="flex flex-col gap-0.5 lg:flex-col">
@@ -192,7 +203,7 @@ export function CategoryCatalog({
                         <rect x="9" y="9" width="5" height="5" rx="1" />
                       </svg>
                     </span>
-                    <span className="min-w-0 flex-1 truncate">Toutes les catégories</span>
+                    <span className="min-w-0 flex-1 truncate">{t("search.categoryAll")}</span>
                     <span
                       className={`tabular-nums text-[11px] font-semibold ${
                         !activeSlug ? "text-primary" : "text-foreground/55"
@@ -251,7 +262,7 @@ export function CategoryCatalog({
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Filtrer par nom ou référence…"
+              placeholder={t("header.searchPlaceholder")}
               className="min-w-0 flex-1 bg-transparent text-foreground placeholder:text-foreground/55 focus:outline-none"
             />
           </label>
@@ -260,7 +271,7 @@ export function CategoryCatalog({
           <p className="text-[13.5px] font-semibold text-foreground">
             <span className="font-heading">{sortedProducts.length}</span>{" "}
             <span className="font-normal text-foreground/55">
-              produit{sortedProducts.length > 1 ? "s" : ""}
+              {sortedProducts.length > 1 ? t("products.countPlural") : t("products.countSingle")}
               {query.trim() ? ` correspondant à "${query.trim()}"` : ""}
             </span>
           </p>
@@ -272,15 +283,15 @@ export function CategoryCatalog({
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5 text-primary">
               <path d="M4 3v10m0 0-2-2m2 2 2-2M12 13V3m0 0-2 2m2-2 2 2" />
             </svg>
-            <span>Trier</span>
+            <span>{t("search.sortLabel")}</span>
             <span aria-hidden="true" className="h-4 w-px bg-foreground/15" />
             <select
               value={sortKey}
               onChange={(e) => setSortKey(e.target.value as SortKey)}
               className="appearance-none border-0 bg-transparent pr-4 text-[13px] font-medium text-foreground focus:outline-none"
-              aria-label="Trier les produits"
+              aria-label={t("search.sortLabel")}
             >
-              {SORT_OPTIONS.map((opt) => (
+              {sortOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
@@ -334,7 +345,7 @@ export function CategoryCatalog({
         {/* Empty state */}
         {sortedProducts.length === 0 && (
           <div className="mt-5 rounded-xl border border-dashed border-foreground/15 bg-white px-6 py-12 text-center text-sm text-foreground/55">
-            Aucun produit ne correspond à votre recherche.
+            {t("search.empty")}
           </div>
         )}
 
@@ -376,7 +387,7 @@ export function CategoryCatalog({
                           <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="h-2.5 w-2.5">
                             <path d="m8 1.5 1.95 4.18 4.55.45-3.42 3.07.96 4.5L8 11.4l-4.04 2.3.96-4.5L1.5 6.13l4.55-.45L8 1.5Z" />
                           </svg>
-                          Priorité
+                          {t("products.featuredBadge")}
                         </span>
                       )}
                     </div>
@@ -397,7 +408,11 @@ export function CategoryCatalog({
                         <span className="text-xs font-medium text-foreground/55">{product.currency}</span>
                       </p>
                       <div className="mt-1.5">
-                        <StockBadge out={oos} />
+                        <StockBadge
+                          out={oos}
+                          inStockLabel={t("products.status.in_stock")}
+                          outOfStockLabel={t("products.status.out_of_stock")}
+                        />
                       </div>
                     </div>
                   </Link>
@@ -461,7 +476,12 @@ export function CategoryCatalog({
                         <span className="text-xs font-medium text-foreground/55">{product.currency}</span>
                       </p>
                       <div className="mt-1.5">
-                        <StockBadge out={oos} variant="row" />
+                        <StockBadge
+                          out={oos}
+                          variant="row"
+                          inStockLabel={t("products.status.in_stock")}
+                          outOfStockLabel={t("products.status.out_of_stock")}
+                        />
                       </div>
                     </div>
                     <div className="hidden items-center sm:flex">
