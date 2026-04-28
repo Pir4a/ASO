@@ -119,6 +119,7 @@ export function MobileMenu({ open, onClose, locale }: MobileMenuProps) {
 
         <nav aria-label={t("header.primaryNav")} className="flex flex-col divide-y divide-foreground/10">
           {[
+            { href: "/", key: "common.home" as const },
             { href: "/categories", key: "header.categories" as const },
             { href: "/products", key: "header.products" as const },
             { href: "/contact", key: "header.contact" as const },
@@ -160,7 +161,7 @@ export function MobileMenu({ open, onClose, locale }: MobileMenuProps) {
                 onClick={onClose}
                 className="rounded-lg bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-foreground/10 focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                {user?.email?.split("@")[0]}
+                {t("header.profileButton")}
               </Link>
               {user?.role === "admin" && (
                 <Link

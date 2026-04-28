@@ -33,8 +33,8 @@ const SECTION_META: Record<
   { label: string; hint: string; Icon: ComponentType<{ className?: string }> }
 > = {
   profile: {
-    label: "Informations",
-    hint: "Nom, email",
+    label: "profile.section.profile.label",
+    hint: "profile.section.profile.hint",
     Icon: ({ className }) => (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true" className={className}>
         <circle cx="8" cy="6" r="3" />
@@ -43,8 +43,8 @@ const SECTION_META: Record<
     ),
   },
   addresses: {
-    label: "Adresses",
-    hint: "Carnet d'adresses",
+    label: "profile.section.addresses.label",
+    hint: "profile.section.addresses.hint",
     Icon: ({ className }) => (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true" className={className}>
         <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6c0 3 4.5 8.5 4.5 8.5s4.5-5.5 4.5-8.5c0-2.5-2-4.5-4.5-4.5Z" />
@@ -53,8 +53,8 @@ const SECTION_META: Record<
     ),
   },
   payments: {
-    label: "Paiements",
-    hint: "Cartes & comptes",
+    label: "profile.section.payments.label",
+    hint: "profile.section.payments.hint",
     Icon: ({ className }) => (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true" className={className}>
         <rect x="2" y="3.5" width="12" height="9" rx="1.5" />
@@ -63,8 +63,8 @@ const SECTION_META: Record<
     ),
   },
   orders: {
-    label: "Mes commandes",
-    hint: "Historique & suivi",
+    label: "profile.section.orders.label",
+    hint: "profile.section.orders.hint",
     Icon: ({ className }) => (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true" className={className}>
         <path d="M2 3h2l1.5 8h7L14 5H5" />
@@ -74,8 +74,8 @@ const SECTION_META: Record<
     ),
   },
   security: {
-    label: "Sécurité",
-    hint: "Mot de passe",
+    label: "profile.section.security.label",
+    hint: "profile.section.security.hint",
     Icon: ({ className }) => (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true" className={className}>
         <rect x="3" y="7" width="10" height="7" rx="1.4" />
@@ -94,6 +94,7 @@ export default function ProfilePage() {
 }
 
 function ProfileShell() {
+  const t = useT();
   const { user, logout } = useAuth();
   const router = useRouter();
   const [section, setSection] = useState<Section>("profile");
@@ -101,7 +102,7 @@ function ProfileShell() {
   const fullName =
     [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
     user?.email?.split("@")[0] ||
-    "Bienvenue";
+    t("profile.welcomeFallback");
   const initials =
     (user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "") ||
     (user?.email?.slice(0, 2).toUpperCase() ?? "?");
@@ -115,14 +116,14 @@ function ProfileShell() {
     <div className="space-y-7">
       {/* Breadcrumb */}
       <nav
-        aria-label="Fil d'Ariane"
+        aria-label={t("auth.login.breadcrumbLabel")}
         className="flex flex-wrap items-center gap-2 text-sm text-foreground/60"
       >
         <Link href="/" className="hover:text-primary">
-          Accueil
+          {t("common.home")}
         </Link>
         <span aria-hidden="true" className="text-foreground/25">/</span>
-        <span className="font-semibold text-foreground">Mon profil</span>
+        <span className="font-semibold text-foreground">{t("account.profile")}</span>
       </nav>
 
       {/* Profile hero */}
@@ -143,17 +144,17 @@ function ProfileShell() {
           <div className="min-w-0 flex-1">
             <p className="inline-flex items-center gap-2 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-[#b3eef2]">
               <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary-hover" />
-              Mon compte
+              {t("account.title")}
             </p>
             <h1 className="mt-1 font-heading text-[28px] font-semibold leading-tight tracking-tight md:text-[34px]">
-              Bonjour, {fullName}
+              {t("profile.hello")}, {fullName}
             </h1>
             {user?.email && (
               <p className="mt-1 text-[13.5px] text-white/70">
                 {user.email}
                 {user.role === "admin" && (
                   <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-white">
-                    Admin
+                    {t("header.admin")}
                   </span>
                 )}
               </p>
@@ -169,7 +170,7 @@ function ProfileShell() {
               <circle cx="6" cy="14" r="1" />
               <circle cx="12" cy="14" r="1" />
             </svg>
-            Mes commandes
+            {t("header.orders")}
           </Link>
         </div>
       </section>
@@ -179,7 +180,7 @@ function ProfileShell() {
         {/* Sidebar */}
         <aside className="lg:sticky lg:top-44">
           <nav
-            aria-label="Sections du compte"
+            aria-label={t("profile.sectionsAria")}
             className="overflow-hidden rounded-2xl border border-foreground/10 bg-white p-1.5"
           >
             <ul className="flex flex-col gap-0.5" role="list">
@@ -208,14 +209,14 @@ function ProfileShell() {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-[13.5px] font-semibold leading-tight">
-                          {meta.label}
+                          {t(meta.label as never)}
                         </span>
                         <span
                           className={`mt-0.5 block text-[11.5px] ${
                             isActive ? "text-foreground/65" : "text-foreground/55"
                           }`}
                         >
-                          {meta.hint}
+                          {t(meta.hint as never)}
                         </span>
                       </span>
                     </button>
@@ -233,7 +234,7 @@ function ProfileShell() {
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="h-3.5 w-3.5">
                   <path d="M6 2H3v12h3M10 5l3 3-3 3M6 8h7" />
                 </svg>
-                Se déconnecter
+                {t("header.logout")}
               </button>
             </div>
           </nav>
@@ -244,18 +245,18 @@ function ProfileShell() {
           {section === "profile" && <PersonalInfoCard />}
           {section === "addresses" && (
             <SectionCard
-              eyebrow="Carnet d'adresses"
-              title="Adresses de livraison & facturation"
-              hint="Ajoutez plusieurs adresses pour accélérer vos commandes."
+              eyebrow={t("profile.addressBookEyebrow")}
+              title={t("profile.addressBookTitle")}
+              hint={t("profile.addressBookHint")}
             >
               <AddressList />
             </SectionCard>
           )}
           {section === "payments" && (
             <SectionCard
-              eyebrow="Méthodes de paiement"
-              title="Cartes enregistrées"
-              hint="Ajoutez ou retirez vos cartes. Données chiffrées (PCI-DSS)."
+              eyebrow={t("profile.paymentMethodsEyebrow")}
+              title={t("profile.paymentMethodsTitle")}
+              hint={t("profile.paymentMethodsHint")}
             >
               <PaymentMethodList />
             </SectionCard>
@@ -653,6 +654,7 @@ function formatDate(iso?: string | Date) {
 }
 
 function OrdersShortcut() {
+  const t = useT();
   const [data, setData] = useState<OrdersByYear | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -665,7 +667,7 @@ function OrdersShortcut() {
         const res = await getOrders();
         if (!cancelled) setData(res);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Erreur de chargement.");
+        if (!cancelled) setError(e instanceof Error ? e.message : t("orders.errorUnexpected"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -673,7 +675,7 @@ function OrdersShortcut() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   const flat = useMemo<OrderDTO[]>(() => {
     if (!data) return [];
@@ -703,19 +705,19 @@ function OrdersShortcut() {
 
   return (
     <SectionCard
-      eyebrow="Commandes"
-      title="Historique de vos achats"
-      hint="Suivi de livraison, statut et téléchargement de factures."
+      eyebrow={t("profile.ordersEyebrow")}
+      title={t("profile.ordersTitle")}
+      hint={t("profile.ordersHint")}
     >
       <div className="grid gap-3 sm:grid-cols-3">
-        <StatusTile color="primary" label="En cours" value={counts.active} hint="En attente · traitement · expédition" />
-        <StatusTile color="success" label="Terminées" value={counts.delivered} hint="Livrées" />
-        <StatusTile color="error" label="Annulées" value={counts.cancelled} hint="Annulées" />
+        <StatusTile color="primary" label={t("orders.statusActive")} value={counts.active} hint={t("profile.orders.activeHint")} />
+        <StatusTile color="success" label={t("orders.statusCompleted")} value={counts.delivered} hint={t("orders.statusLabel.delivered")} />
+        <StatusTile color="error" label={t("orders.statusCancelled")} value={counts.cancelled} hint={t("orders.statusLabel.cancelled")} />
       </div>
 
       {loading ? (
         <div className="mt-6 rounded-xl border border-dashed border-foreground/15 bg-background/40 px-6 py-8 text-center text-sm text-foreground/55">
-          Chargement de vos commandes…
+          {t("orders.loading")}
         </div>
       ) : error ? (
         <div className="mt-6 inline-flex items-center gap-2 rounded-lg border border-error/30 bg-error/10 px-3.5 py-2.5 text-[13px] text-error">
@@ -727,16 +729,16 @@ function OrdersShortcut() {
         </div>
       ) : flat.length === 0 ? (
         <div className="mt-6 rounded-xl border border-dashed border-foreground/15 bg-background/40 px-6 py-8 text-center text-sm text-foreground/55">
-          Aucune commande pour le moment.
+          {t("orders.empty.title")}
         </div>
       ) : (
         <div className="mt-6">
           <div className="mb-3 flex items-end justify-between gap-3">
             <h3 className="font-heading text-[14px] font-semibold text-foreground">
-              Dernières commandes
+              {t("profile.orders.latest")}
             </h3>
             <span className="text-[11.5px] text-foreground/55">
-              {flat.length} au total
+              {flat.length} {t("profile.orders.total")}
             </span>
           </div>
           <ul className="divide-y divide-foreground/5 overflow-hidden rounded-xl border border-foreground/10" role="list">
@@ -760,7 +762,13 @@ function OrdersShortcut() {
                       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusTone(o.status)}`}
                     >
                       <span aria-hidden="true" className="block h-1.5 w-1.5 rounded-full bg-current" />
-                      {STATUS_LABELS[o.status] ?? o.status}
+                      {t(({
+                        pending: "orders.statusLabel.pending",
+                        processing: "orders.statusLabel.processing",
+                        shipped: "orders.statusLabel.shipped",
+                        delivered: "orders.statusLabel.delivered",
+                        cancelled: "orders.statusLabel.cancelled",
+                      } as const)[o.status])}
                     </span>
                     <span className="font-heading text-[13.5px] font-bold tabular-nums text-foreground">
                       {formatPrice(Number(o.total), o.currency)}
@@ -781,7 +789,7 @@ function OrdersShortcut() {
         style={{ color: "#fff" }}
         className="mt-6 inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-5 text-[14px] font-semibold transition hover:bg-primary-hover"
       >
-        Voir toutes mes commandes
+        {t("profile.orders.seeAll")}
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
           <path d="M3 8h10m-3-3 3 3-3 3" />
         </svg>
@@ -831,32 +839,32 @@ function StatusTile({
 
 /* ── Security ──────────────────────────────────────────────── */
 function SecurityCard() {
+  const t = useT();
   const { user } = useAuth();
 
   return (
     <>
       <SectionCard
-        eyebrow="Mot de passe"
-        title="Changer mon mot de passe"
-        hint="Saisissez votre mot de passe actuel pour confirmer la modification."
+        eyebrow={t("profile.security.passwordEyebrow")}
+        title={t("profile.security.passwordTitle")}
+        hint={t("profile.security.passwordHint")}
       >
         <ChangePasswordForm />
         <p className="mt-4 text-[12.5px] text-foreground/60">
-          Vous l&apos;avez oublié ?{" "}
+          {t("profile.security.forgot")}{" "}
           <Link href="/forgot-password" className="font-semibold text-primary hover:underline">
-            Recevoir un lien de réinitialisation
+            {t("profile.security.resetLink")}
           </Link>{" "}
-          à <b className="font-semibold text-foreground">{user?.email ?? "votre email"}</b> (valable
-          24 h).
+          {t("profile.security.to")} <b className="font-semibold text-foreground">{user?.email ?? t("profile.security.yourEmail")}</b> ({t("profile.security.valid24h")}).
         </p>
       </SectionCard>
 
       <MfaCard />
 
       <SectionCard
-        eyebrow="Sessions"
-        title="Vos appareils connectés"
-        hint="Si vous remarquez une activité suspecte, déconnectez-vous puis réinitialisez votre mot de passe."
+        eyebrow={t("profile.security.sessionsEyebrow")}
+        title={t("profile.security.sessionsTitle")}
+        hint={t("profile.security.sessionsHint")}
       >
         <div className="rounded-xl border border-foreground/10 bg-background/30 px-4 py-3.5">
           <div className="flex flex-wrap items-center gap-3">
@@ -867,12 +875,12 @@ function SecurityCard() {
               </svg>
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-[13.5px] font-semibold text-foreground">Session active</p>
-              <p className="text-[11.5px] text-foreground/55">Cet appareil · maintenant</p>
+              <p className="text-[13.5px] font-semibold text-foreground">{t("profile.security.sessionActive")}</p>
+              <p className="text-[11.5px] text-foreground/55">{t("profile.security.thisDeviceNow")}</p>
             </div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success">
               <span aria-hidden="true" className="block h-1.5 w-1.5 rounded-full bg-success" />
-              En cours
+              {t("orders.statusActive")}
             </span>
           </div>
         </div>

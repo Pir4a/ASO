@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useT } from "@/context/LocaleContext";
 
 type CategoryPaginationProps = {
   basePath: string;
@@ -14,6 +17,7 @@ export function CategoryPagination({
   totalPages,
   preservedQuery,
 }: CategoryPaginationProps) {
+  const t = useT();
   if (totalPages <= 1) return null;
 
   const prev = page > 1 ? page - 1 : null;
@@ -33,10 +37,10 @@ export function CategoryPagination({
   return (
     <nav
       className="flex flex-wrap items-center justify-between gap-3 border-t border-foreground/10 pt-4"
-      aria-label="Pagination des produits"
+      aria-label={t("search.title")}
     >
       <div className="text-sm text-foreground/70">
-        Page <span className="font-semibold text-foreground">{page}</span> sur{" "}
+        Page <span className="font-semibold text-foreground">{page}</span> /{" "}
         <span className="font-semibold text-foreground">{totalPages}</span>
       </div>
       <div className="flex gap-2">
@@ -45,11 +49,11 @@ export function CategoryPagination({
             href={href(prev)}
             className="rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:border-primary hover:text-primary"
           >
-            Précédent
+            {t("a11y.carouselPrev")}
           </Link>
         ) : (
           <span className="rounded-lg border border-foreground/10 bg-background px-3 py-2 text-sm font-semibold text-foreground/50">
-            Précédent
+            {t("a11y.carouselPrev")}
           </span>
         )}
         {next ? (
@@ -57,11 +61,11 @@ export function CategoryPagination({
             href={href(next)}
             className="rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:border-primary hover:text-primary"
           >
-            Suivant
+            {t("a11y.carouselNext")}
           </Link>
         ) : (
           <span className="rounded-lg border border-foreground/10 bg-background px-3 py-2 text-sm font-semibold text-foreground/50">
-            Suivant
+            {t("a11y.carouselNext")}
           </span>
         )}
       </div>

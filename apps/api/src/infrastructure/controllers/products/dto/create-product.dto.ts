@@ -72,4 +72,8 @@ export class CreateProductDto {
   @IsOptional()
   @IsObject()
   specs?: Record<string, string>;
+
+  @IsOptional()
+  @IsObject()
+  translations?: Record<string, { name?: string; description?: string }>;
 }

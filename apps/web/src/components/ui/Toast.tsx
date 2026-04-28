@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { useT } from "@/context/LocaleContext";
 
 interface Toast {
     id: string;
@@ -42,6 +43,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast: (id: string) => void }) {
+    const t = useT();
     // We keep the container mounted so the aria-live region is stable and screen
     // readers reliably announce changes. Two regions: polite for info/success,
     // assertive for errors.
@@ -73,7 +75,7 @@ function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast:
             <button
                 type="button"
                 onClick={() => removeToast(toast.id)}
-                aria-label="Dismiss notification"
+                aria-label={t("a11y.clearSearch")}
                 className="ml-2 rounded hover:opacity-70 focus:outline-none focus:ring-2 focus:ring-white"
             >
                 <span aria-hidden="true">✕</span>
@@ -96,7 +98,7 @@ function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast:
                 aria-live="assertive"
                 aria-atomic="true"
                 role="region"
-                aria-label="Errors"
+                aria-label={t("common.unexpectedError")}
                 className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2 rtl:left-4 rtl:right-auto"
             >
                 <div className="pointer-events-auto flex flex-col gap-2">

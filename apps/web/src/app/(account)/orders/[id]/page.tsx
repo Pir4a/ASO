@@ -10,15 +10,8 @@ import {
   type OrderDTO,
   type OrderStatus,
 } from "@/lib/api";
+import { useLocale, useT } from "@/context/LocaleContext";
 import { useCart } from "@/hooks/useCart";
-
-const STATUS_LABELS: Record<OrderStatus, string> = {
-  pending: "En attente",
-  processing: "En traitement",
-  shipped: "Expédiée",
-  delivered: "Livrée",
-  cancelled: "Annulée",
-};
 
 function statusTone(status: OrderStatus): string {
   switch (status) {
@@ -33,10 +26,10 @@ function statusTone(status: OrderStatus): string {
   }
 }
 
-function formatDate(iso?: string | Date): string {
+function formatDate(iso: string | Date | undefined, locale: string): string {
   if (!iso) return "";
   try {
-    return new Date(iso).toLocaleDateString("fr-FR", {
+    return new Date(iso).toLocaleDateString(locale, {
       day: "2-digit",
       month: "long",
       year: "numeric",
@@ -46,8 +39,17 @@ function formatDate(iso?: string | Date): string {
   }
 }
 
-function formatPrice(value: number, currency: string) {
-  return new Intl.NumberFormat("fr-FR", {
+function formatDateTime(iso: string | Date | undefined, locale: string): string {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleString(locale);
+  } catch {
+    return String(iso);
+  }
+}
+
+function formatPrice(value: number, currency: string, locale: string) {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: currency || "EUR",
   }).format(value);
@@ -63,6 +65,8 @@ export default function OrderDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const t = useT();
+  const locale = useLocale();
   const { id } = use(params);
   const [order, setOrder] = useState<OrderDTO | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,8 +87,9 @@ export default function OrderDetailPage({
         const result = await getOrder(id);
         if (!cancelled) setOrder(result);
       } catch (e) {
-        if (!cancelled)
-          setError(e instanceof Error ? e.message : "Erreur inattendue.");
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : t("orders.errorUnexpected"));
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -92,7 +97,7 @@ export default function OrderDetailPage({
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, t]);
 
   const handleDownloadInvoice = async () => {
     if (!order) return;
@@ -102,7 +107,7 @@ export default function OrderDetailPage({
       await downloadOrderInvoice(order.id);
     } catch (e) {
       setInvoiceError(
-        e instanceof Error ? e.message : "Impossible de télécharger la facture.",
+        e instanceof Error ? e.message : t("orderDetail.invoiceError"),
       );
     } finally {
       setInvoiceLoading(false);
@@ -124,7 +129,7 @@ export default function OrderDetailPage({
       setReorderError(
         e instanceof Error
           ? e.message
-          : "Impossible d'ajouter les articles au panier.",
+          : t("orderDetail.reorderError"),
       );
       setReorderLoading(false);
     }
@@ -141,9 +146,14 @@ export default function OrderDetailPage({
   if (error || !order) {
     return (
       <div className="space-y-6">
-        <Breadcrumb here="Commande" />
+        <Breadcrumb
+          here={t("orderDetail.breadcrumbCurrent")}
+          ariaLabel={t("auth.login.breadcrumbLabel")}
+          homeLabel={t("common.home")}
+          ordersLabel={t("header.orders")}
+        />
         <div className="rounded-2xl border border-error/30 bg-error/10 px-6 py-12 text-center text-error">
-          {error ?? "Commande introuvable."}
+          {error ?? t("orderDetail.notFound")}
         </div>
       </div>
     );
@@ -154,19 +164,24 @@ export default function OrderDetailPage({
 
   return (
     <div className="space-y-6">
-      <Breadcrumb here={orderNumber} />
+      <Breadcrumb
+        here={orderNumber}
+        ariaLabel={t("auth.login.breadcrumbLabel")}
+        homeLabel={t("common.home")}
+        ordersLabel={t("header.orders")}
+      />
 
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
             <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-            Commande
+            {t("orderDetail.headerEyebrow")}
           </p>
           <h1 className="font-heading text-[26px] font-semibold tracking-tight text-foreground md:text-[30px]">
             {orderNumber}
           </h1>
           <p className="mt-1 text-[13px] text-foreground/60">
-            Passée le {formatDate(order.createdAt)}
+            {t("orderDetail.placedOn")} {formatDate(order.createdAt, locale)}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -174,26 +189,26 @@ export default function OrderDetailPage({
             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold ${statusTone(order.status)}`}
           >
             <span aria-hidden="true" className="block h-1.5 w-1.5 rounded-full bg-current" />
-            {STATUS_LABELS[order.status] ?? order.status}
+            {t(`orders.statusLabel.${order.status}`)}
           </span>
           <button
             type="button"
             onClick={handleReorder}
             disabled={reorderLoading || (order.items ?? []).length === 0}
             className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-[12.5px] font-semibold text-primary transition hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
-            title="Re-ajouter les articles dans le panier"
+            title={t("orderDetail.reorderTitle")}
           >
             {reorderLoading ? (
               <>
                 <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                Ajout en cours…
+                {t("orderDetail.reorderLoading")}
               </>
             ) : (
               <>
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3 w-3">
                   <path d="M3 8a5 5 0 1 0 1.5-3.5L3 6m0 0V3m0 3h3" />
                 </svg>
-                Renouveler la commande
+                {t("orderDetail.reorderCta")}
               </>
             )}
           </button>
@@ -204,7 +219,7 @@ export default function OrderDetailPage({
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3 w-3">
               <path d="M13 8H3m3-3-3 3 3 3" />
             </svg>
-            Toutes mes commandes
+            {t("header.orders")}
           </Link>
         </div>
       </header>
@@ -221,9 +236,9 @@ export default function OrderDetailPage({
         {/* ── Items ──────────────────────────────────────── */}
         <div className="space-y-5">
           <SectionCard
-            eyebrow="Produits"
-            title="Articles commandés"
-            hint="Récapitulatif détaillé des lignes facturées."
+            eyebrow={t("orderDetail.itemsEyebrow")}
+            title={t("orderDetail.itemsTitle")}
+            hint={t("orderDetail.itemsHint")}
           >
             <ul className="divide-y divide-foreground/5" role="list">
               {(order.items ?? []).map((item) => {
@@ -240,18 +255,18 @@ export default function OrderDetailPage({
                       </p>
                       {item.productSku && (
                         <p className="mt-0.5 font-mono text-[11px] text-foreground/55">
-                          Réf. {item.productSku}
+                          {t("orderDetail.refPrefix")} {item.productSku}
                         </p>
                       )}
                     </div>
                     <div className="text-right text-[13px] text-foreground/65 sm:min-w-[140px]">
                       <p className="tabular-nums">
-                        {formatPrice(unit, item.currency)}
+                        {formatPrice(unit, item.currency, locale)}
                       </p>
                       <p className="text-[11.5px] tabular-nums">×&nbsp;{item.quantity}</p>
                     </div>
                     <p className="text-right font-heading text-[15px] font-bold tabular-nums text-foreground sm:min-w-[120px]">
-                      {formatPrice(lineTotal, item.currency)}
+                      {formatPrice(lineTotal, item.currency, locale)}
                     </p>
                   </li>
                 );
@@ -259,23 +274,23 @@ export default function OrderDetailPage({
             </ul>
             <div className="mt-2 flex items-baseline justify-between border-t border-foreground/10 pt-4">
               <span className="font-heading text-[14px] font-semibold text-foreground">
-                Total TTC
+                {t("orderDetail.totalWithTax")}
               </span>
               <span className="font-heading text-[22px] font-bold tabular-nums text-foreground">
-                {formatPrice(Number(order.total), order.currency)}
+                {formatPrice(Number(order.total), order.currency, locale)}
               </span>
             </div>
           </SectionCard>
 
           {/* ── Invoice ─────────────────────────────────── */}
           <SectionCard
-            eyebrow="Facture"
-            title="Document PDF"
-            hint="Téléchargez votre facture pour vos archives comptables."
+            eyebrow={t("orderDetail.invoiceEyebrow")}
+            title={t("orderDetail.invoiceTitle")}
+            hint={t("orderDetail.invoiceHint")}
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="text-[13px] text-foreground/65">
-                Format A4 · branding Althea Systems · TVA détaillée.
+                {t("orderDetail.invoiceMeta")}
               </div>
               <button
                 type="button"
@@ -287,14 +302,14 @@ export default function OrderDetailPage({
                 {invoiceLoading ? (
                   <>
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Génération…
+                    {t("orderDetail.invoiceGenerating")}
                   </>
                 ) : (
                   <>
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                       <path d="M8 2v8m0 0 3-3m-3 3-3-3M3 13h10" />
                     </svg>
-                    Télécharger la facture (PDF)
+                    {t("orderDetail.invoiceDownload")}
                   </>
                 )}
               </button>
@@ -314,7 +329,7 @@ export default function OrderDetailPage({
         {/* ── Summary sidebar ─────────────────────────────── */}
         <aside className="space-y-5 lg:sticky lg:top-44">
           {/* Payment */}
-          <SectionCard eyebrow="Paiement" title="Méthode utilisée">
+          <SectionCard eyebrow={t("orderDetail.paymentEyebrow")} title={t("orderDetail.paymentTitle")}>
             {order.paymentLast4 ? (
               <div className="flex items-center gap-3">
                 <span
@@ -332,9 +347,9 @@ export default function OrderDetailPage({
                     </span>
                   </p>
                   <p className="mt-0.5 text-[11.5px] text-foreground/60">
-                    Statut ·{" "}
+                    {t("orderDetail.paymentStatusLabel")} ·{" "}
                     {order.paymentStatus === "paid"
-                      ? "Payée"
+                      ? t("orderDetail.paymentPaid")
                       : (order.paymentStatus ?? "—")}
                   </p>
                 </div>
@@ -350,32 +365,32 @@ export default function OrderDetailPage({
                 </span>
                 <div>
                   <p className="font-heading text-[14px] font-semibold text-foreground">
-                    Carte bancaire
+                    {t("orderDetail.paymentCard")}
                     <span className="ml-1 text-[11.5px] font-normal text-foreground/55">
                       (Stripe)
                     </span>
                   </p>
                   <p className="mt-0.5 text-[11.5px] text-foreground/60">
-                    Statut ·{" "}
+                    {t("orderDetail.paymentStatusLabel")} ·{" "}
                     {order.paymentStatus === "paid"
-                      ? "Payée"
+                      ? t("orderDetail.paymentPaid")
                       : (order.paymentStatus ?? "—")}
                     {" · "}
-                    Détails de la carte non capturés
+                    {t("orderDetail.paymentCardDetailsUnavailable")}
                   </p>
                 </div>
               </div>
             ) : (
               <p className="text-[13px] text-foreground/60">
-                Information de paiement indisponible.
+                {t("orderDetail.paymentInfoUnavailable")}
               </p>
             )}
           </SectionCard>
 
           {/* Billing */}
           <SectionCard
-            eyebrow="Adresse"
-            title="Facturation et livraison"
+            eyebrow={t("orderDetail.addressEyebrow")}
+            title={t("orderDetail.addressTitle")}
           >
             {billing ? (
               <address className="not-italic space-y-0.5 text-[13.5px] text-foreground">
@@ -402,14 +417,14 @@ export default function OrderDetailPage({
               </address>
             ) : (
               <p className="text-[13px] text-foreground/60">
-                Aucune adresse enregistrée.
+                {t("orderDetail.addressEmpty")}
               </p>
             )}
           </SectionCard>
 
           {/* Status timeline */}
           {(order.statusHistory ?? []).length > 0 && (
-            <SectionCard eyebrow="Suivi" title="Historique">
+            <SectionCard eyebrow={t("orderDetail.timelineEyebrow")} title={t("orderDetail.timelineTitle")}>
               <ol className="space-y-2.5" role="list">
                 {(order.statusHistory ?? []).map((h, i) => (
                   <li key={`${h.status}-${i}`} className="flex items-start gap-3 text-[12.5px]">
@@ -419,10 +434,10 @@ export default function OrderDetailPage({
                     />
                     <div>
                       <p className="font-semibold text-foreground">
-                        {STATUS_LABELS[h.status] ?? h.status}
+                        {t(`orders.statusLabel.${h.status}`)}
                       </p>
                       <p className="text-[11px] text-foreground/55">
-                        {new Date(h.at).toLocaleString("fr-FR")}
+                        {formatDateTime(h.at, locale)}
                       </p>
                     </div>
                   </li>
@@ -436,18 +451,28 @@ export default function OrderDetailPage({
   );
 }
 
-function Breadcrumb({ here }: { here: string }) {
+function Breadcrumb({
+  here,
+  ariaLabel,
+  homeLabel,
+  ordersLabel,
+}: {
+  here: string;
+  ariaLabel: string;
+  homeLabel: string;
+  ordersLabel: string;
+}) {
   return (
     <nav
-      aria-label="Fil d'Ariane"
+      aria-label={ariaLabel}
       className="flex flex-wrap items-center gap-2 text-sm text-foreground/60"
     >
       <Link href="/" className="hover:text-primary">
-        Accueil
+        {homeLabel}
       </Link>
       <span aria-hidden="true" className="text-foreground/25">/</span>
       <Link href="/orders" className="hover:text-primary">
-        Mes commandes
+        {ordersLabel}
       </Link>
       <span aria-hidden="true" className="text-foreground/25">/</span>
       <span className="font-semibold text-foreground">{here}</span>

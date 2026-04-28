@@ -57,18 +57,18 @@ export default async function ProductsListPage({
   return (
     <div className="space-y-6">
       <nav
-        aria-label="Fil d'Ariane"
+        aria-label={t("auth.login.breadcrumbLabel")}
         className="flex flex-wrap items-center gap-2 text-sm text-foreground/60"
       >
         <Link href="/" className="hover:text-primary">
-          Accueil
+          {t("common.home")}
         </Link>
         <span aria-hidden="true" className="text-foreground/25">/</span>
-        <span className="font-semibold text-foreground">Catalogue</span>
+        <span className="font-semibold text-foreground">{t("products.catalogTitle")}</span>
       </nav>
 
       <CategoryHero
-        eyebrow="Catalogue"
+        eyebrow={t("products.heroEyebrow")}
         name={t("products.catalogTitle")}
         description={t("products.catalogSubtitle")}
         productsTotal={page.meta.total}

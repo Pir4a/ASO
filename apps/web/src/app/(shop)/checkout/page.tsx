@@ -18,6 +18,7 @@ import {
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { AddressForm, type AddressFormData } from "@/components/account/AddressForm";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LocaleContext";
 import { useCart } from "@/hooks/useCart";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -44,6 +45,7 @@ function formatPrice(cents: number, currency = "EUR") {
 }
 
 export default function CheckoutPage() {
+  const t = useT();
   const { refreshCart } = useCart();
   const { user, isAuthenticated } = useAuth();
 
@@ -218,10 +220,10 @@ export default function CheckoutPage() {
           </div>
           <p className="mt-5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-success">
             <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-success" />
-            Commande confirmée
+            {t("orders.statusLabel.delivered")}
           </p>
           <h1 className="mt-2 font-heading text-[28px] font-bold tracking-tight text-foreground md:text-[32px]">
-            Merci pour votre commande
+            {t("cart.title")}
           </h1>
           <p className="mx-auto mt-2 max-w-xl text-[14px] text-foreground/70">
             Un email de confirmation vient d&apos;être envoyé. Votre numéro de commande est{" "}
@@ -233,7 +235,7 @@ export default function CheckoutPage() {
               style={{ color: "#fff" }}
               className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-5 text-[14px] font-semibold transition hover:bg-primary-hover"
             >
-              Voir ma commande
+              {t("account.orders")}
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                 <path d="M3 8h10m-3-3 3 3-3 3" />
               </svg>
@@ -242,13 +244,13 @@ export default function CheckoutPage() {
               href="/orders"
               className="inline-flex h-11 items-center gap-2 rounded-lg border border-foreground/15 bg-white px-5 text-[14px] font-semibold text-foreground transition hover:border-primary hover:text-primary"
             >
-              Mes commandes
+              {t("account.orders")}
             </Link>
             <Link
               href="/products"
               className="inline-flex h-11 items-center gap-2 rounded-lg px-5 text-[14px] font-semibold text-foreground/65 transition hover:text-primary"
             >
-              Retour à la boutique
+              {t("cart.continueShopping")}
             </Link>
           </div>
           {guestSignupSent && (
@@ -275,20 +277,20 @@ export default function CheckoutPage() {
   if (cartItems.length === 0 && !orderResult) {
     return (
       <div className="space-y-6">
-        <Breadcrumb here="Checkout" />
+        <Breadcrumb here={t("cart.checkout")} />
         <section className="overflow-hidden rounded-2xl border border-foreground/10 bg-white px-6 py-16 text-center">
           <h1 className="font-heading text-[24px] font-semibold text-foreground">
-            Votre panier est vide
+            {t("cart.empty.title")}
           </h1>
           <p className="mt-2 text-[14px] text-foreground/65">
-            Ajoutez des produits avant de passer à la caisse.
+            {t("cart.empty.subtitle")}
           </p>
           <Link
             href="/products"
             style={{ color: "#fff" }}
             className="mt-5 inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-5 text-[14px] font-semibold transition hover:bg-primary-hover"
           >
-            Parcourir le catalogue
+            {t("cart.empty.cta")}
           </Link>
         </section>
       </div>
@@ -298,7 +300,7 @@ export default function CheckoutPage() {
   /* ── Main render ────────────────────────────────────────── */
   return (
     <div className="space-y-6">
-      <Breadcrumb here="Checkout" />
+      <Breadcrumb here={t("cart.checkout")} />
 
       <Stepper current={step} authenticated={isAuthenticated} onStepClick={(s) => {
         // allow going back; can't skip forward
@@ -463,7 +465,7 @@ export default function CheckoutPage() {
           {step === "payment" && clientSecret && (
             <SectionCard
               eyebrow={isAuthenticated ? "Étape 3" : "Étape 2"}
-              title="Paiement sécurisé"
+              title={t("cart.perkSecurePayment")}
               hint="Vos cartes enregistrées apparaissent automatiquement. Toutes les transactions sont protégées par Stripe (PCI-DSS)."
             >
               <Elements
@@ -506,10 +508,10 @@ export default function CheckoutPage() {
             <header className="border-b border-foreground/5 px-6 py-5">
               <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
                 <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-                Récapitulatif
+                {t("cart.summaryEyebrow")}
               </p>
               <h2 className="font-heading text-[18px] font-semibold tracking-tight text-foreground">
-                Votre commande
+                {t("cart.title")}
               </h2>
             </header>
             <div className="space-y-4 px-6 py-5">
@@ -536,7 +538,7 @@ export default function CheckoutPage() {
 
               <dl className="space-y-1.5 border-t border-foreground/5 pt-4 text-[13px]">
                 <div className="flex justify-between">
-                  <dt className="text-foreground/65">Sous-total</dt>
+                  <dt className="text-foreground/65">{t("cart.subtotal")}</dt>
                   <dd className="tabular-nums text-foreground">
                     {formatPrice(cartSubtotal, currency)}
                   </dd>
@@ -551,7 +553,7 @@ export default function CheckoutPage() {
 
               <div className="flex items-baseline justify-between border-t border-foreground/10 pt-4">
                 <span className="font-heading text-[14px] font-semibold text-foreground">
-                  Total TTC
+                  {t("cart.totalIncludingVat")}
                 </span>
                 <span className="font-heading text-[20px] font-bold tabular-nums text-foreground">
                   {formatPrice(cartTotal, currency)}
@@ -590,21 +592,21 @@ export default function CheckoutPage() {
                     <circle cx="5" cy="16" r="1.5" />
                     <circle cx="17" cy="16" r="1.5" />
                   </svg>
-                  Livraison 48 h
+                  {t("cart.perkDelivery")}
                 </li>
                 <li className="flex flex-col items-center gap-1.5">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-4 w-4 text-primary">
                     <rect x="3" y="11" width="18" height="11" rx="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
-                  Paiement sécurisé
+                  {t("cart.perkSecurePayment")}
                 </li>
                 <li className="flex flex-col items-center gap-1.5">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-4 w-4 text-primary">
                     <path d="M12 2 4 7v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-5z" />
                     <path d="m9 12 2 2 4-4" />
                   </svg>
-                  Garantie 2 ans
+                  {t("cart.perkWarranty")}
                 </li>
               </ul>
             </div>
@@ -618,17 +620,18 @@ export default function CheckoutPage() {
 /* ── Helpers ─────────────────────────────────────────────── */
 
 function Breadcrumb({ here }: { here: string }) {
+  const t = useT();
   return (
     <nav
-      aria-label="Fil d'Ariane"
+      aria-label={t("auth.login.breadcrumbLabel")}
       className="flex flex-wrap items-center gap-2 text-sm text-foreground/60"
     >
       <Link href="/" className="hover:text-primary">
-        Accueil
+        {t("common.home")}
       </Link>
       <span aria-hidden="true" className="text-foreground/25">/</span>
       <Link href="/cart" className="hover:text-primary">
-        Panier
+        {t("cart.breadcrumb")}
       </Link>
       <span aria-hidden="true" className="text-foreground/25">/</span>
       <span className="font-semibold text-foreground">{here}</span>
@@ -741,6 +744,7 @@ function IdentifyStep({
   onAuthenticated: () => void;
   onContinueAsGuest: () => void;
 }) {
+  const t = useT();
   const router = useRouter();
   const { login } = useAuth();
   const [email, setEmail] = useState("");
@@ -762,11 +766,11 @@ function IdentifyStep({
         body: JSON.stringify({ email, password, rememberMe }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.message || "Identifiants incorrects.");
+      if (!res.ok) throw new Error(data?.message || t("login.errGeneric"));
       await login(data.access_token, data.user);
       onAuthenticated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Connexion impossible.");
+      setError(err instanceof Error ? err.message : t("auth.login.errorGeneric"));
     } finally {
       setSubmitting(false);
     }
@@ -907,14 +911,14 @@ function IdentifyStep({
               {submitting ? (
                 <>
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Connexion…
+                  {t("login.submitting")}
                 </>
               ) : (
                 <>
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                     <path d="M6 2H3v12h3M10 5l3 3-3 3M6 8h7" />
                   </svg>
-                  Se connecter et continuer
+                  {t("login.submit")}
                 </>
               )}
             </button>
@@ -958,13 +962,13 @@ function IdentifyStep({
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                 <path d="M8 3v10M3 8h10" />
               </svg>
-              Créer un compte
+              {t("signup.submit")}
             </button>
           </div>
 
           <div className="rounded-xl border border-dashed border-foreground/15 bg-white/60 p-4">
             <p className="font-heading text-[13.5px] font-semibold text-foreground">
-              Continuer en invité
+              {t("cart.continueShopping")}
             </p>
             <p className="mt-1 text-[12px] text-foreground/65">
               Vous pourrez créer un compte plus tard pour retrouver vos achats.
