@@ -177,6 +177,19 @@ type GlobalSearchSuggestion = {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
+/** Cheap relevance score for the global-search dropdown — exact match
+    > prefix > contains, with later occurrences progressively damped. */
+function scoreQuery(value: string, query: string): number {
+  const hay = value.toLowerCase();
+  const q = query.toLowerCase();
+  if (!q) return 0;
+  if (hay === q) return 100;
+  if (hay.startsWith(q)) return 80;
+  const idx = hay.indexOf(q);
+  if (idx >= 0) return 50 - Math.min(idx, 20);
+  return 0;
+}
+
 const SECTION_LABEL: Record<Section, string> = {
   overview: "Overview",
   analytics: "Analytique",
@@ -476,7 +489,16 @@ function BackofficeDashboard() {
   };
 
   useEffect(() => {
-    void Promise.all([loadCategories(), loadProducts(), loadUsers(), loadContactMessages(), loadDashboard()]);
+    // Orders are pulled here too — the global search dropdown needs them
+    // to surface order matches before the operator opens the Orders tab.
+    void Promise.all([
+      loadCategories(),
+      loadProducts(),
+      loadUsers(),
+      loadContactMessages(),
+      loadDashboard(),
+      loadAdminOrders(),
+    ]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1201,17 +1223,6 @@ function BackofficeDashboard() {
       .join("")
       .toUpperCase() || "?";
 
-  function scoreQuery(value: string, query: string): number {
-    const hay = value.toLowerCase();
-    const q = query.toLowerCase();
-    if (!q) return 0;
-    if (hay === q) return 100;
-    if (hay.startsWith(q)) return 80;
-    const idx = hay.indexOf(q);
-    if (idx >= 0) return 50 - Math.min(idx, 20);
-    return 0;
-  }
-
   /* --------------------------------- UI ----------------------------------- */
 
   return (
@@ -1248,7 +1259,10 @@ function BackofficeDashboard() {
                 setGlobalSearch(e.target.value);
                 setGlobalSearchFocused(true);
               }}
-              onFocus={() => setGlobalSearchFocused(true)}
+              onFocus={() => {
+                setGlobalSearchFocused(true);
+                setGlobalSearchActiveIndex(-1);
+              }}
               onKeyDown={(e) => {
                 if (!globalSearchFocused || globalVisibleSuggestions.length === 0) return;
                 if (e.key === "ArrowDown") {
