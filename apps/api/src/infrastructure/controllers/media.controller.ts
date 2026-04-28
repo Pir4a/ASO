@@ -54,6 +54,7 @@ export class MediaController {
     /** Public stream — image rendering on the storefront and BO. */
     @Get('media/:id')
     @Header('Cache-Control', 'public, max-age=31536000, immutable')
+    @Header('Cross-Origin-Resource-Policy', 'cross-origin')
     async stream(@Param('id') id: string, @Res() res: Response) {
         const metadata = await this.mediaService.metadata(id);
         res.setHeader('Content-Type', metadata.mime);
