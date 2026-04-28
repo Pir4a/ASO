@@ -173,8 +173,10 @@ export class ProductsController {
     }
 
     @Get(':slug')
-    findOne(@Param('slug') slug: string) {
-        return this.findProductBySlugUseCase.execute(slug);
+    async findOne(@Param('slug') slug: string) {
+        const product = await this.findProductBySlugUseCase.execute(slug);
+        if (!product) throw new NotFoundException('Produit introuvable.');
+        return product;
     }
 
     /** Admin listing — returns drafts too. */
