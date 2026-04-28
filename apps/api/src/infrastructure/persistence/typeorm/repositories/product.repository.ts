@@ -187,8 +187,12 @@ export class TypeOrmProductRepository implements ProductRepository {
       qb.andWhere('p.published = true');
     }
 
-    qb.orderBy('p.listPriority', 'DESC')
-      .addOrderBy('CASE WHEN p.stock > 0 THEN 0 ELSE 1 END', 'ASC')
+    // The CASE expression must be exposed as a SELECT alias before
+    // we can ORDER BY it — Postgres rejects raw expressions referenced
+    // by alias-only otherwise, which silently truncated the ordered set.
+    qb.addSelect('CASE WHEN p.stock > 0 THEN 0 ELSE 1 END', 'stock_rank')
+      .orderBy('p.listPriority', 'DESC')
+      .addOrderBy('stock_rank', 'ASC')
       .addOrderBy('p.name', 'ASC')
       .skip((page - 1) * pageSize)
       .take(pageSize);
