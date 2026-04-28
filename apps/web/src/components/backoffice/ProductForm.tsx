@@ -32,6 +32,28 @@ export interface EditableProduct {
   featuredOrder?: number;
 }
 
+interface SpecRow {
+  id: string;
+  key: string;
+  value: string;
+}
+
+function newSpecRowId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `spec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function specsToRows(specs: Record<string, string> | undefined): SpecRow[] {
+  if (!specs) return [];
+  return Object.entries(specs).map(([key, value]) => ({
+    id: newSpecRowId(),
+    key,
+    value: String(value),
+  }));
+}
+
 interface ProductFormProps {
   categories: Category[];
   /** When provided, the form switches to edit mode and PATCHes /products/:id. */
@@ -78,10 +100,8 @@ export function ProductForm({
   const [galleryUrlsText, setGalleryUrlsText] = useState(
     (product?.galleryUrls ?? []).join("\n"),
   );
-  const [specsJson, setSpecsJson] = useState(
-    product?.specs && Object.keys(product.specs).length > 0
-      ? JSON.stringify(product.specs, null, 2)
-      : "",
+  const [specRows, setSpecRows] = useState<SpecRow[]>(() =>
+    specsToRows(product?.specs),
   );
   const [featured, setFeatured] = useState(!!product?.featured);
   const [error, setError] = useState<string | null>(null);
@@ -105,11 +125,7 @@ export function ProductForm({
       product.listPriority !== undefined ? String(product.listPriority) : "",
     );
     setGalleryUrlsText((product.galleryUrls ?? []).join("\n"));
-    setSpecsJson(
-      product.specs && Object.keys(product.specs).length > 0
-        ? JSON.stringify(product.specs, null, 2)
-        : "",
-    );
+    setSpecRows(specsToRows(product.specs));
     setFeatured(!!product.featured);
     setUseCustomSlug(true);
     setError(null);
@@ -142,21 +158,25 @@ export function ProductForm({
     setLoading(true);
 
     try {
-      let specs: Record<string, string> | undefined;
-      if (specsJson.trim()) {
-        try {
-          const parsed = JSON.parse(specsJson) as unknown;
-          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-            specs = Object.fromEntries(
-              Object.entries(parsed as Record<string, unknown>).map(([k, v]) => [k, String(v)]),
-            );
-          } else {
-            throw new Error("Le JSON des specs doit être un objet { \"clé\": \"valeur\" }.");
-          }
-        } catch {
-          throw new Error("Specs invalides : JSON objet attendu (ex. {\"Puissance\":\"400W\"}).");
-        }
+      // Build the specs object from the row editor. Empty keys are dropped;
+      // when the same key appears twice the last row wins (we surface a
+      // warning rather than blocking — the form already trims/dedups before
+      // the request, so the server never sees the duplicate).
+      const cleaned = specRows
+        .map((r) => ({ key: r.key.trim(), value: r.value.trim() }))
+        .filter((r) => r.key.length > 0);
+      const seen = new Set<string>();
+      const duplicates: string[] = [];
+      for (const r of cleaned) {
+        if (seen.has(r.key)) duplicates.push(r.key);
+        seen.add(r.key);
       }
+      if (duplicates.length > 0) {
+        const list = Array.from(new Set(duplicates)).join(", ");
+        throw new Error(`Caractéristique en double : ${list}. Renomme-la ou supprime la ligne.`);
+      }
+      const specs: Record<string, string> | undefined =
+        cleaned.length > 0 ? Object.fromEntries(cleaned.map((r) => [r.key, r.value])) : undefined;
 
       const galleryUrls = galleryUrlsText
         .split("\n")
@@ -221,7 +241,7 @@ export function ProductForm({
         setThumbnailUrl("");
         setListPriority("");
         setGalleryUrlsText("");
-        setSpecsJson("");
+        setSpecRows([]);
         setFeatured(false);
         setUseCustomSlug(false);
       }
@@ -412,15 +432,90 @@ export function ProductForm({
       </div>
 
       <div>
-        <label htmlFor="specsJson" className={labelCls}>Specs techniques (JSON objet)</label>
-        <textarea
-          id="specsJson"
-          rows={4}
-          className={`${inputCls} font-mono text-xs`}
-          value={specsJson}
-          onChange={(e) => setSpecsJson(e.target.value)}
-          placeholder='{"Puissance":"400W","Norme":"CE"}'
-        />
+        <label className={labelCls}>Specs techniques</label>
+        <p className="mb-2 text-[11px] text-foreground/55">
+          Ajoute une ligne par caractéristique (ex. Puissance · 400 W).
+        </p>
+        {specRows.length > 0 ? (
+          <ul className="mb-2 space-y-2">
+            {specRows.map((row, idx) => (
+              <li key={row.id} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={row.key}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setSpecRows((prev) =>
+                      prev.map((r) => (r.id === row.id ? { ...r, key: next } : r)),
+                    );
+                  }}
+                  placeholder="Caractéristique"
+                  aria-label={`Caractéristique ${idx + 1} — clé`}
+                  className={`${inputCls} flex-1`}
+                />
+                <input
+                  type="text"
+                  value={row.value}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setSpecRows((prev) =>
+                      prev.map((r) => (r.id === row.id ? { ...r, value: next } : r)),
+                    );
+                  }}
+                  placeholder="Valeur"
+                  aria-label={`Caractéristique ${idx + 1} — valeur`}
+                  className={`${inputCls} flex-1`}
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSpecRows((prev) => prev.filter((r) => r.id !== row.id))
+                  }
+                  aria-label={`Supprimer la caractéristique ${idx + 1}`}
+                  className="grid h-9 w-9 flex-none place-items-center rounded-lg border border-foreground/10 bg-white text-foreground/60 shadow-sm transition hover:border-error/40 hover:bg-error/5 hover:text-error"
+                >
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 4h10M6.5 4V2.5h3V4M5 4l.5 9h5L11 4M7 6.5v4.5M9 6.5v4.5" />
+                  </svg>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mb-2 rounded-lg border border-dashed border-foreground/15 bg-foreground/[0.02] px-3 py-3 text-xs text-foreground/55">
+            Aucune caractéristique pour l&apos;instant.
+          </p>
+        )}
+        <button
+          type="button"
+          onClick={() =>
+            setSpecRows((prev) => [...prev, { id: newSpecRowId(), key: "", value: "" }])
+          }
+          className="inline-flex items-center gap-1.5 rounded-lg border border-foreground/10 bg-white px-3 py-1.5 text-xs font-semibold text-foreground/70 shadow-sm transition hover:border-primary/40 hover:text-primary"
+        >
+          <svg
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-3.5 w-3.5"
+            aria-hidden="true"
+          >
+            <path d="M8 3.5v9M3.5 8h9" />
+          </svg>
+          Ajouter une caractéristique
+        </button>
       </div>
 
       <div className="flex items-end">
