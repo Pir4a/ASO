@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Category, Product } from "@bootstrap/types";
 
 type SortKey = "priority" | "name" | "price-asc" | "price-desc";
@@ -83,13 +84,52 @@ export function CategoryCatalog({
   /** Pre-fills the toolbar search input (e.g. from `?q=` URL param). */
   initialQuery?: string;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [view, setView] = useState<ViewMode>("grid");
   const [sortKey, setSortKey] = useState<SortKey>("priority");
   const [query, setQuery] = useState(initialQuery);
+  const isProductsCatalogPage = allHref === "/products" && !activeSlug;
+
+  // Tracks the value we last pushed to the URL ourselves. Lets us tell
+  // apart "URL changed because we navigated" (skip prop sync) from "URL
+  // changed externally — back/forward, deep link" (adopt prop). Without
+  // this guard, the prop sync below would stomp keystrokes that landed
+  // while the server was still computing the previous query's response.
+  const lastSyncedQueryRef = useRef(initialQuery);
+
+  useEffect(() => {
+    if (initialQuery === lastSyncedQueryRef.current) return;
+    setQuery(initialQuery);
+    lastSyncedQueryRef.current = initialQuery;
+  }, [initialQuery]);
+
+  useEffect(() => {
+    if (!isProductsCatalogPage) return;
+    const currentQ = (searchParams.get("q") ?? "").trim();
+    const nextQ = query.trim();
+    if (currentQ === nextQ) return;
+
+    const handle = window.setTimeout(() => {
+      const next = new URLSearchParams(searchParams.toString());
+      if (nextQ) {
+        next.set("q", nextQ);
+      } else {
+        next.delete("q");
+      }
+      next.set("page", "1");
+      const qs = next.toString();
+      lastSyncedQueryRef.current = nextQ;
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    }, 250);
+
+    return () => window.clearTimeout(handle);
+  }, [isProductsCatalogPage, pathname, query, router, searchParams]);
 
   const sortedProducts = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = q
+    let list = !isProductsCatalogPage && q
       ? products.filter(
           (p) =>
             p.name.toLowerCase().includes(q) ||
@@ -121,7 +161,7 @@ export function CategoryCatalog({
     });
 
     return list;
-  }, [products, query, sortKey]);
+  }, [isProductsCatalogPage, products, query, sortKey]);
 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[248px_1fr]">
