@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -164,6 +164,17 @@ type Section =
   | "chat"
   | "settings";
 
+type GlobalSearchSuggestion = {
+  key: string;
+  kind: "product" | "category" | "order" | "user";
+  section: Section;
+  label: string;
+  meta: string;
+  targetKey: string;
+  query: string;
+  orderId?: string;
+};
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 const SECTION_LABEL: Record<Section, string> = {
@@ -217,6 +228,12 @@ function BackofficeDashboard() {
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [categorySearch, setCategorySearch] = useState("");
   const [globalSearch, setGlobalSearch] = useState("");
+  const [globalSearchFocused, setGlobalSearchFocused] = useState(false);
+  const [globalSearchActiveIndex, setGlobalSearchActiveIndex] = useState(-1);
+  const [highlightTargetKey, setHighlightTargetKey] = useState<string | null>(null);
+  const [pendingTargetKey, setPendingTargetKey] = useState<string | null>(null);
+  const globalSearchRef = useRef<HTMLDivElement | null>(null);
+  const globalSearchInputRef = useRef<HTMLInputElement | null>(null);
 
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -436,6 +453,28 @@ function BackofficeDashboard() {
         : Promise.resolve(),
     ]);
 
+  const applyGlobalSuggestion = (s: GlobalSearchSuggestion) => {
+    setGlobalSearch("");
+    setGlobalSearchFocused(false);
+    setGlobalSearchActiveIndex(-1);
+    setSection(s.section);
+    setPendingTargetKey(s.targetKey);
+    if (s.kind === "product") {
+      setProductSearch(s.query);
+      setProductPage(1);
+    } else if (s.kind === "category") {
+      setCategorySearch(s.query);
+    } else if (s.kind === "user") {
+      setSearch(s.query);
+      void loadUsers(s.query);
+    } else if (s.kind === "order" && s.orderId) {
+      void openOrderDetail(s.orderId);
+    }
+    window.setTimeout(() => {
+      globalSearchInputRef.current?.blur();
+    }, 0);
+  };
+
   useEffect(() => {
     void Promise.all([loadCategories(), loadProducts(), loadUsers(), loadContactMessages(), loadDashboard()]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -457,6 +496,50 @@ function BackofficeDashboard() {
     ordersPaymentMethodFilter,
     ordersPaymentStatusFilter,
   ]);
+
+  useEffect(() => {
+    setGlobalSearchActiveIndex(-1);
+  }, [globalSearch]);
+
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      if (!globalSearchRef.current) return;
+      if (globalSearchRef.current.contains(e.target as Node)) return;
+      setGlobalSearchFocused(false);
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!pendingTargetKey) return;
+    const target = pendingTargetKey;
+    const timer = window.setTimeout(() => {
+      const escaped = target.replace(/"/g, '\\"');
+      const el = document.querySelector<HTMLElement>(`[data-bo-target="${escaped}"]`);
+      if (!el) return;
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+      setHighlightTargetKey(target);
+      setPendingTargetKey(null);
+    }, 140);
+    return () => window.clearTimeout(timer);
+  }, [
+    pendingTargetKey,
+    section,
+    productSearch,
+    categorySearch,
+    search,
+    products.length,
+    categories.length,
+    users.length,
+    adminOrders.length,
+  ]);
+
+  useEffect(() => {
+    if (!highlightTargetKey) return;
+    const timer = window.setTimeout(() => setHighlightTargetKey(null), 2500);
+    return () => window.clearTimeout(timer);
+  }, [highlightTargetKey]);
 
   /* ------------------------------- Actions -------------------------------- */
 
@@ -636,6 +719,100 @@ function BackofficeDashboard() {
   const lowStockCount = products.filter((p) => (p.stock ?? 0) > 0 && (p.stock ?? 0) < 5).length;
   const outOfStockCount = products.filter((p) => (p.stock ?? 0) === 0).length;
   const activeCategories = categories.filter((c) => c.isActive).length;
+
+  const globalSuggestions = useMemo<GlobalSearchSuggestion[]>(() => {
+    const q = globalSearch.trim().toLowerCase();
+    if (!q) return [];
+    const items: Array<GlobalSearchSuggestion & { score: number }> = [];
+
+    for (const p of products) {
+      const name = p.name ?? "";
+      const sku = p.sku ?? "";
+      const slug = p.slug ?? "";
+      const categoryName = p.category?.name ?? "";
+      const score = Math.max(
+        scoreQuery(name, q),
+        scoreQuery(sku, q),
+        scoreQuery(slug, q),
+        scoreQuery(categoryName, q),
+      );
+      if (score <= 0) continue;
+      items.push({
+        key: `p:${p.id}`,
+        kind: "product",
+        section: "products",
+        label: name || slug || p.id,
+        meta: [sku, categoryName].filter(Boolean).join(" · "),
+        targetKey: `product:${p.id}`,
+        query: name || sku || slug,
+        score,
+      });
+    }
+
+    for (const c of categories) {
+      const score = Math.max(scoreQuery(c.name, q), scoreQuery(c.slug, q));
+      if (score <= 0) continue;
+      items.push({
+        key: `c:${c.id}`,
+        kind: "category",
+        section: "categories",
+        label: c.name,
+        meta: c.slug,
+        targetKey: `category:${c.id}`,
+        query: c.name,
+        score,
+      });
+    }
+
+    for (const u of users) {
+      const fullName = u.fullName ?? "";
+      const score = Math.max(scoreQuery(u.email, q), scoreQuery(fullName, q));
+      if (score <= 0) continue;
+      items.push({
+        key: `u:${u.id}`,
+        kind: "user",
+        section: "users",
+        label: fullName || u.email,
+        meta: fullName ? u.email : "",
+        targetKey: `user:${u.id}`,
+        query: u.email,
+        score,
+      });
+    }
+
+    for (const o of adminOrders) {
+      const customer = o.customerEmail ?? "";
+      const score = Math.max(scoreQuery(o.orderNumber, q), scoreQuery(customer, q));
+      if (score <= 0) continue;
+      items.push({
+        key: `o:${o.id}`,
+        kind: "order",
+        section: "orders",
+        label: o.orderNumber,
+        meta: customer || o.status,
+        targetKey: `order:${o.id}`,
+        query: o.orderNumber,
+        orderId: o.id,
+        score,
+      });
+    }
+
+    items.sort((a, b) => b.score - a.score || a.label.localeCompare(b.label));
+    return items.slice(0, 12).map(({ score: _score, ...rest }) => rest);
+  }, [adminOrders, categories, globalSearch, products, users]);
+
+  const globalCategorySuggestions = useMemo(
+    () => globalSuggestions.filter((s) => s.kind === "category").slice(0, 5),
+    [globalSuggestions],
+  );
+  const globalProposalSuggestions = useMemo(
+    () => globalSuggestions.filter((s) => s.kind !== "category").slice(0, 3),
+    [globalSuggestions],
+  );
+  const globalVisibleSuggestions = useMemo(
+    () => [...globalCategorySuggestions, ...globalProposalSuggestions],
+    [globalCategorySuggestions, globalProposalSuggestions],
+  );
 
   // #11 — text search + dropdown filters + price range, then sort, then paginate.
   const filteredProducts = useMemo(() => {
@@ -1024,6 +1201,17 @@ function BackofficeDashboard() {
       .join("")
       .toUpperCase() || "?";
 
+  function scoreQuery(value: string, query: string): number {
+    const hay = value.toLowerCase();
+    const q = query.toLowerCase();
+    if (!q) return 0;
+    if (hay === q) return 100;
+    if (hay.startsWith(q)) return 80;
+    const idx = hay.indexOf(q);
+    if (idx >= 0) return 50 - Math.min(idx, 20);
+    return 0;
+  }
+
   /* --------------------------------- UI ----------------------------------- */
 
   return (
@@ -1051,14 +1239,98 @@ function BackofficeDashboard() {
             <span className="current">{SECTION_LABEL[section]}</span>
           </div>
           <div className="bo-top-spacer" />
-          <div className="bo-search">
+          <div className="bo-search" ref={globalSearchRef}>
             <Icon.Search />
             <input
+              ref={globalSearchInputRef}
               value={globalSearch}
-              onChange={(e) => setGlobalSearch(e.target.value)}
+              onChange={(e) => {
+                setGlobalSearch(e.target.value);
+                setGlobalSearchFocused(true);
+              }}
+              onFocus={() => setGlobalSearchFocused(true)}
+              onKeyDown={(e) => {
+                if (!globalSearchFocused || globalVisibleSuggestions.length === 0) return;
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setGlobalSearchActiveIndex((prev) => (prev + 1) % globalVisibleSuggestions.length);
+                  return;
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setGlobalSearchActiveIndex((prev) =>
+                    prev <= 0 ? globalVisibleSuggestions.length - 1 : prev - 1,
+                  );
+                  return;
+                }
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setGlobalSearchFocused(false);
+                  setGlobalSearchActiveIndex(-1);
+                  return;
+                }
+                if (e.key === "Enter" && globalSearchActiveIndex >= 0) {
+                  e.preventDefault();
+                  applyGlobalSuggestion(globalVisibleSuggestions[globalSearchActiveIndex]);
+                }
+              }}
               placeholder="Rechercher produits, commandes, clients…"
             />
             <kbd>⌘K</kbd>
+            {globalSearchFocused && globalSearch.trim().length > 0 ? (
+              <div className="bo-search-popover">
+                {globalVisibleSuggestions.length === 0 ? (
+                  <div className="bo-search-empty">Aucun résultat.</div>
+                ) : (
+                  <>
+                    {globalCategorySuggestions.length > 0 ? (
+                      <div className="bo-search-group-label">Catégories</div>
+                    ) : null}
+                    {globalCategorySuggestions.map((s, idx) => (
+                      <button
+                        key={s.key}
+                        type="button"
+                        className={`bo-search-item ${idx === globalSearchActiveIndex ? "active" : ""}`}
+                        onMouseDown={(ev) => ev.preventDefault()}
+                        onMouseEnter={() => setGlobalSearchActiveIndex(idx)}
+                        onClick={() => applyGlobalSuggestion(s)}
+                      >
+                        <span className="bo-search-item-main">{s.label}</span>
+                        <span className="bo-search-item-meta">
+                          Catégorie{s.meta ? ` · ${s.meta}` : ""}
+                        </span>
+                      </button>
+                    ))}
+                    {globalProposalSuggestions.length > 0 ? (
+                      <div className="bo-search-group-label">Propositions</div>
+                    ) : null}
+                    {globalProposalSuggestions.map((s, idx) => {
+                      const absoluteIndex = globalCategorySuggestions.length + idx;
+                      return (
+                        <button
+                          key={s.key}
+                          type="button"
+                          className={`bo-search-item ${absoluteIndex === globalSearchActiveIndex ? "active" : ""}`}
+                          onMouseDown={(ev) => ev.preventDefault()}
+                          onMouseEnter={() => setGlobalSearchActiveIndex(absoluteIndex)}
+                          onClick={() => applyGlobalSuggestion(s)}
+                        >
+                          <span className="bo-search-item-main">{s.label}</span>
+                          <span className="bo-search-item-meta">
+                            {s.kind === "product"
+                              ? "Produit"
+                              : s.kind === "order"
+                                ? "Commande"
+                                : "Utilisateur"}
+                            {s.meta ? ` · ${s.meta}` : ""}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </>
+                )}
+              </div>
+            ) : null}
           </div>
           <Link
             href="/"
@@ -1903,6 +2175,10 @@ function BackofficeDashboard() {
                           return (
                             <tr
                               key={p.id}
+                              data-bo-target={`product:${p.id}`}
+                              className={
+                                highlightTargetKey === `product:${p.id}` ? "bo-row-highlight" : undefined
+                              }
                               style={{
                                 background: selectedProductIds.has(p.id)
                                   ? "var(--bo-brand-soft)"
@@ -2299,6 +2575,8 @@ function BackofficeDashboard() {
                             key={cat.id}
                             id={cat.id}
                             disabled={categorySearch.trim().length > 0}
+                            targetKey={`category:${cat.id}`}
+                            highlighted={highlightTargetKey === `category:${cat.id}`}
                           >
                             <td>
                               <input
@@ -2570,7 +2848,13 @@ function BackofficeDashboard() {
                       </thead>
                       <tbody>
                         {adminOrders.map((o) => (
-                          <tr key={o.id}>
+                          <tr
+                            key={o.id}
+                            data-bo-target={`order:${o.id}`}
+                            className={
+                              highlightTargetKey === `order:${o.id}` ? "bo-row-highlight" : undefined
+                            }
+                          >
                             <td className="bo-mono" style={{ fontSize: 11, fontWeight: 600 }}>
                               {o.orderNumber}
                             </td>
@@ -2843,7 +3127,13 @@ function BackofficeDashboard() {
                       </thead>
                       <tbody>
                         {users.map((u) => (
-                          <tr key={u.id}>
+                          <tr
+                            key={u.id}
+                            data-bo-target={`user:${u.id}`}
+                            className={
+                              highlightTargetKey === `user:${u.id}` ? "bo-row-highlight" : undefined
+                            }
+                          >
                             <td>
                               <div className="bo-hstack">
                                 <span
@@ -3084,10 +3374,14 @@ export default function BackofficePage() {
 function SortableCategoryRow({
   id,
   disabled,
+  targetKey,
+  highlighted,
   children,
 }: {
   id: string;
   disabled?: boolean;
+  targetKey?: string;
+  highlighted?: boolean;
   children: React.ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -3101,7 +3395,12 @@ function SortableCategoryRow({
   };
 
   return (
-    <tr ref={setNodeRef} style={style}>
+    <tr
+      ref={setNodeRef}
+      style={style}
+      data-bo-target={targetKey}
+      className={highlighted ? "bo-row-highlight" : undefined}
+    >
       <td style={{ padding: "0 4px" }}>
         <button
           type="button"
