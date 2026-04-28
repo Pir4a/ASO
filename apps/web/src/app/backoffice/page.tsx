@@ -2890,7 +2890,7 @@ function BackofficeDashboard() {
                               {u.orderCount}
                             </td>
                             <td className="num bo-mono" style={{ fontWeight: 600, fontSize: 11 }}>
-                              {u.revenue.toFixed(0)} €
+                              {Number(u.revenue ?? 0).toFixed(0)} €
                             </td>
                             <td className="num bo-mono muted" style={{ fontSize: 11 }}>
                               {u.addressCount}
