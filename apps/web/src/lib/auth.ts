@@ -118,7 +118,11 @@ export async function authFetch(input: string, init: RequestInit = {}): Promise<
   const buildHeaders = (token: string | null) => {
     const h = new Headers(init.headers ?? {});
     if (token) h.set("Authorization", `Bearer ${token}`);
-    if (init.body && !h.has("Content-Type")) h.set("Content-Type", "application/json");
+    // Only default to JSON for string bodies; FormData/Blob/streams need the
+    // browser to set their own Content-Type (e.g. multipart boundary).
+    if (typeof init.body === "string" && !h.has("Content-Type")) {
+      h.set("Content-Type", "application/json");
+    }
     return h;
   };
 
