@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCategories, getProducts, getProductsCatalog } from "@/lib/api";
+import { getCategories, getProducts, getProductsCatalog, getProductsSearch } from "@/lib/api";
 import { getLocaleFromCookie } from "@/lib/i18n.server";
 import { getTranslations } from "@/lib/translations";
 import { CategoryHero } from "@/components/category/CategoryHero";
@@ -28,7 +28,17 @@ export default async function ProductsListPage({
   const [categories, allProducts, page] = await Promise.all([
     getCategories(),
     getProducts(),
-    getProductsCatalog({ page: requestedPage, limit: size }),
+    initialQuery.length > 0
+      ? getProductsSearch({
+          q: initialQuery,
+          page: requestedPage,
+          limit: size,
+          sort: "relevance",
+        }).then((res) => ({
+          products: res.products,
+          meta: res.meta,
+        }))
+      : getProductsCatalog({ page: requestedPage, limit: size }),
   ]);
 
   const products = page.products;
