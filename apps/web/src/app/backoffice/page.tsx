@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -1030,7 +1031,14 @@ function BackofficeDashboard() {
       <div className="bo-app">
         {/* Brand corner */}
         <div className="bo-brand-cell">
-          <div className="bo-brand-mark">A+</div>
+          <Image
+            src="/logo-mark.png"
+            alt=""
+            width={32}
+            height={32}
+            priority
+            className="bo-brand-logo"
+          />
           <div className="bo-brand-name">Althea Systems</div>
           <div className="bo-brand-env">PROD</div>
         </div>
@@ -1063,12 +1071,6 @@ function BackofficeDashboard() {
           >
             <Icon.Home /> Retour au site
           </Link>
-          <button className="bo-icon-btn" title="Notifications" type="button">
-            <Icon.Bell />
-          </button>
-          <button className="bo-icon-btn" title="Paramètres" type="button" onClick={() => setSection("settings")}>
-            <Icon.Settings />
-          </button>
           <div className="bo-divider-v" />
           <div className="bo-user-chip" title={user?.email ?? "admin"}>
             <span className="avatar">{(user?.email ?? "A")[0].toUpperCase()}</span>
