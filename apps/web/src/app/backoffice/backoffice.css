@@ -959,6 +959,81 @@ table.bo-data td.muted {
   flex: 1;
 }
 
+/* Toolbar — filter/action row above tables (Chat, Invoices, Credit notes). */
+.bo-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Select — same visual language as .bo-input, with a custom chevron so
+   native browser styling doesn't break the row's vertical rhythm. */
+.bo-select {
+  background: var(--bo-panel);
+  border: 1px solid var(--bo-border);
+  border-radius: 5px;
+  padding: 5px 28px 5px 10px;
+  font-size: 12px;
+  color: var(--bo-text);
+  font-family: inherit;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 16 16' fill='none' stroke='%236b6f69' stroke-width='1.6'><path d='m4 6 4 4 4-4'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+.bo-select:focus {
+  border-color: var(--bo-brand);
+  box-shadow: 0 0 0 2px var(--bo-brand-soft);
+}
+
+/* Table wrapper — gives panels a bordered, scrollable container so the
+   underlying <table> sits on the same surface as cards. */
+.bo-table-wrap {
+  border: 1px solid var(--bo-border);
+  border-radius: var(--bo-radius);
+  background: var(--bo-panel);
+  overflow-x: auto;
+}
+
+.bo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  color: var(--bo-text);
+}
+.bo-table thead th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bo-text-dim);
+  background: var(--bo-panel-2);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--bo-border);
+  white-space: nowrap;
+}
+.bo-table tbody td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--bo-border);
+  vertical-align: middle;
+}
+.bo-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.bo-table tbody tr:hover td {
+  background: var(--bo-row-hover);
+}
+.bo-table .num,
+.bo-table th.num,
+.bo-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Mobile fallback */
 @media (max-width: 720px) {
   .bo-app {
