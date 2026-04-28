@@ -49,7 +49,9 @@ export class ResendInvoiceEmailUseCase {
             throw new NotFoundException('Order for invoice not found, cannot regenerate PDF');
         }
 
-        const orderNumber = order ? formatOrderNumber(order.id, order.createdAt) : undefined;
+        const orderNumber = order
+            ? (order.orderNumber ?? formatOrderNumber(order.id, order.createdAt))
+            : undefined;
         await this.emailGateway.sendInvoiceEmail(recipient, invoice.number, pdfBuffer, orderNumber);
 
         return { ok: true, sentTo: recipient };

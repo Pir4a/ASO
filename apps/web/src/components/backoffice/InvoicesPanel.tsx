@@ -10,6 +10,7 @@ type AdminInvoice = {
     id: string;
     number: string;
     orderId: string;
+    orderNumber: string | null;
     userId: string | null;
     customerEmail: string | null;
     totalHtCents: number;
@@ -74,8 +75,13 @@ export function InvoicesPanel({ flash }: { flash?: (kind: "success" | "error", t
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
+            const contentDisposition = res.headers.get("Content-Disposition");
+            const filenameMatch =
+                contentDisposition?.match(/filename\*=UTF-8''([^;]+)|filename="([^"]+)"|filename=([^;]+)/i) ??
+                null;
+            const rawFilename = filenameMatch?.[1] ?? filenameMatch?.[2] ?? filenameMatch?.[3];
             a.href = url;
-            a.download = `facture-${invoice.number}.pdf`;
+            a.download = rawFilename ? decodeURIComponent(rawFilename.trim()) : `facture-${invoice.number}.pdf`;
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -160,6 +166,7 @@ export function InvoicesPanel({ flash }: { flash?: (kind: "success" | "error", t
                     <thead>
                         <tr>
                             <th>Numéro</th>
+                            <th>Commande</th>
                             <th>Client</th>
                             <th>Date</th>
                             <th>Total TTC</th>
@@ -170,7 +177,7 @@ export function InvoicesPanel({ flash }: { flash?: (kind: "success" | "error", t
                     <tbody>
                         {invoices.length === 0 && !loading ? (
                             <tr>
-                                <td colSpan={6} className="bo-muted" style={{ textAlign: "center", padding: 24 }}>
+                                <td colSpan={7} className="bo-muted" style={{ textAlign: "center", padding: 24 }}>
                                     Aucune facture
                                 </td>
                             </tr>
@@ -178,6 +185,7 @@ export function InvoicesPanel({ flash }: { flash?: (kind: "success" | "error", t
                             invoices.map((inv) => (
                                 <tr key={inv.id}>
                                     <td className="bo-mono">{inv.number}</td>
+                                    <td className="bo-mono bo-muted">{inv.orderNumber ?? "—"}</td>
                                     <td>{inv.customerEmail ?? <span className="bo-muted">—</span>}</td>
                                     <td>{formatDate(inv.issuedAt)}</td>
                                     <td className="bo-mono">{formatMoney(inv.totalTtcCents, inv.currency)}</td>

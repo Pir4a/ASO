@@ -10,7 +10,12 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export const CONTENT_TYPES = ['carousel', 'homepage_text', 'category_image'] as const;
+export const CONTENT_TYPES = [
+  'carousel',
+  'homepage_text',
+  'category_image',
+  'backoffice_settings',
+] as const;
 export type AdminContentType = (typeof CONTENT_TYPES)[number];
 
 export class CreateContentBlockDto {
@@ -58,4 +63,9 @@ export class ReorderContentDto {
   @ValidateNested({ each: true })
   @Type(() => ContentOrderItemDto)
   items: ContentOrderItemDto[];
+}
+
+export class UpdateBackofficeSettingsDto {
+  @IsObject()
+  payload: Record<string, unknown>;
 }

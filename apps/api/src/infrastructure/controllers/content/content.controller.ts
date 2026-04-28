@@ -20,6 +20,7 @@ import { Roles } from '../../auth/roles.decorator';
 import {
     CreateContentBlockDto,
     ReorderContentDto,
+    UpdateBackofficeSettingsDto,
     UpdateContentBlockDto,
 } from '../../dto/content/content-block-admin.dto';
 
@@ -36,6 +37,40 @@ export class ContentController {
     @Get()
     findAll() {
         return this.getContentUseCase.execute();
+    }
+
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin')
+    @Get('admin/settings')
+    async getBackofficeSettings() {
+        const block = await this.repo.findOne({ where: { type: 'backoffice_settings' } });
+        return {
+            id: block?.id ?? null,
+            payload: (block?.payload ?? {}) as Record<string, unknown>,
+        };
+    }
+
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin')
+    @Patch('admin/settings')
+    async updateBackofficeSettings(@Body() body: UpdateBackofficeSettingsDto) {
+        const existing = await this.repo.findOne({ where: { type: 'backoffice_settings' } });
+        if (!existing) {
+            const created = this.repo.create({
+                type: 'backoffice_settings',
+                payload: body.payload ?? {},
+                order: 0,
+            });
+            const saved = await this.repo.save(created);
+            return { id: saved.id, payload: saved.payload ?? {} };
+        }
+
+        existing.payload = {
+            ...(existing.payload ?? {}),
+            ...(body.payload ?? {}),
+        };
+        const saved = await this.repo.save(existing);
+        return { id: saved.id, payload: saved.payload ?? {} };
     }
 
     @UseGuards(JwtAuthGuard, RolesGuard)

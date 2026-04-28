@@ -45,6 +45,10 @@ export class NodemailerService implements EmailGateway {
   private readonly logger = new Logger(NodemailerService.name);
   private transporterPromise: Promise<Transporter> | null = null;
 
+  private getCustomerOrderNumber(order: Order): string {
+    return order.orderNumber ?? order.id;
+  }
+
   private getTransporter(): Promise<Transporter> {
     if (!this.transporterPromise) {
       this.transporterPromise = this.createTransporter();
@@ -219,13 +223,14 @@ export class NodemailerService implements EmailGateway {
   ): Promise<void> {
     const locale = this.resolveOrderLocale(options.locale);
     const t = ORDER_CONFIRMATION_T[locale];
+    const customerOrderNumber = this.getCustomerOrderNumber(order);
     const orderUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/orders/${order.id}`;
     const html = this.buildOrderConfirmationHtml(order, orderUrl, t, options.invoiceNumber);
 
     const attachments = options.pdfBuffer
       ? [
           {
-            filename: `${options.invoiceNumber || `commande-${order.id.slice(0, 8)}`}.pdf`,
+            filename: `${options.invoiceNumber || `commande-${customerOrderNumber}`}.pdf`,
             content: options.pdfBuffer,
             contentType: 'application/pdf',
           },
@@ -237,7 +242,7 @@ export class NodemailerService implements EmailGateway {
     const info = await transporter.sendMail({
       from: process.env.SMTP_FROM || '"Althea Shop" <no-reply@althea.local>',
       to,
-      subject: `${t.subject} #${order.id.slice(0, 8)}`,
+      subject: `${t.subject} #${customerOrderNumber}`,
       html,
       attachments,
     });
@@ -262,6 +267,7 @@ export class NodemailerService implements EmailGateway {
     t: Record<string, string>,
     invoiceNumber?: string,
   ): string {
+    const customerOrderNumber = this.getCustomerOrderNumber(order);
     const currency = order.currency || 'EUR';
     const formatPrice = (amount: number) =>
       new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(amount);
@@ -300,7 +306,7 @@ export class NodemailerService implements EmailGateway {
     return `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #222;">
           <h1>${t.greeting}</h1>
-          <p><strong>${t.orderNumber} :</strong> ${this.escapeHtml(order.id)}</p>
+          <p><strong>${t.orderNumber} :</strong> ${this.escapeHtml(customerOrderNumber)}</p>
           ${invoiceBlock}
           <h2 style="margin-top: 24px;">${t.items}</h2>
           <table style="width: 100%; border-collapse: collapse;">
@@ -394,11 +400,10 @@ export class NodemailerService implements EmailGateway {
   async sendGuestSignupEmail(
     to: string,
     token: string,
-    orderId: string,
+    orderNumber: string,
     _locale?: string,
   ): Promise<void> {
     const setupLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}&welcome=1`;
-    const orderShort = orderId.slice(0, 8);
 
     const transporter = await this.getTransporter();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer's Transporter generic defaults to `any`
@@ -408,14 +413,14 @@ export class NodemailerService implements EmailGateway {
       subject: 'Créez votre mot de passe pour suivre votre commande Althea',
       html: `
                 <h1>Merci pour votre commande !</h1>
-                <p>Votre commande <strong>${orderShort}</strong> a bien été enregistrée.</p>
+                <p>Votre commande <strong>${orderNumber}</strong> a bien été enregistrée.</p>
                 <p>Nous avons créé un compte avec votre adresse e-mail pour que vous puissiez la suivre. Définissez votre mot de passe en cliquant sur le lien ci-dessous :</p>
                 <p><a href="${setupLink}">Créer mon mot de passe</a></p>
                 <p>Ce lien expire dans 24 heures. Si vous n'êtes pas à l'origine de cette commande, ignorez cet e-mail.</p>
             `,
     });
 
-    this.logger.log(`Guest signup email sent to ${to} for order ${orderId}`);
+    this.logger.log(`Guest signup email sent to ${to} for order ${orderNumber}`);
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- info is `any` from sendMail; nodemailer accepts it
     const previewUrl = nodemailer.getTestMessageUrl(info);

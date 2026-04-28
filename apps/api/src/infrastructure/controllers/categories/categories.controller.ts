@@ -9,6 +9,8 @@ import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { RolesGuard } from '../../guards/roles.guard';
 import { Roles } from '../../auth/roles.decorator';
 import { BulkCategoryActionDto, CreateCategoryDto, ReorderCategoriesDto, UpdateCategoryDto } from '../../dto/categories/category-admin.dto';
+import { localizeCategory } from '../../../lib/i18n-localize';
+import { AutoTranslationService } from '../../services/auto-translation.service';
 
 @Controller('categories')
 export class CategoriesController {
@@ -17,13 +19,14 @@ export class CategoriesController {
       private readonly findCategoryByIdUseCase: FindCategoryByIdUseCase,
       @Inject(CATEGORY_REPOSITORY_TOKEN)
       private readonly categoryRepository: CategoryRepository,
+      private readonly autoTranslationService: AutoTranslationService,
     ) { }
 
     @Get()
-    async findAll(@Query('includeInactive') includeInactive?: string) {
+    async findAll(@Query('includeInactive') includeInactive?: string, @Query('lang') lang?: string) {
         const categories = await this.getCategoriesUseCase.execute();
-        if (includeInactive === 'true') return categories;
-        return categories.filter((c) => c.isActive !== false);
+        const filtered = includeInactive === 'true' ? categories : categories.filter((c) => c.isActive !== false);
+        return filtered.map((c) => localizeCategory(c, lang));
     }
 
     @UseGuards(JwtAuthGuard, RolesGuard)
@@ -41,6 +44,11 @@ export class CategoriesController {
           imageUrl: body.imageUrl,
           order: body.order ?? 0,
           isActive: true,
+          translations: await this.autoTranslationService.ensureTranslations({
+            name: body.name,
+            description: body.description ?? '',
+            existing: body.translations,
+          }),
         }),
       );
       return created;
@@ -62,6 +70,11 @@ export class CategoriesController {
         new Category({
           ...category,
           ...body,
+          translations: await this.autoTranslationService.ensureTranslations({
+            name: body.name ?? category.name,
+            description: body.description ?? category.description ?? '',
+            existing: body.translations ?? category.translations,
+          }),
           isActive: body.isActive ?? category.isActive,
         }),
       );

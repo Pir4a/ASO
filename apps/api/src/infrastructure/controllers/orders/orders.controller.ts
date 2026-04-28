@@ -65,11 +65,12 @@ export class OrdersController {
         @Param('id') orderId: string,
     ): Promise<StreamableFile> {
         const userId = req.user.sub;
+        const order = await this.getOrderDetailsUseCase.execute(orderId, userId);
         const pdfBuffer = await this.generateInvoicePdfUseCase.execute(orderId, userId);
 
         res.set({
             'Content-Type': 'application/pdf',
-            'Content-Disposition': `attachment; filename="facture-${orderId}.pdf"`,
+            'Content-Disposition': `attachment; filename="facture-${order.orderNumber}.pdf"`,
             'Content-Length': pdfBuffer.length,
         });
 

@@ -11,6 +11,7 @@ import {
     Query,
     Res,
     UseGuards,
+    Inject,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
@@ -25,6 +26,8 @@ import { CancelInvoiceUseCase } from '../../../application/use-cases/credit-note
 import { ListInvoicesQueryDto } from '../../dto/invoices/list-invoices-query.dto';
 import { PatchInvoiceDto, ResendInvoiceEmailDto } from '../../dto/invoices/patch-invoice.dto';
 import { CancelInvoiceDto } from '../../dto/credit-notes/send-credit-note-email.dto';
+import { ORDER_REPOSITORY_TOKEN } from '../../../domain/repositories/order.repository.interface';
+import type { OrderRepository } from '../../../domain/repositories/order.repository.interface';
 
 @Controller('admin/invoices')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -37,6 +40,8 @@ export class AdminInvoicesController {
         private readonly resendInvoiceEmail: ResendInvoiceEmailUseCase,
         private readonly updateInvoice: UpdateInvoiceUseCase,
         private readonly cancelInvoice: CancelInvoiceUseCase,
+        @Inject(ORDER_REPOSITORY_TOKEN)
+        private readonly orderRepository: OrderRepository,
     ) { }
 
     @Get()
@@ -52,6 +57,17 @@ export class AdminInvoicesController {
                 toDate: query.to ? new Date(query.to) : undefined,
             },
         });
+        const orderEntries = await Promise.all(
+            result.rows.map(async ({ invoice }) => ({
+                orderId: invoice.orderId,
+                order: await this.orderRepository.findById(invoice.orderId),
+            })),
+        );
+        const orderById = new Map(
+            orderEntries
+                .filter((entry) => entry.order)
+                .map((entry) => [entry.orderId, entry.order!] as const),
+        );
         return {
             page: result.page,
             pageSize: result.pageSize,
@@ -60,6 +76,7 @@ export class AdminInvoicesController {
                 id: invoice.id,
                 number: invoice.number,
                 orderId: invoice.orderId,
+                orderNumber: orderById.get(invoice.orderId)?.orderNumber ?? null,
                 userId: invoice.userId,
                 customerEmail,
                 totalHtCents: invoice.totalHtCents,

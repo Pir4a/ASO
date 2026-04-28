@@ -165,7 +165,7 @@ export class ConfirmOrderPaymentUseCase {
                 await this.emailGateway.sendGuestSignupEmail(
                     resolvedEmail,
                     guestSignupToken,
-                    finalOrder.id,
+                    finalOrder.orderNumber ?? finalOrder.id,
                 );
             } catch (e) {
                 this.logger.warn(

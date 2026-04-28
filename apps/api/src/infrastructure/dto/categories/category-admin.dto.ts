@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsInt, IsObject, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateCategoryDto {
@@ -20,6 +20,10 @@ export class CreateCategoryDto {
   @IsInt()
   @Min(0)
   order?: number;
+
+  @IsOptional()
+  @IsObject()
+  translations?: Record<string, { name?: string; description?: string }>;
 }
 
 export class UpdateCategoryDto {
@@ -47,6 +51,10 @@ export class UpdateCategoryDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsObject()
+  translations?: Record<string, { name?: string; description?: string }>;
 }
 
 export class CategoryOrderItemDto {

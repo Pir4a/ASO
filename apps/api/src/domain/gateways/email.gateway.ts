@@ -39,7 +39,7 @@ export interface EmailGateway {
     sendGuestSignupEmail(
         to: string,
         token: string,
-        orderId: string,
+        orderNumber: string,
         locale?: string,
     ): Promise<void>;
     sendChatReply(to: string, subject: string, content: string): Promise<void>;

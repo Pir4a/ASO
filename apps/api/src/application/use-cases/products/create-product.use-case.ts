@@ -22,6 +22,7 @@ export interface CreateProductCommand {
     listPriority?: number;
     galleryUrls?: string[];
     specs?: Record<string, string>;
+    translations?: Record<string, { name?: string; description?: string }>;
 }
 
 @Injectable()
@@ -48,6 +49,7 @@ export class CreateProductUseCase {
             listPriority,
             galleryUrls,
             specs,
+            translations,
         } = command;
         const vatAllowed = new Set([0, 5.5, 10, 20]);
         const vatRate = vatAllowed.has(Number(rawVat)) ? (Number(rawVat) as Product['vatRate']) : 20;
@@ -81,6 +83,7 @@ export class CreateProductUseCase {
             listPriority: listPriority ?? 0,
             galleryUrls,
             specs,
+            translations,
             thumbnailUrl,
             categoryId,
             category,

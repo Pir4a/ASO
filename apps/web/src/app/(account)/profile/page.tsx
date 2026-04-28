@@ -21,7 +21,7 @@ import {
   type OrderStatus,
   type OrdersByYear,
 } from "@/lib/api";
-import { useT } from "@/context/LocaleContext";
+import { useLocale, useT } from "@/context/LocaleContext";
 import { isPasswordTooWeakApiMessage, firstHttpErrorMessage } from "@/lib/password-api-error";
 import { passwordMeetsPolicy, getPasswordMissingSummary } from "@/lib/password-policy";
 import { PasswordRequirementHints } from "@/components/account/PasswordRequirementHints";
@@ -94,6 +94,8 @@ export default function ProfilePage() {
 }
 
 function ProfileShell() {
+  const locale = useLocale();
+  const copy = PROFILE_COPY[locale];
   const { user, logout } = useAuth();
   const router = useRouter();
   const [section, setSection] = useState<Section>("profile");
@@ -101,7 +103,7 @@ function ProfileShell() {
   const fullName =
     [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
     user?.email?.split("@")[0] ||
-    "Bienvenue";
+    copy.welcome;
   const initials =
     (user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "") ||
     (user?.email?.slice(0, 2).toUpperCase() ?? "?");
@@ -115,14 +117,14 @@ function ProfileShell() {
     <div className="space-y-7">
       {/* Breadcrumb */}
       <nav
-        aria-label="Fil d'Ariane"
+        aria-label={copy.breadcrumb}
         className="flex flex-wrap items-center gap-2 text-sm text-foreground/60"
       >
         <Link href="/" className="hover:text-primary">
-          Accueil
+          {copy.home}
         </Link>
         <span aria-hidden="true" className="text-foreground/25">/</span>
-        <span className="font-semibold text-foreground">Mon profil</span>
+        <span className="font-semibold text-foreground">{copy.myProfile}</span>
       </nav>
 
       {/* Profile hero */}
@@ -143,10 +145,10 @@ function ProfileShell() {
           <div className="min-w-0 flex-1">
             <p className="inline-flex items-center gap-2 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-[#b3eef2]">
               <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary-hover" />
-              Mon compte
+              {copy.myAccount}
             </p>
             <h1 className="mt-1 font-heading text-[28px] font-semibold leading-tight tracking-tight md:text-[34px]">
-              Bonjour, {fullName}
+              {copy.hello}, {fullName}
             </h1>
             {user?.email && (
               <p className="mt-1 text-[13.5px] text-white/70">
@@ -169,7 +171,7 @@ function ProfileShell() {
               <circle cx="6" cy="14" r="1" />
               <circle cx="12" cy="14" r="1" />
             </svg>
-            Mes commandes
+            {copy.myOrders}
           </Link>
         </div>
       </section>
@@ -233,7 +235,7 @@ function ProfileShell() {
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="h-3.5 w-3.5">
                   <path d="M6 2H3v12h3M10 5l3 3-3 3M6 8h7" />
                 </svg>
-                Se déconnecter
+                {copy.logout}
               </button>
             </div>
           </nav>
@@ -443,9 +445,9 @@ function PersonalInfoCard() {
             {user?.role === "admin" ? "Administrateur" : "Client"}
           </span>
         </ReadOnlyField>
-        <ReadOnlyField label="Identifiant">
-          <span className="font-mono text-[12px] text-foreground/65">
-            {user?.id?.slice(0, 8) ?? "—"}
+        <ReadOnlyField label="Statut du compte">
+          <span className="text-[12px] text-foreground/65">
+            {user?.isVerified ? "Compte vérifié" : "Vérification en attente"}
           </span>
         </ReadOnlyField>
       </dl>
@@ -653,6 +655,8 @@ function formatDate(iso?: string | Date) {
 }
 
 function OrdersShortcut() {
+  const locale = useLocale();
+  const copy = PROFILE_ORDERS_COPY[locale];
   const [data, setData] = useState<OrdersByYear | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -665,7 +669,7 @@ function OrdersShortcut() {
         const res = await getOrders();
         if (!cancelled) setData(res);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Erreur de chargement.");
+        if (!cancelled) setError(e instanceof Error ? e.message : copy.loadingError);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -703,19 +707,19 @@ function OrdersShortcut() {
 
   return (
     <SectionCard
-      eyebrow="Commandes"
-      title="Historique de vos achats"
-      hint="Suivi de livraison, statut et téléchargement de factures."
+      eyebrow={copy.orders}
+      title={copy.purchaseHistory}
+      hint={copy.purchaseHistoryHint}
     >
       <div className="grid gap-3 sm:grid-cols-3">
-        <StatusTile color="primary" label="En cours" value={counts.active} hint="En attente · traitement · expédition" />
-        <StatusTile color="success" label="Terminées" value={counts.delivered} hint="Livrées" />
-        <StatusTile color="error" label="Annulées" value={counts.cancelled} hint="Annulées" />
+        <StatusTile color="primary" label={copy.inProgress} value={counts.active} hint={copy.inProgressHint} />
+        <StatusTile color="success" label={copy.completed} value={counts.delivered} hint={copy.delivered} />
+        <StatusTile color="error" label={copy.cancelled} value={counts.cancelled} hint={copy.cancelled} />
       </div>
 
       {loading ? (
         <div className="mt-6 rounded-xl border border-dashed border-foreground/15 bg-background/40 px-6 py-8 text-center text-sm text-foreground/55">
-          Chargement de vos commandes…
+          {copy.loadingOrders}
         </div>
       ) : error ? (
         <div className="mt-6 inline-flex items-center gap-2 rounded-lg border border-error/30 bg-error/10 px-3.5 py-2.5 text-[13px] text-error">
@@ -727,21 +731,21 @@ function OrdersShortcut() {
         </div>
       ) : flat.length === 0 ? (
         <div className="mt-6 rounded-xl border border-dashed border-foreground/15 bg-background/40 px-6 py-8 text-center text-sm text-foreground/55">
-          Aucune commande pour le moment.
+          {copy.noOrders}
         </div>
       ) : (
         <div className="mt-6">
           <div className="mb-3 flex items-end justify-between gap-3">
             <h3 className="font-heading text-[14px] font-semibold text-foreground">
-              Dernières commandes
+              {copy.latestOrders}
             </h3>
             <span className="text-[11.5px] text-foreground/55">
-              {flat.length} au total
+              {flat.length} {copy.total}
             </span>
           </div>
           <ul className="divide-y divide-foreground/5 overflow-hidden rounded-xl border border-foreground/10" role="list">
             {recent.map((o) => {
-              const number = o.orderNumber ?? `ALT-${o.id.slice(0, 8).toUpperCase()}`;
+              const number = o.orderNumber ?? "—";
               return (
                 <li key={o.id}>
                   <Link
@@ -781,7 +785,7 @@ function OrdersShortcut() {
         style={{ color: "#fff" }}
         className="mt-6 inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-5 text-[14px] font-semibold transition hover:bg-primary-hover"
       >
-        Voir toutes mes commandes
+        {copy.viewAllOrders}
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
           <path d="M3 8h10m-3-3 3 3-3 3" />
         </svg>
@@ -831,32 +835,33 @@ function StatusTile({
 
 /* ── Security ──────────────────────────────────────────────── */
 function SecurityCard() {
+  const locale = useLocale();
+  const copy = PROFILE_SECURITY_COPY[locale];
   const { user } = useAuth();
 
   return (
     <>
       <SectionCard
-        eyebrow="Mot de passe"
-        title="Changer mon mot de passe"
-        hint="Saisissez votre mot de passe actuel pour confirmer la modification."
+        eyebrow={copy.password}
+        title={copy.changePassword}
+        hint={copy.changePasswordHint}
       >
         <ChangePasswordForm />
         <p className="mt-4 text-[12.5px] text-foreground/60">
-          Vous l&apos;avez oublié ?{" "}
+          {copy.forgotPasswordQ}{" "}
           <Link href="/forgot-password" className="font-semibold text-primary hover:underline">
-            Recevoir un lien de réinitialisation
+            {copy.receiveResetLink}
           </Link>{" "}
-          à <b className="font-semibold text-foreground">{user?.email ?? "votre email"}</b> (valable
-          24 h).
+          {copy.to} <b className="font-semibold text-foreground">{user?.email ?? copy.yourEmail}</b> ({copy.valid24h}).
         </p>
       </SectionCard>
 
       <MfaCard />
 
       <SectionCard
-        eyebrow="Sessions"
-        title="Vos appareils connectés"
-        hint="Si vous remarquez une activité suspecte, déconnectez-vous puis réinitialisez votre mot de passe."
+        eyebrow={copy.sessions}
+        title={copy.connectedDevices}
+        hint={copy.sessionsHint}
       >
         <div className="rounded-xl border border-foreground/10 bg-background/30 px-4 py-3.5">
           <div className="flex flex-wrap items-center gap-3">
@@ -867,12 +872,12 @@ function SecurityCard() {
               </svg>
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-[13.5px] font-semibold text-foreground">Session active</p>
-              <p className="text-[11.5px] text-foreground/55">Cet appareil · maintenant</p>
+              <p className="text-[13.5px] font-semibold text-foreground">{copy.activeSession}</p>
+              <p className="text-[11.5px] text-foreground/55">{copy.thisDeviceNow}</p>
             </div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success">
               <span aria-hidden="true" className="block h-1.5 w-1.5 rounded-full bg-success" />
-              En cours
+              {copy.inProgress}
             </span>
           </div>
         </div>
@@ -1402,3 +1407,180 @@ function ChangePasswordForm() {
     </form>
   );
 }
+
+const PROFILE_COPY = {
+  fr: {
+    welcome: "Bienvenue",
+    breadcrumb: "Fil d'Ariane",
+    home: "Accueil",
+    myProfile: "Mon profil",
+    myAccount: "Mon compte",
+    hello: "Bonjour",
+    myOrders: "Mes commandes",
+    logout: "Se déconnecter",
+  },
+  en: {
+    welcome: "Welcome",
+    breadcrumb: "Breadcrumb",
+    home: "Home",
+    myProfile: "My profile",
+    myAccount: "My account",
+    hello: "Hello",
+    myOrders: "My orders",
+    logout: "Log out",
+  },
+  ar: {
+    welcome: "مرحباً",
+    breadcrumb: "مسار التنقل",
+    home: "الرئيسية",
+    myProfile: "ملفي الشخصي",
+    myAccount: "حسابي",
+    hello: "مرحباً",
+    myOrders: "طلباتي",
+    logout: "تسجيل الخروج",
+  },
+  he: {
+    welcome: "ברוכים הבאים",
+    breadcrumb: "שביל ניווט",
+    home: "דף הבית",
+    myProfile: "הפרופיל שלי",
+    myAccount: "החשבון שלי",
+    hello: "שלום",
+    myOrders: "ההזמנות שלי",
+    logout: "התנתקות",
+  },
+} as const;
+
+const PROFILE_ORDERS_COPY = {
+  fr: {
+    loadingError: "Erreur de chargement.",
+    orders: "Commandes",
+    purchaseHistory: "Historique de vos achats",
+    purchaseHistoryHint: "Suivi de livraison, statut et téléchargement de factures.",
+    inProgress: "En cours",
+    inProgressHint: "En attente · traitement · expédition",
+    completed: "Terminées",
+    delivered: "Livrées",
+    cancelled: "Annulées",
+    loadingOrders: "Chargement de vos commandes…",
+    noOrders: "Aucune commande pour le moment.",
+    latestOrders: "Dernières commandes",
+    total: "au total",
+    viewAllOrders: "Voir toutes mes commandes",
+  },
+  en: {
+    loadingError: "Loading error.",
+    orders: "Orders",
+    purchaseHistory: "Purchase history",
+    purchaseHistoryHint: "Delivery tracking, status and invoice downloads.",
+    inProgress: "In progress",
+    inProgressHint: "Pending · processing · shipped",
+    completed: "Completed",
+    delivered: "Delivered",
+    cancelled: "Cancelled",
+    loadingOrders: "Loading your orders…",
+    noOrders: "No orders yet.",
+    latestOrders: "Latest orders",
+    total: "total",
+    viewAllOrders: "View all my orders",
+  },
+  ar: {
+    loadingError: "خطأ في التحميل.",
+    orders: "الطلبات",
+    purchaseHistory: "سجل مشترياتك",
+    purchaseHistoryHint: "تتبع الشحن، الحالة، وتنزيل الفواتير.",
+    inProgress: "قيد التنفيذ",
+    inProgressHint: "انتظار · معالجة · شحن",
+    completed: "مكتملة",
+    delivered: "مسلّمة",
+    cancelled: "ملغاة",
+    loadingOrders: "جارٍ تحميل طلباتك…",
+    noOrders: "لا توجد طلبات حالياً.",
+    latestOrders: "أحدث الطلبات",
+    total: "إجمالي",
+    viewAllOrders: "عرض كل طلباتي",
+  },
+  he: {
+    loadingError: "שגיאת טעינה.",
+    orders: "הזמנות",
+    purchaseHistory: "היסטוריית רכישות",
+    purchaseHistoryHint: "מעקב משלוח, סטטוס והורדת חשבוניות.",
+    inProgress: "בתהליך",
+    inProgressHint: "ממתין · בטיפול · נשלח",
+    completed: "הושלמו",
+    delivered: "נמסרו",
+    cancelled: "בוטלו",
+    loadingOrders: "טוען את ההזמנות שלך…",
+    noOrders: "אין הזמנות כרגע.",
+    latestOrders: "הזמנות אחרונות",
+    total: "בסך הכול",
+    viewAllOrders: "צפייה בכל ההזמנות שלי",
+  },
+} as const;
+
+const PROFILE_SECURITY_COPY = {
+  fr: {
+    password: "Mot de passe",
+    changePassword: "Changer mon mot de passe",
+    changePasswordHint: "Saisissez votre mot de passe actuel pour confirmer la modification.",
+    forgotPasswordQ: "Vous l'avez oublié ?",
+    receiveResetLink: "Recevoir un lien de réinitialisation",
+    to: "à",
+    yourEmail: "votre email",
+    valid24h: "valable 24 h",
+    sessions: "Sessions",
+    connectedDevices: "Vos appareils connectés",
+    sessionsHint: "Si vous remarquez une activité suspecte, déconnectez-vous puis réinitialisez votre mot de passe.",
+    activeSession: "Session active",
+    thisDeviceNow: "Cet appareil · maintenant",
+    inProgress: "En cours",
+  },
+  en: {
+    password: "Password",
+    changePassword: "Change my password",
+    changePasswordHint: "Enter your current password to confirm the change.",
+    forgotPasswordQ: "Forgot it?",
+    receiveResetLink: "Receive reset link",
+    to: "to",
+    yourEmail: "your email",
+    valid24h: "valid for 24h",
+    sessions: "Sessions",
+    connectedDevices: "Your connected devices",
+    sessionsHint: "If you notice suspicious activity, log out and reset your password.",
+    activeSession: "Active session",
+    thisDeviceNow: "This device · now",
+    inProgress: "Active",
+  },
+  ar: {
+    password: "كلمة المرور",
+    changePassword: "تغيير كلمة المرور",
+    changePasswordHint: "أدخل كلمة المرور الحالية لتأكيد التغيير.",
+    forgotPasswordQ: "هل نسيتها؟",
+    receiveResetLink: "استلام رابط إعادة التعيين",
+    to: "إلى",
+    yourEmail: "بريدك الإلكتروني",
+    valid24h: "صالح لمدة 24 ساعة",
+    sessions: "الجلسات",
+    connectedDevices: "أجهزتك المتصلة",
+    sessionsHint: "إذا لاحظت نشاطاً مشبوهاً، سجّل الخروج ثم أعد تعيين كلمة المرور.",
+    activeSession: "جلسة نشطة",
+    thisDeviceNow: "هذا الجهاز · الآن",
+    inProgress: "نشطة",
+  },
+  he: {
+    password: "סיסמה",
+    changePassword: "שינוי הסיסמה שלי",
+    changePasswordHint: "הזן את הסיסמה הנוכחית כדי לאשר את השינוי.",
+    forgotPasswordQ: "שכחת?",
+    receiveResetLink: "קבלת קישור לאיפוס",
+    to: "ל",
+    yourEmail: "האימייל שלך",
+    valid24h: "תקף ל-24 שעות",
+    sessions: "סשנים",
+    connectedDevices: "המכשירים המחוברים שלך",
+    sessionsHint: "אם זיהית פעילות חשודה, התנתק ואז אפס סיסמה.",
+    activeSession: "סשן פעיל",
+    thisDeviceNow: "המכשיר הזה · עכשיו",
+    inProgress: "פעיל",
+  },
+} as const;

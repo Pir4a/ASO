@@ -103,6 +103,7 @@ export async function getProductsSearch(filters: {
   page?: number;
   limit?: number;
 }): Promise<{ products: Product[]; meta: ProductSearchMeta; facets: ProductSearchFacets }> {
+  const lang = await getCurrentLocale();
   const page = Math.max(1, filters.page ?? 1);
   const limit = Math.min(50, Math.max(1, filters.limit ?? 12));
   const sort = PRODUCT_SEARCH_SORT.includes(filters.sort as ProductSearchSortParam)
@@ -119,6 +120,7 @@ export async function getProductsSearch(filters: {
   sp.set("sort", sort);
   sp.set("page", String(page));
   sp.set("limit", String(limit));
+  sp.set("lang", lang);
 
   const res = await fetch(`${API_URL}/products/search?${sp.toString()}`, { cache: "no-store" });
   if (!res.ok) {
@@ -636,8 +638,13 @@ export async function downloadOrderInvoice(id: string): Promise<void> {
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
+  const contentDisposition = res.headers.get("Content-Disposition");
+  const filenameMatch =
+    contentDisposition?.match(/filename\*=UTF-8''([^;]+)|filename="([^"]+)"|filename=([^;]+)/i) ??
+    null;
+  const rawFilename = filenameMatch?.[1] ?? filenameMatch?.[2] ?? filenameMatch?.[3];
   a.href = url;
-  a.download = `facture-${id}.pdf`;
+  a.download = rawFilename ? decodeURIComponent(rawFilename.trim()) : `facture-${id}.pdf`;
   document.body.appendChild(a);
   a.click();
   a.remove();

@@ -8,6 +8,7 @@ import { FindCategoryByIdUseCase } from '../../application/use-cases/categories/
 import { CATEGORY_REPOSITORY_TOKEN } from '../../domain/repositories/category.repository.interface';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
+import { AutoTranslationService } from '../services/auto-translation.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([CategoryEntity])],
@@ -19,6 +20,7 @@ import { RolesGuard } from '../guards/roles.guard';
     },
     GetCategoriesUseCase,
     FindCategoryByIdUseCase,
+    AutoTranslationService,
     JwtAuthGuard,
     RolesGuard,
   ],

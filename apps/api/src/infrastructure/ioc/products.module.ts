@@ -12,6 +12,7 @@ import { CategoriesModule } from './categories.module';
 import { AuthModule } from './auth.module';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
+import { AutoTranslationService } from '../services/auto-translation.service';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { RolesGuard } from '../guards/roles.guard';
     FindProductBySlugUseCase,
     CreateProductUseCase,
     SearchProductsUseCase,
+    AutoTranslationService,
     JwtAuthGuard,
     RolesGuard,
   ],

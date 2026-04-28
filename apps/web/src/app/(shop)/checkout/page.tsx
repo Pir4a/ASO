@@ -18,6 +18,7 @@ import {
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { AddressForm, type AddressFormData } from "@/components/account/AddressForm";
 import { useAuth } from "@/context/AuthContext";
+import { useLocale } from "@/context/LocaleContext";
 import { useCart } from "@/hooks/useCart";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -32,18 +33,20 @@ type CartItem = {
   name?: string;
 };
 
-const STEP_META: { key: Step; label: string }[] = [
-  { key: "identify", label: "Identification" },
-  { key: "address", label: "Adresse" },
-  { key: "payment", label: "Paiement" },
-];
-
-function formatPrice(cents: number, currency = "EUR") {
+function formatPrice(cents: number, currency = "EUR", localeCode = "fr-FR") {
   const v = cents / 100;
-  return `${v >= 1000 ? v.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : v.toFixed(2)} ${currency}`;
+  return `${v >= 1000 ? v.toLocaleString(localeCode, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : v.toFixed(2)} ${currency}`;
 }
 
 export default function CheckoutPage() {
+  const locale = useLocale();
+  const copy = CHECKOUT_COPY[locale];
+  const localeCode = LOCALE_TO_INTL[locale];
+  const stepMeta: { key: Step; label: string }[] = [
+    { key: "identify", label: copy.stepIdentify },
+    { key: "address", label: copy.stepAddress },
+    { key: "payment", label: copy.stepPayment },
+  ];
   const { refreshCart } = useCart();
   const { user, isAuthenticated } = useAuth();
 
@@ -137,7 +140,7 @@ export default function CheckoutPage() {
         setShowNewAddress(false);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Erreur lors de la création.");
+      setError(e instanceof Error ? e.message : copy.createAddressError);
     } finally {
       setIsLoading(false);
     }
@@ -146,7 +149,7 @@ export default function CheckoutPage() {
   const handleGoToPayment = async () => {
     if (!selectedAddressId) return;
     if (!isAuthenticated && !guestEmail.trim()) {
-      setError("Indiquez votre adresse e-mail pour finaliser la commande en invité.");
+      setError(copy.guestEmailRequired);
       return;
     }
     setIsLoading(true);
@@ -155,7 +158,7 @@ export default function CheckoutPage() {
       let order: { id: string; orderNumber?: string };
       if (!isAuthenticated) {
         const sel = addresses.find((a) => a.id === selectedAddressId);
-        if (!sel) throw new Error("Adresse introuvable.");
+        if (!sel) throw new Error(copy.addressNotFound);
         const inlineAddress: GuestCheckoutAddress = {
           firstName: sel.firstName,
           lastName: sel.lastName,
@@ -182,7 +185,7 @@ export default function CheckoutPage() {
       setError(
         e instanceof Error
           ? e.message
-          : "Impossible d'initialiser le paiement.",
+          : copy.paymentInitError,
       );
     } finally {
       setIsLoading(false);
@@ -212,7 +215,7 @@ export default function CheckoutPage() {
   if (step === "confirmation" && orderResult) {
     return (
       <div className="space-y-6">
-        <Breadcrumb here="Confirmation" />
+        <Breadcrumb here={copy.confirmation} />
         <section className="overflow-hidden rounded-2xl border border-foreground/10 bg-white px-6 py-12 text-center">
           <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-success/10 text-success">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-8 w-8">
@@ -221,15 +224,15 @@ export default function CheckoutPage() {
           </div>
           <p className="mt-5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-success">
             <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-success" />
-            Commande confirmée
+            {copy.orderConfirmed}
           </p>
           <h1 className="mt-2 font-heading text-[28px] font-bold tracking-tight text-foreground md:text-[32px]">
-            Merci pour votre commande
+            {copy.thankYou}
           </h1>
           <p className="mx-auto mt-2 max-w-xl text-[14px] text-foreground/70">
-            Un email de confirmation vient d&apos;être envoyé. Votre numéro de commande est{" "}
+            {copy.confirmationEmail}{" "}
             <span className="font-mono font-semibold text-foreground">
-              {orderResult.orderNumber ?? `ALT-${orderResult.id.slice(0, 8).toUpperCase()}`}
+              {orderResult.orderNumber ?? "—"}
             </span>.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
@@ -238,7 +241,7 @@ export default function CheckoutPage() {
               style={{ color: "#fff" }}
               className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-5 text-[14px] font-semibold transition hover:bg-primary-hover"
             >
-              Voir ma commande
+              {copy.viewOrder}
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                 <path d="M3 8h10m-3-3 3 3-3 3" />
               </svg>
@@ -247,13 +250,13 @@ export default function CheckoutPage() {
               href="/orders"
               className="inline-flex h-11 items-center gap-2 rounded-lg border border-foreground/15 bg-white px-5 text-[14px] font-semibold text-foreground transition hover:border-primary hover:text-primary"
             >
-              Mes commandes
+              {copy.myOrders}
             </Link>
             <Link
               href="/products"
               className="inline-flex h-11 items-center gap-2 rounded-lg px-5 text-[14px] font-semibold text-foreground/65 transition hover:text-primary"
             >
-              Retour à la boutique
+              {copy.backToShop}
             </Link>
           </div>
           {guestSignupSent && (
@@ -262,12 +265,11 @@ export default function CheckoutPage() {
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                   <path d="M2 4h12v8H2zM2 4l6 5 6-5" />
                 </svg>
-                Compte créé
+                {copy.accountCreated}
               </p>
               <p className="mt-1.5 text-[13.5px] text-foreground">
-                Un compte a été créé pour <span className="font-semibold">{guestEmail}</span>.
-                Consultez votre boîte mail : un lien vous attend pour définir votre
-                mot de passe et retrouver votre commande dans votre espace client.
+                {copy.accountCreatedFor} <span className="font-semibold">{guestEmail}</span>.{" "}
+                {copy.checkMailbox}
               </p>
             </div>
           )}
@@ -280,20 +282,20 @@ export default function CheckoutPage() {
   if (cartItems.length === 0 && !orderResult) {
     return (
       <div className="space-y-6">
-        <Breadcrumb here="Checkout" />
+        <Breadcrumb here={copy.checkout} />
         <section className="overflow-hidden rounded-2xl border border-foreground/10 bg-white px-6 py-16 text-center">
           <h1 className="font-heading text-[24px] font-semibold text-foreground">
-            Votre panier est vide
+            {copy.emptyCartTitle}
           </h1>
           <p className="mt-2 text-[14px] text-foreground/65">
-            Ajoutez des produits avant de passer à la caisse.
+            {copy.emptyCartBody}
           </p>
           <Link
             href="/products"
             style={{ color: "#fff" }}
             className="mt-5 inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-5 text-[14px] font-semibold transition hover:bg-primary-hover"
           >
-            Parcourir le catalogue
+            {copy.browseCatalog}
           </Link>
         </section>
       </div>
@@ -303,13 +305,13 @@ export default function CheckoutPage() {
   /* ── Main render ────────────────────────────────────────── */
   return (
     <div className="space-y-6">
-      <Breadcrumb here="Checkout" />
+      <Breadcrumb here={copy.checkout} />
 
       <Stepper current={step} authenticated={isAuthenticated} onStepClick={(s) => {
         // allow going back; can't skip forward
         if (s === "identify" && !isAuthenticated) setStep("identify");
         if (s === "address") setStep("address");
-      }} />
+      }} stepsMeta={stepMeta} />
 
       {error && (
         <div
@@ -336,9 +338,9 @@ export default function CheckoutPage() {
 
           {step === "address" && (
             <SectionCard
-              eyebrow={isAuthenticated ? "Étape 2" : "Étape 1"}
-              title="Adresse de facturation et de livraison"
-              hint="Choisissez une adresse enregistrée ou ajoutez-en une nouvelle."
+              eyebrow={isAuthenticated ? copy.step2 : copy.step1}
+              title={copy.billingShippingAddress}
+              hint={copy.addressHint}
             >
               {!isAuthenticated && (
                 <div className="mb-5 rounded-2xl border border-foreground/10 bg-background/40 p-4">
@@ -346,21 +348,20 @@ export default function CheckoutPage() {
                     htmlFor="checkout-guest-email"
                     className="mb-1.5 block text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/65"
                   >
-                    Email de contact
+                    {copy.contactEmail}
                   </label>
                   <input
                     id="checkout-guest-email"
                     type="email"
                     required
-                    placeholder="vous@exemple.fr"
+                    placeholder={copy.emailPlaceholder}
                     autoComplete="email"
                     value={guestEmail}
                     onChange={(e) => setGuestEmail(e.target.value)}
                     className="w-full rounded-lg border border-foreground/10 bg-white px-3.5 py-2.5 text-[14px] text-foreground placeholder:text-foreground/45 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                   />
                   <p className="mt-1.5 text-[12px] text-foreground/65">
-                    Nous enverrons votre confirmation de commande et un lien pour
-                    créer votre mot de passe à cette adresse.
+                    {copy.emailHelp}
                   </p>
                 </div>
               )}
@@ -403,7 +404,7 @@ export default function CheckoutPage() {
                               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="h-2.5 w-2.5">
                                 <path d="m3 8 3.5 3.5L13 5" />
                               </svg>
-                              Sélectionnée
+                              {copy.selected}
                             </span>
                           )}
                         </button>
@@ -423,7 +424,7 @@ export default function CheckoutPage() {
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                       <path d="M8 3v10M3 8h10" />
                     </svg>
-                    Ajouter une adresse
+                    {copy.addAddress}
                   </button>
                   <button
                     type="button"
@@ -432,7 +433,7 @@ export default function CheckoutPage() {
                     style={{ color: "#fff" }}
                     className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-5 text-[14px] font-semibold transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {isLoading ? "Initialisation…" : "Passer au paiement"}
+                    {isLoading ? copy.initializing : copy.goToPayment}
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                       <path d="M3 8h10m-3-3 3 3-3 3" />
                     </svg>
@@ -442,12 +443,12 @@ export default function CheckoutPage() {
                 <div className="mt-5 rounded-2xl border border-foreground/10 bg-background/40 p-5">
                   <p className="mb-3 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
                     <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-                    Nouvelle adresse
+                    {copy.newAddress}
                   </p>
                   <AddressForm
                     onSubmit={handleCreateAddress}
                     onCancel={() => setShowNewAddress(false)}
-                    submitLabel="Enregistrer l'adresse"
+                    submitLabel={copy.saveAddress}
                   />
                 </div>
               )}
@@ -458,8 +459,7 @@ export default function CheckoutPage() {
                     <circle cx="8" cy="8" r="6" />
                     <path d="M8 7v4M8 5v.01" />
                   </svg>
-                  En tant qu&apos;invité, l&apos;adresse sera utilisée uniquement pour cette
-                  commande.
+                  {copy.guestAddressInfo}
                 </p>
               )}
             </SectionCard>
@@ -467,9 +467,9 @@ export default function CheckoutPage() {
 
           {step === "payment" && clientSecret && (
             <SectionCard
-              eyebrow={isAuthenticated ? "Étape 3" : "Étape 2"}
-              title="Paiement sécurisé"
-              hint="Vos cartes enregistrées apparaissent automatiquement. Toutes les transactions sont protégées par Stripe (PCI-DSS)."
+              eyebrow={isAuthenticated ? copy.step3 : copy.step2}
+              title={copy.securePayment}
+              hint={copy.securePaymentHint}
             >
               <Elements
                 stripe={stripePromise}
@@ -491,14 +491,14 @@ export default function CheckoutPage() {
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3 w-3">
                     <path d="M13 8H3m3-3-3 3 3 3" />
                   </svg>
-                  Retour à l&apos;adresse
+                  {copy.backToAddress}
                 </button>
                 <span className="inline-flex items-center gap-2">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5 text-primary">
                     <rect x="3" y="11" width="18" height="11" rx="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
-                  Connexion sécurisée · Stripe
+                  {copy.secureConnectionStripe}
                 </span>
               </div>
             </SectionCard>
@@ -511,10 +511,10 @@ export default function CheckoutPage() {
             <header className="border-b border-foreground/5 px-6 py-5">
               <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
                 <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-                Récapitulatif
+                {copy.summary}
               </p>
               <h2 className="font-heading text-[18px] font-semibold tracking-tight text-foreground">
-                Votre commande
+                {copy.yourOrder}
               </h2>
             </header>
             <div className="space-y-4 px-6 py-5">
@@ -529,11 +529,11 @@ export default function CheckoutPage() {
                         {it.name ?? it.productId}
                       </span>
                       <span className="text-[11.5px] text-foreground/55 tabular-nums">
-                        {formatPrice(it.priceCents, it.currency)} × {it.quantity}
+                        {formatPrice(it.priceCents, it.currency, localeCode)} × {it.quantity}
                       </span>
                     </span>
                     <span className="font-heading font-semibold tabular-nums text-foreground">
-                      {formatPrice(it.priceCents * it.quantity, it.currency)}
+                      {formatPrice(it.priceCents * it.quantity, it.currency, localeCode)}
                     </span>
                   </li>
                 ))}
@@ -541,25 +541,25 @@ export default function CheckoutPage() {
 
               <dl className="space-y-1.5 border-t border-foreground/5 pt-4 text-[13px]">
                 <div className="flex justify-between">
-                  <dt className="text-foreground/65">Sous-total</dt>
+                  <dt className="text-foreground/65">{copy.subtotal}</dt>
                   <dd className="tabular-nums text-foreground">
-                    {formatPrice(cartSubtotal, currency)}
+                    {formatPrice(cartSubtotal, currency, localeCode)}
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-foreground/65">TVA</dt>
+                  <dt className="text-foreground/65">{copy.vat}</dt>
                   <dd className="tabular-nums text-foreground">
-                    {formatPrice(cartVat, currency)}
+                    {formatPrice(cartVat, currency, localeCode)}
                   </dd>
                 </div>
               </dl>
 
               <div className="flex items-baseline justify-between border-t border-foreground/10 pt-4">
                 <span className="font-heading text-[14px] font-semibold text-foreground">
-                  Total TTC
+                  {copy.totalInclTax}
                 </span>
                 <span className="font-heading text-[20px] font-bold tabular-nums text-foreground">
-                  {formatPrice(cartTotal, currency)}
+                  {formatPrice(cartTotal, currency, localeCode)}
                 </span>
               </div>
 
@@ -571,12 +571,12 @@ export default function CheckoutPage() {
                       <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6c0 3 4.5 8.5 4.5 8.5s4.5-5.5 4.5-8.5c0-2.5-2-4.5-4.5-4.5Z" />
                       <circle cx="8" cy="6" r="1.6" />
                     </svg>
-                    Livraison
+                    {copy.delivery}
                   </p>
                   <p className="text-[12.5px] text-foreground/80">
                     {[selectedAddress.firstName, selectedAddress.lastName]
                       .filter(Boolean)
-                      .join(" ") || "Adresse sélectionnée"}{" "}
+                      .join(" ") || copy.selectedAddress}{" "}
                     · {selectedAddress.street}
                     {selectedAddress.address2 ? `, ${selectedAddress.address2}` : ""}
                     {", "}
@@ -595,21 +595,21 @@ export default function CheckoutPage() {
                     <circle cx="5" cy="16" r="1.5" />
                     <circle cx="17" cy="16" r="1.5" />
                   </svg>
-                  Livraison 48 h
+                  {copy.delivery48h}
                 </li>
                 <li className="flex flex-col items-center gap-1.5">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-4 w-4 text-primary">
                     <rect x="3" y="11" width="18" height="11" rx="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
-                  Paiement sécurisé
+                  {copy.securePaymentShort}
                 </li>
                 <li className="flex flex-col items-center gap-1.5">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-4 w-4 text-primary">
                     <path d="M12 2 4 7v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-5z" />
                     <path d="m9 12 2 2 4-4" />
                   </svg>
-                  Garantie 2 ans
+                  {copy.twoYearWarranty}
                 </li>
               </ul>
             </div>
@@ -623,17 +623,19 @@ export default function CheckoutPage() {
 /* ── Helpers ─────────────────────────────────────────────── */
 
 function Breadcrumb({ here }: { here: string }) {
+  const locale = useLocale();
+  const copy = CHECKOUT_COPY[locale];
   return (
     <nav
-      aria-label="Fil d'Ariane"
+      aria-label={copy.breadcrumb}
       className="flex flex-wrap items-center gap-2 text-sm text-foreground/60"
     >
       <Link href="/" className="hover:text-primary">
-        Accueil
+        {copy.home}
       </Link>
       <span aria-hidden="true" className="text-foreground/25">/</span>
       <Link href="/cart" className="hover:text-primary">
-        Panier
+        {copy.cart}
       </Link>
       <span aria-hidden="true" className="text-foreground/25">/</span>
       <span className="font-semibold text-foreground">{here}</span>
@@ -645,12 +647,14 @@ function Stepper({
   current,
   authenticated,
   onStepClick,
+  stepsMeta,
 }: {
   current: Step;
   authenticated: boolean;
   onStepClick: (s: Step) => void;
+  stepsMeta: { key: Step; label: string }[];
 }) {
-  const steps = STEP_META.filter((s) => (authenticated ? s.key !== "identify" : true));
+  const steps = stepsMeta.filter((s) => (authenticated ? s.key !== "identify" : true));
   const currentIndex = steps.findIndex((s) => s.key === current);
 
   return (
@@ -746,6 +750,8 @@ function IdentifyStep({
   onAuthenticated: () => void;
   onContinueAsGuest: () => void;
 }) {
+  const locale = useLocale();
+  const copy = CHECKOUT_COPY[locale];
   const router = useRouter();
   const { login } = useAuth();
   const [email, setEmail] = useState("");
@@ -767,11 +773,11 @@ function IdentifyStep({
         body: JSON.stringify({ email, password, rememberMe }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.message || "Identifiants incorrects.");
+      if (!res.ok) throw new Error(data?.message || copy.badCredentials);
       await login(data.access_token, data.user);
       onAuthenticated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Connexion impossible.");
+      setError(err instanceof Error ? err.message : copy.loginFailed);
     } finally {
       setSubmitting(false);
     }
@@ -792,14 +798,13 @@ function IdentifyStep({
         <div className="relative">
           <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#b3eef2]">
             <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary-hover" />
-            Étape 1 · Identification
+            {copy.step1Identify}
           </p>
           <h2 className="font-heading text-[22px] font-semibold leading-tight tracking-tight md:text-[26px]">
-            Avant de finaliser votre commande
+            {copy.beforeFinalize}
           </h2>
           <p className="mt-1.5 max-w-xl text-[13.5px] text-white/75">
-            Connectez-vous pour récupérer vos adresses et cartes enregistrées,
-            ou continuez en tant qu&apos;invité.
+            {copy.identifyHint}
           </p>
         </div>
       </header>
@@ -808,7 +813,7 @@ function IdentifyStep({
         {/* Left: inline login */}
         <div className="space-y-4 px-6 py-6 lg:border-r lg:border-foreground/5">
           <h3 className="font-heading text-[15px] font-semibold text-foreground">
-            J&apos;ai déjà un compte
+            {copy.alreadyAccount}
           </h3>
 
           <form onSubmit={handleLogin} className="space-y-3.5">
@@ -817,14 +822,14 @@ function IdentifyStep({
                 htmlFor="checkout-login-email"
                 className="mb-1.5 block text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/65"
               >
-                Email
+                {copy.email}
               </label>
               <input
                 id="checkout-login-email"
                 type="email"
                 required
                 autoComplete="email"
-                placeholder="vous@exemple.fr"
+                placeholder={copy.emailPlaceholder}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-lg border border-foreground/10 bg-white px-3.5 py-2.5 text-[14px] text-foreground placeholder:text-foreground/45 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
@@ -837,13 +842,13 @@ function IdentifyStep({
                   htmlFor="checkout-login-pw"
                   className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/65"
                 >
-                  Mot de passe
+                  {copy.password}
                 </label>
                 <Link
                   href="/forgot-password"
                   className="text-[11.5px] font-semibold text-primary transition hover:text-primary-hover"
                 >
-                  Oublié ?
+                  {copy.forgot}
                 </Link>
               </div>
               <div className="relative">
@@ -860,7 +865,7 @@ function IdentifyStep({
                 <button
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
-                  aria-label={showPassword ? "Masquer" : "Afficher"}
+                  aria-label={showPassword ? copy.hide : copy.show}
                   className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded text-foreground/55 transition hover:bg-background hover:text-primary"
                 >
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="h-3.5 w-3.5">
@@ -887,7 +892,7 @@ function IdentifyStep({
                 onChange={(e) => setRememberMe(e.target.checked)}
                 className="h-4 w-4 rounded border-foreground/25 text-primary focus:ring-2 focus:ring-primary/30"
               />
-              Se souvenir de moi (7 jours)
+              {copy.remember7d}
             </label>
 
             {error && (
@@ -912,14 +917,14 @@ function IdentifyStep({
               {submitting ? (
                 <>
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Connexion…
+                  {copy.signingIn}
                 </>
               ) : (
                 <>
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                     <path d="M6 2H3v12h3M10 5l3 3-3 3M6 8h7" />
                   </svg>
-                  Se connecter et continuer
+                  {copy.signInAndContinue}
                 </>
               )}
             </button>
@@ -930,20 +935,19 @@ function IdentifyStep({
         <div className="space-y-5 bg-background/30 px-6 py-6">
           <div>
             <h3 className="font-heading text-[15px] font-semibold text-foreground">
-              Pas encore de compte ?
+              {copy.noAccount}
             </h3>
             <p className="mt-1.5 text-[13px] text-foreground/65">
-              Créez-en un en quelques secondes pour suivre vos commandes,
-              télécharger vos factures et réutiliser vos cartes.
+              {copy.createAccountHint}
             </p>
             <ul
               role="list"
               className="mt-3 space-y-1.5 text-[12.5px] text-foreground/75"
             >
               {[
-                "Suivi de livraison + historique des commandes",
-                "Adresses et cartes enregistrées (paiement en 1 clic)",
-                "Factures PDF Althea Systems",
+                copy.benefit1,
+                copy.benefit2,
+                copy.benefit3,
               ].map((b) => (
                 <li key={b} className="inline-flex items-start gap-2">
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 flex-none text-primary">
@@ -963,23 +967,23 @@ function IdentifyStep({
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                 <path d="M8 3v10M3 8h10" />
               </svg>
-              Créer un compte
+              {copy.createAccount}
             </button>
           </div>
 
           <div className="rounded-xl border border-dashed border-foreground/15 bg-white/60 p-4">
             <p className="font-heading text-[13.5px] font-semibold text-foreground">
-              Continuer en invité
+              {copy.continueGuest}
             </p>
             <p className="mt-1 text-[12px] text-foreground/65">
-              Vous pourrez créer un compte plus tard pour retrouver vos achats.
+              {copy.guestHint}
             </p>
             <button
               type="button"
               onClick={onContinueAsGuest}
               className="mt-3 inline-flex h-9 items-center gap-1.5 text-[12.5px] font-semibold text-primary transition hover:text-primary-hover"
             >
-              Continuer sans compte
+              {copy.continueWithoutAccount}
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3 w-3">
                 <path d="M3 8h10m-3-3 3 3-3 3" />
               </svg>
@@ -990,3 +994,123 @@ function IdentifyStep({
     </section>
   );
 }
+
+const LOCALE_TO_INTL = {
+  fr: "fr-FR",
+  en: "en-US",
+  ar: "ar",
+  he: "he",
+} as const;
+
+const CHECKOUT_COPY_FR = {
+    home: "Accueil",
+    cart: "Panier",
+    breadcrumb: "Fil d'Ariane",
+    checkout: "Checkout",
+    confirmation: "Confirmation",
+    orderConfirmed: "Commande confirmée",
+    thankYou: "Merci pour votre commande",
+    confirmationEmail: "Un email de confirmation vient d'être envoyé. Votre numéro de commande est",
+    viewOrder: "Voir ma commande",
+    myOrders: "Mes commandes",
+    backToShop: "Retour à la boutique",
+    accountCreated: "Compte créé",
+    accountCreatedFor: "Un compte a été créé pour",
+    checkMailbox: "Consultez votre boîte mail : un lien vous attend pour définir votre mot de passe et retrouver votre commande dans votre espace client.",
+    emptyCartTitle: "Votre panier est vide",
+    emptyCartBody: "Ajoutez des produits avant de passer à la caisse.",
+    browseCatalog: "Parcourir le catalogue",
+    stepIdentify: "Identification",
+    stepAddress: "Adresse",
+    stepPayment: "Paiement",
+    step1: "Étape 1",
+    step2: "Étape 2",
+    step3: "Étape 3",
+    billingShippingAddress: "Adresse de facturation et de livraison",
+    addressHint: "Choisissez une adresse enregistrée ou ajoutez-en une nouvelle.",
+    contactEmail: "Email de contact",
+    emailPlaceholder: "vous@exemple.fr",
+    emailHelp: "Nous enverrons votre confirmation de commande et un lien pour créer votre mot de passe à cette adresse.",
+    selected: "Sélectionnée",
+    addAddress: "Ajouter une adresse",
+    initializing: "Initialisation…",
+    goToPayment: "Passer au paiement",
+    newAddress: "Nouvelle adresse",
+    saveAddress: "Enregistrer l'adresse",
+    guestAddressInfo: "En tant qu'invité, l'adresse sera utilisée uniquement pour cette commande.",
+    securePayment: "Paiement sécurisé",
+    securePaymentHint: "Vos cartes enregistrées apparaissent automatiquement. Toutes les transactions sont protégées par Stripe (PCI-DSS).",
+    backToAddress: "Retour à l'adresse",
+    secureConnectionStripe: "Connexion sécurisée · Stripe",
+    summary: "Récapitulatif",
+    yourOrder: "Votre commande",
+    subtotal: "Sous-total",
+    vat: "TVA",
+    totalInclTax: "Total TTC",
+    delivery: "Livraison",
+    selectedAddress: "Adresse sélectionnée",
+    delivery48h: "Livraison 48 h",
+    securePaymentShort: "Paiement sécurisé",
+    twoYearWarranty: "Garantie 2 ans",
+    createAddressError: "Erreur lors de la création.",
+    guestEmailRequired: "Indiquez votre adresse e-mail pour finaliser la commande en invité.",
+    addressNotFound: "Adresse introuvable.",
+    paymentInitError: "Impossible d'initialiser le paiement.",
+    badCredentials: "Identifiants incorrects.",
+    loginFailed: "Connexion impossible.",
+    step1Identify: "Étape 1 · Identification",
+    beforeFinalize: "Avant de finaliser votre commande",
+    identifyHint: "Connectez-vous pour récupérer vos adresses et cartes enregistrées, ou continuez en tant qu'invité.",
+    alreadyAccount: "J'ai déjà un compte",
+    email: "Email",
+    password: "Mot de passe",
+    forgot: "Oublié ?",
+    hide: "Masquer",
+    show: "Afficher",
+    remember7d: "Se souvenir de moi (7 jours)",
+    signingIn: "Connexion…",
+    signInAndContinue: "Se connecter et continuer",
+    noAccount: "Pas encore de compte ?",
+    createAccountHint: "Créez-en un en quelques secondes pour suivre vos commandes, télécharger vos factures et réutiliser vos cartes.",
+    benefit1: "Suivi de livraison + historique des commandes",
+    benefit2: "Adresses et cartes enregistrées (paiement en 1 clic)",
+    benefit3: "Factures PDF Althea Systems",
+    createAccount: "Créer un compte",
+    continueGuest: "Continuer en invité",
+    guestHint: "Vous pourrez créer un compte plus tard pour retrouver vos achats.",
+    continueWithoutAccount: "Continuer sans compte",
+  };
+
+const CHECKOUT_COPY_EN = {
+    home: "Home", cart: "Cart", breadcrumb: "Breadcrumb", checkout: "Checkout", confirmation: "Confirmation",
+    orderConfirmed: "Order confirmed", thankYou: "Thank you for your order", confirmationEmail: "A confirmation email has been sent. Your order number is",
+    viewOrder: "View my order", myOrders: "My orders", backToShop: "Back to shop", accountCreated: "Account created",
+    accountCreatedFor: "An account was created for", checkMailbox: "Check your mailbox: a link is waiting for you to set your password and find your order in your account.",
+    emptyCartTitle: "Your cart is empty", emptyCartBody: "Add products before checkout.", browseCatalog: "Browse catalog",
+    stepIdentify: "Identification", stepAddress: "Address", stepPayment: "Payment", step1: "Step 1", step2: "Step 2", step3: "Step 3",
+    billingShippingAddress: "Billing and shipping address", addressHint: "Choose a saved address or add a new one.", contactEmail: "Contact email",
+    emailPlaceholder: "you@example.com", emailHelp: "We will send your order confirmation and a password setup link to this address.",
+    selected: "Selected", addAddress: "Add an address", initializing: "Initializing…", goToPayment: "Continue to payment", newAddress: "New address",
+    saveAddress: "Save address", guestAddressInfo: "As a guest, this address is used only for this order.", securePayment: "Secure payment",
+    securePaymentHint: "Your saved cards appear automatically. All transactions are protected by Stripe (PCI-DSS).", backToAddress: "Back to address",
+    secureConnectionStripe: "Secure connection · Stripe", summary: "Summary", yourOrder: "Your order", subtotal: "Subtotal", vat: "VAT",
+    totalInclTax: "Total (incl. VAT)", delivery: "Delivery", selectedAddress: "Selected address", delivery48h: "48h delivery",
+    securePaymentShort: "Secure payment", twoYearWarranty: "2-year warranty", createAddressError: "Could not create address.",
+    guestEmailRequired: "Enter your email address to complete checkout as guest.", addressNotFound: "Address not found.",
+    paymentInitError: "Could not initialize payment.", badCredentials: "Invalid credentials.", loginFailed: "Login failed.",
+    step1Identify: "Step 1 · Identification", beforeFinalize: "Before finalizing your order",
+    identifyHint: "Sign in to reuse your saved addresses and cards, or continue as guest.", alreadyAccount: "I already have an account",
+    email: "Email", password: "Password", forgot: "Forgot?", hide: "Hide", show: "Show", remember7d: "Remember me (7 days)",
+    signingIn: "Signing in…", signInAndContinue: "Sign in and continue", noAccount: "No account yet?",
+    createAccountHint: "Create one in seconds to track orders, download invoices, and reuse your cards.",
+    benefit1: "Delivery tracking + order history", benefit2: "Saved addresses and cards (1-click payment)", benefit3: "Althea Systems PDF invoices",
+    createAccount: "Create account", continueGuest: "Continue as guest", guestHint: "You can create an account later to find your purchases.",
+    continueWithoutAccount: "Continue without account",
+  };
+
+const CHECKOUT_COPY = {
+  fr: CHECKOUT_COPY_FR,
+  en: CHECKOUT_COPY_EN,
+  ar: CHECKOUT_COPY_EN,
+  he: CHECKOUT_COPY_EN,
+} as const;

@@ -1,6 +1,10 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-export type ContentType = 'carousel' | 'homepage_text' | 'category_image';
+export type ContentType =
+  | 'carousel'
+  | 'homepage_text'
+  | 'category_image'
+  | 'backoffice_settings';
 
 @Entity({ name: 'content_blocks' })
 export class ContentBlock {

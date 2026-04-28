@@ -27,6 +27,7 @@ import { ContentManager } from "@/components/backoffice/ContentManager";
 import { InvoicesPanel } from "@/components/backoffice/InvoicesPanel";
 import { CreditNotesPanel } from "@/components/backoffice/CreditNotesPanel";
 import { ChatPanel } from "@/components/backoffice/ChatPanel";
+import { SettingsPanel } from "@/components/backoffice/SettingsPanel";
 import { AdminOrderForm } from "@/components/backoffice/AdminOrderForm";
 import { DashboardCharts, type AdminDashboardData } from "@/components/backoffice/DashboardCharts";
 import {
@@ -1481,11 +1482,11 @@ function BackofficeDashboard() {
                       </thead>
                       <tbody>
                         {recentOrdersPreview.map((o) => {
-                          const cust = o.customerEmail ?? (o.userId ? o.userId.slice(0, 8) + "…" : "—");
+                          const cust = o.customerEmail ?? "Client";
                           return (
                             <tr key={o.id}>
                               <td className="bo-mono" style={{ fontSize: 11.5 }}>
-                                {o.id.slice(0, 14)}
+                                {o.orderNumber}
                               </td>
                               <td>
                                 <span
@@ -2576,7 +2577,7 @@ function BackofficeDashboard() {
                               {new Date(o.createdAt).toLocaleString("fr-FR")}
                             </td>
                             <td style={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis" }}>
-                              {o.customerEmail ?? (o.userId ? o.userId.slice(0, 8) + "…" : "—")}
+                              {o.customerEmail ?? "Client"}
                             </td>
                             <td>{orderStatusBadge(o.status)}</td>
                             <td>{paymentStatusBadge(o.paymentStatus)}</td>
@@ -3030,26 +3031,7 @@ function BackofficeDashboard() {
 
           {/* SETTINGS */}
           {section === "settings" && (
-            <Panel title="Paramètres" subtitle="Configuration de l'instance back office">
-              <div className="bo-vstack" style={{ gap: 12 }}>
-                <div>
-                  <div className="bo-label">Compte connecté</div>
-                  <div className="bo-mono">{user?.email ?? "—"}</div>
-                </div>
-                <div>
-                  <div className="bo-label">Rôle</div>
-                  <span className="bo-badge brand">{user?.role ?? "—"}</span>
-                </div>
-                <div>
-                  <div className="bo-label">Environnement</div>
-                  <span className="bo-badge neutral">PROD</span>
-                </div>
-                <div>
-                  <div className="bo-label">Build</div>
-                  <span className="bo-mono bo-muted">v2.14.3 · a7f9e2</span>
-                </div>
-              </div>
-            </Panel>
+            <SettingsPanel userEmail={user?.email} userRole={user?.role} flash={flash} />
           )}
         </main>
       </div>

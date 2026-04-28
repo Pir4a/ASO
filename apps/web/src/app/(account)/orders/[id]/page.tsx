@@ -11,14 +11,14 @@ import {
   type OrderStatus,
 } from "@/lib/api";
 import { useCart } from "@/hooks/useCart";
+import { useLocale } from "@/context/LocaleContext";
 
-const STATUS_LABELS: Record<OrderStatus, string> = {
-  pending: "En attente",
-  processing: "En traitement",
-  shipped: "Expédiée",
-  delivered: "Livrée",
-  cancelled: "Annulée",
-};
+const LOCALE_TO_INTL = {
+  fr: "fr-FR",
+  en: "en-US",
+  ar: "ar",
+  he: "he",
+} as const;
 
 function statusTone(status: OrderStatus): string {
   switch (status) {
@@ -33,10 +33,10 @@ function statusTone(status: OrderStatus): string {
   }
 }
 
-function formatDate(iso?: string | Date): string {
+function formatDate(iso: string | Date | undefined, localeCode: string): string {
   if (!iso) return "";
   try {
-    return new Date(iso).toLocaleDateString("fr-FR", {
+    return new Date(iso).toLocaleDateString(localeCode, {
       day: "2-digit",
       month: "long",
       year: "numeric",
@@ -46,8 +46,8 @@ function formatDate(iso?: string | Date): string {
   }
 }
 
-function formatPrice(value: number, currency: string) {
-  return new Intl.NumberFormat("fr-FR", {
+function formatPrice(value: number, currency: string, localeCode: string) {
+  return new Intl.NumberFormat(localeCode, {
     style: "currency",
     currency: currency || "EUR",
   }).format(value);
@@ -63,6 +63,10 @@ export default function OrderDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const locale = useLocale();
+  const copy = ORDER_DETAIL_COPY[locale];
+  const localeCode = LOCALE_TO_INTL[locale];
+  const statusLabels = copy.statusLabels as Record<OrderStatus, string>;
   const { id } = use(params);
   const [order, setOrder] = useState<OrderDTO | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,7 +88,7 @@ export default function OrderDetailPage({
         if (!cancelled) setOrder(result);
       } catch (e) {
         if (!cancelled)
-          setError(e instanceof Error ? e.message : "Erreur inattendue.");
+          setError(e instanceof Error ? e.message : copy.unexpectedError);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -102,7 +106,7 @@ export default function OrderDetailPage({
       await downloadOrderInvoice(order.id);
     } catch (e) {
       setInvoiceError(
-        e instanceof Error ? e.message : "Impossible de télécharger la facture.",
+        e instanceof Error ? e.message : copy.invoiceDownloadError,
       );
     } finally {
       setInvoiceLoading(false);
@@ -124,7 +128,7 @@ export default function OrderDetailPage({
       setReorderError(
         e instanceof Error
           ? e.message
-          : "Impossible d'ajouter les articles au panier.",
+          : copy.reorderError,
       );
       setReorderLoading(false);
     }
@@ -141,32 +145,32 @@ export default function OrderDetailPage({
   if (error || !order) {
     return (
       <div className="space-y-6">
-        <Breadcrumb here="Commande" />
+        <Breadcrumb here={copy.order} copy={copy} />
         <div className="rounded-2xl border border-error/30 bg-error/10 px-6 py-12 text-center text-error">
-          {error ?? "Commande introuvable."}
+          {error ?? copy.notFound}
         </div>
       </div>
     );
   }
 
-  const orderNumber = order.orderNumber ?? `ALT-${order.id.slice(0, 8).toUpperCase()}`;
+  const orderNumber = order.orderNumber ?? "—";
   const billing = order.billingAddress ?? order.shippingAddress;
 
   return (
     <div className="space-y-6">
-      <Breadcrumb here={orderNumber} />
+      <Breadcrumb here={orderNumber} copy={copy} />
 
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
             <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-            Commande
+            {copy.order}
           </p>
           <h1 className="font-heading text-[26px] font-semibold tracking-tight text-foreground md:text-[30px]">
             {orderNumber}
           </h1>
           <p className="mt-1 text-[13px] text-foreground/60">
-            Passée le {formatDate(order.createdAt)}
+            {copy.placedOn} {formatDate(order.createdAt, localeCode)}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -174,26 +178,26 @@ export default function OrderDetailPage({
             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold ${statusTone(order.status)}`}
           >
             <span aria-hidden="true" className="block h-1.5 w-1.5 rounded-full bg-current" />
-            {STATUS_LABELS[order.status] ?? order.status}
+            {statusLabels[order.status] ?? order.status}
           </span>
           <button
             type="button"
             onClick={handleReorder}
             disabled={reorderLoading || (order.items ?? []).length === 0}
             className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-[12.5px] font-semibold text-primary transition hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
-            title="Re-ajouter les articles dans le panier"
+            title={copy.reorderTitle}
           >
             {reorderLoading ? (
               <>
                 <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                Ajout en cours…
+                {copy.adding}
               </>
             ) : (
               <>
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3 w-3">
                   <path d="M3 8a5 5 0 1 0 1.5-3.5L3 6m0 0V3m0 3h3" />
                 </svg>
-                Renouveler la commande
+                {copy.reorder}
               </>
             )}
           </button>
@@ -204,7 +208,7 @@ export default function OrderDetailPage({
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3 w-3">
               <path d="M13 8H3m3-3-3 3 3 3" />
             </svg>
-            Toutes mes commandes
+            {copy.allOrders}
           </Link>
         </div>
       </header>
@@ -221,9 +225,9 @@ export default function OrderDetailPage({
         {/* ── Items ──────────────────────────────────────── */}
         <div className="space-y-5">
           <SectionCard
-            eyebrow="Produits"
-            title="Articles commandés"
-            hint="Récapitulatif détaillé des lignes facturées."
+            eyebrow={copy.products}
+            title={copy.orderedItems}
+            hint={copy.orderedItemsHint}
           >
             <ul className="divide-y divide-foreground/5" role="list">
               {(order.items ?? []).map((item) => {
@@ -240,18 +244,18 @@ export default function OrderDetailPage({
                       </p>
                       {item.productSku && (
                         <p className="mt-0.5 font-mono text-[11px] text-foreground/55">
-                          Réf. {item.productSku}
+                          {copy.skuPrefix} {item.productSku}
                         </p>
                       )}
                     </div>
                     <div className="text-right text-[13px] text-foreground/65 sm:min-w-[140px]">
                       <p className="tabular-nums">
-                        {formatPrice(unit, item.currency)}
+                        {formatPrice(unit, item.currency, localeCode)}
                       </p>
                       <p className="text-[11.5px] tabular-nums">×&nbsp;{item.quantity}</p>
                     </div>
                     <p className="text-right font-heading text-[15px] font-bold tabular-nums text-foreground sm:min-w-[120px]">
-                      {formatPrice(lineTotal, item.currency)}
+                      {formatPrice(lineTotal, item.currency, localeCode)}
                     </p>
                   </li>
                 );
@@ -259,23 +263,23 @@ export default function OrderDetailPage({
             </ul>
             <div className="mt-2 flex items-baseline justify-between border-t border-foreground/10 pt-4">
               <span className="font-heading text-[14px] font-semibold text-foreground">
-                Total TTC
+                {copy.totalInclTax}
               </span>
               <span className="font-heading text-[22px] font-bold tabular-nums text-foreground">
-                {formatPrice(Number(order.total), order.currency)}
+                {formatPrice(Number(order.total), order.currency, localeCode)}
               </span>
             </div>
           </SectionCard>
 
           {/* ── Invoice ─────────────────────────────────── */}
           <SectionCard
-            eyebrow="Facture"
-            title="Document PDF"
-            hint="Téléchargez votre facture pour vos archives comptables."
+            eyebrow={copy.invoice}
+            title={copy.pdfDocument}
+            hint={copy.invoiceHint}
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="text-[13px] text-foreground/65">
-                Format A4 · branding Althea Systems · TVA détaillée.
+                {copy.invoiceMeta}
               </div>
               <button
                 type="button"
@@ -287,14 +291,14 @@ export default function OrderDetailPage({
                 {invoiceLoading ? (
                   <>
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Génération…
+                    {copy.generating}
                   </>
                 ) : (
                   <>
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                       <path d="M8 2v8m0 0 3-3m-3 3-3-3M3 13h10" />
                     </svg>
-                    Télécharger la facture (PDF)
+                    {copy.downloadInvoice}
                   </>
                 )}
               </button>
@@ -314,7 +318,7 @@ export default function OrderDetailPage({
         {/* ── Summary sidebar ─────────────────────────────── */}
         <aside className="space-y-5 lg:sticky lg:top-44">
           {/* Payment */}
-          <SectionCard eyebrow="Paiement" title="Méthode utilisée">
+          <SectionCard eyebrow={copy.payment} title={copy.methodUsed}>
             {order.paymentLast4 ? (
               <div className="flex items-center gap-3">
                 <span
@@ -332,9 +336,9 @@ export default function OrderDetailPage({
                     </span>
                   </p>
                   <p className="mt-0.5 text-[11.5px] text-foreground/60">
-                    Statut ·{" "}
+                    {copy.statusLabel} ·{" "}
                     {order.paymentStatus === "paid"
-                      ? "Payée"
+                      ? copy.paid
                       : (order.paymentStatus ?? "—")}
                   </p>
                 </div>
@@ -350,32 +354,32 @@ export default function OrderDetailPage({
                 </span>
                 <div>
                   <p className="font-heading text-[14px] font-semibold text-foreground">
-                    Carte bancaire
+                    {copy.card}
                     <span className="ml-1 text-[11.5px] font-normal text-foreground/55">
                       (Stripe)
                     </span>
                   </p>
                   <p className="mt-0.5 text-[11.5px] text-foreground/60">
-                    Statut ·{" "}
+                    {copy.statusLabel} ·{" "}
                     {order.paymentStatus === "paid"
-                      ? "Payée"
+                      ? copy.paid
                       : (order.paymentStatus ?? "—")}
                     {" · "}
-                    Détails de la carte non capturés
+                    {copy.cardDetailsNotCaptured}
                   </p>
                 </div>
               </div>
             ) : (
               <p className="text-[13px] text-foreground/60">
-                Information de paiement indisponible.
+                {copy.paymentInfoUnavailable}
               </p>
             )}
           </SectionCard>
 
           {/* Billing */}
           <SectionCard
-            eyebrow="Adresse"
-            title="Facturation et livraison"
+            eyebrow={copy.address}
+            title={copy.billingShipping}
           >
             {billing ? (
               <address className="not-italic space-y-0.5 text-[13.5px] text-foreground">
@@ -402,14 +406,14 @@ export default function OrderDetailPage({
               </address>
             ) : (
               <p className="text-[13px] text-foreground/60">
-                Aucune adresse enregistrée.
+                {copy.noAddress}
               </p>
             )}
           </SectionCard>
 
           {/* Status timeline */}
           {(order.statusHistory ?? []).length > 0 && (
-            <SectionCard eyebrow="Suivi" title="Historique">
+            <SectionCard eyebrow={copy.tracking} title={copy.history}>
               <ol className="space-y-2.5" role="list">
                 {(order.statusHistory ?? []).map((h, i) => (
                   <li key={`${h.status}-${i}`} className="flex items-start gap-3 text-[12.5px]">
@@ -419,10 +423,10 @@ export default function OrderDetailPage({
                     />
                     <div>
                       <p className="font-semibold text-foreground">
-                        {STATUS_LABELS[h.status] ?? h.status}
+                        {statusLabels[h.status] ?? h.status}
                       </p>
                       <p className="text-[11px] text-foreground/55">
-                        {new Date(h.at).toLocaleString("fr-FR")}
+                        {new Date(h.at).toLocaleString(localeCode)}
                       </p>
                     </div>
                   </li>
@@ -436,18 +440,24 @@ export default function OrderDetailPage({
   );
 }
 
-function Breadcrumb({ here }: { here: string }) {
+function Breadcrumb({
+  here,
+  copy,
+}: {
+  here: string;
+  copy: (typeof ORDER_DETAIL_COPY)[keyof typeof ORDER_DETAIL_COPY];
+}) {
   return (
     <nav
       aria-label="Fil d'Ariane"
       className="flex flex-wrap items-center gap-2 text-sm text-foreground/60"
     >
       <Link href="/" className="hover:text-primary">
-        Accueil
+        {copy.home}
       </Link>
       <span aria-hidden="true" className="text-foreground/25">/</span>
       <Link href="/orders" className="hover:text-primary">
-        Mes commandes
+        {copy.myOrders}
       </Link>
       <span aria-hidden="true" className="text-foreground/25">/</span>
       <span className="font-semibold text-foreground">{here}</span>
@@ -482,3 +492,182 @@ function SectionCard({
     </section>
   );
 }
+
+const ORDER_DETAIL_COPY = {
+  fr: {
+    home: "Accueil",
+    myOrders: "Mes commandes",
+    order: "Commande",
+    placedOn: "Passée le",
+    unexpectedError: "Erreur inattendue.",
+    invoiceDownloadError: "Impossible de télécharger la facture.",
+    reorderError: "Impossible d'ajouter les articles au panier.",
+    notFound: "Commande introuvable.",
+    reorderTitle: "Re-ajouter les articles dans le panier",
+    adding: "Ajout en cours…",
+    reorder: "Renouveler la commande",
+    allOrders: "Toutes mes commandes",
+    products: "Produits",
+    orderedItems: "Articles commandés",
+    orderedItemsHint: "Récapitulatif détaillé des lignes facturées.",
+    skuPrefix: "Réf.",
+    totalInclTax: "Total TTC",
+    invoice: "Facture",
+    pdfDocument: "Document PDF",
+    invoiceHint: "Téléchargez votre facture pour vos archives comptables.",
+    invoiceMeta: "Format A4 · branding Althea Systems · TVA détaillée.",
+    generating: "Génération…",
+    downloadInvoice: "Télécharger la facture (PDF)",
+    payment: "Paiement",
+    methodUsed: "Méthode utilisée",
+    statusLabel: "Statut",
+    paid: "Payée",
+    card: "Carte bancaire",
+    cardDetailsNotCaptured: "Détails de la carte non capturés",
+    paymentInfoUnavailable: "Information de paiement indisponible.",
+    address: "Adresse",
+    billingShipping: "Facturation et livraison",
+    noAddress: "Aucune adresse enregistrée.",
+    tracking: "Suivi",
+    history: "Historique",
+    statusLabels: {
+      pending: "En attente",
+      processing: "En traitement",
+      shipped: "Expédiée",
+      delivered: "Livrée",
+      cancelled: "Annulée",
+    },
+  },
+  en: {
+    home: "Home",
+    myOrders: "My orders",
+    order: "Order",
+    placedOn: "Placed on",
+    unexpectedError: "Unexpected error.",
+    invoiceDownloadError: "Could not download invoice.",
+    reorderError: "Could not add items to cart.",
+    notFound: "Order not found.",
+    reorderTitle: "Add these items back to cart",
+    adding: "Adding…",
+    reorder: "Reorder",
+    allOrders: "All my orders",
+    products: "Products",
+    orderedItems: "Ordered items",
+    orderedItemsHint: "Detailed summary of billed lines.",
+    skuPrefix: "SKU",
+    totalInclTax: "Total (incl. VAT)",
+    invoice: "Invoice",
+    pdfDocument: "PDF document",
+    invoiceHint: "Download your invoice for accounting records.",
+    invoiceMeta: "A4 format · Althea Systems branding · detailed VAT.",
+    generating: "Generating…",
+    downloadInvoice: "Download invoice (PDF)",
+    payment: "Payment",
+    methodUsed: "Method used",
+    statusLabel: "Status",
+    paid: "Paid",
+    card: "Card",
+    cardDetailsNotCaptured: "Card details were not captured",
+    paymentInfoUnavailable: "Payment information unavailable.",
+    address: "Address",
+    billingShipping: "Billing and shipping",
+    noAddress: "No address saved.",
+    tracking: "Tracking",
+    history: "History",
+    statusLabels: {
+      pending: "Pending",
+      processing: "Processing",
+      shipped: "Shipped",
+      delivered: "Delivered",
+      cancelled: "Cancelled",
+    },
+  },
+  ar: {
+    home: "الرئيسية",
+    myOrders: "طلباتي",
+    order: "الطلب",
+    placedOn: "تم الطلب في",
+    unexpectedError: "حدث خطأ غير متوقع.",
+    invoiceDownloadError: "تعذّر تنزيل الفاتورة.",
+    reorderError: "تعذّر إضافة المنتجات إلى السلة.",
+    notFound: "لم يتم العثور على الطلب.",
+    reorderTitle: "إعادة إضافة المنتجات إلى السلة",
+    adding: "جارٍ الإضافة…",
+    reorder: "إعادة الطلب",
+    allOrders: "كل طلباتي",
+    products: "المنتجات",
+    orderedItems: "المنتجات المطلوبة",
+    orderedItemsHint: "ملخص تفصيلي للعناصر المفوترة.",
+    skuPrefix: "SKU",
+    totalInclTax: "الإجمالي شامل الضريبة",
+    invoice: "الفاتورة",
+    pdfDocument: "مستند PDF",
+    invoiceHint: "نزّل الفاتورة لأرشيفك المحاسبي.",
+    invoiceMeta: "صيغة A4 · هوية Althea Systems · ضريبة مفصلة.",
+    generating: "جارٍ الإنشاء…",
+    downloadInvoice: "تنزيل الفاتورة (PDF)",
+    payment: "الدفع",
+    methodUsed: "الطريقة المستخدمة",
+    statusLabel: "الحالة",
+    paid: "مدفوع",
+    card: "بطاقة",
+    cardDetailsNotCaptured: "لم يتم حفظ تفاصيل البطاقة",
+    paymentInfoUnavailable: "معلومات الدفع غير متاحة.",
+    address: "العنوان",
+    billingShipping: "الفوترة والشحن",
+    noAddress: "لا يوجد عنوان محفوظ.",
+    tracking: "التتبع",
+    history: "السجل",
+    statusLabels: {
+      pending: "قيد الانتظار",
+      processing: "قيد المعالجة",
+      shipped: "تم الشحن",
+      delivered: "تم التسليم",
+      cancelled: "ملغى",
+    },
+  },
+  he: {
+    home: "דף הבית",
+    myOrders: "ההזמנות שלי",
+    order: "הזמנה",
+    placedOn: "בוצעה בתאריך",
+    unexpectedError: "אירעה שגיאה בלתי צפויה.",
+    invoiceDownloadError: "לא ניתן להוריד חשבונית.",
+    reorderError: "לא ניתן להוסיף את הפריטים לעגלה.",
+    notFound: "הזמנה לא נמצאה.",
+    reorderTitle: "הוסף מחדש את הפריטים לעגלה",
+    adding: "מוסיף…",
+    reorder: "הזמנה חוזרת",
+    allOrders: "כל ההזמנות שלי",
+    products: "מוצרים",
+    orderedItems: "פריטים שהוזמנו",
+    orderedItemsHint: "סיכום מפורט של שורות החיוב.",
+    skuPrefix: "SKU",
+    totalInclTax: "סה\"כ כולל מע\"מ",
+    invoice: "חשבונית",
+    pdfDocument: "מסמך PDF",
+    invoiceHint: "הורד את החשבונית לרישומי הנהלת חשבונות.",
+    invoiceMeta: "פורמט A4 · מיתוג Althea Systems · מע\"מ מפורט.",
+    generating: "מייצר…",
+    downloadInvoice: "הורדת חשבונית (PDF)",
+    payment: "תשלום",
+    methodUsed: "שיטה בשימוש",
+    statusLabel: "סטטוס",
+    paid: "שולם",
+    card: "כרטיס",
+    cardDetailsNotCaptured: "פרטי הכרטיס לא נשמרו",
+    paymentInfoUnavailable: "פרטי תשלום אינם זמינים.",
+    address: "כתובת",
+    billingShipping: "חיוב ומשלוח",
+    noAddress: "אין כתובת שמורה.",
+    tracking: "מעקב",
+    history: "היסטוריה",
+    statusLabels: {
+      pending: "ממתין",
+      processing: "בטיפול",
+      shipped: "נשלח",
+      delivered: "נמסר",
+      cancelled: "בוטל",
+    },
+  },
+} as const;

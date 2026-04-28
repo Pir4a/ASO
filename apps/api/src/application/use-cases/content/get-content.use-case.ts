@@ -16,7 +16,10 @@ export class GetContentUseCase {
         // additional rows exist in the database.
         const seen: Record<string, number> = { carousel: 0 };
         const MAX_CAROUSEL = 3;
-        return all.filter((block) => {
+    return all.filter((block) => {
+      // Backoffice runtime settings are admin-only and must not leak through
+      // the public content endpoint consumed by the storefront.
+      if (block.type === 'backoffice_settings') return false;
             if (block.type === 'carousel') {
                 seen.carousel = (seen.carousel ?? 0) + 1;
                 return seen.carousel <= MAX_CAROUSEL;

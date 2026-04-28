@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { sendChatMessage, startChatSession } from "@/lib/api";
-import { useT } from "@/context/LocaleContext";
+import { useLocale, useT } from "@/context/LocaleContext";
 import { CategoryHero } from "@/components/category/CategoryHero";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
@@ -16,31 +16,33 @@ interface ChatMsg {
 
 export default function ContactPage() {
   const t = useT();
+  const locale = useLocale();
+  const copy = CONTACT_COPY[locale];
   const [tab, setTab] = useState<"chat" | "form">("chat");
 
   return (
     <div className="space-y-7">
       {/* Breadcrumb */}
       <nav
-        aria-label="Fil d'Ariane"
+        aria-label={copy.breadcrumb}
         className="flex flex-wrap items-center gap-2 text-sm text-foreground/60"
       >
         <Link href="/" className="hover:text-primary">
-          Accueil
+          {copy.home}
         </Link>
         <span aria-hidden="true" className="text-foreground/25">/</span>
-        <span className="font-semibold text-foreground">Contact</span>
+        <span className="font-semibold text-foreground">{t("footer.contact")}</span>
       </nav>
 
       {/* Hero */}
       <CategoryHero
-        eyebrow="Support"
+        eyebrow={copy.support}
         name={t("contact.title")}
         description={t("contact.subtitle")}
         stats={[
-          { value: "< 2 h", label: "Réponse moyenne" },
-          { value: "24/7", label: "Assistant IA" },
-          { value: "FR", label: "Support local" },
+          { value: "< 2 h", label: copy.avgReply },
+          { value: "24/7", label: copy.aiAssistant },
+          { value: "FR", label: copy.localSupport },
         ]}
       />
 
@@ -50,7 +52,7 @@ export default function ContactPage() {
           {/* Tab toggle */}
           <div
             role="tablist"
-            aria-label="Choisir un mode de contact"
+            aria-label={copy.chooseContactMode}
             className="inline-flex rounded-xl border border-foreground/10 bg-white p-1 shadow-sm"
           >
             <button
@@ -70,7 +72,7 @@ export default function ContactPage() {
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-4 w-4">
                 <path d="M2.5 3.5h11a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H7l-3 2.5V11.5H2.5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Z" />
               </svg>
-              Chat IA
+              {copy.aiChat}
             </button>
             <button
               type="button"
@@ -90,7 +92,7 @@ export default function ContactPage() {
                 <rect x="2" y="3.5" width="12" height="9" rx="1" />
                 <path d="m2.5 4.5 5.5 4 5.5-4" />
               </svg>
-              Formulaire
+              {copy.form}
             </button>
           </div>
 
@@ -103,10 +105,10 @@ export default function ContactPage() {
             <header className="border-b border-foreground/5 px-5 py-4">
               <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
                 <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-                Contact direct
+                {copy.directContact}
               </p>
               <h2 className="font-heading text-[18px] font-semibold tracking-tight text-foreground">
-                Joindre l&apos;équipe Althea
+                {copy.reachTeam}
               </h2>
             </header>
             <ul className="divide-y divide-foreground/5" role="list">
@@ -123,7 +125,7 @@ export default function ContactPage() {
               />
               <ContactRow
                 href="tel:+33184801200"
-                label="Téléphone"
+                label={copy.phone}
                 value="+33 1 84 80 12 00"
                 icon={
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-5 w-5">
@@ -132,7 +134,7 @@ export default function ContactPage() {
                 }
               />
               <ContactRow
-                label="Adresse"
+                label={copy.address}
                 value="12 rue de la Santé, 75013 Paris"
                 icon={
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-5 w-5">
@@ -142,8 +144,8 @@ export default function ContactPage() {
                 }
               />
               <ContactRow
-                label="Horaires"
-                value="Lun – Ven · 9 h – 18 h"
+                label={copy.hours}
+                value={copy.hoursValue}
                 icon={
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-5 w-5">
                     <circle cx="12" cy="12" r="9" />
@@ -157,11 +159,10 @@ export default function ContactPage() {
           <section className="overflow-hidden rounded-2xl border-l-4 border-primary border-y border-r border-foreground/10 bg-white px-5 py-4">
             <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
               <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-              Garanties
+              {copy.guarantees}
             </p>
             <p className="text-[13.5px] leading-relaxed text-foreground/75">
-              Tous nos équipements sont certifiés CE médical, conformes ISO 13485, et accompagnés
-              d&apos;une garantie constructeur avec maintenance assurée par nos techniciens.
+              {copy.guaranteesBody}
             </p>
           </section>
         </aside>
@@ -219,6 +220,8 @@ function ContactRow({
 
 function ChatPanel() {
   const t = useT();
+  const locale = useLocale();
+  const copy = CONTACT_COPY[locale];
   const [messages, setMessages] = useState<ChatMsg[]>([
     { id: "welcome", role: "assistant", content: t("contact.chatWelcome") },
   ]);
@@ -288,11 +291,11 @@ function ChatPanel() {
         </span>
         <div className="min-w-0">
           <p className="font-heading text-[14.5px] font-semibold leading-tight text-foreground">
-            Assistant Althea
+            {copy.assistantName}
           </p>
           <p className="mt-0.5 inline-flex items-center gap-1.5 text-[11.5px] text-foreground/55">
             <span aria-hidden="true" className="block h-1.5 w-1.5 rounded-full bg-success shadow-[0_0_0_3px_rgba(16,185,129,0.18)]" />
-            En ligne · Réponses instantanées
+            {copy.onlineInstant}
           </p>
         </div>
       </header>
@@ -358,7 +361,7 @@ function ChatPanel() {
           type="button"
           onClick={() => send()}
           disabled={!input.trim() || isLoading}
-          aria-label="Envoyer le message"
+          aria-label={copy.sendMessage}
           style={input.trim() && !isLoading ? { color: "#fff" } : undefined}
           className={`grid h-11 w-11 flex-none place-items-center rounded-full transition ${
             input.trim() && !isLoading
@@ -393,6 +396,8 @@ function ChatPanel() {
 
 function ContactForm() {
   const t = useT();
+  const locale = useLocale();
+  const copy = CONTACT_COPY[locale];
   const [subject, setSubject] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -409,7 +414,7 @@ function ContactForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ subject, email, message }),
       });
-      if (!res.ok) throw new Error("Impossible d'envoyer votre message.");
+      if (!res.ok) throw new Error(copy.formSendError);
       setSubject("");
       setEmail("");
       setMessage("");
@@ -417,7 +422,7 @@ function ContactForm() {
     } catch (error) {
       setFeedback({
         kind: "error",
-        text: error instanceof Error ? error.message : "Erreur inattendue.",
+        text: error instanceof Error ? error.message : copy.unexpectedError,
       });
     } finally {
       setLoading(false);
@@ -449,7 +454,7 @@ function ContactForm() {
           maxLength={120}
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
-          placeholder="Demande d'information"
+          placeholder={copy.subjectPlaceholder}
           className={inputCls}
         />
       </div>
@@ -464,7 +469,7 @@ function ContactForm() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="vous@exemple.fr"
+          placeholder={copy.emailPlaceholder}
           className={inputCls}
         />
       </div>
@@ -480,7 +485,7 @@ function ContactForm() {
           maxLength={2000}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Détaillez votre demande…"
+          placeholder={copy.messagePlaceholder}
           rows={6}
           className={`${inputCls} resize-y`}
         />
@@ -533,3 +538,118 @@ function ContactForm() {
     </form>
   );
 }
+
+const CONTACT_COPY = {
+  fr: {
+    breadcrumb: "Fil d'Ariane",
+    home: "Accueil",
+    support: "Support",
+    avgReply: "Réponse moyenne",
+    aiAssistant: "Assistant IA",
+    localSupport: "Support local",
+    chooseContactMode: "Choisir un mode de contact",
+    aiChat: "Chat IA",
+    form: "Formulaire",
+    directContact: "Contact direct",
+    reachTeam: "Joindre l'équipe Althea",
+    phone: "Téléphone",
+    address: "Adresse",
+    hours: "Horaires",
+    hoursValue: "Lun – Ven · 9 h – 18 h",
+    guarantees: "Garanties",
+    guaranteesBody:
+      "Tous nos équipements sont certifiés CE médical, conformes ISO 13485, et accompagnés d'une garantie constructeur avec maintenance assurée par nos techniciens.",
+    assistantName: "Assistant Althea",
+    onlineInstant: "En ligne · Réponses instantanées",
+    sendMessage: "Envoyer le message",
+    formSendError: "Impossible d'envoyer votre message.",
+    unexpectedError: "Erreur inattendue.",
+    subjectPlaceholder: "Demande d'information",
+    emailPlaceholder: "vous@exemple.fr",
+    messagePlaceholder: "Détaillez votre demande…",
+  },
+  en: {
+    breadcrumb: "Breadcrumb",
+    home: "Home",
+    support: "Support",
+    avgReply: "Average reply",
+    aiAssistant: "AI assistant",
+    localSupport: "Local support",
+    chooseContactMode: "Choose a contact mode",
+    aiChat: "AI chat",
+    form: "Form",
+    directContact: "Direct contact",
+    reachTeam: "Reach Althea team",
+    phone: "Phone",
+    address: "Address",
+    hours: "Hours",
+    hoursValue: "Mon – Fri · 9am – 6pm",
+    guarantees: "Guarantees",
+    guaranteesBody:
+      "All our equipment is CE medical certified, ISO 13485 compliant, and comes with manufacturer warranty plus maintenance by our technicians.",
+    assistantName: "Althea Assistant",
+    onlineInstant: "Online · Instant replies",
+    sendMessage: "Send message",
+    formSendError: "Could not send your message.",
+    unexpectedError: "Unexpected error.",
+    subjectPlaceholder: "Information request",
+    emailPlaceholder: "you@example.com",
+    messagePlaceholder: "Describe your request…",
+  },
+  ar: {
+    breadcrumb: "مسار التنقل",
+    home: "الرئيسية",
+    support: "الدعم",
+    avgReply: "متوسط الرد",
+    aiAssistant: "مساعد ذكي",
+    localSupport: "دعم محلي",
+    chooseContactMode: "اختر طريقة التواصل",
+    aiChat: "دردشة ذكية",
+    form: "نموذج",
+    directContact: "تواصل مباشر",
+    reachTeam: "التواصل مع فريق Althea",
+    phone: "الهاتف",
+    address: "العنوان",
+    hours: "المواعيد",
+    hoursValue: "الاثنين – الجمعة · 9 ص – 6 م",
+    guarantees: "الضمانات",
+    guaranteesBody:
+      "جميع أجهزتنا معتمدة CE طبي ومتوافقة مع ISO 13485، مع ضمان المصنع وصيانة من فنيينا.",
+    assistantName: "مساعد Althea",
+    onlineInstant: "متصل · ردود فورية",
+    sendMessage: "إرسال الرسالة",
+    formSendError: "تعذّر إرسال رسالتك.",
+    unexpectedError: "حدث خطأ غير متوقع.",
+    subjectPlaceholder: "طلب معلومات",
+    emailPlaceholder: "you@example.com",
+    messagePlaceholder: "اشرح طلبك…",
+  },
+  he: {
+    breadcrumb: "שביל ניווט",
+    home: "דף הבית",
+    support: "תמיכה",
+    avgReply: "זמן תגובה ממוצע",
+    aiAssistant: "עוזר AI",
+    localSupport: "תמיכה מקומית",
+    chooseContactMode: "בחר אופן יצירת קשר",
+    aiChat: "צ'אט AI",
+    form: "טופס",
+    directContact: "יצירת קשר ישירה",
+    reachTeam: "פנייה לצוות Althea",
+    phone: "טלפון",
+    address: "כתובת",
+    hours: "שעות פעילות",
+    hoursValue: "א׳–ה׳ · 09:00–18:00",
+    guarantees: "התחייבויות",
+    guaranteesBody:
+      "כל הציוד שלנו מאושר CE רפואי, תואם ISO 13485, וכולל אחריות יצרן ותחזוקה על ידי הטכנאים שלנו.",
+    assistantName: "עוזר Althea",
+    onlineInstant: "מחובר · תגובות מיידיות",
+    sendMessage: "שליחת הודעה",
+    formSendError: "לא ניתן לשלוח את ההודעה.",
+    unexpectedError: "אירעה שגיאה בלתי צפויה.",
+    subjectPlaceholder: "בקשת מידע",
+    emailPlaceholder: "you@example.com",
+    messagePlaceholder: "פרט את הבקשה שלך…",
+  },
+} as const;

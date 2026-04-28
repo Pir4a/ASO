@@ -27,7 +27,7 @@ export class PdfService {
             doc.on('end', () => resolve(Buffer.concat(chunks)));
             doc.on('error', reject);
 
-            const orderNumber = formatOrderNumber(order.id, order.createdAt);
+            const orderNumber = order.orderNumber ?? formatOrderNumber(order.id, order.createdAt);
             const pageW = doc.page.width;
             const margin = 50;
             const contentW = pageW - margin * 2;
@@ -261,7 +261,7 @@ export class PdfService {
             doc.on('end', () => resolveFn(Buffer.concat(chunks)));
             doc.on('error', reject);
 
-            const orderNumber = formatOrderNumber(order.id, order.createdAt);
+            const orderNumber = order.orderNumber ?? formatOrderNumber(order.id, order.createdAt);
             const pageW = doc.page.width;
             const margin = 50;
             const contentW = pageW - margin * 2;

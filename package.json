@@ -4,6 +4,7 @@
   "private": true,
   "description": "Monorepo e-commerce Althea Systems (Next.js, NestJS, PostgreSQL, MongoDB)",
   "type": "module",
+  "packageManager": "npm@11.11.0",
   "workspaces": [
     "apps/*",
     "packages/*"

@@ -29,6 +29,8 @@ import {
 } from '../../../domain/repositories/product.repository.interface';
 import { Product } from '../../../domain/entities/product.entity';
 import { SearchProductsUseCase } from '../../../application/use-cases/products/search-products.use-case';
+import { localizeProduct } from '../../../lib/i18n-localize';
+import { AutoTranslationService } from '../../services/auto-translation.service';
 
 @Controller('products')
 export class ProductsController {
@@ -37,6 +39,7 @@ export class ProductsController {
         private readonly findProductBySlugUseCase: FindProductBySlugUseCase,
         private readonly createProductUseCase: CreateProductUseCase,
         private readonly searchProductsUseCase: SearchProductsUseCase,
+        private readonly autoTranslationService: AutoTranslationService,
         @Inject(PRODUCT_REPOSITORY_TOKEN)
         private readonly productRepository: ProductRepository,
     ) { }
@@ -67,6 +70,7 @@ export class ProductsController {
         @Query('sort') sortStr?: string,
         @Query('page') pageStr?: string,
         @Query('limit') limitStr?: string,
+        @Query('lang') lang?: string,
     ) {
         const page = Math.max(1, Number.parseInt(pageStr ?? '1', 10) || 1);
         const pageSize = Math.min(
@@ -105,7 +109,7 @@ export class ProductsController {
 
         const totalPages = Math.max(1, Math.ceil(result.total / pageSize));
         return {
-            data: result.items,
+            data: result.items.map((p) => localizeProduct(p, lang)),
             meta: {
                 total: result.total,
                 page,
@@ -129,6 +133,7 @@ export class ProductsController {
         @Query('categoryId') categoryId?: string,
         @Query('page') pageStr?: string,
         @Query('limit') limitStr?: string,
+        @Query('lang') lang?: string,
     ) {
         const paginate =
             !!(categorySlug || categoryId || pageStr !== undefined || limitStr !== undefined);
@@ -147,34 +152,39 @@ export class ProductsController {
             });
             const totalPages = Math.max(1, Math.ceil(total / pageSize));
             return {
-                data: items,
+                data: items.map((p) => localizeProduct(p, lang)),
                 meta: { total, page, pageSize, totalPages },
             };
         }
-        return this.getProductsUseCase.execute();
+        const products = await this.getProductsUseCase.execute();
+        return products.map((p) => localizeProduct(p, lang));
     }
 
     @Get('featured')
-    async findFeatured(@Query('limit') limit?: string) {
+    async findFeatured(@Query('limit') limit?: string, @Query('lang') lang?: string) {
         const parsedLimit = Math.max(
             1,
             Math.min(20, Number.parseInt(limit ?? '8', 10) || 8),
         );
-        return this.productRepository.findFeatured(parsedLimit);
+        const products = await this.productRepository.findFeatured(parsedLimit);
+        return products.map((p) => localizeProduct(p, lang));
     }
 
     @Get(':slug/related')
     async related(
         @Param('slug') slug: string,
         @Query('limit') limit?: string,
+        @Query('lang') lang?: string,
     ) {
         const lim = Math.min(12, Math.max(1, Number.parseInt(limit ?? '6', 10) || 6));
-        return this.productRepository.findRelatedBySlug(slug, lim);
+        const related = await this.productRepository.findRelatedBySlug(slug, lim);
+        return related.map((p) => localizeProduct(p, lang));
     }
 
     @Get(':slug')
-    findOne(@Param('slug') slug: string) {
-        return this.findProductBySlugUseCase.execute(slug);
+    async findOne(@Param('slug') slug: string, @Query('lang') lang?: string) {
+        const product = await this.findProductBySlugUseCase.execute(slug);
+        return product ? localizeProduct(product, lang) : product;
     }
 
     /** Admin listing — returns drafts too. */
@@ -212,8 +222,16 @@ export class ProductsController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('admin')
     @Post()
-    create(@Body() createProductDto: CreateProductDto) {
-        return this.createProductUseCase.execute(createProductDto);
+    async create(@Body() createProductDto: CreateProductDto) {
+        const translations = await this.autoTranslationService.ensureTranslations({
+            name: createProductDto.name,
+            description: createProductDto.description,
+            existing: createProductDto.translations,
+        });
+        return this.createProductUseCase.execute({
+            ...createProductDto,
+            translations,
+        });
     }
 
     @UseGuards(JwtAuthGuard, RolesGuard)
@@ -234,6 +252,11 @@ export class ProductsController {
         const updated = new Product({
             ...existing,
             ...bodyRest,
+            translations: await this.autoTranslationService.ensureTranslations({
+                name: body.name ?? existing.name,
+                description: body.description ?? existing.description,
+                existing: body.translations ?? existing.translations,
+            }),
             ...(bodyVat !== undefined
                 ? {
                     vatRate: ([0, 5.5, 10, 20] as const).includes(bodyVat as 0 | 5.5 | 10 | 20)

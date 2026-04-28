@@ -4,6 +4,7 @@ import {
     Get,
     HttpCode,
     HttpStatus,
+    Inject,
     Param,
     Post,
     Query,
@@ -20,6 +21,10 @@ import { GetCreditNotePdfUseCase } from '../../../application/use-cases/credit-n
 import { SendCreditNoteEmailUseCase } from '../../../application/use-cases/credit-notes/send-credit-note-email.use-case';
 import { ListCreditNotesQueryDto } from '../../dto/credit-notes/list-credit-notes-query.dto';
 import { SendCreditNoteEmailDto } from '../../dto/credit-notes/send-credit-note-email.dto';
+import { INVOICE_REPOSITORY_TOKEN } from '../../../domain/repositories/invoice.repository.interface';
+import type { InvoiceRepository } from '../../../domain/repositories/invoice.repository.interface';
+import { ORDER_REPOSITORY_TOKEN } from '../../../domain/repositories/order.repository.interface';
+import type { OrderRepository } from '../../../domain/repositories/order.repository.interface';
 
 @Controller('admin/credit-notes')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -30,6 +35,10 @@ export class AdminCreditNotesController {
         private readonly getCreditNote: GetCreditNoteUseCase,
         private readonly getCreditNotePdf: GetCreditNotePdfUseCase,
         private readonly sendCreditNoteEmail: SendCreditNoteEmailUseCase,
+        @Inject(INVOICE_REPOSITORY_TOKEN)
+        private readonly invoiceRepository: InvoiceRepository,
+        @Inject(ORDER_REPOSITORY_TOKEN)
+        private readonly orderRepository: OrderRepository,
     ) { }
 
     @Get()
@@ -43,14 +52,25 @@ export class AdminCreditNotesController {
                 search: query.search,
             },
         });
+        const creditNotesWithRefs = await Promise.all(
+            result.items.map(async (cn) => {
+                const invoice = await this.invoiceRepository.findById(cn.invoiceId);
+                const order = invoice
+                    ? await this.orderRepository.findById(invoice.orderId)
+                    : null;
+                return { cn, invoice, order };
+            }),
+        );
         return {
             page: result.page,
             pageSize: result.pageSize,
             total: result.total,
-            creditNotes: result.items.map((cn) => ({
+            creditNotes: creditNotesWithRefs.map(({ cn, invoice, order }) => ({
                 id: cn.id,
                 number: cn.number,
                 invoiceId: cn.invoiceId,
+                invoiceNumber: invoice?.number ?? null,
+                orderNumber: order?.orderNumber ?? null,
                 userId: cn.userId,
                 amountTtcCents: cn.amountTtcCents,
                 currency: cn.currency,

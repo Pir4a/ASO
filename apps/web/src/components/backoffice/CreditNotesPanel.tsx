@@ -10,6 +10,8 @@ type AdminCreditNote = {
     id: string;
     number: string;
     invoiceId: string;
+    invoiceNumber: string | null;
+    orderNumber: string | null;
     userId: string | null;
     amountTtcCents: number;
     currency: string;
@@ -138,6 +140,7 @@ export function CreditNotesPanel({ flash }: { flash?: (kind: "success" | "error"
                         <tr>
                             <th>Numéro</th>
                             <th>Facture</th>
+                            <th>Commande</th>
                             <th>Date</th>
                             <th>Motif</th>
                             <th>Montant TTC</th>
@@ -147,7 +150,7 @@ export function CreditNotesPanel({ flash }: { flash?: (kind: "success" | "error"
                     <tbody>
                         {creditNotes.length === 0 && !loading ? (
                             <tr>
-                                <td colSpan={6} className="bo-muted" style={{ textAlign: "center", padding: 24 }}>
+                                <td colSpan={7} className="bo-muted" style={{ textAlign: "center", padding: 24 }}>
                                     Aucun avoir
                                 </td>
                             </tr>
@@ -155,7 +158,8 @@ export function CreditNotesPanel({ flash }: { flash?: (kind: "success" | "error"
                             creditNotes.map((cn) => (
                                 <tr key={cn.id}>
                                     <td className="bo-mono">{cn.number}</td>
-                                    <td className="bo-mono bo-muted">{cn.invoiceId.slice(0, 8)}…</td>
+                                    <td className="bo-mono bo-muted">{cn.invoiceNumber ?? "—"}</td>
+                                    <td className="bo-mono bo-muted">{cn.orderNumber ?? "—"}</td>
                                     <td>{formatDate(cn.issuedAt)}</td>
                                     <td>
                                         <span className="bo-badge">{REASON_LABELS[cn.reason]}</span>

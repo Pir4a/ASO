@@ -243,7 +243,7 @@ function OrderRow({
         : `${names[0]} + ${otherCount} ${otherWord}`;
   const qty = items.reduce((sum, it) => sum + (it.quantity ?? 0), 0);
   const itemWord = qty > 1 ? t("cart.itemPlural") : t("cart.itemSingular");
-  const orderNumber = order.orderNumber ?? `ALT-${order.id.slice(0, 8).toUpperCase()}`;
+  const orderNumber = order.orderNumber ?? "—";
 
   return (
     <Link

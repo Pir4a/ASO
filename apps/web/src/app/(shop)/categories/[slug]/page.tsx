@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getCategories, getProducts, getProductsByCategorySlug } from "@/lib/api";
 import { CategoryHero } from "@/components/category/CategoryHero";
 import { CategoryCatalog } from "@/components/category/CategoryCatalog";
+import { getLocaleFromCookie } from "@/lib/i18n.server";
+import { getTranslations } from "@/lib/translations";
 
 export default async function CategoryDetail({
   params,
@@ -14,6 +16,8 @@ export default async function CategoryDetail({
   const { slug } = await params;
   const { q: rawQ } = await searchParams;
   const initialQuery = (rawQ ?? "").trim();
+  const locale = await getLocaleFromCookie();
+  const t = getTranslations(locale);
 
   const [categories, allProducts, page] = await Promise.all([
     getCategories(),
@@ -38,15 +42,15 @@ export default async function CategoryDetail({
   return (
     <div className="space-y-6">
       <nav
-        aria-label="Fil d'Ariane"
+        aria-label={t("auth.login.breadcrumbLabel")}
         className="flex flex-wrap items-center gap-2 text-sm text-foreground/60"
       >
         <Link href="/" className="hover:text-primary">
-          Accueil
+          {t("common.home")}
         </Link>
         <span aria-hidden="true" className="text-foreground/25">/</span>
         <Link href="/categories" className="hover:text-primary">
-          Catégories
+          {t("categories.title")}
         </Link>
         <span aria-hidden="true" className="text-foreground/25">/</span>
         <span className="font-semibold text-foreground">{category.name}</span>
