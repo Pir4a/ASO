@@ -20,9 +20,9 @@ type Phase = "idle" | "in" | "out";
 
 /**
  * Full-screen ECG flourish played when navigating between the storefront
- * and the BO. An SVG heart-rate trace sweeps across the screen while the
- * Althea mark pulses at midpoint; the underlying route swap happens behind
- * the overlay so the user lands on the destination as the line completes.
+ * and the BO. An SVG heart-rate trace sweeps across the screen; the
+ * underlying route swap happens behind the overlay so the user lands on
+ * the destination as the line completes.
  */
 export function RouteFlourish() {
   const router = useRouter();
@@ -89,12 +89,6 @@ export function RouteFlourish() {
             className="route-flourish__path"
           />
         </svg>
-        <div className="route-flourish__logo">
-          {/* The logo PNG has a dark fringe baked into its outer pixels
-              (no clean alpha edge), so we render it as a background image
-              and zoom slightly past the container to crop the fringe out. */}
-          <div className="route-flourish__logo-mark" role="img" aria-label="" />
-        </div>
       </div>
     </div>
   );

@@ -123,26 +123,7 @@ button:disabled,
   stroke-dashoffset: 100;
   filter: drop-shadow(0 0 6px color-mix(in oklch, currentColor 50%, transparent));
 }
-.route-flourish__logo {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  transform-origin: center;
-  opacity: 0;
-}
-.route-flourish__logo-mark {
-  width: clamp(64px, 10vw, 104px);
-  aspect-ratio: 82 / 71;
-  background-image: url("/logo-mark.png");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 122% 122%;
-  border-radius: 18%;
-  filter: drop-shadow(0 6px 16px rgba(0, 168, 181, 0.22));
-}
-
-/* IN phase — backdrop fades in, line draws across, logo pulses on the QRS. */
+/* IN phase — backdrop fades in, line draws across. */
 .route-flourish--in .route-flourish__backdrop {
   animation: bo-backdrop-in 220ms ease-out forwards;
 }
@@ -151,9 +132,6 @@ button:disabled,
 }
 .route-flourish--in .route-flourish__path {
   animation: bo-ecg-sweep 880ms cubic-bezier(0.45, 0.05, 0.55, 0.95) 80ms forwards;
-}
-.route-flourish--in .route-flourish__logo {
-  animation: bo-logo-beat 880ms cubic-bezier(0.4, 0, 0.2, 1) 80ms forwards;
 }
 
 /* OUT phase — fade everything out so the destination page shows through. */
@@ -177,25 +155,13 @@ button:disabled,
   from { stroke-dashoffset: 100; }
   to   { stroke-dashoffset: 0; }
 }
-/* Logo heartbeat — quiet during the flat lead-in, two thumps when the
-   QRS spike crosses the center, then a soft settle during the T-wave. */
-@keyframes bo-logo-beat {
-  0%   { opacity: 0.55; transform: scale(0.94); }
-  35%  { opacity: 0.75; transform: scale(0.97); }
-  48%  { opacity: 1;    transform: scale(1.18); }
-  56%  { opacity: 1;    transform: scale(0.98); }
-  64%  { opacity: 1;    transform: scale(1.10); }
-  72%  { opacity: 1;    transform: scale(1.00); }
-  100% { opacity: 1;    transform: scale(1.00); }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .route-flourish--in .route-flourish__backdrop,
   .route-flourish--in .route-flourish__stage {
     animation-duration: 80ms;
   }
-  .route-flourish--in .route-flourish__path,
-  .route-flourish--in .route-flourish__logo {
+  .route-flourish--in .route-flourish__path {
     animation: none;
     stroke-dashoffset: 0;
     opacity: 1;
