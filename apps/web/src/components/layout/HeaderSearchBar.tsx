@@ -19,7 +19,7 @@ export function HeaderSearchBar({ className, autoFocus, onSubmitted }: HeaderSea
     e.preventDefault();
     const trimmed = query.trim();
     router.push(
-      trimmed ? `/products?q=${encodeURIComponent(trimmed)}#products-first` : "/products#products-first",
+      trimmed ? `/products?q=${encodeURIComponent(trimmed)}` : "/products",
     );
     onSubmitted?.();
   };

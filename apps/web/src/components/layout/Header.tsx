@@ -154,7 +154,7 @@ export function Header({ locale }: HeaderProps) {
       router.push(`/products/${s.slug}`);
       return;
     }
-    router.push(`/products?q=${encodeURIComponent(s.query)}#products-first`);
+    router.push(`/products?q=${encodeURIComponent(s.query)}`);
   };
 
   const itemCount = items.reduce((sum, it) => sum + it.quantity, 0);
@@ -186,7 +186,7 @@ export function Header({ locale }: HeaderProps) {
     if (trimmed) params.set("q", trimmed);
     if (searchSlug) params.set("categorySlug", searchSlug);
     const qs = params.toString();
-    router.push(`/products${qs ? `?${qs}` : ""}#products-first`);
+    router.push(`/products${qs ? `?${qs}` : ""}`);
   };
 
   return (
