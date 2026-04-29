@@ -16,6 +16,15 @@ const apiOrigin = (() => {
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  async redirects() {
+    return [
+      {
+        source: "/search",
+        destination: "/products",
+        permanent: true,
+      },
+    ];
+  },
   images: {
     unoptimized: isLocalApi,
     remotePatterns: [
