@@ -5,6 +5,7 @@ import { getTranslations } from "@/lib/translations";
 import { CategoryHero } from "@/components/category/CategoryHero";
 import { CategoryCatalog } from "@/components/category/CategoryCatalog";
 import { PaginationControls } from "@/components/common/PaginationControls";
+import { ProductsScrollToFirst } from "@/components/product/ProductsScrollToFirst";
 import {
   PAGE_SIZE_OPTIONS,
   DEFAULT_PAGE_SIZE,
@@ -83,6 +84,11 @@ export default async function ProductsListPage({
         allHref="/products"
         allCount={page.meta.total}
         initialQuery={initialQuery}
+        firstProductId="products-first"
+      />
+      <ProductsScrollToFirst
+        triggerKey={`${initialQuery}:${requestedPage}`}
+        targetId="products-first"
       />
 
       <PaginationControls
