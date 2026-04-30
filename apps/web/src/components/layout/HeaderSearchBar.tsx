@@ -18,7 +18,9 @@ export function HeaderSearchBar({ className, autoFocus, onSubmitted }: HeaderSea
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const trimmed = query.trim();
-    router.push(trimmed ? `/search?q=${encodeURIComponent(trimmed)}` : "/search");
+    router.push(
+      trimmed ? `/products?q=${encodeURIComponent(trimmed)}` : "/products",
+    );
     onSubmitted?.();
   };
 

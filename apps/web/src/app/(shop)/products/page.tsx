@@ -73,6 +73,7 @@ export default async function ProductsListPage({
         description={t("products.catalogSubtitle")}
         productsTotal={page.meta.total}
         availableTotal={availableTotal}
+        compact
       />
 
       <CategoryCatalog

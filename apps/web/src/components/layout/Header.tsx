@@ -154,7 +154,7 @@ export function Header({ locale }: HeaderProps) {
       router.push(`/products/${s.slug}`);
       return;
     }
-    router.push(`/search?q=${encodeURIComponent(s.query)}`);
+    router.push(`/products?q=${encodeURIComponent(s.query)}`);
   };
 
   const itemCount = items.reduce((sum, it) => sum + it.quantity, 0);
@@ -171,6 +171,8 @@ export function Header({ locale }: HeaderProps) {
   const onSearch = (e: FormEvent) => {
     e.preventDefault();
     const trimmed = query.trim();
+    setSuggestionsOpen(false);
+    setActiveSuggestionIndex(-1);
     // If the typed query matches an in-stock product name exactly, jump
     // straight to its detail page instead of running a faceted search.
     const exactProduct = suggestions.find(
@@ -184,7 +186,7 @@ export function Header({ locale }: HeaderProps) {
     if (trimmed) params.set("q", trimmed);
     if (searchSlug) params.set("categorySlug", searchSlug);
     const qs = params.toString();
-    router.push(`/search${qs ? `?${qs}` : ""}`);
+    router.push(`/products${qs ? `?${qs}` : ""}`);
   };
 
   return (
