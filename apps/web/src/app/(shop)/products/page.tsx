@@ -84,8 +84,6 @@ export default async function ProductsListPage({
         allHref="/products"
         allCount={page.meta.total}
         initialQuery={initialQuery}
-        firstProductId={undefined}
-        productsSearchBarId="products-searchbar"
       />
 
       <PaginationControls

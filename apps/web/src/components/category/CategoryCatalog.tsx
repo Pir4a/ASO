@@ -75,8 +75,6 @@ export function CategoryCatalog({
   allHref,
   allCount,
   initialQuery = "",
-  firstProductId,
-  productsSearchBarId,
 }: {
   categories: Category[];
   /** Slug of the active category, or `null`/`undefined` when showing all products. */
@@ -89,10 +87,6 @@ export function CategoryCatalog({
   allCount?: number;
   /** Pre-fills the toolbar search input (e.g. from `?q=` URL param). */
   initialQuery?: string;
-  /** When provided, the first rendered product gets this DOM id for scrolling. */
-  firstProductId?: string;
-  /** When provided, the products toolbar gets this DOM id for scrolling. */
-  productsSearchBarId?: string;
 }) {
   const t = useT();
   const router = useRouter();
@@ -257,10 +251,7 @@ export function CategoryCatalog({
       {/* ─────── Catalog content ─────── */}
       <div className="min-w-0">
         {/* Toolbar */}
-        <div
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-foreground/10 bg-white px-4 py-3.5 sm:px-5 scroll-mt-28"
-          id={productsSearchBarId}
-        >
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-foreground/10 bg-white px-4 py-3.5 sm:px-5">
           {/* Search (left) */}
           <label className="flex min-w-[180px] flex-1 items-center gap-2 rounded-lg border border-foreground/10 bg-background/60 px-3 py-1.5 text-[13px] text-foreground/55 sm:max-w-[280px]">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5 flex-none text-primary">
@@ -361,10 +352,10 @@ export function CategoryCatalog({
         {/* Grid view — sm+ only (mobile always uses list per spec) */}
         {sortedProducts.length > 0 && view === "grid" && (
           <ul className="mt-5 hidden gap-4 sm:grid sm:grid-cols-2 xl:grid-cols-3" role="list">
-            {sortedProducts.map((product, idx) => {
+            {sortedProducts.map((product) => {
               const oos = isOutOfStock(product);
               return (
-                <li key={product.id} id={firstProductId && idx === 0 ? firstProductId : undefined}>
+                <li key={product.id}>
                   <Link
                     href={`/products/${product.slug}`}
                     aria-disabled={oos}
@@ -437,13 +428,10 @@ export function CategoryCatalog({
             className={`mt-5 flex flex-col gap-3 ${view === "grid" ? "sm:hidden" : ""}`}
             role="list"
           >
-            {sortedProducts.map((product, idx) => {
+            {sortedProducts.map((product) => {
               const oos = isOutOfStock(product);
               return (
-                <li
-                  key={product.id}
-                  id={firstProductId && view !== "grid" && idx === 0 ? firstProductId : undefined}
-                >
+                <li key={product.id}>
                   <Link
                     href={`/products/${product.slug}`}
                     aria-disabled={oos}
