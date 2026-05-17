@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/context/LocaleContext";
 import { API_URL } from "@/lib/api";
+import { parseApiError } from "@/lib/api-error";
+import { ResendVerificationEmail } from "@/components/account/ResendVerificationEmail";
 
 function LoginForm() {
   const t = useT();
@@ -15,6 +17,7 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [needsVerification, setNeedsVerification] = useState(false);
   const [loading, setLoading] = useState(false);
   // MFA-challenge state — set when /auth/login replies { mfaRequired, challengeToken }.
   const [challengeToken, setChallengeToken] = useState<string | null>(null);
@@ -24,9 +27,15 @@ function LoginForm() {
   const { login } = useAuth();
 
   useEffect(() => {
+    const success = searchParams.get("success");
+    if (success === "signup") {
+      setSuccessMessage(t("signup.successMessage"));
+    }
     const message = searchParams.get("message");
     if (message) setSuccessMessage(message);
-  }, [searchParams]);
+    const prefill = searchParams.get("email");
+    if (prefill) setEmail(prefill);
+  }, [searchParams, t]);
 
   const finishLogin = async (
     accessToken: string,
@@ -41,6 +50,7 @@ function LoginForm() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    setNeedsVerification(false);
     setLoading(true);
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
@@ -50,7 +60,13 @@ function LoginForm() {
         body: JSON.stringify({ email, password, rememberMe }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || t("login.errGeneric"));
+      if (!response.ok) {
+        const parsed = parseApiError(data);
+        if (parsed.code === "EMAIL_NOT_VERIFIED") {
+          setNeedsVerification(true);
+        }
+        throw new Error(parsed.message || t("login.errGeneric"));
+      }
       // Two-step path: server says MFA is required; swap to the code prompt.
       if (data.mfaRequired && data.challengeToken) {
         setChallengeToken(data.challengeToken);
@@ -257,6 +273,12 @@ function LoginForm() {
             <path d="m4.5 4.5 7 7" />
           </svg>
           {error}
+        </div>
+      )}
+
+      {needsVerification && (
+        <div className="rounded-lg border border-warning/30 bg-warning/5 px-3.5 py-3">
+          <ResendVerificationEmail email={email} />
         </div>
       )}
 

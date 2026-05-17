@@ -12,6 +12,7 @@ import { PAYMENT_GATEWAY } from '../../../domain/gateways/payment.gateway';
 import type { EmailGateway } from '../../../domain/gateways/email.gateway';
 import { EMAIL_GATEWAY } from '../../../domain/gateways/email.gateway';
 import { GenerateInvoiceOnPaymentUseCase } from '../invoices/generate-invoice-on-payment.use-case';
+import { PdfService } from '../../../infrastructure/services/pdf.service';
 
 export interface ConfirmOrderPaymentInput {
     orderId: string;
@@ -44,6 +45,7 @@ export class ConfirmOrderPaymentUseCase {
         @Inject(EMAIL_GATEWAY)
         private readonly emailGateway: EmailGateway,
         private readonly generateInvoiceOnPaymentUseCase: GenerateInvoiceOnPaymentUseCase,
+        private readonly pdfService: PdfService,
     ) { }
 
     async execute(input: ConfirmOrderPaymentInput): Promise<{ ok: true }> {
@@ -132,6 +134,21 @@ export class ConfirmOrderPaymentUseCase {
             if (invoiceResult) {
                 invoiceNumber = invoiceResult.invoice.number;
                 pdfBuffer = invoiceResult.pdfBuffer ?? undefined;
+                if (!pdfBuffer && invoiceResult.invoice.pdfUrl) {
+                    pdfBuffer =
+                        (await this.pdfService.readPersistedInvoicePdf(
+                            invoiceResult.invoice.pdfUrl,
+                        )) ?? undefined;
+                }
+                if (!pdfBuffer) {
+                    try {
+                        pdfBuffer = await this.pdfService.generateInvoice(finalOrder);
+                    } catch (pdfErr) {
+                        this.logger.warn(
+                            `Invoice PDF regeneration failed for order ${finalOrder.id}: ${(pdfErr as Error).message}`,
+                        );
+                    }
+                }
             }
         } catch (e) {
             this.logger.warn(
@@ -143,15 +160,30 @@ export class ConfirmOrderPaymentUseCase {
             const user = finalOrder.userId
                 ? await this.userRepository.findById(finalOrder.userId)
                 : null;
-            if (user?.email) {
-                await this.emailGateway.sendOrderConfirmation(user.email, finalOrder, {
+            const recipientEmail =
+                user?.email?.trim().toLowerCase() ??
+                resolvedEmail?.trim().toLowerCase() ??
+                input.guestEmail?.trim().toLowerCase() ??
+                null;
+
+            if (recipientEmail) {
+                if (invoiceNumber && !pdfBuffer) {
+                    this.logger.warn(
+                        `Order ${finalOrder.id}: invoice ${invoiceNumber} exists but PDF missing — confirmation email sent without attachment.`,
+                    );
+                } else if (invoiceNumber && pdfBuffer) {
+                    this.logger.log(
+                        `Order ${finalOrder.id}: sending confirmation with invoice ${invoiceNumber} (PDF attached).`,
+                    );
+                }
+                await this.emailGateway.sendOrderConfirmation(recipientEmail, finalOrder, {
                     locale: (user as unknown as { locale?: string }).locale,
                     invoiceNumber,
                     pdfBuffer,
                 });
             } else {
                 this.logger.warn(
-                    `No email available for order ${finalOrder.id} (user ${finalOrder.userId}); skipping confirmation email.`,
+                    `No email available for order ${finalOrder.id}; skipping confirmation email.`,
                 );
             }
         } catch (e) {

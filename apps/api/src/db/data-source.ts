@@ -15,6 +15,7 @@ import { InvoiceOrm } from '../infrastructure/persistence/typeorm/entities/invoi
 import { CreditNoteOrm } from '../infrastructure/persistence/typeorm/entities/credit-note.entity';
 import { ChatSessionOrm } from '../infrastructure/persistence/typeorm/entities/chat-session.entity';
 import { ChatMessageOrm } from '../infrastructure/persistence/typeorm/entities/chat-message.entity';
+import { ProductStockNotification } from '../infrastructure/persistence/typeorm/entities/product-stock-notification.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -35,6 +36,7 @@ export const AppDataSource = new DataSource({
     CreditNoteOrm,
     ChatSessionOrm,
     ChatMessageOrm,
+    ProductStockNotification,
   ],
   migrations: ['src/migrations/*.ts'],
   synchronize: true,

@@ -1,24 +1,24 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  ExecutionContext,
+  Injectable,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
-/**
- * Optional JWT auth guard.
- * - If a valid Bearer token is present, `req.user` is populated.
- * - If no token or the token is invalid, the request continues as an unauthenticated/guest request
- *   (no 401 is raised).
- */
+/** Attaches `req.user` when a valid Bearer JWT is sent; otherwise leaves user unset without 401. */
 @Injectable()
 export class OptionalJwtAuthGuard extends AuthGuard('jwt') {
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  override async canActivate(context: ExecutionContext): Promise<boolean> {
+    const req = context.switchToHttp().getRequest<{ headers?: Record<string, string | undefined> }>();
+    const auth = req.headers?.authorization;
+    if (!auth || !auth.startsWith('Bearer ')) return true;
     try {
-      await super.canActivate(context);
+      return (await super.canActivate(context)) as boolean;
     } catch {
-      // Ignore auth errors for optional routes.
+      return true;
     }
-    return true;
   }
 
-  handleRequest<TUser = unknown>(_err: unknown, user: TUser): TUser {
-    return user as TUser;
+  override handleRequest<TUser>(_err: unknown, user: TUser): TUser | undefined {
+    return user ?? undefined;
   }
 }

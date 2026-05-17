@@ -7,6 +7,7 @@ import { BuyNowButton } from "@/components/product/BuyNowButton";
 import { ProductImageGallery } from "@/components/product/ProductImageGallery";
 import { ProductSpecs } from "@/components/product/ProductSpecs";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
+import { StockNotifySection } from "@/components/product/StockNotifySection";
 import { useT } from "@/context/LocaleContext";
 import type { Category, Product } from "@bootstrap/types";
 
@@ -142,18 +143,7 @@ export function ProductDetailClient({
             {/* CTA cluster */}
             <div className="mt-2 flex flex-col gap-3 border-t border-foreground/5 pt-5">
               {outOfStock ? (
-                <button
-                  type="button"
-                  disabled
-                  aria-disabled="true"
-                  className="inline-flex h-12 cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-foreground/10 px-5 text-[15px] font-semibold text-foreground/55"
-                >
-                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-4 w-4">
-                    <circle cx="8" cy="8" r="6" />
-                    <path d="m4.5 4.5 7 7" />
-                  </svg>
-                  {t("products.status.out_of_stock")}
-                </button>
+                <StockNotifySection productId={product.id} />
               ) : (
                 <>
                   <div className="flex flex-wrap items-stretch gap-2">

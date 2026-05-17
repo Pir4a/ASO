@@ -19,7 +19,13 @@ export class GenerateInvoiceOnPaymentUseCase {
 
     async execute(order: Order): Promise<{ invoice: Invoice; pdfBuffer: Buffer | null } | null> {
         const existing = await this.invoiceRepository.findByOrderId(order.id);
-        if (existing) return { invoice: existing, pdfBuffer: null };
+        if (existing) {
+            let pdfBuffer: Buffer | null = null;
+            if (existing.pdfUrl) {
+                pdfBuffer = await this.pdfService.readPersistedInvoicePdf(existing.pdfUrl);
+            }
+            return { invoice: existing, pdfBuffer };
+        }
 
         const issuedAt = new Date();
         const number = await this.generateNumber(issuedAt);

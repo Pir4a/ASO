@@ -30,7 +30,7 @@ COPY apps/api/package*.json ./apps/api/
 # Install production dependencies only
 RUN npm ci --workspace api --omit=dev
 
-# Copy built application
+# Copy built application (+ email assets e.g. logo.png)
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 
 # Expose port

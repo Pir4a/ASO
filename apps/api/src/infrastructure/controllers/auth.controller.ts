@@ -4,6 +4,7 @@ import { IsString, IsNotEmpty, MaxLength } from 'class-validator';
 import { AuthService, REFRESH_TOKEN_TTL_DAYS } from '../services/auth.service';
 import { RegisterDto, LoginDto, UpdateUserRoleDto } from '../dto/auth/auth.dto';
 import { ForgotPasswordDto } from '../dto/auth/forgot-password.dto';
+import { ResendVerificationDto } from '../dto/auth/resend-verification.dto';
 import { ResetPasswordDto } from '../dto/auth/reset-password.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
@@ -115,6 +116,12 @@ export class AuthController {
   @Get('verify')
   async verifyEmail(@Query('token') token: string) {
     return this.authService.verifyEmail(token);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('resend-verification')
+  async resendVerification(@Body() dto: ResendVerificationDto) {
+    return this.authService.resendVerificationEmail(dto.email);
   }
 
   @HttpCode(HttpStatus.OK)
