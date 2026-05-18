@@ -22,11 +22,11 @@ import { EMAIL_GATEWAY } from '../../domain/gateways/email.gateway';
 import type { EmailGateway } from '../../domain/gateways/email.gateway';
 import { VerifyEmailUseCase } from '../../application/use-cases/auth/verify-email.use-case';
 import { ResendVerificationEmailUseCase } from '../../application/use-cases/auth/resend-verification-email.use-case';
-
-export const EMAIL_NOT_VERIFIED_CODE = 'EMAIL_NOT_VERIFIED';
 import { RequestPasswordResetUseCase } from '../../application/use-cases/auth/request-password-reset.use-case';
 import { ResetPasswordUseCase } from '../../application/use-cases/auth/reset-password.use-case';
 import { randomBytes } from 'crypto';
+
+export const EMAIL_NOT_VERIFIED_CODE = 'EMAIL_NOT_VERIFIED';
 
 /** #37 — short-lived access token, refresh cookie carries the long-lived bit. */
 export const ACCESS_TOKEN_TTL = '15m';
