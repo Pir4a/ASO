@@ -19,6 +19,8 @@ import { SetupMfaUseCase } from '../../application/use-cases/auth/mfa/setup-mfa.
 import { VerifyMfaUseCase } from '../../application/use-cases/auth/mfa/verify-mfa.use-case';
 import { DisableMfaUseCase } from '../../application/use-cases/auth/mfa/disable-mfa.use-case';
 import { MfaChallengeUseCase } from '../../application/use-cases/auth/mfa/mfa-challenge.use-case';
+import { ResendVerificationEmailUseCase } from '../../application/use-cases/auth/resend-verification-email.use-case';
+import { VerifyEmailUseCase } from '../../application/use-cases/auth/verify-email.use-case';
 
 @Module({
   imports: [
@@ -48,6 +50,8 @@ import { MfaChallengeUseCase } from '../../application/use-cases/auth/mfa/mfa-ch
     VerifyMfaUseCase,
     DisableMfaUseCase,
     MfaChallengeUseCase,
+    VerifyEmailUseCase,
+    ResendVerificationEmailUseCase,
     RolesGuard,
     JwtAuthGuard,
     CsrfGuard,

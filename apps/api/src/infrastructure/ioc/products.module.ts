@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { SubscribeProductStockNotifyUseCase } from '../../application/use-cases/products/subscribe-product-stock-notify.use-case';
 import { Product as ProductEntity } from '../persistence/typeorm/entities/product.entity';
+import { ProductStockNotification } from '../persistence/typeorm/entities/product-stock-notification.entity';
 import { TypeOrmProductRepository } from '../persistence/typeorm/repositories/product.repository';
 import { ProductsController } from '../controllers/products/products.controller';
 import { GetProductsUseCase } from '../../application/use-cases/products/get-products.use-case';
@@ -11,11 +13,12 @@ import { PRODUCT_REPOSITORY_TOKEN } from '../../domain/repositories/product.repo
 import { CategoriesModule } from './categories.module';
 import { AuthModule } from './auth.module';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ProductEntity]),
+    TypeOrmModule.forFeature([ProductEntity, ProductStockNotification]),
     CategoriesModule,
     AuthModule,
   ],
@@ -29,7 +32,9 @@ import { RolesGuard } from '../guards/roles.guard';
     FindProductBySlugUseCase,
     CreateProductUseCase,
     SearchProductsUseCase,
+    SubscribeProductStockNotifyUseCase,
     JwtAuthGuard,
+    OptionalJwtAuthGuard,
     RolesGuard,
   ],
   exports: [PRODUCT_REPOSITORY_TOKEN, GetProductsUseCase, FindProductBySlugUseCase],

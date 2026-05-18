@@ -11,6 +11,7 @@ import {
     Patch,
     Post,
     Query,
+    Req,
     UseGuards,
 } from '@nestjs/common';
 import { buildCsv } from '../../../lib/csv';
@@ -18,8 +19,10 @@ import { GetProductsUseCase } from '../../../application/use-cases/products/get-
 import { FindProductBySlugUseCase } from '../../../application/use-cases/products/find-product-by-slug.use-case';
 import { CreateProductUseCase } from '../../../application/use-cases/products/create-product.use-case';
 import { CreateProductDto } from './dto/create-product.dto';
+import { StockNotifyDto } from './dto/stock-notify.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../../guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../../guards/roles.guard';
 import { Roles } from '../../auth/roles.decorator';
 import {
@@ -29,6 +32,9 @@ import {
 } from '../../../domain/repositories/product.repository.interface';
 import { Product } from '../../../domain/entities/product.entity';
 import { SearchProductsUseCase } from '../../../application/use-cases/products/search-products.use-case';
+import { SubscribeProductStockNotifyUseCase } from '../../../application/use-cases/products/subscribe-product-stock-notify.use-case';
+
+type RequestWithOptionalUser = { user?: { sub: string; email: string } };
 
 @Controller('products')
 export class ProductsController {
@@ -37,6 +43,7 @@ export class ProductsController {
         private readonly findProductBySlugUseCase: FindProductBySlugUseCase,
         private readonly createProductUseCase: CreateProductUseCase,
         private readonly searchProductsUseCase: SearchProductsUseCase,
+        private readonly subscribeProductStockNotifyUseCase: SubscribeProductStockNotifyUseCase,
         @Inject(PRODUCT_REPOSITORY_TOKEN)
         private readonly productRepository: ProductRepository,
     ) { }
@@ -161,6 +168,21 @@ export class ProductsController {
             Math.min(20, Number.parseInt(limit ?? '8', 10) || 8),
         );
         return this.productRepository.findFeatured(parsedLimit);
+    }
+
+    /** Alert when product is back in stock (logged-in uses JWT email; guest supplies `email`). */
+    @Post(':productId/stock-notify')
+    @UseGuards(OptionalJwtAuthGuard)
+    subscribeStockNotify(
+        @Param('productId') productId: string,
+        @Body() dto: StockNotifyDto,
+        @Req() req: RequestWithOptionalUser,
+    ) {
+        return this.subscribeProductStockNotifyUseCase.execute({
+            productId,
+            emailFromBody: dto.email,
+            user: req.user,
+        });
     }
 
     @Get(':slug/related')

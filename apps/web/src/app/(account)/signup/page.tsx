@@ -50,7 +50,9 @@ export default function SignupPage() {
         return;
       }
 
-      router.push("/login?success=signup");
+      router.push(
+        `/login?success=signup&email=${encodeURIComponent(email.trim().toLowerCase())}`,
+      );
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t("auth.signup.errorUnknown"));
     } finally {

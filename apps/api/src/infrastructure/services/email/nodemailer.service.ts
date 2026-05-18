@@ -6,6 +6,8 @@ import {
   CreditNoteEmailContext,
 } from '../../../domain/gateways/email.gateway';
 import type { Order } from '../../../domain/entities/order.entity';
+import { getEmailLogoAttachment, wrapEmailHtml } from './email-layout';
+import type { Attachment } from 'nodemailer/lib/mailer';
 
 type Locale = 'fr' | 'en';
 
@@ -22,6 +24,8 @@ const ORDER_CONFIRMATION_T: Record<Locale, Record<string, string>> = {
     shippingAddress: 'Adresse de livraison',
     total: 'Total TTC',
     viewOrder: 'Voir ma commande',
+    invoiceAttached:
+      'Votre facture PDF est jointe à cet e-mail (pièce jointe).',
     footer: "Si vous avez des questions, n'hésitez pas à nous contacter.",
   },
   en: {
@@ -36,9 +40,14 @@ const ORDER_CONFIRMATION_T: Record<Locale, Record<string, string>> = {
     shippingAddress: 'Shipping address',
     total: 'Total',
     viewOrder: 'View my order',
+    invoiceAttached: 'Your invoice PDF is attached to this email.',
     footer: 'If you have any questions, feel free to contact us.',
   },
 };
+
+function defaultFrom(): string {
+  return process.env.SMTP_FROM || '"Althea Systems" <no-reply@althea.local>';
+}
 
 @Injectable()
 export class NodemailerService implements EmailGateway {
@@ -87,60 +96,81 @@ export class NodemailerService implements EmailGateway {
     }
   }
 
-  async sendVerificationEmail(to: string, token: string): Promise<void> {
-    const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify?token=${token}`;
-
+  /** Sends HTML with shared layout + inline logo; extra attachments appended after logo. */
+  private async mail(
+    to: string,
+    subject: string,
+    bodyHtml: string,
+    extraAttachments?: Attachment[],
+    devLogLink?: string,
+  ): Promise<void> {
     const transporter = await this.getTransporter();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer's Transporter generic defaults to `any`
+    const attachments: Attachment[] = [...(extraAttachments ?? [])];
+    const logo = getEmailLogoAttachment();
+    if (logo) attachments.unshift(logo);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer SendMailOptions
     const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"Althea Shop" <no-reply@althea.local>',
+      from: defaultFrom(),
       to,
-      subject: 'Vérifiez votre compte Althea',
-      html: `
-                <h1>Bienvenue chez Althea !</h1>
-                <p>Merci de vous être inscrit. Veuillez cliquer sur le lien ci-dessous pour vérifier votre adresse email :</p>
-                <p><a href="${verificationLink}">Vérifier mon compte</a></p>
-                <p>Ce lien expirera dans 24 heures.</p>
-            `,
+      subject,
+      html: wrapEmailHtml(bodyHtml),
+      attachments: attachments.length > 0 ? attachments : undefined,
     });
 
-    this.logger.log(`Verification email sent to ${to}`);
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- info is `any` from sendMail; nodemailer accepts it
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const previewUrl = nodemailer.getTestMessageUrl(info);
     if (previewUrl) {
       this.logger.log(`Ethereal preview: ${previewUrl}`);
-    } else if (!process.env.SMTP_HOST) {
-      this.logger.log(`Verification link (dev fallback): ${verificationLink}`);
+    } else if (devLogLink && !process.env.SMTP_HOST) {
+      this.logger.log(`Email dev fallback link: ${devLogLink}`);
     }
+  }
+
+  async sendVerificationEmail(to: string, token: string): Promise<void> {
+    const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify?token=${token}`;
+
+    await this.mail(
+      to,
+      'Activez votre compte Althea Systems',
+      `
+          <h1 style="color:#003d5c;font-size:22px;margin:0 0 16px">Bienvenue chez Althea Systems</h1>
+          <p>Merci pour votre inscription. Cliquez sur le bouton ci-dessous pour activer votre compte :</p>
+          <p style="margin:28px 0">
+            <a href="${verificationLink}" style="background:#00a8b5;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">
+              Vérifier mon adresse e-mail
+            </a>
+          </p>
+          <p style="font-size:13px;color:#555">Ce lien expire dans 24 heures. Si vous n'avez pas créé de compte, ignorez ce message.</p>
+      `,
+      undefined,
+      verificationLink,
+    );
+
+    this.logger.log(`Verification email sent to ${to}`);
   }
 
   async sendPasswordResetEmail(to: string, token: string, _locale?: string): Promise<void> {
     const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
 
-    const transporter = await this.getTransporter();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer's Transporter generic defaults to `any`
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"Althea Shop" <no-reply@althea.local>',
+    await this.mail(
       to,
-      subject: 'Réinitialisation de votre mot de passe Althea',
-      html: `
-                <h1>Réinitialisation de votre mot de passe</h1>
-                <p>Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le lien ci-dessous pour choisir un nouveau mot de passe :</p>
-                <p><a href="${resetLink}">Réinitialiser mon mot de passe</a></p>
-                <p>Ce lien expirera dans 24 heures. Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.</p>
-            `,
-    });
+      'Réinitialisation de votre mot de passe Althea Systems',
+      `
+          <h1 style="color:#003d5c;font-size:20px;margin:0 0 12px">Réinitialisation du mot de passe</h1>
+          <p>Cliquez sur le bouton pour choisir un nouveau mot de passe :</p>
+          <p style="margin:24px 0">
+            <a href="${resetLink}" style="background:#00a8b5;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">
+              Réinitialiser mon mot de passe
+            </a>
+          </p>
+          <p style="font-size:13px;color:#555">Ce lien expire dans 24 heures.</p>
+      `,
+      undefined,
+      resetLink,
+    );
 
     this.logger.log(`Password reset email sent to ${to}`);
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- info is `any` from sendMail; nodemailer accepts it
-    const previewUrl = nodemailer.getTestMessageUrl(info);
-    if (previewUrl) {
-      this.logger.log(`Ethereal preview: ${previewUrl}`);
-    } else if (!process.env.SMTP_HOST) {
-      this.logger.log(`Password reset link (dev fallback): ${resetLink}`);
-    }
   }
 
   async sendInvoiceEmail(
@@ -150,34 +180,24 @@ export class NodemailerService implements EmailGateway {
     orderNumber?: string,
     _locale?: string,
   ): Promise<void> {
-    const transporter = await this.getTransporter();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer's Transporter generic defaults to `any`
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"Althea Shop" <no-reply@althea.local>',
+    await this.mail(
       to,
-      subject: `Votre facture Althea ${invoiceNumber}`,
-      html: `
-                <h1>Votre facture est disponible</h1>
-                <p>Merci pour votre commande${orderNumber ? ` <strong>${orderNumber}</strong>` : ''}.</p>
-                <p>Vous trouverez votre facture <strong>${invoiceNumber}</strong> en pièce jointe à cet e-mail.</p>
-                <p>L'équipe Althea Systems</p>
-            `,
-      attachments: [
+      `Votre facture Althea Systems ${invoiceNumber}`,
+      `
+          <h1 style="color:#003d5c;font-size:20px;margin:0 0 12px">Votre facture</h1>
+          <p>Merci pour votre commande${orderNumber ? ` <strong>${this.escapeHtml(orderNumber)}</strong>` : ''}.</p>
+          <p>La facture <strong>${this.escapeHtml(invoiceNumber)}</strong> est jointe à cet e-mail au format PDF.</p>
+      `,
+      [
         {
           filename: `facture-${invoiceNumber}.pdf`,
           content: pdfBuffer,
           contentType: 'application/pdf',
         },
       ],
-    });
+    );
 
     this.logger.log(`Invoice email sent to ${to} for ${invoiceNumber}`);
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- info is `any` from sendMail; nodemailer accepts it
-    const previewUrl = nodemailer.getTestMessageUrl(info);
-    if (previewUrl) {
-      this.logger.log(`Ethereal preview: ${previewUrl}`);
-    }
   }
 
   async sendEmailChangeConfirmation(
@@ -187,29 +207,24 @@ export class NodemailerService implements EmailGateway {
   ): Promise<void> {
     const confirmLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/account/confirm-email-change?token=${token}`;
 
-    const transporter = await this.getTransporter();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer's Transporter generic defaults to `any`
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"Althea Shop" <no-reply@althea.local>',
-      to: newEmail,
-      subject: 'Confirmez votre nouvelle adresse e-mail Althea',
-      html: `
-                <h1>Confirmez votre nouvelle adresse</h1>
-                <p>Vous avez demandé à modifier l'adresse e-mail liée à votre compte Althea. Pour finaliser le changement, cliquez sur le lien ci-dessous :</p>
-                <p><a href="${confirmLink}">Confirmer mon nouvel e-mail</a></p>
-                <p>Ce lien expirera dans 24 heures. Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail.</p>
-            `,
-    });
+    await this.mail(
+      newEmail,
+      'Confirmez votre nouvelle adresse e-mail Althea Systems',
+      `
+          <h1 style="color:#003d5c;font-size:20px;margin:0 0 12px">Nouvelle adresse e-mail</h1>
+          <p>Confirmez le changement d'adresse pour votre compte :</p>
+          <p style="margin:24px 0">
+            <a href="${confirmLink}" style="background:#00a8b5;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">
+              Confirmer mon e-mail
+            </a>
+          </p>
+          <p style="font-size:13px;color:#555">Ce lien expire dans 24 heures.</p>
+      `,
+      undefined,
+      confirmLink,
+    );
 
     this.logger.log(`Email-change confirmation sent to ${newEmail}`);
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- info is `any` from sendMail; nodemailer accepts it
-    const previewUrl = nodemailer.getTestMessageUrl(info);
-    if (previewUrl) {
-      this.logger.log(`Ethereal preview: ${previewUrl}`);
-    } else if (!process.env.SMTP_HOST) {
-      this.logger.log(`Email-change confirmation link (dev fallback): ${confirmLink}`);
-    }
   }
 
   async sendOrderConfirmation(
@@ -222,33 +237,26 @@ export class NodemailerService implements EmailGateway {
     const orderUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/orders/${order.id}`;
     const html = this.buildOrderConfirmationHtml(order, orderUrl, t, options.invoiceNumber);
 
-    const attachments = options.pdfBuffer
+    const hasInvoicePdf = Boolean(options.pdfBuffer && options.invoiceNumber);
+    const attachments = hasInvoicePdf
       ? [
           {
-            filename: `${options.invoiceNumber || `commande-${order.id.slice(0, 8)}`}.pdf`,
+            filename: `facture-${options.invoiceNumber}.pdf`,
             content: options.pdfBuffer,
             contentType: 'application/pdf',
           },
         ]
       : undefined;
 
-    const transporter = await this.getTransporter();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer's Transporter generic defaults to `any`
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"Althea Shop" <no-reply@althea.local>',
-      to,
-      subject: `${t.subject} #${order.id.slice(0, 8)}`,
-      html,
-      attachments,
-    });
+    const subject = hasInvoicePdf
+      ? `${t.subject} — facture ${options.invoiceNumber}`
+      : `${t.subject} #${order.id.slice(0, 8)}`;
 
-    this.logger.log(`Order confirmation sent to ${to} for order ${order.id}`);
+    await this.mail(to, subject, html, attachments);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- info is `any` from sendMail; nodemailer accepts it
-    const previewUrl = nodemailer.getTestMessageUrl(info);
-    if (previewUrl) {
-      this.logger.log(`Ethereal preview: ${previewUrl}`);
-    }
+    this.logger.log(
+      `Order confirmation sent to ${to} for order ${order.id}${hasInvoicePdf ? ' (invoice PDF attached)' : ''}`,
+    );
   }
 
   private resolveOrderLocale(input?: string): Locale {
@@ -294,12 +302,14 @@ export class NodemailerService implements EmailGateway {
       .join('');
 
     const invoiceBlock = invoiceNumber
-      ? `<p><strong>${t.invoiceNumber} :</strong> ${this.escapeHtml(invoiceNumber)}</p>`
+      ? `<p><strong>${t.invoiceNumber} :</strong> ${this.escapeHtml(invoiceNumber)}</p>
+         <p style="background:#e8f7f8;border-left:4px solid #00a8b5;padding:12px 14px;border-radius:4px;font-size:14px;">
+           ${t.invoiceAttached}
+         </p>`
       : '';
 
     return `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #222;">
-          <h1>${t.greeting}</h1>
+          <h1 style="color:#003d5c;font-size:22px;margin:0 0 12px">${t.greeting}</h1>
           <p><strong>${t.orderNumber} :</strong> ${this.escapeHtml(order.id)}</p>
           ${invoiceBlock}
           <h2 style="margin-top: 24px;">${t.items}</h2>
@@ -321,13 +331,12 @@ export class NodemailerService implements EmailGateway {
           </p>
           <h2 style="margin-top: 24px;">${t.shippingAddress}</h2>
           <div>${addressLines}</div>
-          <p style="margin-top: 32px;">
-            <a href="${orderUrl}" style="background: #111; color: #fff; padding: 12px 20px; text-decoration: none; border-radius: 4px;">
+          <p style="margin-top: 28px;">
+            <a href="${orderUrl}" style="background:#003d5c;color:#fff;padding:12px 20px;text-decoration:none;border-radius:8px;font-weight:600">
               ${t.viewOrder}
             </a>
           </p>
-          <p style="margin-top: 32px; font-size: 12px; color: #666;">${t.footer}</p>
-        </div>
+          <p style="margin-top:24px;font-size:12px;color:#666">${t.footer}</p>
       `;
   }
 
@@ -355,40 +364,29 @@ export class NodemailerService implements EmailGateway {
       year: 'numeric',
     });
 
-    const transporter = await this.getTransporter();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer's Transporter generic defaults to `any`
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"Althea Shop" <no-reply@althea.local>',
+    await this.mail(
       to,
-      subject: `Avoir Althea ${context.number}`,
-      html: `
-                <h1>Avoir émis</h1>
-                <p>Bonjour,</p>
-                <p>Nous vous confirmons l'émission d'un avoir <strong>${context.number}</strong> en référence à la facture <strong>${context.invoiceReference}</strong>.</p>
-                <ul>
-                    <li><strong>Date :</strong> ${issuedDate}</li>
-                    <li><strong>Motif :</strong> ${context.reason}</li>
-                    <li><strong>Montant TTC :</strong> ${formatted}</li>
-                </ul>
-                <p>Le document est joint à cet e-mail pour vos archives comptables.</p>
-                <p>L'équipe Althea Systems</p>
-            `,
-      attachments: [
+      `Avoir Althea Systems ${context.number}`,
+      `
+          <h1 style="color:#003d5c;font-size:20px;margin:0 0 12px">Avoir émis</h1>
+          <p>Avoir <strong>${this.escapeHtml(context.number)}</strong> — facture <strong>${this.escapeHtml(context.invoiceReference)}</strong>.</p>
+          <ul>
+            <li><strong>Date :</strong> ${issuedDate}</li>
+            <li><strong>Motif :</strong> ${this.escapeHtml(context.reason)}</li>
+            <li><strong>Montant TTC :</strong> ${formatted}</li>
+          </ul>
+          <p>Le document PDF est joint à cet e-mail.</p>
+      `,
+      [
         {
           filename: `${context.number}.pdf`,
           content: pdfBuffer,
           contentType: 'application/pdf',
         },
       ],
-    });
+    );
 
     this.logger.log(`Credit note email sent to ${to} for ${context.number}`);
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- info is `any` from sendMail; nodemailer accepts it
-    const previewUrl = nodemailer.getTestMessageUrl(info);
-    if (previewUrl) {
-      this.logger.log(`Ethereal preview: ${previewUrl}`);
-    }
   }
 
   async sendGuestSignupEmail(
@@ -400,30 +398,25 @@ export class NodemailerService implements EmailGateway {
     const setupLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}&welcome=1`;
     const orderShort = orderId.slice(0, 8);
 
-    const transporter = await this.getTransporter();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer's Transporter generic defaults to `any`
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"Althea Shop" <no-reply@althea.local>',
+    await this.mail(
       to,
-      subject: 'Créez votre mot de passe pour suivre votre commande Althea',
-      html: `
-                <h1>Merci pour votre commande !</h1>
-                <p>Votre commande <strong>${orderShort}</strong> a bien été enregistrée.</p>
-                <p>Nous avons créé un compte avec votre adresse e-mail pour que vous puissiez la suivre. Définissez votre mot de passe en cliquant sur le lien ci-dessous :</p>
-                <p><a href="${setupLink}">Créer mon mot de passe</a></p>
-                <p>Ce lien expire dans 24 heures. Si vous n'êtes pas à l'origine de cette commande, ignorez cet e-mail.</p>
-            `,
-    });
+      'Suivez votre commande Althea Systems',
+      `
+          <h1 style="color:#003d5c;font-size:20px;margin:0 0 12px">Merci pour votre commande</h1>
+          <p>Commande <strong>${orderShort}</strong> enregistrée.</p>
+          <p>Créez votre mot de passe pour suivre la commande :</p>
+          <p style="margin:24px 0">
+            <a href="${setupLink}" style="background:#00a8b5;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">
+              Créer mon mot de passe
+            </a>
+          </p>
+          <p style="font-size:13px;color:#555">Lien valable 24 h.</p>
+      `,
+      undefined,
+      setupLink,
+    );
 
     this.logger.log(`Guest signup email sent to ${to} for order ${orderId}`);
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- info is `any` from sendMail; nodemailer accepts it
-    const previewUrl = nodemailer.getTestMessageUrl(info);
-    if (previewUrl) {
-      this.logger.log(`Ethereal preview: ${previewUrl}`);
-    } else if (!process.env.SMTP_HOST) {
-      this.logger.log(`Guest signup link (dev fallback): ${setupLink}`);
-    }
   }
 
   async sendChatReply(to: string, subject: string, content: string): Promise<void> {
@@ -433,28 +426,19 @@ export class NodemailerService implements EmailGateway {
       .replace(/>/g, '&gt;')
       .replace(/\n/g, '<br/>');
 
-    const transporter = await this.getTransporter();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- nodemailer's Transporter generic defaults to `any`
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"Althea Shop" <no-reply@althea.local>',
+    await this.mail(
       to,
-      subject: `Re: ${subject}`,
-      html: `
-                <p>Bonjour,</p>
-                <p>Notre équipe support a répondu à votre demande&nbsp;:</p>
-                <blockquote style="border-left:3px solid #ccc;padding:8px 12px;color:#333;">
-                    ${escaped}
-                </blockquote>
-                <p>Bien cordialement,<br/>L'équipe Althea Systems</p>
-            `,
-    });
+      `Re: ${subject}`,
+      `
+          <p>Bonjour,</p>
+          <p>Notre équipe support a répondu à votre demande&nbsp;:</p>
+          <blockquote style="border-left:4px solid #00a8b5;padding:8px 12px;color:#333;margin:16px 0">
+            ${escaped}
+          </blockquote>
+          <p>Bien cordialement,<br/>L'équipe Althea Systems</p>
+      `,
+    );
 
     this.logger.log(`Chat reply email sent to ${to}`);
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- info is `any` from sendMail; nodemailer accepts it
-    const previewUrl = nodemailer.getTestMessageUrl(info);
-    if (previewUrl) {
-      this.logger.log(`Ethereal preview: ${previewUrl}`);
-    }
   }
 }

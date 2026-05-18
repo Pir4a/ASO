@@ -21,9 +21,12 @@ import { UserRole } from '../../domain/entities/user.entity';
 import { EMAIL_GATEWAY } from '../../domain/gateways/email.gateway';
 import type { EmailGateway } from '../../domain/gateways/email.gateway';
 import { VerifyEmailUseCase } from '../../application/use-cases/auth/verify-email.use-case';
+import { ResendVerificationEmailUseCase } from '../../application/use-cases/auth/resend-verification-email.use-case';
 import { RequestPasswordResetUseCase } from '../../application/use-cases/auth/request-password-reset.use-case';
 import { ResetPasswordUseCase } from '../../application/use-cases/auth/reset-password.use-case';
 import { randomBytes } from 'crypto';
+
+export const EMAIL_NOT_VERIFIED_CODE = 'EMAIL_NOT_VERIFIED';
 
 /** #37 — short-lived access token, refresh cookie carries the long-lived bit. */
 export const ACCESS_TOKEN_TTL = '15m';
@@ -41,6 +44,7 @@ export class AuthService {
     @Inject(USER_REPOSITORY_TOKEN) private readonly userRepository: UserRepository,
     @Inject(EMAIL_GATEWAY) private readonly emailGateway: EmailGateway,
     private readonly verifyEmailUseCase: VerifyEmailUseCase,
+    private readonly resendVerificationEmailUseCase: ResendVerificationEmailUseCase,
     private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
   ) { }
@@ -72,7 +76,16 @@ export class AuthService {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash: _, ...userResult } = user;
-    return userResult;
+    return {
+      ...userResult,
+      message:
+        'Compte créé. Un email de vérification a été envoyé — cliquez sur le lien pour activer votre compte.',
+      email,
+    };
+  }
+
+  async resendVerificationEmail(email: string) {
+    return this.resendVerificationEmailUseCase.execute(email);
   }
 
   async verifyEmail(token: string) {
@@ -88,7 +101,10 @@ export class AuthService {
     }
 
     if (!user.isVerified) {
-      throw new UnauthorizedException('Veuillez vérifier votre email avant de vous connecter.');
+      throw new UnauthorizedException({
+        message: 'Veuillez vérifier votre email avant de vous connecter.',
+        code: EMAIL_NOT_VERIFIED_CODE,
+      });
     }
     if (user.isActive === false) {
       throw new UnauthorizedException('Ce compte a été désactivé par un administrateur.');
