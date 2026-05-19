@@ -220,7 +220,7 @@ export default function CheckoutPage() {
           </div>
           <p className="mt-5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-success">
             <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-success" />
-            {t("orders.statusLabel.delivered")}
+            {t("checkout.confirmedBadge")}
           </p>
           <h1 className="mt-2 font-heading text-[28px] font-bold tracking-tight text-foreground md:text-[32px]">
             {t("cart.title")}
@@ -235,7 +235,7 @@ export default function CheckoutPage() {
               style={{ color: "#fff" }}
               className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-5 text-[14px] font-semibold transition hover:bg-primary-hover"
             >
-              {t("account.orders")}
+              {t("checkout.viewOrder")}
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                 <path d="M3 8h10m-3-3 3 3-3 3" />
               </svg>
