@@ -104,7 +104,7 @@ export default function OrderDetailPage({
     setInvoiceLoading(true);
     setInvoiceError(null);
     try {
-      await downloadOrderInvoice(order.id);
+      await downloadOrderInvoice(order.id, order.orderNumber);
     } catch (e) {
       setInvoiceError(
         e instanceof Error ? e.message : t("orderDetail.invoiceError"),
