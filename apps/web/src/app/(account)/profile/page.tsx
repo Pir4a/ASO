@@ -25,6 +25,7 @@ import { useT } from "@/context/LocaleContext";
 import { isPasswordTooWeakApiMessage, firstHttpErrorMessage } from "@/lib/password-api-error";
 import { passwordMeetsPolicy, getPasswordMissingSummary } from "@/lib/password-policy";
 import { PasswordRequirementHints } from "@/components/account/PasswordRequirementHints";
+import { parseApiError } from "@/lib/api-error";
 
 type Section = "profile" | "addresses" | "payments" | "orders" | "security";
 
@@ -890,7 +891,7 @@ function SecurityCard() {
 }
 
 /* ── MFA enrollment & disable ────────────────────────────────── */
-type MfaStatus = "loading" | "disabled" | "enabled";
+type MfaStatus = "loading" | "disabled" | "enabled" | "error";
 interface MfaSetupPayload {
   qrDataUrl: string;
   otpauthUrl: string;
@@ -905,19 +906,32 @@ function MfaCard() {
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [flash, setFlash] = useState<{ kind: "success" | "error"; text: string } | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
   const refresh = async () => {
+    setErrorDetail(null);
     try {
       const res = await authFetch("/profile/me");
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        // Don't silently pretend MFA is disabled — a transient failure to
+        // read /profile/me lets the UI claim "off" while the DB says "on",
+        // which then makes /auth/mfa/setup return 400 on click.
+        const payload = (await res.json().catch(() => ({}))) as { message?: string };
+        setErrorDetail(
+          `${res.status} ${res.statusText}${payload.message ? ` — ${payload.message}` : ""}`,
+        );
+        setStatus("error");
+        return;
+      }
       const data = (await res.json()) as {
         mfaEnabled?: boolean;
         mfaBackupCodesRemaining?: number;
       };
       setStatus(data.mfaEnabled ? "enabled" : "disabled");
       setBackupRemaining(data.mfaBackupCodesRemaining ?? 0);
-    } catch {
-      setStatus("disabled");
+    } catch (err) {
+      setErrorDetail(err instanceof Error ? err.message : String(err));
+      setStatus("error");
     }
   };
 
@@ -930,12 +944,25 @@ function MfaCard() {
     setSubmitting(true);
     try {
       const res = await authFetch("/auth/mfa/setup", { method: "POST" });
-      const data = (await res.json().catch(() => ({}))) as Partial<MfaSetupPayload> & {
-        message?: string;
-      };
-      if (!res.ok) throw new Error(data.message ?? "Initialisation impossible.");
-      if (!data.qrDataUrl || !data.secret || !data.backupCodes) throw new Error("Réponse invalide.");
-      setSetupData(data as MfaSetupPayload);
+      const raw = (await res.json().catch(() => ({}))) as Partial<MfaSetupPayload> &
+        Record<string, unknown>;
+      if (!res.ok) {
+        const parsed = parseApiError(raw);
+        // Recover gracefully from the "MFA is already on, the UI just didn't
+        // know" race — re-sync /profile/me and swap to the enabled panel
+        // instead of surfacing a confusing 400 to the user.
+        if (parsed.code === "MFA_ALREADY_ENABLED") {
+          await refresh();
+          setFlash({
+            kind: "success",
+            text: "La MFA est déjà activée sur votre compte.",
+          });
+          return;
+        }
+        throw new Error(parsed.message || "Initialisation impossible.");
+      }
+      if (!raw.qrDataUrl || !raw.secret || !raw.backupCodes) throw new Error("Réponse invalide.");
+      setSetupData(raw as MfaSetupPayload);
       setCode("");
     } catch (err) {
       setFlash({
@@ -1042,6 +1069,26 @@ function MfaCard() {
 
       {status === "loading" && (
         <p className="text-[13px] text-foreground/55">Chargement…</p>
+      )}
+
+      {status === "error" && (
+        <div className="space-y-3">
+          <div className="rounded-lg border border-error/30 bg-error/5 px-3.5 py-2.5 text-[13px] text-error">
+            <p>Impossible de récupérer l&apos;état MFA. Reconnectez-vous ou réessayez.</p>
+            {errorDetail && (
+              <p className="mt-1 font-mono text-[11.5px] text-error/80">
+                Détail : {errorDetail}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => void refresh()}
+            className="rounded-lg border border-foreground/10 bg-white px-4 py-2 text-[13px] font-semibold text-foreground/70 hover:bg-foreground/5"
+          >
+            Réessayer
+          </button>
+        </div>
       )}
 
       {/* SETUP IN PROGRESS — show QR + backup codes + verification input */}
@@ -1181,20 +1228,42 @@ function MfaCard() {
       {/* ENABLED — show status + disable form */}
       {!setupData && status === "enabled" && (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-success/30 bg-success/10 px-4 py-3">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-success/15 text-success">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
-                <path d="m3 8 3.5 3.5L13 5" />
-              </svg>
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-[13.5px] font-semibold text-foreground">
-                MFA activée
-              </p>
-              <p className="text-[11.5px] text-foreground/65">
-                {backupRemaining} code{backupRemaining > 1 ? "s" : ""} de secours restant
-                {backupRemaining > 1 ? "s" : ""}
-              </p>
+          <div className="rounded-xl border border-success/30 bg-success/10 p-4">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-success/20 text-success">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                  <path d="M12 2 4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6l-8-4Z" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-[14px] font-semibold text-foreground">
+                    MFA activée
+                  </p>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.06em] text-success">
+                    <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                    Actif
+                  </span>
+                </div>
+                <p className="mt-1 text-[12.5px] text-foreground/70">
+                  Votre compte est protégé par un second facteur. Vos prochaines connexions
+                  demanderont un code à 6 chiffres ou un code de secours.
+                </p>
+                <p className="mt-2 text-[11.5px] font-medium text-foreground/65">
+                  {backupRemaining > 0 ? (
+                    <>
+                      {backupRemaining} code{backupRemaining > 1 ? "s" : ""} de secours restant
+                      {backupRemaining > 1 ? "s" : ""}.
+                    </>
+                  ) : (
+                    <span className="text-warning">
+                      Plus aucun code de secours disponible — désactivez puis réactivez la MFA
+                      pour en regénérer 8 nouveaux.
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
           </div>
 

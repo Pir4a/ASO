@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { csrfHeader, isTokenExpired } from "@/lib/auth";
 
 interface User {
@@ -128,7 +128,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = "/login";
   };
 
-  const updateUser = (partial: Partial<User>) => {
+  // Must be stable: consumers (e.g. /profile) put updateUser in useEffect
+  // deps. A fresh ref on each render would re-fire the effect → /profile/me
+  // → updateUser → re-render → loop → 429 (same class of bug as #42 on /orders).
+  const updateUser = useCallback((partial: Partial<User>) => {
     setUser((prev) => {
       if (!prev) return prev;
       const next = { ...prev, ...partial };
@@ -139,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return next;
     });
-  };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout, updateUser, isAuthenticated: !!user, loading }}>

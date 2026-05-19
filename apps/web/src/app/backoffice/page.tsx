@@ -1367,7 +1367,6 @@ function BackofficeDashboard() {
               </div>
             </div>
             <span className="role">Admin</span>
-            <Icon.ChevD />
           </div>
           <button className="bo-icon-btn danger" title="Déconnexion" type="button" onClick={handleLogout}>
             <Icon.Logout />

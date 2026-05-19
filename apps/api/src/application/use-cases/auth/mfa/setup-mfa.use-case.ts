@@ -16,6 +16,10 @@ export interface MfaSetupResult {
     backupCodes: string[];
 }
 
+/** Stable error code for `MFA already enabled` so the frontend can react
+    without parsing localized messages. */
+export const MFA_ALREADY_ENABLED_CODE = 'MFA_ALREADY_ENABLED';
+
 const ISSUER = 'Althea Systems';
 const BACKUP_CODE_COUNT = 8;
 const BACKUP_CODE_BYTES = 5; // 10 hex chars, easy to read in groups of 5.
@@ -43,7 +47,10 @@ export class SetupMfaUseCase {
         const user = await this.userRepository.findById(userId);
         if (!user) throw new NotFoundException('Utilisateur introuvable.');
         if (user.mfaEnabled) {
-            throw new BadRequestException('MFA déjà activée — désactivez-la avant de regénérer.');
+            throw new BadRequestException({
+                message: 'MFA déjà activée — désactivez-la avant de regénérer.',
+                code: MFA_ALREADY_ENABLED_CODE,
+            });
         }
 
         const secret = await generateSecret();
