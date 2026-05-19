@@ -230,7 +230,7 @@ export default function CheckoutPage() {
           <p className="mx-auto mt-2 max-w-xl text-[14px] text-foreground/70">
             Un email de confirmation vient d&apos;être envoyé. Votre numéro de commande est{" "}
             <span className="font-mono font-semibold text-foreground">
-              {orderResult.orderNumber ?? orderResult.id}
+              {orderResult.orderNumber ?? orderResult.id.slice(0, 8)}
             </span>
             .
           </p>
