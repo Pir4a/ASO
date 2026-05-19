@@ -23,6 +23,17 @@ export function formatOrderNumber(id: string, createdAt: Date | string): string 
     return `ALT-${y}${m}${day}-${suffix}`;
 }
 
+/** Same reference as BO / emails (stored sequential number, else legacy fallback). */
+export function resolveOrderNumber(order: {
+    id: string;
+    createdAt: Date | string;
+    orderNumber?: string | null;
+}): string {
+    const stored = order.orderNumber?.trim();
+    if (stored) return stored;
+    return formatOrderNumber(order.id, order.createdAt);
+}
+
 @Injectable()
 export class GetOrderDetailsUseCase {
     constructor(
@@ -68,8 +79,7 @@ export class GetOrderDetailsUseCase {
         }
 
         return Object.assign(order, {
-            orderNumber:
-                order.orderNumber ?? formatOrderNumber(order.id, order.createdAt),
+            orderNumber: resolveOrderNumber(order),
         }) as OrderDetailsResponse;
     }
 }

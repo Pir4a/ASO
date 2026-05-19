@@ -61,7 +61,9 @@ export default function CheckoutPage() {
   const [cartVat, setCartVat] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
   const [currency, setCurrency] = useState("EUR");
-  const [orderResult, setOrderResult] = useState<{ id: string } | null>(null);
+  const [orderResult, setOrderResult] = useState<{ id: string; orderNumber?: string } | null>(
+    null,
+  );
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [guestEmail, setGuestEmail] = useState("");
   const [guestCartId, setGuestCartId] = useState<string | null>(null);
@@ -227,7 +229,10 @@ export default function CheckoutPage() {
           </h1>
           <p className="mx-auto mt-2 max-w-xl text-[14px] text-foreground/70">
             Un email de confirmation vient d&apos;être envoyé. Votre numéro de commande est{" "}
-            <span className="font-mono font-semibold text-foreground">{orderResult.id.slice(0, 8)}</span>.
+            <span className="font-mono font-semibold text-foreground">
+              {orderResult.orderNumber ?? orderResult.id.slice(0, 8)}
+            </span>
+            .
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Link

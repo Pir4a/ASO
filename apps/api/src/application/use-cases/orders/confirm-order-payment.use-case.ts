@@ -142,7 +142,10 @@ export class ConfirmOrderPaymentUseCase {
                 }
                 if (!pdfBuffer) {
                     try {
-                        pdfBuffer = await this.pdfService.generateInvoice(finalOrder);
+                        pdfBuffer = await this.pdfService.generateInvoice(
+                            finalOrder,
+                            invoiceNumber,
+                        );
                     } catch (pdfErr) {
                         this.logger.warn(
                             `Invoice PDF regeneration failed for order ${finalOrder.id}: ${(pdfErr as Error).message}`,

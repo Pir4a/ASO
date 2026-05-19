@@ -26,6 +26,9 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders:
       'Content-Type, Accept, Authorization, x-guest-cart-id, x-csrf-token',
+    // Needed so the invoice-download path on the web can read the server-set
+    // filename (Content-Disposition is not in the CORS-safelist by default).
+    exposedHeaders: ['Content-Disposition'],
   });
 
   // Helmet has to come before Swagger so the docs page can load its inline

@@ -671,7 +671,20 @@ export async function getOrder(id: string): Promise<OrderDTO> {
   return (await res.json()) as OrderDTO;
 }
 
-export async function downloadOrderInvoice(id: string): Promise<void> {
+function filenameFromContentDisposition(header: string | null): string | null {
+  if (!header) return null;
+  const utf8 = /filename\*=UTF-8''([^;]+)/i.exec(header);
+  if (utf8) return decodeURIComponent(utf8[1]);
+  const quoted = /filename="([^"]+)"/i.exec(header);
+  if (quoted) return quoted[1];
+  const plain = /filename=([^;\s]+)/i.exec(header);
+  return plain ? plain[1].replace(/"/g, "") : null;
+}
+
+export async function downloadOrderInvoice(
+  id: string,
+  orderNumber?: string,
+): Promise<void> {
   const { authFetch } = await import("./auth");
   const res = await authFetch(`/orders/${encodeURIComponent(id)}/invoice`);
   if (!res.ok) throw new Error(`API error ${res.status}`);
@@ -679,7 +692,12 @@ export async function downloadOrderInvoice(id: string): Promise<void> {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `facture-${id}.pdf`;
+  const fromHeader = filenameFromContentDisposition(
+    res.headers.get("Content-Disposition"),
+  );
+  a.download =
+    fromHeader ??
+    (orderNumber ? `facture-${orderNumber}.pdf` : "facture.pdf");
   document.body.appendChild(a);
   a.click();
   a.remove();
