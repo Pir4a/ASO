@@ -39,7 +39,7 @@ export class GetInvoicePdfUseCase {
         const order = await this.orderRepository.findById(invoice.orderId);
         if (!order) throw new NotFoundException('Order for invoice not found');
 
-        const buffer = await this.pdfService.generateInvoice(order);
+        const buffer = await this.pdfService.generateInvoice(order, invoice.number);
         return {
             buffer,
             invoiceNumber: invoice.number,

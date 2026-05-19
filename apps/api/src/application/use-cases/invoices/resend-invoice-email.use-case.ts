@@ -8,7 +8,7 @@ import type { OrderRepository } from '../../../domain/repositories/order.reposit
 import { USER_REPOSITORY_TOKEN } from '../../../domain/repositories/user.repository.interface';
 import type { UserRepository } from '../../../domain/repositories/user.repository.interface';
 import { PdfService } from '../../../infrastructure/services/pdf.service';
-import { formatOrderNumber } from '../orders/get-order-details.use-case';
+import { resolveOrderNumber } from '../orders/get-order-details.use-case';
 
 @Injectable()
 export class ResendInvoiceEmailUseCase {
@@ -43,13 +43,13 @@ export class ResendInvoiceEmailUseCase {
             pdfBuffer = await this.pdfService.readPersistedInvoicePdf(invoice.pdfUrl);
         }
         if (!pdfBuffer && order) {
-            pdfBuffer = await this.pdfService.generateInvoice(order);
+            pdfBuffer = await this.pdfService.generateInvoice(order, invoice.number);
         }
         if (!pdfBuffer) {
             throw new NotFoundException('Order for invoice not found, cannot regenerate PDF');
         }
 
-        const orderNumber = order ? formatOrderNumber(order.id, order.createdAt) : undefined;
+        const orderNumber = order ? resolveOrderNumber(order) : undefined;
         await this.emailGateway.sendInvoiceEmail(recipient, invoice.number, pdfBuffer, orderNumber);
 
         return { ok: true, sentTo: recipient };

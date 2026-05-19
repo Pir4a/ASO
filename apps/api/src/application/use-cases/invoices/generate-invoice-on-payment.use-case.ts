@@ -51,7 +51,7 @@ export class GenerateInvoiceOnPaymentUseCase {
 
         let pdfBuffer: Buffer | null = null;
         try {
-            pdfBuffer = await this.pdfService.generateInvoice(order);
+            pdfBuffer = await this.pdfService.generateInvoice(order, saved.number);
             const pdfUrl = await this.pdfService.persistInvoicePdf(saved.id, pdfBuffer);
             saved.pdfUrl = pdfUrl;
             await this.invoiceRepository.update(saved);
