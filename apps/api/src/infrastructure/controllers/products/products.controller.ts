@@ -33,6 +33,11 @@ import {
 import { Product } from '../../../domain/entities/product.entity';
 import { SearchProductsUseCase } from '../../../application/use-cases/products/search-products.use-case';
 import { SubscribeProductStockNotifyUseCase } from '../../../application/use-cases/products/subscribe-product-stock-notify.use-case';
+import { GetProductStockNotifyStatusUseCase } from '../../../application/use-cases/products/get-product-stock-notify-status.use-case';
+import { UnsubscribeProductStockNotifyUseCase } from '../../../application/use-cases/products/unsubscribe-product-stock-notify.use-case';
+import { CountProductStockNotifySubscribersUseCase } from '../../../application/use-cases/products/count-product-stock-notify-subscribers.use-case';
+import { NotifyProductStockSubscribersUseCase } from '../../../application/use-cases/products/notify-product-stock-subscribers.use-case';
+import { isProductRestock } from '../../../application/use-cases/products/stock-restock';
 
 type RequestWithOptionalUser = { user?: { sub: string; email: string } };
 
@@ -44,6 +49,10 @@ export class ProductsController {
         private readonly createProductUseCase: CreateProductUseCase,
         private readonly searchProductsUseCase: SearchProductsUseCase,
         private readonly subscribeProductStockNotifyUseCase: SubscribeProductStockNotifyUseCase,
+        private readonly getProductStockNotifyStatusUseCase: GetProductStockNotifyStatusUseCase,
+        private readonly unsubscribeProductStockNotifyUseCase: UnsubscribeProductStockNotifyUseCase,
+        private readonly countProductStockNotifySubscribersUseCase: CountProductStockNotifySubscribersUseCase,
+        private readonly notifyProductStockSubscribersUseCase: NotifyProductStockSubscribersUseCase,
         @Inject(PRODUCT_REPOSITORY_TOKEN)
         private readonly productRepository: ProductRepository,
     ) { }
@@ -185,6 +194,41 @@ export class ProductsController {
         });
     }
 
+    @Get(':productId/stock-notify/status')
+    @UseGuards(OptionalJwtAuthGuard)
+    getStockNotifyStatus(
+        @Param('productId') productId: string,
+        @Query('email') email: string | undefined,
+        @Req() req: RequestWithOptionalUser,
+    ) {
+        return this.getProductStockNotifyStatusUseCase.execute({
+            productId,
+            emailFromQuery: email,
+            user: req.user,
+        });
+    }
+
+    @Delete(':productId/stock-notify')
+    @UseGuards(OptionalJwtAuthGuard)
+    unsubscribeStockNotify(
+        @Param('productId') productId: string,
+        @Body() dto: StockNotifyDto,
+        @Req() req: RequestWithOptionalUser,
+    ) {
+        return this.unsubscribeProductStockNotifyUseCase.execute({
+            productId,
+            emailFromBody: dto.email,
+            user: req.user,
+        });
+    }
+
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin')
+    @Get(':id/stock-notify/subscribers/count')
+    countStockNotifySubscribers(@Param('id') id: string) {
+        return this.countProductStockNotifySubscribersUseCase.execute(id);
+    }
+
     @Get(':slug/related')
     async related(
         @Param('slug') slug: string,
@@ -255,9 +299,16 @@ export class ProductsController {
         }
 
         const { vatRate: bodyVat, ...bodyRest } = body;
+        const previousStock = existing.stock ?? 0;
+        const nextStock =
+            body.stock !== undefined && body.stock !== null
+                ? body.stock
+                : previousStock;
+
         const updated = new Product({
             ...existing,
             ...bodyRest,
+            ...(body.stock !== undefined ? { stock: nextStock } : {}),
             ...(bodyVat !== undefined
                 ? {
                     vatRate: ([0, 5.5, 10, 20] as const).includes(bodyVat as 0 | 5.5 | 10 | 20)
@@ -267,7 +318,14 @@ export class ProductsController {
                 : {}),
         });
 
-        return this.productRepository.update(updated);
+        const saved = await this.productRepository.update(updated);
+
+        let stockNotify: { notified: number; failed: number } | undefined;
+        if (isProductRestock(previousStock, nextStock)) {
+            stockNotify = await this.notifyProductStockSubscribersUseCase.execute(id);
+        }
+
+        return stockNotify ? { ...saved, stockNotify } : saved;
     }
 
     @UseGuards(JwtAuthGuard, RolesGuard)

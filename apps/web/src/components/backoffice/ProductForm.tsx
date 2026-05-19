@@ -55,6 +55,11 @@ function specsToRows(specs: Record<string, string> | undefined): SpecRow[] {
   }));
 }
 
+/** Aligné sur l’API : mail uniquement quand le stock passe de ≤ 0 à > 0. */
+function isProductRestock(previousStock: number, nextStock: number): boolean {
+  return previousStock <= 0 && nextStock > 0;
+}
+
 interface ProductFormProps {
   categories: Category[];
   /** When provided, the form switches to edit mode and PATCHes /products/:id. */
@@ -113,6 +118,9 @@ export function ProductForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [restockModal, setRestockModal] = useState<{ subscriberCount: number } | null>(
+    null,
+  );
   const router = useRouter();
 
   // If the parent swaps the product (e.g. clicks Edit on a different row while
@@ -162,14 +170,8 @@ export function ProductForm({
     if (!useCustomSlug && !isEdit) setSlug(generateSlug(next));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    setLoading(true);
-
-    try {
-      let translations: Record<string, { name?: string; description?: string }> | undefined;
+  const saveProduct = async () => {
+    let translations: Record<string, { name?: string; description?: string }> | undefined;
       // Build the specs object from the row editor. Empty keys are dropped;
       // when the same key appears twice the last row wins (we surface a
       // warning rather than blocking — the form already trims/dedups before
@@ -264,33 +266,97 @@ export function ProductForm({
         body: JSON.stringify(body),
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(
-          data.message || (isEdit ? "Mise à jour impossible." : "Erreur lors de l'ajout du produit."),
-        );
-      }
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(
+        data.message || (isEdit ? "Mise à jour impossible." : "Erreur lors de l'ajout du produit."),
+      );
+    }
 
-      setSuccess(isEdit ? "Produit mis à jour." : "Produit ajouté avec succès !");
-      if (!isEdit) {
-        setName("");
-        setSlug("");
-        setDescription("");
-        setPrice("");
-        setStock("");
-        setCategoryId("");
-        setVatRate("20");
-        setThumbnailUrl("");
-        setListPriority("");
-        setGalleryUrlsText("");
-        setSpecRows([]);
-        setTranslationsJson("");
-        setFeatured(false);
-        setUseCustomSlug(false);
+    const stockNotify = data.stockNotify as { notified?: number; failed?: number } | undefined;
+    let successMsg = isEdit ? "Produit mis à jour." : "Produit ajouté avec succès !";
+    if (stockNotify && (stockNotify.notified ?? 0) + (stockNotify.failed ?? 0) > 0) {
+      const sent = stockNotify.notified ?? 0;
+      const failed = stockNotify.failed ?? 0;
+      successMsg = `Produit mis à jour. ${sent} e-mail${sent > 1 ? "s" : ""} d'alerte stock envoyé${sent > 1 ? "s" : ""}.`;
+      if (failed > 0) {
+        successMsg += ` ${failed} envoi${failed > 1 ? "s" : ""} en échec.`;
       }
-      onSaved?.();
-      onCreated?.();
-      router.refresh();
+    }
+
+    setSuccess(successMsg);
+    if (!isEdit) {
+      setName("");
+      setSlug("");
+      setDescription("");
+      setPrice("");
+      setStock("");
+      setCategoryId("");
+      setVatRate("20");
+      setThumbnailUrl("");
+      setListPriority("");
+      setGalleryUrlsText("");
+      setSpecRows([]);
+      setTranslationsJson("");
+      setFeatured(false);
+      setUseCustomSlug(false);
+    }
+    onSaved?.();
+    onCreated?.();
+    router.refresh();
+    return data;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+
+    const nextStock = parseInt(stock, 10);
+    const previousStock = product?.stock ?? 0;
+    const willRestock =
+      isEdit && isProductRestock(previousStock, nextStock);
+
+    if (willRestock) {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        const countRes = await fetch(
+          `${API_URL}/products/${product!.id}/stock-notify/subscribers/count`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          },
+        );
+        const countData = (await countRes.json()) as { count?: number; message?: string };
+        if (!countRes.ok) {
+          throw new Error(countData.message || "Impossible de compter les inscrits à l'alerte.");
+        }
+        setRestockModal({ subscriberCount: countData.count ?? 0 });
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Une erreur inattendue est survenue.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await saveProduct();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Une erreur inattendue est survenue.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const confirmRestockSave = async () => {
+    setRestockModal(null);
+    setError(null);
+    setSuccess(null);
+    setLoading(true);
+    try {
+      await saveProduct();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Une erreur inattendue est survenue.");
     } finally {
@@ -303,6 +369,81 @@ export function ProductForm({
   const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-foreground/60";
 
   return (
+    <>
+      {restockModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="restock-modal-title"
+          className="aso-anim-modal-backdrop"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !loading) setRestockModal(null);
+          }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.55)",
+            backdropFilter: "blur(2px)",
+            zIndex: 90,
+            display: "grid",
+            placeItems: "center",
+            padding: 16,
+          }}
+        >
+          <div
+            className="aso-anim-modal-card"
+            style={{
+              width: "100%",
+              maxWidth: 440,
+              background: "white",
+              borderRadius: 12,
+              boxShadow: "0 18px 40px rgba(15, 23, 42, 0.25)",
+              padding: "20px 22px",
+            }}
+          >
+            <h2
+              id="restock-modal-title"
+              style={{ margin: "0 0 10px", fontSize: 16, fontWeight: 600 }}
+            >
+              Réapprovisionnement
+            </h2>
+            <p style={{ margin: "0 0 16px", fontSize: 14, lineHeight: 1.5, color: "#334155" }}>
+              Vous passez le stock de{" "}
+              <strong>{name || product?.name || "ce produit"}</strong> à une valeur positive.
+              {restockModal.subscriberCount > 0 ? (
+                <>
+                  {" "}
+                  <strong>{restockModal.subscriberCount}</strong> personne
+                  {restockModal.subscriberCount > 1 ? "s" : ""} inscrite
+                  {restockModal.subscriberCount > 1 ? "s" : ""} à l&apos;alerte recevront un
+                  e-mail « de nouveau en stock ». Les inscriptions restent actives pour une
+                  prochaine rupture.
+                </>
+              ) : (
+                <> Aucune inscription à l&apos;alerte pour ce produit — aucun e-mail ne sera envoyé.</>
+              )}
+            </p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => setRestockModal(null)}
+                className="inline-flex items-center rounded-lg border border-foreground/10 bg-white px-4 py-2 text-sm font-semibold text-foreground/70 shadow-sm transition hover:bg-foreground/5 disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => void confirmRestockSave()}
+                className="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover disabled:opacity-50"
+              >
+                {loading ? "Enregistrement…" : "Confirmer et enregistrer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
@@ -623,5 +764,6 @@ export function ProductForm({
         </button>
       </div>
     </form>
+    </>
   );
 }

@@ -17,27 +17,35 @@ import { ChatSessionOrm } from '../infrastructure/persistence/typeorm/entities/c
 import { ChatMessageOrm } from '../infrastructure/persistence/typeorm/entities/chat-message.entity';
 import { ProductStockNotification } from '../infrastructure/persistence/typeorm/entities/product-stock-notification.entity';
 
-export const AppDataSource = new DataSource({
-  type: 'postgres',
+const entities = [
+  User,
+  Category,
+  Product,
+  ContentBlock,
+  Address,
+  Cart,
+  CartItem,
+  Order,
+  OrderItem,
+  Promotion,
+  ContactMessage,
+  InvoiceOrm,
+  CreditNoteOrm,
+  ChatSessionOrm,
+  ChatMessageOrm,
+  ProductStockNotification,
+];
+
+/** Nest bootstrap — migrations run only via `npm run db:migrate`. */
+export const typeOrmNestOptions = {
+  type: 'postgres' as const,
   url: process.env.DATABASE_URL,
-  entities: [
-    User,
-    Category,
-    Product,
-    ContentBlock,
-    Address,
-    Cart,
-    CartItem,
-    Order,
-    OrderItem,
-    Promotion,
-    ContactMessage,
-    InvoiceOrm,
-    CreditNoteOrm,
-    ChatSessionOrm,
-    ChatMessageOrm,
-    ProductStockNotification,
-  ],
-  migrations: ['src/migrations/*.ts'],
+  entities,
   synchronize: true,
+};
+
+/** TypeORM CLI (`db:migrate`, `seed`, etc.). */
+export const AppDataSource = new DataSource({
+  ...typeOrmNestOptions,
+  migrations: ['src/migrations/*.ts'],
 });

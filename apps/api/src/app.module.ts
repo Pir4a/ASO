@@ -24,7 +24,7 @@ import { ChatModule } from './infrastructure/ioc/chat.module';
 import { InvoicesModule } from './infrastructure/ioc/invoices.module';
 import { CreditNotesModule } from './infrastructure/ioc/credit-notes.module';
 import { MediaModule } from './infrastructure/ioc/media.module';
-import { AppDataSource } from './db/data-source';
+import { typeOrmNestOptions } from './db/data-source';
 
 @Module({
   imports: [
@@ -84,7 +84,7 @@ import { AppDataSource } from './db/data-source';
         limit: 100,
       },
     ]),
-    TypeOrmModule.forRoot(AppDataSource.options),
+    TypeOrmModule.forRoot(typeOrmNestOptions),
     MongooseModule.forRootAsync({
       useFactory: () => ({
         uri:
