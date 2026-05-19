@@ -222,14 +222,10 @@ export default function CheckoutPage() {
           </div>
           <p className="mt-5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-success">
             <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-success" />
-<<<<<<< HEAD
             {t("checkout.confirmedBadge")}
-=======
-            {t("orders.statusLabel.processing")}
->>>>>>> b4f3ae9 (fix(orders): align order confirmation email and invoice references)
           </p>
           <h1 className="mt-2 font-heading text-[28px] font-bold tracking-tight text-foreground md:text-[32px]">
-            Commande confirmée
+            {t("cart.title")}
           </h1>
           <p className="mx-auto mt-2 max-w-xl text-[14px] text-foreground/70">
             Un email de confirmation vient d&apos;être envoyé. Votre numéro de commande est{" "}
