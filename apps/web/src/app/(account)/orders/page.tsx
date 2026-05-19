@@ -61,6 +61,7 @@ export default function OrdersPage() {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [productType, setProductType] = useState<string>("all");
   const [search, setSearch] = useState<string>("");
+  const [searchDebounced, setSearchDebounced] = useState<string>("");
 
   const statusLabels: Record<OrderStatus, string> = {
     pending: t("orders.statusLabel.pending"),
@@ -71,6 +72,11 @@ export default function OrdersPage() {
   };
 
   useEffect(() => {
+    const timer = setTimeout(() => setSearchDebounced(search), 350);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -78,7 +84,7 @@ export default function OrdersPage() {
       try {
         const filters = {
           year: year === "all" ? undefined : Number(year),
-          search: search.trim() || undefined,
+          search: searchDebounced.trim() || undefined,
         };
         const result = await getOrders(filters);
         if (!cancelled) setData(result);
@@ -92,7 +98,7 @@ export default function OrdersPage() {
     return () => {
       cancelled = true;
     };
-  }, [year, search, t]);
+  }, [year, searchDebounced, t]);
 
   const productTypes = useMemo(() => uniqueProductTypes(data), [data]);
 
