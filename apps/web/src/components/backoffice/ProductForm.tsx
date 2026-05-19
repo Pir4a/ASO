@@ -461,14 +461,14 @@ export function ProductForm({
               />
               URL personnalisée (slug SEO)
             </label>
-            <div className="flex gap-2">
-              <span className="inline-flex items-center rounded-lg border border-foreground/10 bg-background px-2 text-xs text-foreground/60">
+            <div className="flex min-w-0 gap-2">
+              <span className="inline-flex shrink-0 items-center rounded-lg border border-foreground/10 bg-background px-2 text-xs text-foreground/60">
                 /products/
               </span>
               <input
                 id="slug"
                 type="text"
-                className={inputCls}
+                className={`${inputCls} min-w-0 flex-1`}
                 value={slug}
                 onChange={(e) => setSlug(normalizeSlugInput(e.target.value))}
                 disabled={!useCustomSlug}
@@ -476,7 +476,7 @@ export function ProductForm({
               />
               <button
                 type="button"
-                className="rounded-lg border border-foreground/15 px-2.5 text-xs font-semibold text-foreground/70 hover:bg-background"
+                className="shrink-0 rounded-lg border border-foreground/15 px-2.5 text-xs font-semibold text-foreground/70 hover:bg-background"
                 onClick={() => setSlug(generateSlug(name))}
                 title="Régénérer depuis le nom"
               >
@@ -495,7 +495,7 @@ export function ProductForm({
         <textarea id="description" rows={3} className={inputCls} value={description} onChange={(e) => setDescription(e.target.value)} required />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="price" className={labelCls}>Prix (€)</label>
           <input id="price" type="number" step="0.01" className={inputCls} value={price} onChange={(e) => setPrice(e.target.value)} required />
@@ -619,7 +619,7 @@ export function ProductForm({
         {specRows.length > 0 ? (
           <ul className="mb-2 space-y-2">
             {specRows.map((row, idx) => (
-              <li key={row.id} className="flex items-center gap-2">
+              <li key={row.id} className="flex min-w-0 items-center gap-2">
                 <input
                   type="text"
                   value={row.key}
@@ -631,7 +631,7 @@ export function ProductForm({
                   }}
                   placeholder="Caractéristique"
                   aria-label={`Caractéristique ${idx + 1} — clé`}
-                  className={`${inputCls} flex-1`}
+                  className={`${inputCls} min-w-0 flex-1`}
                 />
                 <input
                   type="text"
@@ -644,7 +644,7 @@ export function ProductForm({
                   }}
                   placeholder="Valeur"
                   aria-label={`Caractéristique ${idx + 1} — valeur`}
-                  className={`${inputCls} flex-1`}
+                  className={`${inputCls} min-w-0 flex-1`}
                 />
                 <button
                   type="button"

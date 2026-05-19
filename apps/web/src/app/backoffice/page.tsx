@@ -2853,7 +2853,6 @@ function BackofficeDashboard() {
                           <th>Client</th>
                           <th>Statut</th>
                           <th>Paiement</th>
-                          <th>Mode</th>
                           <th className="num">Total</th>
                           <th className="num">Lignes</th>
                           <th className="num">Voir</th>
@@ -2879,13 +2878,6 @@ function BackofficeDashboard() {
                             </td>
                             <td>{orderStatusBadge(o.status)}</td>
                             <td>{paymentStatusBadge(o.paymentStatus)}</td>
-                            <td>
-                              {paymentMethodLabel(
-                                o.paymentMethod,
-                                o.paymentBrand,
-                                o.paymentLast4,
-                              )}
-                            </td>
                             <td className="num" style={{ fontWeight: 600 }}>
                               {o.total.toFixed(2)} {o.currency}
                             </td>
