@@ -4,7 +4,7 @@ import { dirname, join, resolve } from 'path';
 import PDFDocument from 'pdfkit';
 import { Order } from '../../domain/entities/order.entity';
 import { CreditNote } from '../../domain/entities/credit-note.entity';
-import { formatOrderNumber } from '../../application/use-cases/orders/get-order-details.use-case';
+import { resolveOrderNumber } from '../../application/use-cases/orders/get-order-details.use-case';
 
 const INVOICE_STORAGE_DIR = resolve(process.cwd(), 'storage/invoices');
 const CREDIT_NOTE_STORAGE_DIR = resolve(process.cwd(), 'storage/credit-notes');
@@ -18,7 +18,7 @@ const PANEL = '#fafaf8';
 
 @Injectable()
 export class PdfService {
-    generateInvoice(order: Order): Promise<Buffer> {
+    generateInvoice(order: Order, invoiceNumber?: string): Promise<Buffer> {
         return new Promise((resolve, reject) => {
             const doc = new PDFDocument({ margin: 50, size: 'A4' });
             const chunks: Buffer[] = [];
@@ -27,7 +27,8 @@ export class PdfService {
             doc.on('end', () => resolve(Buffer.concat(chunks)));
             doc.on('error', reject);
 
-            const orderNumber = formatOrderNumber(order.id, order.createdAt);
+            const orderNumber = resolveOrderNumber(order);
+            const headerNumber = invoiceNumber?.trim() || orderNumber;
             const pageW = doc.page.width;
             const margin = 50;
             const contentW = pageW - margin * 2;
@@ -48,11 +49,12 @@ export class PdfService {
             doc.fontSize(11).fillColor('#ffffff').font('Helvetica-Bold')
                 .text('FACTURE', pageW - margin - 80, 38, { width: 80, align: 'right', lineBreak: false });
             doc.font('Helvetica').fontSize(9).fillColor('#b3eef2')
-                .text(orderNumber, pageW - margin - 200, 56, { width: 200, align: 'right', lineBreak: false });
+                .text(headerNumber, pageW - margin - 200, 56, { width: 200, align: 'right', lineBreak: false });
             doc.restore();
 
             /* ── Company + invoice meta blocks ──────────────────── */
             const metaTop = 110;
+            const metaBoxExtra = invoiceNumber ? 28 : 0;
             doc.fillColor(INK_MUTED).font('Helvetica-Bold').fontSize(8.5)
                 .text('ÉMETTEUR', margin, metaTop);
             doc.fillColor(INK).font('Helvetica-Bold').fontSize(11)
@@ -67,7 +69,7 @@ export class PdfService {
             // Right column: invoice meta box
             const metaX = margin + contentW * 0.55;
             const metaW = contentW * 0.45;
-            doc.roundedRect(metaX, metaTop - 4, metaW, 96, 6).fillColor(PANEL).fill();
+            doc.roundedRect(metaX, metaTop - 4, metaW, 96 + metaBoxExtra, 6).fillColor(PANEL).fill();
             doc.fillColor(INK_MUTED).font('Helvetica-Bold').fontSize(8.5)
                 .text('FACTURE', metaX + 14, metaTop + 4);
             const metaRow = (label: string, value: string, y: number) => {
@@ -76,17 +78,22 @@ export class PdfService {
                 doc.fillColor(INK).font('Helvetica-Bold').fontSize(9.5)
                     .text(value, metaX + 14, y + 11, { width: metaW - 28 });
             };
-            metaRow('N° de commande', orderNumber, metaTop + 22);
+            let metaRowY = metaTop + 22;
+            if (invoiceNumber) {
+                metaRow('N° facture', invoiceNumber, metaRowY);
+                metaRowY += 28;
+            }
+            metaRow('N° de commande', orderNumber, metaRowY);
             metaRow(
                 'Date',
                 new Date(order.createdAt).toLocaleDateString('fr-FR', {
                     day: '2-digit', month: 'long', year: 'numeric',
                 }),
-                metaTop + 50,
+                metaRowY + 28,
             );
 
             /* ── Bill-to ────────────────────────────────────────── */
-            const billY = metaTop + 110;
+            const billY = metaTop + 110 + metaBoxExtra;
             doc.fillColor(INK_MUTED).font('Helvetica-Bold').fontSize(8.5)
                 .text('FACTURÉ À', margin, billY);
             const addr = (order.billingAddress || order.shippingAddress) as unknown as
@@ -261,7 +268,7 @@ export class PdfService {
             doc.on('end', () => resolveFn(Buffer.concat(chunks)));
             doc.on('error', reject);
 
-            const orderNumber = formatOrderNumber(order.id, order.createdAt);
+            const orderNumber = resolveOrderNumber(order);
             const pageW = doc.page.width;
             const margin = 50;
             const contentW = pageW - margin * 2;

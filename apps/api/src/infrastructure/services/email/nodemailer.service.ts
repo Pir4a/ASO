@@ -6,6 +6,7 @@ import {
   CreditNoteEmailContext,
 } from '../../../domain/gateways/email.gateway';
 import type { Order } from '../../../domain/entities/order.entity';
+import { resolveOrderNumber } from '../../../application/use-cases/orders/get-order-details.use-case';
 import { getEmailLogoAttachment, wrapEmailHtml } from './email-layout';
 import type { Attachment } from 'nodemailer/lib/mailer';
 
@@ -234,8 +235,15 @@ export class NodemailerService implements EmailGateway {
   ): Promise<void> {
     const locale = this.resolveOrderLocale(options.locale);
     const t = ORDER_CONFIRMATION_T[locale];
+    const displayOrderNumber = resolveOrderNumber(order);
     const orderUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/orders/${order.id}`;
-    const html = this.buildOrderConfirmationHtml(order, orderUrl, t, options.invoiceNumber);
+    const html = this.buildOrderConfirmationHtml(
+      order,
+      orderUrl,
+      t,
+      displayOrderNumber,
+      options.invoiceNumber,
+    );
 
     const hasInvoicePdf = Boolean(options.pdfBuffer && options.invoiceNumber);
     const attachments = hasInvoicePdf
@@ -250,7 +258,7 @@ export class NodemailerService implements EmailGateway {
 
     const subject = hasInvoicePdf
       ? `${t.subject} — facture ${options.invoiceNumber}`
-      : `${t.subject} #${order.id.slice(0, 8)}`;
+      : `${t.subject} ${displayOrderNumber}`;
 
     await this.mail(to, subject, html, attachments);
 
@@ -268,6 +276,7 @@ export class NodemailerService implements EmailGateway {
     order: Order,
     orderUrl: string,
     t: Record<string, string>,
+    displayOrderNumber: string,
     invoiceNumber?: string,
   ): string {
     const currency = order.currency || 'EUR';
@@ -310,7 +319,7 @@ export class NodemailerService implements EmailGateway {
 
     return `
           <h1 style="color:#003d5c;font-size:22px;margin:0 0 12px">${t.greeting}</h1>
-          <p><strong>${t.orderNumber} :</strong> ${this.escapeHtml(order.id)}</p>
+          <p><strong>${t.orderNumber} :</strong> ${this.escapeHtml(displayOrderNumber)}</p>
           ${invoiceBlock}
           <h2 style="margin-top: 24px;">${t.items}</h2>
           <table style="width: 100%; border-collapse: collapse;">

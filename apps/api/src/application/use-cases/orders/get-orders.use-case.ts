@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Order } from '../../../domain/entities/order.entity';
 import { ORDER_REPOSITORY_TOKEN } from '../../../domain/repositories/order.repository.interface';
 import type { OrderRepository, OrderFilters } from '../../../domain/repositories/order.repository.interface';
-import { formatOrderNumber } from './get-order-details.use-case';
+import { resolveOrderNumber } from './get-order-details.use-case';
 
 export type OrderListItem = Order & { orderNumber: string };
 
@@ -30,7 +30,7 @@ export class GetOrdersUseCase {
             }
             ordersByYear[year].push(
                 Object.assign(order, {
-                    orderNumber: formatOrderNumber(order.id, order.createdAt),
+                    orderNumber: resolveOrderNumber(order),
                 }) as OrderListItem,
             );
         }
