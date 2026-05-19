@@ -43,6 +43,16 @@ export interface EmailGateway {
         locale?: string,
     ): Promise<void>;
     sendChatReply(to: string, subject: string, content: string): Promise<void>;
+    sendStockNotifyConfirmationEmail(
+        to: string,
+        productName: string,
+        productSlug: string,
+    ): Promise<void>;
+    sendProductBackInStockEmail(
+        to: string,
+        productName: string,
+        productSlug: string,
+    ): Promise<void>;
 }
 
 export const EMAIL_GATEWAY = 'EMAIL_GATEWAY';

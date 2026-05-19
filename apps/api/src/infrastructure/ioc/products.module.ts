@@ -1,6 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SubscribeProductStockNotifyUseCase } from '../../application/use-cases/products/subscribe-product-stock-notify.use-case';
+import { GetProductStockNotifyStatusUseCase } from '../../application/use-cases/products/get-product-stock-notify-status.use-case';
+import { UnsubscribeProductStockNotifyUseCase } from '../../application/use-cases/products/unsubscribe-product-stock-notify.use-case';
+import { CountProductStockNotifySubscribersUseCase } from '../../application/use-cases/products/count-product-stock-notify-subscribers.use-case';
+import { NotifyProductStockSubscribersUseCase } from '../../application/use-cases/products/notify-product-stock-subscribers.use-case';
 import { Product as ProductEntity } from '../persistence/typeorm/entities/product.entity';
 import { ProductStockNotification } from '../persistence/typeorm/entities/product-stock-notification.entity';
 import { TypeOrmProductRepository } from '../persistence/typeorm/repositories/product.repository';
@@ -33,6 +37,10 @@ import { RolesGuard } from '../guards/roles.guard';
     CreateProductUseCase,
     SearchProductsUseCase,
     SubscribeProductStockNotifyUseCase,
+    GetProductStockNotifyStatusUseCase,
+    UnsubscribeProductStockNotifyUseCase,
+    CountProductStockNotifySubscribersUseCase,
+    NotifyProductStockSubscribersUseCase,
     JwtAuthGuard,
     OptionalJwtAuthGuard,
     RolesGuard,

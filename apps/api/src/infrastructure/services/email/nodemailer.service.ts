@@ -419,6 +419,59 @@ export class NodemailerService implements EmailGateway {
     this.logger.log(`Guest signup email sent to ${to} for order ${orderId}`);
   }
 
+  async sendStockNotifyConfirmationEmail(
+    to: string,
+    productName: string,
+    productSlug: string,
+  ): Promise<void> {
+    const productUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/products/${encodeURIComponent(productSlug)}`;
+    const safeName = this.escapeHtml(productName);
+
+    await this.mail(
+      to,
+      `Alerte stock confirmée — ${productName}`,
+      `
+          <h1 style="color:#003d5c;font-size:20px;margin:0 0 12px">Demande enregistrée</h1>
+          <p>Merci — votre alerte pour <strong>${safeName}</strong> est bien enregistrée.</p>
+          <p>Dès que ce produit sera de nouveau disponible, nous vous enverrons un e-mail à cette adresse.</p>
+          <p style="margin:24px 0">
+            <a href="${productUrl}" style="background:#00a8b5;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">
+              Voir le produit
+            </a>
+          </p>
+          <p style="font-size:13px;color:#555">Pour vous désabonner, rendez-vous sur la fiche produit et cliquez sur « Se désabonner ».</p>
+      `,
+    );
+
+    this.logger.log(`Stock notify confirmation sent to ${to} for ${productSlug}`);
+  }
+
+  async sendProductBackInStockEmail(
+    to: string,
+    productName: string,
+    productSlug: string,
+  ): Promise<void> {
+    const productUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/products/${encodeURIComponent(productSlug)}`;
+    const safeName = this.escapeHtml(productName);
+
+    await this.mail(
+      to,
+      `${productName} est de nouveau disponible`,
+      `
+          <h1 style="color:#003d5c;font-size:20px;margin:0 0 12px">Bonne nouvelle !</h1>
+          <p>Le produit <strong>${safeName}</strong> que vous suiviez est de nouveau en stock.</p>
+          <p style="margin:24px 0">
+            <a href="${productUrl}" style="background:#00a8b5;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">
+              Voir le produit
+            </a>
+          </p>
+          <p style="font-size:13px;color:#555">Vous recevez ce message car vous vous êtes inscrit à l'alerte stock. Pour vous désabonner, rendez-vous sur la fiche produit.</p>
+      `,
+    );
+
+    this.logger.log(`Back-in-stock email sent to ${to} for ${productSlug}`);
+  }
+
   async sendChatReply(to: string, subject: string, content: string): Promise<void> {
     const escaped = content
       .replace(/&/g, '&amp;')
