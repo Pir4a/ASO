@@ -170,7 +170,7 @@ export function ProductForm({
     if (!useCustomSlug && !isEdit) setSlug(generateSlug(next));
   };
 
-  const saveProduct = async () => {
+  const saveProduct = async (restockSubscriberCount?: number) => {
     let translations: Record<string, { name?: string; description?: string }> | undefined;
       // Build the specs object from the row editor. Empty keys are dropped;
       // when the same key appears twice the last row wins (we surface a
@@ -273,15 +273,10 @@ export function ProductForm({
       );
     }
 
-    const stockNotify = data.stockNotify as { notified?: number; failed?: number } | undefined;
     let successMsg = isEdit ? "Produit mis à jour." : "Produit ajouté avec succès !";
-    if (stockNotify && (stockNotify.notified ?? 0) + (stockNotify.failed ?? 0) > 0) {
-      const sent = stockNotify.notified ?? 0;
-      const failed = stockNotify.failed ?? 0;
-      successMsg = `Produit mis à jour. ${sent} e-mail${sent > 1 ? "s" : ""} d'alerte stock envoyé${sent > 1 ? "s" : ""}.`;
-      if (failed > 0) {
-        successMsg += ` ${failed} envoi${failed > 1 ? "s" : ""} en échec.`;
-      }
+    if (restockSubscriberCount && restockSubscriberCount > 0) {
+      const plural = restockSubscriberCount > 1 ? "s" : "";
+      successMsg = `Produit mis à jour. ${restockSubscriberCount} e-mail${plural} d'alerte stock en cours d'envoi.`;
     }
 
     setSuccess(successMsg);
@@ -351,12 +346,13 @@ export function ProductForm({
   };
 
   const confirmRestockSave = async () => {
+    const count = restockModal?.subscriberCount ?? 0;
     setRestockModal(null);
     setError(null);
     setSuccess(null);
     setLoading(true);
     try {
-      await saveProduct();
+      await saveProduct(count);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Une erreur inattendue est survenue.");
     } finally {

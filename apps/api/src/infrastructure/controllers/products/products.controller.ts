@@ -320,12 +320,22 @@ export class ProductsController {
 
         const saved = await this.productRepository.update(updated);
 
-        let stockNotify: { notified: number; failed: number } | undefined;
+        // Fire-and-forget: a product with hundreds of subscribers must not
+        // hold the PATCH open for the duration of the SMTP fan-out. The
+        // notify use case is itself race-free (atomic DELETE..RETURNING).
         if (isProductRestock(previousStock, nextStock)) {
-            stockNotify = await this.notifyProductStockSubscribersUseCase.execute(id);
+            setImmediate(() => {
+                this.notifyProductStockSubscribersUseCase
+                    .execute(id)
+                    .catch((err: unknown) => {
+                        const msg = err instanceof Error ? err.message : String(err);
+                        // Use console — Logger isn't accessible here without DI plumbing.
+                        console.warn(`Background restock notify failed for ${id}: ${msg}`);
+                    });
+            });
         }
 
-        return stockNotify ? { ...saved, stockNotify } : saved;
+        return saved;
     }
 
     @UseGuards(JwtAuthGuard, RolesGuard)

@@ -26,27 +26,40 @@ export class NotifyProductStockSubscribersUseCase {
     const product = await this.productRepository.findById(productId);
     if (!product) throw new NotFoundException('Produit introuvable.');
 
-    const rows = await this.notifications.find({ where: { productId } });
+    // Atomic claim: DELETE ... RETURNING serializes concurrent restocks at the
+    // row-lock level, so two simultaneous PATCHes that both flip stock from 0
+    // can't both fan out the same set of emails — the second one gets zero rows.
+    const claimed = await this.notifications
+      .createQueryBuilder()
+      .delete()
+      .from(ProductStockNotification)
+      .where('productId = :productId', { productId })
+      .returning(['email'])
+      .execute();
+
+    const rows = (claimed.raw as Array<{ email: string }> | undefined) ?? [];
     if (rows.length === 0) return { notified: 0, failed: 0 };
 
     let notified = 0;
     let failed = 0;
 
-    for (const row of rows) {
-      try {
-        await this.emailGateway.sendProductBackInStockEmail(
-          row.email,
-          product.name,
-          product.slug,
-        );
-        notified += 1;
-      } catch (e) {
-        failed += 1;
-        this.logger.warn(
-          `Back-in-stock email failed for ${row.email} / ${product.slug}: ${(e as Error).message}`,
-        );
-      }
-    }
+    await Promise.all(
+      rows.map(async (row) => {
+        try {
+          await this.emailGateway.sendProductBackInStockEmail(
+            row.email,
+            product.name,
+            product.slug,
+          );
+          notified += 1;
+        } catch (e) {
+          failed += 1;
+          this.logger.warn(
+            `Back-in-stock email failed for ${row.email} / ${product.slug}: ${(e as Error).message}`,
+          );
+        }
+      }),
+    );
 
     this.logger.log(
       `Back-in-stock emails for ${product.slug}: ${notified} sent, ${failed} failed (${rows.length} subscribers).`,
