@@ -291,6 +291,13 @@ const translations = {
         // Backoffice
         "backoffice.title": "Admin Dashboard",
         "backoffice.subtitle": "Manage your catalog, categories, users, and support messages.",
+        "backoffice.creditNotes.col.number": "Number",
+        "backoffice.creditNotes.col.invoice": "Invoice",
+        "backoffice.creditNotes.col.date": "Date",
+        "backoffice.creditNotes.col.customer": "Customer",
+        "backoffice.creditNotes.col.reason": "Reason",
+        "backoffice.creditNotes.col.amount": "Amount (incl. VAT)",
+        "backoffice.creditNotes.col.actions": "Actions",
 
         // Homepage extras
         "home.exploreByCategory": "Browse by category",
@@ -797,6 +804,13 @@ const translations = {
         // Backoffice
         "backoffice.title": "Tableau de bord admin",
         "backoffice.subtitle": "Gérez votre catalogue, catégories, utilisateurs et messages.",
+        "backoffice.creditNotes.col.number": "Numéro",
+        "backoffice.creditNotes.col.invoice": "Facture",
+        "backoffice.creditNotes.col.date": "Date",
+        "backoffice.creditNotes.col.customer": "Client",
+        "backoffice.creditNotes.col.reason": "Motif",
+        "backoffice.creditNotes.col.amount": "Montant TTC",
+        "backoffice.creditNotes.col.actions": "Actions",
 
         // Homepage extras
         "home.exploreByCategory": "Explorer par catégorie",
@@ -1302,6 +1316,13 @@ const translations = {
         // Backoffice
         "backoffice.title": "لوحة تحكم المسؤول",
         "backoffice.subtitle": "إدارة الكتالوج والفئات والمستخدمين والرسائل.",
+        "backoffice.creditNotes.col.number": "الرقم",
+        "backoffice.creditNotes.col.invoice": "الفاتورة",
+        "backoffice.creditNotes.col.date": "التاريخ",
+        "backoffice.creditNotes.col.customer": "العميل",
+        "backoffice.creditNotes.col.reason": "السبب",
+        "backoffice.creditNotes.col.amount": "المبلغ شامل الضريبة",
+        "backoffice.creditNotes.col.actions": "الإجراءات",
 
         // Homepage extras
         "home.exploreByCategory": "تصفّح حسب الفئة",
@@ -1807,6 +1828,13 @@ const translations = {
         // Backoffice
         "backoffice.title": "לוח בקרה למנהל",
         "backoffice.subtitle": "ניהול הקטלוג, הקטגוריות, המשתמשים וההודעות.",
+        "backoffice.creditNotes.col.number": "מספר",
+        "backoffice.creditNotes.col.invoice": "חשבונית",
+        "backoffice.creditNotes.col.date": "תאריך",
+        "backoffice.creditNotes.col.customer": "לקוח",
+        "backoffice.creditNotes.col.reason": "סיבה",
+        "backoffice.creditNotes.col.amount": "סכום כולל מע\"מ",
+        "backoffice.creditNotes.col.actions": "פעולות",
 
         // Homepage extras
         "home.exploreByCategory": "עיון לפי קטגוריה",

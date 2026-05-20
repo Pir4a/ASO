@@ -8,8 +8,14 @@ export interface CreditNoteFilters {
     search?: string;
 }
 
+export interface CreditNoteListRow {
+    creditNote: CreditNote;
+    invoiceNumber: string | null;
+    customerEmail: string | null;
+}
+
 export interface PaginatedCreditNotes {
-    items: CreditNote[];
+    items: CreditNoteListRow[];
     total: number;
     page: number;
     pageSize: number;

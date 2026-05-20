@@ -1024,6 +1024,29 @@ table.bo-data td.muted {
   flex: 1;
 }
 
+/* Inline button styled as a link — used in tables to link related rows
+   (e.g., credit-note → linked invoice number). Inherits font so it sits flush
+   inside `.bo-mono` cells. */
+.bo-link {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--bo-brand);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.bo-link:hover {
+  color: var(--bo-brand-strong);
+}
+.bo-link:disabled {
+  color: var(--bo-text-muted);
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
 /* Toolbar — filter/action row above tables (Chat, Invoices, Credit notes). */
 .bo-toolbar {
   display: flex;
