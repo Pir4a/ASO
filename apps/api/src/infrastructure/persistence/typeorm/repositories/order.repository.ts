@@ -168,6 +168,10 @@ export class TypeOrmOrderRepository implements OrderRepository {
       paymentMethod?: string;
       paymentStatus?: string;
     };
+    sort?: {
+      field: 'orderNumber' | 'createdAt' | 'customerEmail' | 'total';
+      direction: 'asc' | 'desc';
+    };
   }): Promise<{
     rows: { order: DomainOrder; customerEmail: string | null }[];
     total: number;
@@ -175,9 +179,27 @@ export class TypeOrmOrderRepository implements OrderRepository {
     const qb = this.repository
       .createQueryBuilder('order')
       .leftJoinAndSelect('order.items', 'items')
-      .orderBy('order.createdAt', 'DESC')
       .skip(params.skip)
       .take(params.take);
+
+    // CDC §XVI — sortable column headers. `customerEmail` joins users; the
+    // other fields live on the order row itself, so they sort cheaply.
+    const sortField = params.sort?.field ?? 'createdAt';
+    const sortDir: 'ASC' | 'DESC' =
+      params.sort?.direction === 'asc' ? 'ASC' : 'DESC';
+    if (sortField === 'customerEmail') {
+      qb.leftJoin('users', 'u', 'u.id = order.userId')
+        .addSelect('u.email', 'order_customer_email')
+        .orderBy('u.email', sortDir, sortDir === 'ASC' ? 'NULLS LAST' : 'NULLS LAST')
+        .addOrderBy('order.createdAt', 'DESC');
+    } else if (sortField === 'orderNumber') {
+      qb.orderBy('order.orderNumber', sortDir, sortDir === 'ASC' ? 'NULLS LAST' : 'NULLS LAST')
+        .addOrderBy('order.createdAt', 'DESC');
+    } else if (sortField === 'total') {
+      qb.orderBy('order.total', sortDir).addOrderBy('order.createdAt', 'DESC');
+    } else {
+      qb.orderBy('order.createdAt', sortDir);
+    }
     if (params.filters?.status) {
       qb.andWhere('order.status = :st', { st: params.filters.status });
     }

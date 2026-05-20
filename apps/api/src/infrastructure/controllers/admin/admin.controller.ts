@@ -163,6 +163,8 @@ export class AdminController {
     @Query('status') status?: string,
     @Query('paymentMethod') paymentMethod?: string,
     @Query('paymentStatus') paymentStatus?: string,
+    @Query('sort') sortField?: string,
+    @Query('dir') sortDir?: string,
   ) {
     const page = Math.max(1, Number.parseInt(pageStr ?? '1', 10) || 1);
     const limit = Math.min(
@@ -170,6 +172,17 @@ export class AdminController {
       Math.max(1, Number.parseInt(limitStr ?? '25', 10) || 25),
     );
     const skip = (page - 1) * limit;
+    // CDC §XVI — admin clicks any column header to sort. Whitelist the field
+    // so we never inject arbitrary SQL through the order-by clause.
+    const allowedSort = ['orderNumber', 'createdAt', 'customerEmail', 'total'] as const;
+    type SortField = (typeof allowedSort)[number];
+    const sort: { field: SortField; direction: 'asc' | 'desc' } | undefined =
+      sortField && (allowedSort as readonly string[]).includes(sortField)
+        ? {
+            field: sortField as SortField,
+            direction: sortDir === 'asc' ? 'asc' : 'desc',
+          }
+        : undefined;
     const { rows, total } = await this.orderRepository.findAllForAdmin({
       skip,
       take: limit,
@@ -178,6 +191,7 @@ export class AdminController {
         paymentMethod: paymentMethod?.trim() || undefined,
         paymentStatus: paymentStatus?.trim() || undefined,
       },
+      sort,
     });
     const totalPages = Math.max(1, Math.ceil(total / limit));
     return {

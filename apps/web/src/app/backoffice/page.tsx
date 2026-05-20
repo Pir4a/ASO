@@ -266,6 +266,20 @@ function BackofficeDashboard() {
   const [ordersPaymentMethodFilter, setOrdersPaymentMethodFilter] = useState<string>("");
   const [adminOrderModalOpen, setAdminOrderModalOpen] = useState(false);
   const [ordersPaymentStatusFilter, setOrdersPaymentStatusFilter] = useState<string>("");
+  // CDC §XVI — clickable column headers on the BO orders + users tables.
+  type OrdersSortKey = "orderNumber" | "createdAt" | "customerEmail" | "total";
+  const [ordersSortBy, setOrdersSortBy] = useState<OrdersSortKey>("createdAt");
+  const [ordersSortDir, setOrdersSortDir] = useState<"asc" | "desc">("desc");
+  type UsersSortKey =
+    | "name"
+    | "email"
+    | "created"
+    | "status"
+    | "orderCount"
+    | "revenue"
+    | "lastLogin";
+  const [usersSortBy, setUsersSortBy] = useState<UsersSortKey>("email");
+  const [usersSortDir, setUsersSortDir] = useState<"asc" | "desc">("asc");
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [orderDetail, setOrderDetail] = useState<AdminOrderDetail | null>(null);
   const [loadingOrderDetail, setLoadingOrderDetail] = useState(false);
@@ -327,13 +341,65 @@ function BackofficeDashboard() {
     }
   };
 
+  // CDC §XVI — bulk-selection export. We build the CSV client-side rather
+  // than re-fetching, because the table already holds the rows the operator
+  // ticked and the columns mirror the backend's products/admin/export.csv.
+  const csvEscape = (value: unknown): string => {
+    if (value === null || value === undefined) return "";
+    const s = String(value);
+    return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const downloadProductsSelectionCsv = (rows: Product[], filename: string) => {
+    try {
+      const columns: { header: string; value: (p: Product) => unknown }[] = [
+        { header: "sku", value: (p) => p.sku ?? "" },
+        { header: "slug", value: (p) => p.slug ?? "" },
+        { header: "name", value: (p) => p.name ?? "" },
+        { header: "category", value: (p) => p.category?.name ?? "" },
+        { header: "price", value: (p) => Number(p.price ?? 0).toFixed(2) },
+        { header: "currency", value: () => "EUR" },
+        { header: "vatRate", value: (p) => p.vatRate ?? 20 },
+        { header: "stock", value: (p) => p.stock ?? 0 },
+        { header: "status", value: (p) => p.status ?? "" },
+        { header: "published", value: (p) => (p.published === false ? "false" : "true") },
+        { header: "featured", value: (p) => (p.featured ? "true" : "false") },
+        { header: "listPriority", value: (p) => p.listPriority ?? 0 },
+      ];
+      const headerLine = columns.map((c) => csvEscape(c.header)).join(",");
+      const lines = rows.map((r) => columns.map((c) => csvEscape(c.value(r))).join(","));
+      // Prepend the UTF-8 BOM so Excel picks up encoding correctly (matches
+      // the backend buildCsv() helper).
+      const body = "﻿" + [headerLine, ...lines].join("\r\n");
+      const blob = new Blob([body], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      flash("success", `${filename} téléchargé.`);
+    } catch (e) {
+      flash("error", `Export impossible: ${(e as Error).message}`);
+    }
+  };
+
   /* ------------------------------- Loaders -------------------------------- */
 
-  const loadUsers = async (q?: string) => {
+  const loadUsers = async (
+    q?: string,
+    sortBy: UsersSortKey = usersSortBy,
+    sortDir: "asc" | "desc" = usersSortDir,
+  ) => {
     setLoadingUsers(true);
     try {
       const params = new URLSearchParams();
       if (q) params.set("q", q);
+      // CDC §XVI — push the requested sort to the API so server-side
+      // aggregates (CA, # commandes) stay authoritative.
+      params.set("sort", sortBy);
+      params.set("dir", sortDir);
       const res = await authFetch(`${API_URL}/users?${params.toString()}`);
       if (!res.ok) throw new Error("Impossible de charger les utilisateurs.");
       setUsers(await res.json());
@@ -443,6 +509,8 @@ function BackofficeDashboard() {
     status = ordersStatusFilter,
     paymentMethod = ordersPaymentMethodFilter,
     paymentStatus = ordersPaymentStatusFilter,
+    sortBy: OrdersSortKey = ordersSortBy,
+    sortDir: "asc" | "desc" = ordersSortDir,
   ) => {
     setLoadingOrders(true);
     try {
@@ -450,6 +518,9 @@ function BackofficeDashboard() {
       if (status) sp.set("status", status);
       if (paymentMethod) sp.set("paymentMethod", paymentMethod);
       if (paymentStatus) sp.set("paymentStatus", paymentStatus);
+      // CDC §XVI — server-side sort so pagination stays correct.
+      sp.set("sort", sortBy);
+      sp.set("dir", sortDir);
       const res = await authFetch(`${API_URL}/admin/orders?${sp.toString()}`);
       if (!res.ok) throw new Error();
       const body = (await res.json()) as {
@@ -562,6 +633,8 @@ function BackofficeDashboard() {
       ordersStatusFilter,
       ordersPaymentMethodFilter,
       ordersPaymentStatusFilter,
+      ordersSortBy,
+      ordersSortDir,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -570,7 +643,16 @@ function BackofficeDashboard() {
     ordersStatusFilter,
     ordersPaymentMethodFilter,
     ordersPaymentStatusFilter,
+    ordersSortBy,
+    ordersSortDir,
   ]);
+
+  // CDC §XVI — re-fetch users when the operator clicks a sortable header.
+  useEffect(() => {
+    if (section !== "users") return;
+    void loadUsers(search, usersSortBy, usersSortDir);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section, usersSortBy, usersSortDir]);
 
   useEffect(() => {
     setGlobalSearchActiveIndex(-1);
@@ -980,6 +1062,53 @@ function BackofficeDashboard() {
 
   const sortIndicator = (key: ProductSortKey) =>
     productSortBy === key ? (productSortDir === "asc" ? " ↑" : " ↓") : "";
+
+  // CDC §XVI — reusable header cell for the orders + users tables. Clicking
+  // toggles asc/desc on the active column; switching to another column resets
+  // the direction to a sensible default (asc for text, desc for date/number).
+  const renderSortableTh = <K extends string>(
+    key: K,
+    label: string,
+    options: {
+      activeKey: K;
+      direction: "asc" | "desc";
+      defaultDir?: "asc" | "desc";
+      onSort: (key: K, dir: "asc" | "desc") => void;
+      className?: string;
+    },
+  ) => {
+    const isActive = options.activeKey === key;
+    const arrow = isActive ? (options.direction === "asc" ? " ↑" : " ↓") : "";
+    return (
+      <th
+        className={options.className}
+        onClick={() => {
+          if (isActive) {
+            options.onSort(key, options.direction === "asc" ? "desc" : "asc");
+          } else {
+            options.onSort(key, options.defaultDir ?? "asc");
+          }
+        }}
+        style={{ cursor: "pointer", userSelect: "none" }}
+        aria-sort={isActive ? (options.direction === "asc" ? "ascending" : "descending") : "none"}
+      >
+        {label}
+        {arrow}
+      </th>
+    );
+  };
+
+  const setOrdersSort = (key: OrdersSortKey, dir: "asc" | "desc") => {
+    setOrdersSortBy(key);
+    setOrdersSortDir(dir);
+    // Pagination resets to page 1 — the new ordering would otherwise leak
+    // rows from an unrelated page.
+    setOrdersPage(1);
+  };
+  const setUsersSort = (key: UsersSortKey, dir: "asc" | "desc") => {
+    setUsersSortBy(key);
+    setUsersSortDir(dir);
+  };
 
   const allOnPageSelected =
     paginatedProducts.length > 0 &&
@@ -2018,10 +2147,35 @@ function BackofficeDashboard() {
                     <button
                       className="bo-btn"
                       type="button"
-                      onClick={() => void downloadCsv("/products/admin/export.csv", "products.csv")}
-                      title="Télécharger en CSV"
+                      onClick={() => {
+                        // CDC §XVI — when at least one row is selected, the
+                        // export becomes "Exporter la sélection (N)" and is
+                        // built client-side from the rows already loaded.
+                        // Otherwise we hit the backend's full-catalogue CSV.
+                        if (selectedProductIds.size > 0) {
+                          const selected = products.filter((p) =>
+                            selectedProductIds.has(p.id),
+                          );
+                          downloadProductsSelectionCsv(
+                            selected,
+                            "products-selection.csv",
+                          );
+                          return;
+                        }
+                        void downloadCsv(
+                          "/products/admin/export.csv",
+                          "products.csv",
+                        );
+                      }}
+                      title={
+                        selectedProductIds.size > 0
+                          ? "Télécharger les produits sélectionnés en CSV"
+                          : "Télécharger en CSV"
+                      }
                     >
-                      Export CSV
+                      {selectedProductIds.size > 0
+                        ? `Exporter la sélection (${selectedProductIds.size})`
+                        : "Export CSV"}
                     </button>
                     <button className="bo-btn primary" type="button" onClick={() => setShowProductForm((v) => !v)}>
                       <Icon.Plus /> Ajouter
@@ -2930,12 +3084,33 @@ function BackofficeDashboard() {
                     <table className="bo-data">
                       <thead>
                         <tr>
-                          <th>N°</th>
-                          <th>Date</th>
-                          <th>Client</th>
+                          {renderSortableTh("orderNumber", "N°", {
+                            activeKey: ordersSortBy,
+                            direction: ordersSortDir,
+                            defaultDir: "desc",
+                            onSort: setOrdersSort,
+                          })}
+                          {renderSortableTh("createdAt", "Date", {
+                            activeKey: ordersSortBy,
+                            direction: ordersSortDir,
+                            defaultDir: "desc",
+                            onSort: setOrdersSort,
+                          })}
+                          {renderSortableTh("customerEmail", "Client", {
+                            activeKey: ordersSortBy,
+                            direction: ordersSortDir,
+                            defaultDir: "asc",
+                            onSort: setOrdersSort,
+                          })}
                           <th>Statut</th>
                           <th>Paiement</th>
-                          <th className="num">Total</th>
+                          {renderSortableTh("total", "Total", {
+                            activeKey: ordersSortBy,
+                            direction: ordersSortDir,
+                            defaultDir: "desc",
+                            onSort: setOrdersSort,
+                            className: "num",
+                          })}
                           <th className="num">Lignes</th>
                           <th className="num">Voir</th>
                         </tr>
@@ -3201,13 +3376,45 @@ function BackofficeDashboard() {
                     <table className="bo-data">
                       <thead>
                         <tr>
-                          <th>Utilisateur</th>
+                          {renderSortableTh("name", "Utilisateur", {
+                            activeKey: usersSortBy,
+                            direction: usersSortDir,
+                            defaultDir: "asc",
+                            onSort: setUsersSort,
+                          })}
                           <th>Rôle</th>
-                          <th>Statut</th>
-                          <th>Inscription</th>
-                          <th>Dernière connexion</th>
-                          <th className="num">Cmd</th>
-                          <th className="num">CA</th>
+                          {renderSortableTh("status", "Statut", {
+                            activeKey: usersSortBy,
+                            direction: usersSortDir,
+                            defaultDir: "asc",
+                            onSort: setUsersSort,
+                          })}
+                          {renderSortableTh("created", "Inscription", {
+                            activeKey: usersSortBy,
+                            direction: usersSortDir,
+                            defaultDir: "desc",
+                            onSort: setUsersSort,
+                          })}
+                          {renderSortableTh("lastLogin", "Dernière connexion", {
+                            activeKey: usersSortBy,
+                            direction: usersSortDir,
+                            defaultDir: "desc",
+                            onSort: setUsersSort,
+                          })}
+                          {renderSortableTh("orderCount", "Cmd", {
+                            activeKey: usersSortBy,
+                            direction: usersSortDir,
+                            defaultDir: "desc",
+                            onSort: setUsersSort,
+                            className: "num",
+                          })}
+                          {renderSortableTh("revenue", "CA", {
+                            activeKey: usersSortBy,
+                            direction: usersSortDir,
+                            defaultDir: "desc",
+                            onSort: setUsersSort,
+                            className: "num",
+                          })}
                           <th className="num">Adr.</th>
                           <th className="num">Actions</th>
                         </tr>
