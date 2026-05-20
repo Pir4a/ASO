@@ -55,8 +55,8 @@ function formatPrice(value: number, currency: string, locale: string) {
   }).format(value);
 }
 
-function brandLabel(b?: string) {
-  if (!b) return "Carte";
+function brandLabel(b: string | undefined, fallback: string) {
+  if (!b) return fallback;
   return b.charAt(0).toUpperCase() + b.slice(1).toLowerCase();
 }
 
@@ -337,11 +337,11 @@ export default function OrderDetailPage({
                   className="grid h-10 w-14 place-items-center rounded-lg bg-foreground text-[10.5px] font-bold uppercase tracking-[0.08em] text-white"
                   style={{ color: "#fff" }}
                 >
-                  {brandLabel(order.paymentBrand).slice(0, 4)}
+                  {brandLabel(order.paymentBrand, t("payment.cardLabel")).slice(0, 4)}
                 </span>
                 <div>
                   <p className="font-heading text-[14px] font-semibold text-foreground">
-                    {brandLabel(order.paymentBrand)}{" "}
+                    {brandLabel(order.paymentBrand, t("payment.cardLabel"))}{" "}
                     <span className="font-mono text-foreground/65">
                       •••• {order.paymentLast4}
                     </span>

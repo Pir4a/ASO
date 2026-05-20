@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useT } from "@/context/LocaleContext";
 
 export interface AddressFormData {
     id?: string;
@@ -31,8 +32,9 @@ export function AddressForm({
     initialData,
     onSubmit,
     onCancel,
-    submitLabel = "Enregistrer",
+    submitLabel,
 }: AddressFormProps) {
+    const t = useT();
     const [data, setData] = useState<AddressFormData>({
         firstName: initialData?.firstName ?? "",
         lastName: initialData?.lastName ?? "",
@@ -58,10 +60,12 @@ export function AddressForm({
         }
     };
 
+    const resolvedSubmitLabel = submitLabel ?? t("common.save");
+
     return (
         <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
             <div>
-                <label htmlFor="addr-fn" className={labelCls}>Prénom</label>
+                <label htmlFor="addr-fn" className={labelCls}>{t("address.firstName")}</label>
                 <input
                     id="addr-fn"
                     required
@@ -71,7 +75,7 @@ export function AddressForm({
                 />
             </div>
             <div>
-                <label htmlFor="addr-ln" className={labelCls}>Nom</label>
+                <label htmlFor="addr-ln" className={labelCls}>{t("address.lastName")}</label>
                 <input
                     id="addr-ln"
                     required
@@ -81,11 +85,11 @@ export function AddressForm({
                 />
             </div>
             <div className="sm:col-span-2">
-                <label htmlFor="addr-street" className={labelCls}>Adresse</label>
+                <label htmlFor="addr-street" className={labelCls}>{t("address.street")}</label>
                 <input
                     id="addr-street"
                     required
-                    placeholder="Numéro et rue"
+                    placeholder={t("address.streetPlaceholder")}
                     value={data.street}
                     onChange={(e) => set("street", e.target.value)}
                     className={inputCls}
@@ -93,18 +97,18 @@ export function AddressForm({
             </div>
             <div className="sm:col-span-2">
                 <label htmlFor="addr-2" className={labelCls}>
-                    Complément d&apos;adresse <span className="font-normal lowercase tracking-normal text-foreground/45">(optionnel)</span>
+                    {t("address.address2")} <span className="font-normal lowercase tracking-normal text-foreground/45">{t("address.optional")}</span>
                 </label>
                 <input
                     id="addr-2"
-                    placeholder="Bât., étage, code…"
+                    placeholder={t("address.address2Placeholder")}
                     value={data.address2}
                     onChange={(e) => set("address2", e.target.value)}
                     className={inputCls}
                 />
             </div>
             <div>
-                <label htmlFor="addr-postal" className={labelCls}>Code postal</label>
+                <label htmlFor="addr-postal" className={labelCls}>{t("address.postalCode")}</label>
                 <input
                     id="addr-postal"
                     required
@@ -115,7 +119,7 @@ export function AddressForm({
                 />
             </div>
             <div>
-                <label htmlFor="addr-city" className={labelCls}>Ville</label>
+                <label htmlFor="addr-city" className={labelCls}>{t("address.city")}</label>
                 <input
                     id="addr-city"
                     required
@@ -126,7 +130,7 @@ export function AddressForm({
             </div>
             <div>
                 <label htmlFor="addr-region" className={labelCls}>
-                    Région <span className="font-normal lowercase tracking-normal text-foreground/45">(optionnel)</span>
+                    {t("address.region")} <span className="font-normal lowercase tracking-normal text-foreground/45">{t("address.optional")}</span>
                 </label>
                 <input
                     id="addr-region"
@@ -136,7 +140,7 @@ export function AddressForm({
                 />
             </div>
             <div>
-                <label htmlFor="addr-country" className={labelCls}>Pays</label>
+                <label htmlFor="addr-country" className={labelCls}>{t("address.country")}</label>
                 <input
                     id="addr-country"
                     required
@@ -146,11 +150,11 @@ export function AddressForm({
                 />
             </div>
             <div className="sm:col-span-2">
-                <label htmlFor="addr-phone" className={labelCls}>Téléphone mobile</label>
+                <label htmlFor="addr-phone" className={labelCls}>{t("address.phone")}</label>
                 <input
                     id="addr-phone"
                     type="tel"
-                    placeholder="+33 6 12 34 56 78"
+                    placeholder={t("address.phonePlaceholder")}
                     value={data.phone}
                     onChange={(e) => set("phone", e.target.value)}
                     className={inputCls}
@@ -164,7 +168,7 @@ export function AddressForm({
                     disabled={loading}
                     className="inline-flex h-10 items-center gap-2 rounded-lg border border-foreground/15 bg-white px-4 text-[13px] font-semibold text-foreground transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                    Annuler
+                    {t("common.cancel")}
                 </button>
                 <button
                     type="submit"
@@ -175,14 +179,14 @@ export function AddressForm({
                     {loading ? (
                         <>
                             <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                            Enregistrement…
+                            {t("address.saving")}
                         </>
                     ) : (
                         <>
                             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="h-3.5 w-3.5">
                                 <path d="m3 8 3.5 3.5L13 5" />
                             </svg>
-                            {submitLabel}
+                            {resolvedSubmitLabel}
                         </>
                     )}
                 </button>
