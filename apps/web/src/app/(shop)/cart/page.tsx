@@ -4,20 +4,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useT } from "@/context/LocaleContext";
+import { useT, useLocale, useTPlural } from "@/context/LocaleContext";
 import { useCart, type CartItem } from "@/hooks/useCart";
+import { formatPrice } from "@/lib/format";
 
 function isUnavailable(item: CartItem) {
   return typeof item.stock === "number" && item.stock <= 0;
 }
 
-function formatPrice(cents: number, currency: string) {
-  const v = cents / 100;
-  return `${v >= 1000 ? v.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : v.toFixed(2)} ${currency}`;
-}
-
 export default function CartPage() {
   const t = useT();
+  const locale = useLocale();
+  const tPlural = useTPlural();
   const {
     items,
     subtotal,
@@ -124,7 +122,7 @@ export default function CartPage() {
             {t("cart.title")}
           </h1>
           <p className="mt-1 text-[13px] text-foreground/60">
-            {itemCount} {itemCount > 1 ? t("cart.itemPlural") : t("cart.itemSingular")} · {t("cart.autoUpdated")}
+            {tPlural("cart.itemCount", itemCount)} · {t("cart.autoUpdated")}
           </p>
         </div>
         <Link
@@ -242,7 +240,7 @@ export default function CartPage() {
                     <p className="mt-0.5 text-[12.5px] text-foreground/60">
                       {t("cart.unitPrice")} ·{" "}
                       <span className="font-medium text-foreground/80 tabular-nums">
-                        {formatPrice(item.priceCents, item.currency)}
+                        {formatPrice(item.priceCents, item.currency, locale)}
                       </span>
                     </p>
                     {oos && (
@@ -312,7 +310,7 @@ export default function CartPage() {
                         oos ? "text-foreground/55 line-through" : "text-foreground"
                       }`}
                     >
-                      {formatPrice(item.priceCents * item.quantity, item.currency)}
+                      {formatPrice(item.priceCents * item.quantity, item.currency, locale)}
                     </p>
                   </div>
 
@@ -351,13 +349,13 @@ export default function CartPage() {
                 <div className="flex justify-between">
                   <dt className="text-foreground/65">{t("cart.subtotal")}</dt>
                   <dd className="tabular-nums text-foreground">
-                    {formatPrice(subtotal, currency)}
+                    {formatPrice(subtotal, currency, locale)}
                   </dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-foreground/65">{t("cart.vat")}</dt>
                   <dd className="tabular-nums text-foreground">
-                    {formatPrice(vat, currency)}
+                    {formatPrice(vat, currency, locale)}
                   </dd>
                 </div>
                 {discount > 0 && (
@@ -369,7 +367,7 @@ export default function CartPage() {
                       </span>
                     </dt>
                     <dd className="tabular-nums">
-                      −{formatPrice(discount, currency)}
+                      −{formatPrice(discount, currency, locale)}
                     </dd>
                   </div>
                 )}
@@ -380,7 +378,7 @@ export default function CartPage() {
                   {t("cart.totalIncludingVat")}
                 </span>
                 <span className="font-heading text-[22px] font-bold tabular-nums text-foreground">
-                  {formatPrice(total, currency)}
+                  {formatPrice(total, currency, locale)}
                 </span>
               </div>
 

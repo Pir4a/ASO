@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useT } from "@/context/LocaleContext";
+import { useT, useLocale } from "@/context/LocaleContext";
 import type { Category, Product } from "@bootstrap/types";
 
 /**
@@ -44,9 +44,9 @@ function isOutOfStock(p: Product) {
   return p.status === "out_of_stock" || (p.stock !== undefined && p.stock <= 0);
 }
 
-function formatPrice(p: Product) {
+function formatPrice(p: Product, locale: string) {
   const value = p.priceCents / 100;
-  return value >= 1000 ? value.toLocaleString("fr-FR") : value.toFixed(2);
+  return value >= 1000 ? value.toLocaleString(locale) : value.toFixed(2);
 }
 
 function StockBadge({
@@ -139,6 +139,7 @@ export function CategoryCatalog({
   serverDriven?: boolean;
 }) {
   const t = useT();
+  const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -593,7 +594,7 @@ export function CategoryCatalog({
                           oos ? "text-foreground/55" : "text-foreground"
                         }`}
                       >
-                        <span className="num tabular-nums">{formatPrice(product)}</span>{" "}
+                        <span className="num tabular-nums">{formatPrice(product, locale)}</span>{" "}
                         <span className="text-xs font-medium text-foreground/55">{product.currency}</span>
                       </p>
                       <div className="mt-1.5">
@@ -661,7 +662,7 @@ export function CategoryCatalog({
                           oos ? "text-foreground/55" : "text-foreground"
                         }`}
                       >
-                        <span className="num tabular-nums">{formatPrice(product)}</span>{" "}
+                        <span className="num tabular-nums">{formatPrice(product, locale)}</span>{" "}
                         <span className="text-xs font-medium text-foreground/55">{product.currency}</span>
                       </p>
                       <div className="mt-1.5">
@@ -679,7 +680,7 @@ export function CategoryCatalog({
                           oos ? "text-foreground/55" : "text-foreground"
                         }`}
                       >
-                        <span className="num tabular-nums">{formatPrice(product)}</span>{" "}
+                        <span className="num tabular-nums">{formatPrice(product, locale)}</span>{" "}
                         <span className="text-xs font-medium text-foreground/55">{product.currency}</span>
                       </p>
                     </div>

@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTransition } from "react";
+import { useT } from "@/context/LocaleContext";
 import {
   PAGE_SIZE_OPTIONS,
   DEFAULT_PAGE_SIZE,
@@ -52,6 +53,7 @@ export function PaginationControls({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const t = useT();
 
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const safePage = Math.min(Math.max(1, currentPage), totalPages);
@@ -94,11 +96,11 @@ export function PaginationControls({
     >
       <div className="flex items-center gap-2">
         <label htmlFor="pagination-size" className="text-foreground/70">
-          Afficher
+          {t("pagination.show")}
         </label>
         <select
           id="pagination-size"
-          aria-label="Nombre d'éléments par page"
+          aria-label={t("pagination.itemsPerPageAria")}
           className="cursor-pointer rounded-md border border-primary/25 bg-background px-2 py-1 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
           value={pageSize}
           onChange={onSizeChange}
@@ -110,17 +112,17 @@ export function PaginationControls({
             </option>
           ))}
         </select>
-        <span className="text-foreground/60">par page</span>
+        <span className="text-foreground/60">{t("pagination.perPage")}</span>
       </div>
 
       <p className="text-xs text-foreground/60">
         {totalItems === 0
-          ? "Aucun élément"
-          : `${startIndex}–${endIndex} sur ${totalItems}`}
+          ? t("pagination.noItems")
+          : t("pagination.range", { start: startIndex, end: endIndex, total: totalItems })}
       </p>
 
       <nav
-        aria-label="Pagination"
+        aria-label={t("pagination.label")}
         className="flex items-center gap-2"
       >
         <button
@@ -129,10 +131,10 @@ export function PaginationControls({
           disabled={safePage <= 1 || isPending}
           className="cursor-pointer rounded-md border border-primary/25 px-3 py-1 text-sm font-medium text-foreground hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-primary/25 disabled:hover:text-foreground"
         >
-          Précédent
+          {t("pagination.previous")}
         </button>
         <span className="text-xs text-foreground/70">
-          Page {safePage} / {totalPages}
+          {t("pagination.pageOf", { page: safePage, total: totalPages })}
         </span>
         <button
           type="button"
@@ -140,7 +142,7 @@ export function PaginationControls({
           disabled={safePage >= totalPages || isPending}
           className="cursor-pointer rounded-md border border-primary/25 px-3 py-1 text-sm font-medium text-foreground hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-primary/25 disabled:hover:text-foreground"
         >
-          Suivant
+          {t("pagination.next")}
         </button>
       </nav>
     </div>

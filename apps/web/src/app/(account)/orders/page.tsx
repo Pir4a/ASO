@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getOrders, type OrderDTO, type OrdersByYear, type OrderStatus } from "@/lib/api";
-import { useT } from "@/context/LocaleContext";
+import { useT, useLocale } from "@/context/LocaleContext";
 
 type StatusFilter = "all" | "active" | "completed" | "cancelled";
 
@@ -53,6 +53,7 @@ function uniqueProductTypes(ordersByYear: OrdersByYear): string[] {
 
 export default function OrdersPage() {
   const t = useT();
+  const locale = useLocale();
   const [data, setData] = useState<OrdersByYear>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -236,6 +237,7 @@ function OrderRow({
   statusLabels: Record<OrderStatus, string>;
 }) {
   const t = useT();
+  const locale = useLocale();
   const items = order.items ?? [];
   const names = items.map((i) => i.productName).filter(Boolean);
   const otherCount = names.length - 1;
@@ -259,7 +261,7 @@ function OrderRow({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-foreground">{summary}</p>
           <p className="mt-1 text-xs text-foreground/60">
-            {formatDate(order.createdAt, "fr-FR")} · {qty} {itemWord} · {t("orders.row.numberPrefix")}{" "}
+            {formatDate(order.createdAt, locale)} · {qty} {itemWord} · {t("orders.row.numberPrefix")}{" "}
             <span className="font-mono">{order.id}</span>
           </p>
         </div>

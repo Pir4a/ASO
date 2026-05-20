@@ -18,8 +18,9 @@ import {
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { AddressForm, type AddressFormData } from "@/components/account/AddressForm";
 import { useAuth } from "@/context/AuthContext";
-import { useT } from "@/context/LocaleContext";
+import { useT, useLocale } from "@/context/LocaleContext";
 import { useCart } from "@/hooks/useCart";
+import { formatPrice } from "@/lib/format";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -40,13 +41,9 @@ const STEP_META: { key: Step; labelKey: "checkout.step.identify" | "checkout.ste
   { key: "review", labelKey: "checkout.step.review" },
 ];
 
-function formatPrice(cents: number, currency = "EUR") {
-  const v = cents / 100;
-  return `${v >= 1000 ? v.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : v.toFixed(2)} ${currency}`;
-}
-
 export default function CheckoutPage() {
   const t = useT();
+  const locale = useLocale();
   const { refreshCart, discount: cartDiscount, promoCode: cartPromoCode } = useCart();
   const { user, isAuthenticated } = useAuth();
 
@@ -574,11 +571,11 @@ export default function CheckoutPage() {
                         {it.name ?? it.productId}
                       </span>
                       <span className="text-[11.5px] text-foreground/55 tabular-nums">
-                        {formatPrice(it.priceCents, it.currency)} × {it.quantity}
+                        {formatPrice(it.priceCents, it.currency, locale)} × {it.quantity}
                       </span>
                     </span>
                     <span className="font-heading font-semibold tabular-nums text-foreground">
-                      {formatPrice(it.priceCents * it.quantity, it.currency)}
+                      {formatPrice(it.priceCents * it.quantity, it.currency, locale)}
                     </span>
                   </li>
                 ))}
@@ -588,13 +585,13 @@ export default function CheckoutPage() {
                 <div className="flex justify-between">
                   <dt className="text-foreground/65">{t("cart.subtotal")}</dt>
                   <dd className="tabular-nums text-foreground">
-                    {formatPrice(cartSubtotal, currency)}
+                    {formatPrice(cartSubtotal, currency, locale)}
                   </dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-foreground/65">TVA</dt>
                   <dd className="tabular-nums text-foreground">
-                    {formatPrice(cartVat, currency)}
+                    {formatPrice(cartVat, currency, locale)}
                   </dd>
                 </div>
                 {cartDiscount > 0 && (
@@ -603,7 +600,7 @@ export default function CheckoutPage() {
                       {t("cart.discount")}{cartPromoCode ? ` (${cartPromoCode})` : ""}
                     </dt>
                     <dd className="tabular-nums text-success">
-                      −{formatPrice(cartDiscount, currency)}
+                      −{formatPrice(cartDiscount, currency, locale)}
                     </dd>
                   </div>
                 )}
@@ -614,7 +611,7 @@ export default function CheckoutPage() {
                   {t("cart.totalIncludingVat")}
                 </span>
                 <span className="font-heading text-[20px] font-bold tabular-nums text-foreground">
-                  {formatPrice(Math.max(0, cartTotal - cartDiscount), currency)}
+                  {formatPrice(Math.max(0, cartTotal - cartDiscount), currency, locale)}
                 </span>
               </div>
 
@@ -794,6 +791,7 @@ function ReviewSummary({
   address: Address | null;
   email: string | null;
 }) {
+  const locale = useLocale();
   return (
     <div className="space-y-5">
       <p className="text-[13px] text-foreground/70">{t("checkout.review.intro")}</p>
@@ -814,11 +812,11 @@ function ReviewSummary({
                   {it.name ?? it.productId}
                 </span>
                 <span className="text-[11.5px] text-foreground/55 tabular-nums">
-                  {formatPrice(it.priceCents, it.currency)} × {it.quantity}
+                  {formatPrice(it.priceCents, it.currency, locale)} × {it.quantity}
                 </span>
               </span>
               <span className="font-heading font-semibold tabular-nums text-foreground">
-                {formatPrice(it.priceCents * it.quantity, it.currency)}
+                {formatPrice(it.priceCents * it.quantity, it.currency, locale)}
               </span>
             </li>
           ))}
@@ -882,13 +880,13 @@ function ReviewSummary({
         <div className="flex justify-between">
           <dt className="text-foreground/65">{t("cart.subtotal")}</dt>
           <dd className="tabular-nums text-foreground">
-            {formatPrice(cartSubtotal, currency)}
+            {formatPrice(cartSubtotal, currency, locale)}
           </dd>
         </div>
         <div className="flex justify-between">
           <dt className="text-foreground/65">{t("cart.vat")}</dt>
           <dd className="tabular-nums text-foreground">
-            {formatPrice(cartVat, currency)}
+            {formatPrice(cartVat, currency, locale)}
           </dd>
         </div>
         {cartDiscount > 0 && (
@@ -898,7 +896,7 @@ function ReviewSummary({
               {cartPromoCode ? ` (${cartPromoCode})` : ""}
             </dt>
             <dd className="tabular-nums text-success">
-              −{formatPrice(cartDiscount, currency)}
+              −{formatPrice(cartDiscount, currency, locale)}
             </dd>
           </div>
         )}
@@ -907,7 +905,7 @@ function ReviewSummary({
             {t("cart.totalIncludingVat")}
           </dt>
           <dd className="font-heading text-[18px] font-bold tabular-nums text-foreground">
-            {formatPrice(Math.max(0, cartTotal - cartDiscount), currency)}
+            {formatPrice(Math.max(0, cartTotal - cartDiscount), currency, locale)}
           </dd>
         </div>
       </dl>

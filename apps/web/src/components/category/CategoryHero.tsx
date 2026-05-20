@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useT, useTPlural } from "@/context/LocaleContext";
 
 type Stat = { value: string; label: string };
 
@@ -8,7 +11,7 @@ type CategoryHeroProps = {
   imageUrl?: string;
   productsTotal?: number;
   availableTotal?: number;
-  /** Eyebrow label shown above the title (defaults to "Catégorie"). */
+  /** Eyebrow label shown above the title (defaults to translated "Category"). */
   eyebrow?: string;
   /** Optional stats strip rendered on the description band. */
   stats?: Stat[];
@@ -22,10 +25,13 @@ export function CategoryHero({
   imageUrl,
   productsTotal,
   availableTotal,
-  eyebrow = "Catégorie",
+  eyebrow,
   stats,
   compact = false,
 }: CategoryHeroProps) {
+  const t = useT();
+  const tPlural = useTPlural();
+  const resolvedEyebrow = eyebrow ?? t("category.eyebrowDefault");
   return (
     <section className="overflow-hidden rounded-2xl border border-foreground/10 bg-white shadow-[0_8px_28px_rgba(0,61,92,0.08)]">
       {/* Image with overlay title — mandatory per spec */}
@@ -58,7 +64,7 @@ export function CategoryHero({
               <path d="M8 1.5C5 1.5 3 3.5 3 6.5c0 3.5 5 8 5 8s5-4.5 5-8c0-3-2-5-5-5Z" />
               <circle cx="8" cy="6" r="1.5" />
             </svg>
-            {eyebrow}
+            {resolvedEyebrow}
           </span>
           <h1 className={`font-heading font-bold leading-[1.05] tracking-tight text-white drop-shadow-[0_2px_18px_rgba(0,37,58,0.3)] ${compact ? "text-[28px] md:text-[34px] lg:text-[36px]" : "text-3xl md:text-[40px] lg:text-[44px]"}`}>
             {name}
@@ -66,19 +72,13 @@ export function CategoryHero({
           {(productsTotal !== undefined || availableTotal !== undefined) && (
             <div className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-background ${compact ? "mt-2" : "mt-3"}`}>
               {productsTotal !== undefined && (
-                <span>
-                  <b className="font-semibold text-white">{productsTotal}</b> produit
-                  {productsTotal > 1 ? "s" : ""} référencé{productsTotal > 1 ? "s" : ""}
-                </span>
+                <span>{tPlural("category.productsListed", productsTotal)}</span>
               )}
               {productsTotal !== undefined && availableTotal !== undefined && (
                 <span aria-hidden="true" className="text-white/40">·</span>
               )}
               {availableTotal !== undefined && (
-                <span>
-                  <b className="font-semibold text-white">{availableTotal}</b> disponible
-                  {availableTotal > 1 ? "s" : ""} immédiatement
-                </span>
+                <span>{tPlural("category.availableNow", availableTotal)}</span>
               )}
             </div>
           )}
