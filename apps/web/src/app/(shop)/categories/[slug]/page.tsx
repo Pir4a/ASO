@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCategories, getProducts, getProductsByCategorySlug } from "@/lib/api";
+import {
+  PRODUCT_SEARCH_SORT,
+  getCategories,
+  getProducts,
+  getProductsByCategorySlug,
+  getProductsSearch,
+  type ProductSearchSortParam,
+} from "@/lib/api";
 import { getLocaleFromCookie } from "@/lib/i18n.server";
 import { getTranslations } from "@/lib/translations";
 import { CategoryHero } from "@/components/category/CategoryHero";
@@ -11,18 +18,59 @@ export default async function CategoryDetail({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    inStock?: string;
+    sort?: string;
+  }>;
 }) {
   const { slug } = await params;
-  const { q: rawQ } = await searchParams;
+  const {
+    q: rawQ,
+    minPrice: rawMin,
+    maxPrice: rawMax,
+    inStock: rawInStock,
+    sort: rawSort,
+  } = await searchParams;
   const initialQuery = (rawQ ?? "").trim();
+  const initialMinPrice = (rawMin ?? "").trim();
+  const initialMaxPrice = (rawMax ?? "").trim();
+  const initialInStockOnly = rawInStock === "1";
+  const initialSort: ProductSearchSortParam = PRODUCT_SEARCH_SORT.includes(
+    (rawSort ?? "") as ProductSearchSortParam,
+  )
+    ? (rawSort as ProductSearchSortParam)
+    : "relevance";
   const locale = await getLocaleFromCookie();
   const t = getTranslations(locale);
+
+  // Switch to the search API as soon as any facet/sort/query is active —
+  // it can filter, sort, and paginate by category in one round-trip.
+  // Otherwise keep the simpler category-browse call for the default view.
+  const useSearchApi =
+    initialQuery.length > 0 ||
+    initialMinPrice.length > 0 ||
+    initialMaxPrice.length > 0 ||
+    initialInStockOnly ||
+    initialSort !== "relevance";
 
   const [categories, allProducts, page] = await Promise.all([
     getCategories(),
     getProducts(),
-    getProductsByCategorySlug(slug, { page: 1, limit: 48 }),
+    useSearchApi
+      ? getProductsSearch({
+          q: initialQuery || undefined,
+          categorySlug: slug,
+          minPrice: initialMinPrice || undefined,
+          maxPrice: initialMaxPrice || undefined,
+          inStockOnly: initialInStockOnly,
+          page: 1,
+          limit: 48,
+          sort: initialSort,
+        }).then((res) => ({ products: res.products, meta: res.meta }))
+      : getProductsByCategorySlug(slug, { page: 1, limit: 48 }),
   ]);
 
   const category = categories.find((c) => c.slug === slug);
@@ -70,6 +118,11 @@ export default async function CategoryDetail({
         products={products}
         productCounts={productCounts}
         initialQuery={initialQuery}
+        initialMinPrice={initialMinPrice}
+        initialMaxPrice={initialMaxPrice}
+        initialInStockOnly={initialInStockOnly}
+        initialSort={initialSort}
+        serverDriven={useSearchApi}
       />
     </div>
   );
