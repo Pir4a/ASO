@@ -28,6 +28,24 @@ body {
   font-family: var(--font-body), system-ui, -apple-system, sans-serif;
 }
 
+/* RTL/locale-specific font fallback. Latin fonts (Inter/Poppins) don't ship
+   Arabic or Hebrew glyphs, so for those locales prepend a script-matching
+   Noto font so headings + body keep typographic quality. */
+html[lang="ar"] body,
+html[lang="ar"] {
+  font-family: var(--font-arabic), var(--font-body), system-ui, -apple-system, sans-serif;
+}
+html[lang="he"] body,
+html[lang="he"] {
+  font-family: var(--font-hebrew), var(--font-body), system-ui, -apple-system, sans-serif;
+}
+html[lang="ar"] h1, html[lang="ar"] h2, html[lang="ar"] h3, html[lang="ar"] h4, html[lang="ar"] h5, html[lang="ar"] h6 {
+  font-family: var(--font-arabic), var(--font-heading), system-ui, sans-serif;
+}
+html[lang="he"] h1, html[lang="he"] h2, html[lang="he"] h3, html[lang="he"] h4, html[lang="he"] h5, html[lang="he"] h6 {
+  font-family: var(--font-hebrew), var(--font-heading), system-ui, sans-serif;
+}
+
 a {
   color: inherit;
 }
@@ -51,8 +69,9 @@ button:disabled,
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
-/* Toast animations */
-@keyframes slide-in-right {
+/* Toast animations — slide in from the inline-end edge so it works in both
+   LTR and RTL without hardcoding direction. */
+@keyframes slide-in-end {
   from {
     transform: translateX(100%);
     opacity: 0;
@@ -64,8 +83,24 @@ button:disabled,
   }
 }
 
+@keyframes slide-in-start {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 .animate-slide-in {
-  animation: slide-in-right 0.3s ease-out;
+  animation: slide-in-end 0.3s ease-out;
+}
+
+html[dir="rtl"] .animate-slide-in {
+  animation: slide-in-start 0.3s ease-out;
 }
 
 /* Button animations */

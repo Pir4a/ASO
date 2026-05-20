@@ -140,7 +140,7 @@ function VerifyContent() {
             : t("auth.verify.errorGeneric")}
       </p>
       {emailHint ? (
-        <div className="mx-auto max-w-sm rounded-lg border border-foreground/10 bg-background/40 px-4 py-3 text-left">
+        <div className="mx-auto max-w-sm rounded-lg border border-foreground/10 bg-background/40 px-4 py-3 text-start">
           <ResendVerificationEmail email={emailHint} />
         </div>
       ) : errorKind === "expired" ? (

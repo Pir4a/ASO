@@ -259,13 +259,13 @@ export default function OrderDetailPage({
                         </p>
                       )}
                     </div>
-                    <div className="text-right text-[13px] text-foreground/65 sm:min-w-[140px]">
+                    <div className="text-end text-[13px] text-foreground/65 sm:min-w-[140px]">
                       <p className="tabular-nums">
                         {formatPrice(unit, item.currency, locale)}
                       </p>
                       <p className="text-[11.5px] tabular-nums">×&nbsp;{item.quantity}</p>
                     </div>
-                    <p className="text-right font-heading text-[15px] font-bold tabular-nums text-foreground sm:min-w-[120px]">
+                    <p className="text-end font-heading text-[15px] font-bold tabular-nums text-foreground sm:min-w-[120px]">
                       {formatPrice(lineTotal, item.currency, locale)}
                     </p>
                   </li>
@@ -366,7 +366,7 @@ export default function OrderDetailPage({
                 <div>
                   <p className="font-heading text-[14px] font-semibold text-foreground">
                     {t("orderDetail.paymentCard")}
-                    <span className="ml-1 text-[11.5px] font-normal text-foreground/55">
+                    <span className="ms-1 text-[11.5px] font-normal text-foreground/55">
                       (Stripe)
                     </span>
                   </p>

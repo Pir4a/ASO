@@ -264,7 +264,7 @@ export default function CheckoutPage() {
             </Link>
           </div>
           {guestSignupSent && (
-            <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-primary/20 bg-primary/5 p-5 text-left">
+            <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-primary/20 bg-primary/5 p-5 text-start">
               <p className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                   <path d="M2 4h12v8H2zM2 4l6 5 6-5" />
@@ -383,7 +383,7 @@ export default function CheckoutPage() {
                           type="button"
                           onClick={() => setSelectedAddressId(a.id)}
                           aria-pressed={selected}
-                          className={`flex w-full flex-col gap-1 rounded-xl border bg-white px-4 py-3.5 text-left text-[13.5px] transition ${
+                          className={`flex w-full flex-col gap-1 rounded-xl border bg-white px-4 py-3.5 text-start text-[13.5px] transition ${
                             selected
                               ? "border-primary ring-1 ring-primary/30 bg-primary/5"
                               : "border-foreground/10 hover:border-primary-hover"
@@ -1012,7 +1012,7 @@ function IdentifyStep({
 
       <div className="grid gap-0 lg:grid-cols-2">
         {/* Left: inline login */}
-        <div className="space-y-4 px-6 py-6 lg:border-r lg:border-foreground/5">
+        <div className="space-y-4 px-6 py-6 lg:border-e lg:border-foreground/5">
           <h3 className="font-heading text-[15px] font-semibold text-foreground">
             J&apos;ai déjà un compte
           </h3>
@@ -1061,13 +1061,13 @@ function IdentifyStep({
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-foreground/10 bg-white px-3.5 py-2.5 pr-10 text-[14px] text-foreground placeholder:text-foreground/45 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+                  className="w-full rounded-lg border border-foreground/10 bg-white px-3.5 py-2.5 pe-10 text-[14px] text-foreground placeholder:text-foreground/45 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
                   aria-label={showPassword ? "Masquer" : "Afficher"}
-                  className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded text-foreground/55 transition hover:bg-background hover:text-primary"
+                  className="absolute end-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded text-foreground/55 transition hover:bg-background hover:text-primary"
                 >
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="h-3.5 w-3.5">
                     {showPassword ? (

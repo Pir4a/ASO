@@ -76,7 +76,7 @@ function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast:
                 type="button"
                 onClick={() => removeToast(toast.id)}
                 aria-label={t("a11y.clearSearch")}
-                className="ml-2 rounded hover:opacity-70 focus:outline-none focus:ring-2 focus:ring-white"
+                className="ms-2 rounded hover:opacity-70 focus:outline-none focus:ring-2 focus:ring-white"
             >
                 <span aria-hidden="true">✕</span>
             </button>
@@ -88,7 +88,7 @@ function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast:
             <div
                 aria-live="polite"
                 aria-atomic="true"
-                className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2 rtl:left-4 rtl:right-auto"
+                className="pointer-events-none fixed bottom-4 end-4 z-50 flex flex-col gap-2"
             >
                 <div className="pointer-events-auto flex flex-col gap-2">
                     {polite.map(renderToast)}
@@ -99,7 +99,7 @@ function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast:
                 aria-atomic="true"
                 role="region"
                 aria-label={t("common.unexpectedError")}
-                className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2 rtl:left-4 rtl:right-auto"
+                className="pointer-events-none fixed bottom-4 end-4 z-50 flex flex-col gap-2"
             >
                 <div className="pointer-events-auto flex flex-col gap-2">
                     {assertive.map(renderToast)}

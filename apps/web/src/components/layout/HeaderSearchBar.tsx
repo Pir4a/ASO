@@ -36,7 +36,7 @@ export function HeaderSearchBar({ className, autoFocus, onSubmitted }: HeaderSea
       </label>
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-foreground/50 rtl:left-auto rtl:right-0 rtl:pl-0 rtl:pr-3.5"
+        className="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3.5 text-foreground/50"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -60,14 +60,14 @@ export function HeaderSearchBar({ className, autoFocus, onSubmitted }: HeaderSea
         autoFocus={autoFocus}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={t("header.searchPlaceholder")}
-        className="w-full rounded-xl border border-foreground/10 bg-background/60 py-2.5 pl-10 pr-10 text-sm text-foreground placeholder:text-foreground/50 shadow-sm outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/30 rtl:pl-10 rtl:pr-10"
+        className="w-full rounded-xl border border-foreground/10 bg-background/60 py-2.5 ps-10 pe-10 text-sm text-foreground placeholder:text-foreground/50 shadow-sm outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/30"
       />
       {query && (
         <button
           type="button"
           onClick={() => setQuery("")}
           aria-label={t("a11y.clearSearch")}
-          className="absolute inset-y-0 right-0 flex items-center pr-3 text-foreground/50 hover:text-foreground focus:outline-none focus:text-primary rtl:left-0 rtl:right-auto rtl:pl-3 rtl:pr-0"
+          className="absolute inset-y-0 end-0 flex items-center pe-3 text-foreground/50 hover:text-foreground focus:outline-none focus:text-primary"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -87,7 +87,7 @@ export function HeaderSearchBar({ className, autoFocus, onSubmitted }: HeaderSea
       )}
       <button
         type="submit"
-        className="sr-only focus:not-sr-only focus:absolute focus:right-1 focus:top-1 focus:rounded focus:bg-primary focus:px-2 focus:py-1 focus:text-xs focus:text-white rtl:focus:left-1 rtl:focus:right-auto"
+        className="sr-only focus:not-sr-only focus:absolute focus:end-1 focus:top-1 focus:rounded focus:bg-primary focus:px-2 focus:py-1 focus:text-xs focus:text-white"
       >
         {t("a11y.searchSubmit")}
       </button>

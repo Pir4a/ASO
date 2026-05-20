@@ -7,7 +7,8 @@ import {
     escalateChatSession,
     type ChatSessionStatus,
 } from "@/lib/api";
-import { useT } from "@/context/LocaleContext";
+import { useT, useLocale } from "@/context/LocaleContext";
+import { isRtl } from "@/lib/i18n.shared";
 
 interface Message {
     id: string;
@@ -23,6 +24,8 @@ const EMAIL_KEY = "althea.chat.email";
 export function ChatWidget() {
     const [open, setOpen] = useState(false);
     const t = useT();
+    const locale = useLocale();
+    const rtl = isRtl(locale);
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
@@ -67,7 +70,7 @@ export function ChatWidget() {
         const trimmedEmail = emailDraft.trim().toLowerCase();
         const trimmedSubject = subjectDraft.trim();
         if (!trimmedEmail || !trimmedSubject) {
-            setStartError("Email et sujet sont requis.");
+            setStartError(t("chat.startError"));
             return;
         }
         setStartingSession(true);
@@ -82,7 +85,7 @@ export function ChatWidget() {
             localStorage.setItem(SUBJECT_KEY, res.subject);
             localStorage.setItem(EMAIL_KEY, trimmedEmail);
         } catch (err) {
-            setStartError(err instanceof Error ? err.message : "Erreur");
+            setStartError(err instanceof Error ? err.message : t("chat.genericError"));
         } finally {
             setStartingSession(false);
         }
@@ -126,8 +129,7 @@ export function ChatWidget() {
                 {
                     id: `esc-${Date.now()}`,
                     role: "assistant",
-                    content:
-                        "Votre demande a été transférée à un agent. Vous recevrez une réponse par e-mail.",
+                    content: t("chat.escalationMessage"),
                 },
             ]);
         } catch {
@@ -166,9 +168,9 @@ export function ChatWidget() {
             <button
                 id="chat-widget-toggle"
                 onClick={() => setOpen((o) => !o)}
-                aria-label="Chat"
+                aria-label={t("chat.toggleAria")}
                 style={{
-                    position: "fixed", bottom: 24, right: 24, zIndex: 50,
+                    position: "fixed", bottom: 24, insetInlineEnd: 24, zIndex: 50,
                     width: 56, height: 56, borderRadius: "50%", border: "none",
                     background: "var(--primary)",
                     boxShadow: "0 4px 14px color-mix(in srgb, var(--foreground) 35%, transparent)",
@@ -190,7 +192,7 @@ export function ChatWidget() {
             {open && (
                 <div
                     style={{
-                        position: "fixed", bottom: 92, right: 24, zIndex: 50,
+                        position: "fixed", bottom: 92, insetInlineEnd: 24, zIndex: 50,
                         width: 370, maxHeight: "78vh", borderRadius: 20,
                         background: "white", boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
                         display: "flex", flexDirection: "column", overflow: "hidden",
@@ -218,12 +220,12 @@ export function ChatWidget() {
                             }}
                         >
                             <p style={{ fontSize: 12, color: "var(--foreground)", opacity: 0.75 }}>
-                                Avant de démarrer, indiquez votre email et le sujet de votre demande.
+                                {t("chat.preformIntro")}
                             </p>
                             <input
                                 type="email"
                                 required
-                                placeholder="vous@exemple.fr"
+                                placeholder={t("chat.emailPlaceholder")}
                                 value={emailDraft}
                                 onChange={(e) => setEmailDraft(e.target.value)}
                                 disabled={startingSession}
@@ -240,7 +242,7 @@ export function ChatWidget() {
                                 type="text"
                                 required
                                 maxLength={160}
-                                placeholder="Sujet (ex. Question sur une commande)"
+                                placeholder={t("chat.subjectPlaceholder")}
                                 value={subjectDraft}
                                 onChange={(e) => setSubjectDraft(e.target.value)}
                                 disabled={startingSession}
@@ -275,7 +277,7 @@ export function ChatWidget() {
                                         startingSession || !emailDraft.trim() || !subjectDraft.trim() ? 0.6 : 1,
                                 }}
                             >
-                                {startingSession ? "Connexion…" : "Démarrer la conversation"}
+                                {startingSession ? t("chat.startingSession") : t("chat.startSession")}
                             </button>
                         </form>
                     )}
@@ -296,27 +298,41 @@ export function ChatWidget() {
                                         borderBottom: "1px solid color-mix(in srgb, var(--primary) 30%, transparent)",
                                     }}
                                 >
-                                    {`Un agent vous répondra par e-mail à ${storedEmail || "votre adresse"}.`}
+                                    {t("chat.escalatedNotice", { email: storedEmail || t("chat.escalatedFallbackAddress") })}
                                 </div>
                             )}
 
                             {/* Messages */}
                             <div style={{ flex: 1, overflowY: "auto", padding: "14px 14px 6px", display: "flex", flexDirection: "column", gap: 10, background: "var(--background)", maxHeight: 320 }}>
-                                {messages.map((m) => (
-                                    <div key={m.id} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
-                                        <div style={{
-                                            maxWidth: "80%", padding: "8px 14px", fontSize: 13, lineHeight: 1.5,
-                                            whiteSpace: "pre-wrap", wordBreak: "break-word",
-                                            borderRadius: m.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                                            background: m.role === "user" ? "var(--primary)" : "white",
-                                            color: m.role === "user" ? "white" : "var(--foreground)",
-                                            boxShadow: m.role === "user" ? "none" : "0 1px 4px rgba(0,0,0,0.06)",
-                                        }}>{m.content}</div>
-                                    </div>
-                                ))}
+                                {messages.map((m) => {
+                                    const isUser = m.role === "user";
+                                    // Use logical border-radius corners so the speech-tail
+                                    // corner sits on the writing-mode-inline-start side.
+                                    return (
+                                        <div key={m.id} style={{ display: "flex", justifyContent: isUser ? "flex-end" : "flex-start" }}>
+                                            <div style={{
+                                                maxWidth: "80%", padding: "8px 14px", fontSize: 13, lineHeight: 1.5,
+                                                whiteSpace: "pre-wrap", wordBreak: "break-word",
+                                                borderStartStartRadius: 14,
+                                                borderStartEndRadius: 14,
+                                                borderEndEndRadius: isUser ? 4 : 14,
+                                                borderEndStartRadius: isUser ? 14 : 4,
+                                                background: isUser ? "var(--primary)" : "white",
+                                                color: isUser ? "white" : "var(--foreground)",
+                                                boxShadow: isUser ? "none" : "0 1px 4px rgba(0,0,0,0.06)",
+                                            }}>{m.content}</div>
+                                        </div>
+                                    );
+                                })}
                                 {isLoading && (
                                     <div style={{ display: "flex" }}>
-                                        <div style={{ padding: "8px 18px", borderRadius: "14px 14px 14px 4px", background: "white", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", display: "flex", gap: 4, alignItems: "center" }}>
+                                        <div style={{
+                                            padding: "8px 18px",
+                                            borderStartStartRadius: 14, borderStartEndRadius: 14,
+                                            borderEndEndRadius: 14, borderEndStartRadius: 4,
+                                            background: "white", boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+                                            display: "flex", gap: 4, alignItems: "center",
+                                        }}>
                                             <span className="chat-dot" style={{ animationDelay: "0s" }} />
                                             <span className="chat-dot" style={{ animationDelay: "0.15s" }} />
                                             <span className="chat-dot" style={{ animationDelay: "0.3s" }} />
@@ -352,7 +368,7 @@ export function ChatWidget() {
                                     <button
                                         type="button"
                                         onClick={escalate}
-                                        title="Demander un humain"
+                                        title={t("chat.askHuman")}
                                         style={{
                                             padding: "5px 10px",
                                             borderRadius: 14,
@@ -364,15 +380,15 @@ export function ChatWidget() {
                                             cursor: "pointer",
                                         }}
                                     >
-                                        Parler à un humain
+                                        {t("chat.talkToHuman")}
                                     </button>
                                 )}
                                 <button
                                     type="button"
                                     onClick={resetSession}
-                                    title="Nouvelle conversation"
+                                    title={t("chat.newConversation")}
                                     style={{
-                                        marginLeft: "auto",
+                                        marginInlineStart: "auto",
                                         padding: "5px 10px",
                                         borderRadius: 14,
                                         border: "1px solid color-mix(in srgb, var(--foreground) 12%, transparent)",
@@ -383,7 +399,7 @@ export function ChatWidget() {
                                         cursor: "pointer",
                                     }}
                                 >
-                                    Nouvelle conversation
+                                    {t("chat.newConversation")}
                                 </button>
                             </div>
 
@@ -412,7 +428,10 @@ export function ChatWidget() {
                                         display: "flex", alignItems: "center", justifyContent: "center",
                                     }}
                                 >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
+                                    {/* Paper-plane points along the inline-end direction; flip in RTL. */}
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white" style={{ transform: rtl ? "scaleX(-1)" : undefined }}>
+                                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                                    </svg>
                                 </button>
                             </div>
                         </>

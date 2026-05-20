@@ -154,7 +154,7 @@ export default function ContactPage() {
             </ul>
           </section>
 
-          <section className="overflow-hidden rounded-2xl border-l-4 border-primary border-y border-r border-foreground/10 bg-white px-5 py-4">
+          <section className="overflow-hidden rounded-2xl border-s-4 border-primary border-y border-e border-foreground/10 bg-white px-5 py-4">
             <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
               <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
               {t("contact.guaranteesTitle")}

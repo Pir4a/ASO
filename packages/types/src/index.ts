@@ -1,4 +1,4 @@
-export type Locale = 'en' | 'fr' | 'ar';
+export type Locale = 'en' | 'fr' | 'ar' | 'he';
 
 export interface Category {
   id: string;

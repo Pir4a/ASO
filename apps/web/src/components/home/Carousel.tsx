@@ -227,7 +227,7 @@ export function Carousel({ slides: slidesProp }: { slides: CarouselSlide[] }) {
           </button>
 
           {/* Top-right arrow controls */}
-          <div className="absolute right-5 top-5 z-30 flex gap-2">
+          <div className="absolute end-5 top-5 z-30 flex gap-2">
             <button
               type="button"
               onClick={prev}

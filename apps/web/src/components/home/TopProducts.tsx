@@ -48,7 +48,7 @@ export async function TopProducts({ products }: { products: Product[] }) {
             )}
             {product.featured && (
               <span
-                className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-white shadow-sm"
+                className="absolute start-2 top-2 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-white shadow-sm"
                 style={{ color: "#fff" }}
               >
                 <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="h-2.5 w-2.5">

@@ -55,7 +55,7 @@ export function CategoryListingCards({
               />
 
               {/* Order pill (top-left) */}
-              <span className="absolute left-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1 text-[11px] font-bold tracking-wide text-foreground backdrop-blur tabular-nums">
+              <span className="absolute start-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1 text-[11px] font-bold tracking-wide text-foreground backdrop-blur tabular-nums">
                 {orderTag.split("·")[0]}
                 <span className="text-primary">·{orderTag.split("·")[1]}</span>
               </span>

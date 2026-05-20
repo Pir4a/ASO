@@ -104,7 +104,7 @@ export function CategoryHero({
           )}
           {stats && stats.length > 0 && (
             <ul
-              className="flex justify-around gap-6 border-t border-foreground/10 pt-4 text-center lg:justify-end lg:gap-7 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0"
+              className="flex justify-around gap-6 border-t border-foreground/10 pt-4 text-center lg:justify-end lg:gap-7 lg:border-s lg:border-t-0 lg:ps-7 lg:pt-0"
               role="list"
             >
               {stats.map((s) => (

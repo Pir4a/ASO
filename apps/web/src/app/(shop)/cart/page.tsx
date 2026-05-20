@@ -162,7 +162,7 @@ export default function CartPage() {
       )}
 
       {!isAuthenticated && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/30 border-l-4 bg-primary/5 px-4 py-3.5 text-[13.5px] text-foreground">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/30 border-s-4 bg-primary/5 px-4 py-3.5 text-[13.5px] text-foreground">
           <span className="inline-flex items-center gap-2">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="h-4 w-4 text-primary">
               <circle cx="8" cy="6" r="2.6" />
@@ -306,7 +306,7 @@ export default function CartPage() {
                   </div>
 
                   {/* Line total */}
-                  <div className="w-28 text-right">
+                  <div className="w-28 text-end">
                     <p
                       className={`font-heading text-[16px] font-bold tabular-nums ${
                         oos ? "text-foreground/55 line-through" : "text-foreground"

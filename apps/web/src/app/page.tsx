@@ -25,7 +25,7 @@ export default async function Home() {
       {homepageText && (homepageText.headline || homepageText.body) && (
         <section
           aria-label={homepageText.headline || t("home.infoFallback")}
-          className="grid items-center gap-5 rounded-xl border border-foreground/10 border-l-4 border-l-primary bg-white p-6 md:grid-cols-[44px_1fr_auto] md:gap-6 md:p-7"
+          className="grid items-center gap-5 rounded-xl border border-foreground/10 border-s-4 border-s-primary bg-white p-6 md:grid-cols-[44px_1fr_auto] md:gap-6 md:p-7"
         >
           <div
             aria-hidden="true"
@@ -52,7 +52,7 @@ export default async function Home() {
               />
             )}
           </div>
-          <ul className="flex justify-around gap-6 border-t border-foreground/10 pt-4 text-center md:border-l md:border-t-0 md:pl-6 md:pt-0">
+          <ul className="flex justify-around gap-6 border-t border-foreground/10 pt-4 text-center md:border-s md:border-t-0 md:ps-6 md:pt-0">
             <li>
               <p className="font-heading text-lg font-semibold text-foreground leading-tight">
                 {products.length}+

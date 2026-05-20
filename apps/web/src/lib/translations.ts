@@ -515,6 +515,33 @@ const translations = {
         "orderDetail.addressEmpty": "No saved address.",
         "orderDetail.timelineEyebrow": "Tracking",
         "orderDetail.timelineTitle": "History",
+        // Document <head> / SEO metadata
+        "meta.siteTitle": "Althea Systems – Medical E-commerce",
+        "meta.siteDescription": "Your trusted source for premium medical equipment and devices. Fast delivery, expert support, competitive pricing across Europe.",
+        "meta.ogDescription": "Premium medical equipment and devices for healthcare professionals across Europe.",
+        // Chat widget (pre-form, escalation, action row)
+        "chat.toggleAria": "Open chat",
+        "chat.preformIntro": "Before we start, please enter your email and what you'd like to discuss.",
+        "chat.emailPlaceholder": "you@example.com",
+        "chat.subjectPlaceholder": "Subject (e.g. Question about an order)",
+        "chat.startingSession": "Connecting…",
+        "chat.startSession": "Start the conversation",
+        "chat.startError": "Email and subject are required.",
+        "chat.genericError": "Error",
+        "chat.escalatedNotice": "An agent will reply by email at {email}.",
+        "chat.escalatedFallbackAddress": "your address",
+        "chat.escalationMessage": "Your request has been forwarded to an agent. You'll receive a reply by email.",
+        "chat.askHuman": "Ask for a human",
+        "chat.talkToHuman": "Talk to a human",
+        "chat.newConversation": "New conversation",
+        // Product image gallery
+        "gallery.previous": "Previous image",
+        "gallery.next": "Next image",
+        "gallery.imageAlt": "{name} — image {index} of {total}",
+        "gallery.goToImage": "Show image {index}",
+        "gallery.thumbnail": "Thumbnail {index}",
+        // Sort label + signup arrow direction
+        "search.sort.name": "A → Z",
     },
 
     fr: {
@@ -1031,6 +1058,33 @@ const translations = {
         "orderDetail.addressEmpty": "Aucune adresse enregistrée.",
         "orderDetail.timelineEyebrow": "Suivi",
         "orderDetail.timelineTitle": "Historique",
+        // Document <head> / SEO metadata
+        "meta.siteTitle": "Althea Systems – E-commerce médical",
+        "meta.siteDescription": "Votre source de confiance pour le matériel médical et les dispositifs haut de gamme. Livraison rapide, support expert, tarifs compétitifs dans toute l'Europe.",
+        "meta.ogDescription": "Matériel médical et dispositifs haut de gamme pour les professionnels de santé en Europe.",
+        // Chat widget (pre-form, escalation, action row)
+        "chat.toggleAria": "Ouvrir le chat",
+        "chat.preformIntro": "Avant de démarrer, indiquez votre email et le sujet de votre demande.",
+        "chat.emailPlaceholder": "vous@exemple.fr",
+        "chat.subjectPlaceholder": "Sujet (ex. Question sur une commande)",
+        "chat.startingSession": "Connexion…",
+        "chat.startSession": "Démarrer la conversation",
+        "chat.startError": "Email et sujet sont requis.",
+        "chat.genericError": "Erreur",
+        "chat.escalatedNotice": "Un agent vous répondra par e-mail à {email}.",
+        "chat.escalatedFallbackAddress": "votre adresse",
+        "chat.escalationMessage": "Votre demande a été transférée à un agent. Vous recevrez une réponse par e-mail.",
+        "chat.askHuman": "Demander un humain",
+        "chat.talkToHuman": "Parler à un humain",
+        "chat.newConversation": "Nouvelle conversation",
+        // Product image gallery
+        "gallery.previous": "Image précédente",
+        "gallery.next": "Image suivante",
+        "gallery.imageAlt": "{name} — visuel {index} sur {total}",
+        "gallery.goToImage": "Afficher l'image {index}",
+        "gallery.thumbnail": "Miniature {index}",
+        // Sort label + signup arrow direction
+        "search.sort.name": "A → Z",
     },
 
     ar: {
@@ -1546,6 +1600,33 @@ const translations = {
         "orderDetail.addressEmpty": "لا يوجد عنوان محفوظ.",
         "orderDetail.timelineEyebrow": "التتبع",
         "orderDetail.timelineTitle": "السجل",
+        // Document <head> / SEO metadata
+        "meta.siteTitle": "Althea Systems – التجارة الإلكترونية الطبية",
+        "meta.siteDescription": "مصدرك الموثوق للمعدات والأجهزة الطبية الفاخرة. شحن سريع، دعم متخصص، وأسعار تنافسية في جميع أنحاء أوروبا.",
+        "meta.ogDescription": "معدات وأجهزة طبية فاخرة للمتخصصين في الرعاية الصحية في جميع أنحاء أوروبا.",
+        // Chat widget (pre-form, escalation, action row)
+        "chat.toggleAria": "افتح المحادثة",
+        "chat.preformIntro": "قبل البدء، يرجى إدخال بريدك الإلكتروني وموضوع طلبك.",
+        "chat.emailPlaceholder": "you@example.com",
+        "chat.subjectPlaceholder": "الموضوع (مثال: سؤال عن طلب)",
+        "chat.startingSession": "جارٍ الاتصال…",
+        "chat.startSession": "ابدأ المحادثة",
+        "chat.startError": "البريد الإلكتروني والموضوع مطلوبان.",
+        "chat.genericError": "خطأ",
+        "chat.escalatedNotice": "سيرد عليك أحد الوكلاء عبر البريد الإلكتروني على {email}.",
+        "chat.escalatedFallbackAddress": "عنوانك",
+        "chat.escalationMessage": "تم تحويل طلبك إلى أحد الوكلاء. سترد رد عبر البريد الإلكتروني.",
+        "chat.askHuman": "اطلب التحدث إلى موظف",
+        "chat.talkToHuman": "تحدث إلى موظف",
+        "chat.newConversation": "محادثة جديدة",
+        // Product image gallery
+        "gallery.previous": "الصورة السابقة",
+        "gallery.next": "الصورة التالية",
+        "gallery.imageAlt": "{name} — صورة {index} من {total}",
+        "gallery.goToImage": "عرض الصورة {index}",
+        "gallery.thumbnail": "صورة مصغرة {index}",
+        // Sort label + signup arrow direction
+        "search.sort.name": "أ → ي",
     },
 
     he: {
@@ -2061,17 +2142,83 @@ const translations = {
         "orderDetail.addressEmpty": "לא נשמרה כתובת.",
         "orderDetail.timelineEyebrow": "מעקב",
         "orderDetail.timelineTitle": "היסטוריה",
+        // Document <head> / SEO metadata
+        "meta.siteTitle": "Althea Systems – מסחר אלקטרוני רפואי",
+        "meta.siteDescription": "המקור המהימן שלכם לציוד ולמכשירים רפואיים מובחרים. משלוח מהיר, תמיכה מקצועית ומחירים תחרותיים בכל אירופה.",
+        "meta.ogDescription": "ציוד ומכשירים רפואיים מובחרים לאנשי מקצוע בתחום הבריאות בכל אירופה.",
+        // Chat widget (pre-form, escalation, action row)
+        "chat.toggleAria": "פתח צ׳אט",
+        "chat.preformIntro": "לפני שמתחילים, יש להזין את כתובת המייל ואת נושא הפנייה.",
+        "chat.emailPlaceholder": "you@example.com",
+        "chat.subjectPlaceholder": "נושא (לדוגמה: שאלה על הזמנה)",
+        "chat.startingSession": "מתחבר…",
+        "chat.startSession": "התחל שיחה",
+        "chat.startError": "יש להזין מייל ונושא.",
+        "chat.genericError": "שגיאה",
+        "chat.escalatedNotice": "סוכן יחזור אליך במייל אל {email}.",
+        "chat.escalatedFallbackAddress": "הכתובת שלך",
+        "chat.escalationMessage": "הבקשה הועברה לסוכן. תקבל מענה במייל.",
+        "chat.askHuman": "בקש לדבר עם נציג",
+        "chat.talkToHuman": "דבר עם נציג",
+        "chat.newConversation": "שיחה חדשה",
+        // Product image gallery
+        "gallery.previous": "תמונה קודמת",
+        "gallery.next": "תמונה הבאה",
+        "gallery.imageAlt": "{name} — תמונה {index} מתוך {total}",
+        "gallery.goToImage": "הצג תמונה {index}",
+        "gallery.thumbnail": "תמונה ממוזערת {index}",
+        // Sort label + signup arrow direction
+        "search.sort.name": "א → ת",
     },
 } as const;
 
 export type TranslationKey = keyof typeof translations.en;
 
-export function t(locale: Locale, key: TranslationKey): string {
-    return translations[locale]?.[key] ?? translations.en[key] ?? key;
+export type TranslationVars = Record<string, string | number>;
+
+function interpolate(template: string, vars?: TranslationVars): string {
+    if (!vars) return template;
+    return template.replace(/\{(\w+)\}/g, (_, name) =>
+        Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : `{${name}}`,
+    );
+}
+
+export function t(locale: Locale, key: TranslationKey, vars?: TranslationVars): string {
+    const raw = translations[locale]?.[key] ?? translations.en[key] ?? key;
+    return interpolate(raw, vars);
 }
 
 export function getTranslations(locale: Locale) {
-    return (key: TranslationKey) => t(locale, key);
+    return (key: TranslationKey, vars?: TranslationVars) => t(locale, key, vars);
+}
+
+/**
+ * Picks the right plural variant for `count` using Intl.PluralRules.
+ *
+ * For each `base` key, define sibling keys with the plural-form suffix:
+ *   - "<base>.zero" (Arabic only)
+ *   - "<base>.one"
+ *   - "<base>.two"  (Arabic / Hebrew dual)
+ *   - "<base>.few"
+ *   - "<base>.many"
+ *   - "<base>.other" (REQUIRED — universal fallback)
+ *
+ * `count` is auto-injected into vars as `{count}`.
+ */
+export function tPlural(
+    locale: Locale,
+    base: string,
+    count: number,
+    vars?: TranslationVars,
+): string {
+    const rules = new Intl.PluralRules(locale);
+    const category = rules.select(count);
+    const lookup = (suffix: string) => {
+        const k = `${base}.${suffix}` as TranslationKey;
+        return translations[locale]?.[k] ?? translations.en[k];
+    };
+    const raw = lookup(category) ?? lookup('other') ?? base;
+    return interpolate(raw, { count, ...vars });
 }
 
 type AboutCopy = {
