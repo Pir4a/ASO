@@ -9,14 +9,24 @@ import { useT } from "@/context/LocaleContext";
 const AUTOPLAY_MS = 6500;
 const SWIPE_THRESHOLD_PX = 40;
 
-export function Carousel({ slides }: { slides: CarouselSlide[] }) {
+export function Carousel({ slides: slidesProp }: { slides: CarouselSlide[] }) {
   const t = useT();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const count = slides?.length ?? 0;
+  // CDC XVI.6: when an admin flags one slide as "image principale", surface
+  // it first. We move the flagged slide to position 0 while preserving the
+  // relative order of the others. If no slide is flagged the original order
+  // wins (i.e. position 0 acts as the implicit principal).
+  const slides = (() => {
+    const list = slidesProp ?? [];
+    const principalIdx = list.findIndex((s) => s.isPrincipal);
+    if (principalIdx <= 0) return list;
+    return [list[principalIdx], ...list.filter((_, i) => i !== principalIdx)];
+  })();
+  const count = slides.length;
   const goTo = useCallback(
     (next: number) => {
       if (count === 0) return;

@@ -304,6 +304,7 @@ export async function getHomepageData(): Promise<{
           (c.payload?.url as string) ||
           undefined,
         ctaLabel: (c.payload?.ctaLabel as string) || undefined,
+        isPrincipal: Boolean(c.payload?.isPrincipal),
       })) as CarouselSlide[];
 
     const textBlock = content.find((c) => c.type === "homepage_text");

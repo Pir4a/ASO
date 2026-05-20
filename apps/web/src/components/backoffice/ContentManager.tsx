@@ -18,6 +18,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Badge, Icon, IconButton, Panel } from "./DashboardUI";
 import { MediaUpload } from "./MediaUpload";
+import { RichTextEditor } from "./RichTextEditor";
 import { authFetch } from "@/lib/auth";
 import { API_URL, MAX_CAROUSEL_SLIDES } from "@/lib/api";
 
@@ -27,6 +28,8 @@ type CarouselPayload = {
   imageUrl?: string;
   href?: string;
   ctaLabel?: string;
+  /** CDC XVI.6 — admin marker for the carousel's "image principale". */
+  isPrincipal?: boolean;
 };
 
 type HomepageTextPayload = {
@@ -135,6 +138,47 @@ export function ContentManager({ flash }: ContentManagerProps) {
       if (!res.ok) throw new Error("Mise à jour impossible");
       await load();
       flash("success", "Mis à jour.");
+    } catch (err) {
+      flash("error", err instanceof Error ? err.message : "Erreur");
+    }
+  };
+
+  /**
+   * Mark a single carousel slide as the "image principale" (CDC XVI.6) and
+   * clear the flag from every other slide. We only PATCH rows whose flag
+   * actually changes to keep the round-trip minimal.
+   */
+  const togglePrincipal = async (id: string) => {
+    const current = carouselBlocks.find((b) => b.id === id);
+    if (!current) return;
+    const currentlyPrincipal = Boolean((current.payload as CarouselPayload | undefined)?.isPrincipal);
+    try {
+      if (currentlyPrincipal) {
+        // Toggle off — no other state to fix.
+        await authFetch(`${API_URL}/content/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ payload: { isPrincipal: false } }),
+        });
+      } else {
+        // Clear any previously-flagged slide first, then set the new one.
+        const previous = carouselBlocks.filter(
+          (b) => b.id !== id && Boolean((b.payload as CarouselPayload | undefined)?.isPrincipal),
+        );
+        await Promise.all(
+          previous.map((b) =>
+            authFetch(`${API_URL}/content/${b.id}`, {
+              method: "PATCH",
+              body: JSON.stringify({ payload: { isPrincipal: false } }),
+            }),
+          ),
+        );
+        await authFetch(`${API_URL}/content/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ payload: { isPrincipal: true } }),
+        });
+      }
+      await load();
+      flash("success", currentlyPrincipal ? "Image principale retirée." : "Image principale définie.");
     } catch (err) {
       flash("error", err instanceof Error ? err.message : "Erreur");
     }
@@ -270,6 +314,9 @@ export function ContentManager({ flash }: ContentManagerProps) {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
                               <Badge tone="violet">#{block.order + 1}</Badge>
+                              {p.isPrincipal && (
+                                <Badge tone="amber">Image principale</Badge>
+                              )}
                               <p className="truncate text-sm font-semibold text-foreground">
                                 {p.title || "(sans titre)"}
                               </p>
@@ -285,6 +332,25 @@ export function ContentManager({ flash }: ContentManagerProps) {
                           </div>
                           <div className="flex shrink-0 flex-col gap-1">
                             <div className="flex gap-1">
+                              <button
+                                type="button"
+                                onClick={() => togglePrincipal(block.id)}
+                                title={
+                                  p.isPrincipal
+                                    ? "Retirer le statut d'image principale"
+                                    : "Définir comme image principale"
+                                }
+                                aria-pressed={Boolean(p.isPrincipal)}
+                                className={`grid h-7 w-7 cursor-pointer place-items-center rounded-md border transition ${
+                                  p.isPrincipal
+                                    ? "border-amber-400 bg-amber-100 text-amber-700 hover:bg-amber-200"
+                                    : "border-foreground/10 bg-white text-foreground/50 hover:border-amber-300 hover:text-amber-600"
+                                }`}
+                              >
+                                <svg viewBox="0 0 16 16" fill={p.isPrincipal ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.4" className="h-3.5 w-3.5" aria-hidden="true">
+                                  <path d="M8 1.8 9.85 5.6l4.2.6-3.04 2.96.72 4.18L8 11.36 4.27 13.34l.72-4.18L1.95 6.2l4.2-.6L8 1.8Z" />
+                                </svg>
+                              </button>
                               <IconButton onClick={() => startEditing(block)} title="Éditer">
                                 <Icon.Edit />
                               </IconButton>
@@ -452,12 +518,15 @@ export function ContentManager({ flash }: ContentManagerProps) {
           </div>
           <div>
             <label className={labelCls}>Corps du texte</label>
-            <textarea
-              rows={3}
-              className={inputCls}
+            <RichTextEditor
               value={textDraft.body ?? ""}
-              onChange={(e) => setTextDraft((d) => ({ ...d, body: e.target.value }))}
+              onChange={(html) => setTextDraft((d) => ({ ...d, body: html }))}
+              ariaLabel="Corps du texte homepage"
+              placeholder="Texte enrichi : gras, italique, lien, couleur…"
             />
+            <p className="mt-1 text-[11px] text-foreground/50">
+              Mise en forme autorisée : gras, italique, lien, couleur du texte.
+            </p>
           </div>
           <div className="flex justify-end">
             <button
