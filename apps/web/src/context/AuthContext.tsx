@@ -10,6 +10,9 @@ interface User {
   firstName?: string;
   lastName?: string;
   pendingEmail?: string | null;
+  /** Mirrors `User.mfaEnabled` on the server. Drives the admin-MFA gate in
+      AuthGuard so an admin without MFA enrolled can't reach the backoffice. */
+  mfaEnabled?: boolean;
 }
 
 interface AuthContextType {

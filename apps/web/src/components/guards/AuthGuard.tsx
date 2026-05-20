@@ -13,17 +13,39 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
   const { isAuthenticated, loading, user } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push("/login");
-    } else if (!loading && isAuthenticated && requiredRole && user?.role !== requiredRole) {
-      // Rediriger si l'utilisateur est connecté mais n'a pas le rôle requis
-      router.push("/"); // Ou une page d'accès refusé
-    }
-  }, [isAuthenticated, loading, router, requiredRole, user]);
+  // CDC §XVI.10 — admins must have MFA enrolled to reach the backoffice.
+  // Computed here (not just in the effect) so the render branch can hide the
+  // children while the redirect is in flight.
+  const adminMissingMfa =
+    requiredRole === "admin" &&
+    user?.role === "admin" &&
+    user?.mfaEnabled !== true;
 
-  if (loading || !isAuthenticated || (requiredRole && user?.role !== requiredRole)) {
-    return null; // Ou un loader, si tu veux afficher quelque chose pendant la redirection
+  useEffect(() => {
+    if (loading) return;
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+    if (requiredRole && user?.role !== requiredRole) {
+      // Logged in but wrong role: bounce to home.
+      router.push("/");
+      return;
+    }
+    if (adminMissingMfa) {
+      // Logged in as admin but MFA not enrolled: send to the profile page,
+      // pre-targeted on the security section with an explanation banner.
+      router.push("/profile?reason=admin_mfa_required");
+    }
+  }, [isAuthenticated, loading, router, requiredRole, user, adminMissingMfa]);
+
+  if (
+    loading ||
+    !isAuthenticated ||
+    (requiredRole && user?.role !== requiredRole) ||
+    adminMissingMfa
+  ) {
+    return null;
   }
   return <>{children}</>;
 }

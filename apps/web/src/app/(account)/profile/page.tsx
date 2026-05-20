@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
+  Suspense,
   useEffect,
   useMemo,
   useState,
@@ -89,7 +90,9 @@ const SECTION_META: Record<
 export default function ProfilePage() {
   return (
     <AuthGuard>
-      <ProfileShell />
+      <Suspense fallback={null}>
+        <ProfileShell />
+      </Suspense>
     </AuthGuard>
   );
 }
@@ -98,7 +101,18 @@ function ProfileShell() {
   const t = useT();
   const { user, logout } = useAuth();
   const router = useRouter();
-  const [section, setSection] = useState<Section>("profile");
+  const searchParams = useSearchParams();
+  // CDC §XVI.10 — when the AuthGuard redirects an admin without MFA here,
+  // it tacks `?reason=admin_mfa_required` onto the URL so we know to open
+  // the security section straight away and surface an explanatory banner.
+  const reason = searchParams.get("reason");
+  const adminMfaRequired =
+    reason === "admin_mfa_required" &&
+    user?.role === "admin" &&
+    user?.mfaEnabled !== true;
+  const [section, setSection] = useState<Section>(
+    reason === "admin_mfa_required" ? "security" : "profile",
+  );
 
   const fullName =
     [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
@@ -243,6 +257,27 @@ function ProfileShell() {
 
         {/* Content */}
         <div className="min-w-0 space-y-5">
+          {adminMfaRequired && (
+            <div
+              role="alert"
+              className="flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/10 px-4 py-3.5 text-[13.5px] text-foreground"
+            >
+              <span aria-hidden="true" className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-warning/20 text-warning">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+                  <path d="M8 1 1 14h14L8 1Z" />
+                  <path d="M8 6v3.5M8 11.5v.5" />
+                </svg>
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-foreground">
+                  {t("profile.security.adminMfaRequiredTitle")}
+                </p>
+                <p className="mt-0.5 text-[12.5px] text-foreground/70">
+                  {t("profile.security.adminMfaRequiredHint")}
+                </p>
+              </div>
+            </div>
+          )}
           {section === "profile" && <PersonalInfoCard />}
           {section === "addresses" && (
             <SectionCard

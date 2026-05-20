@@ -271,6 +271,8 @@ const translations = {
         "profile.security.sessionsHint": "If you notice suspicious activity, sign out and reset your password.",
         "profile.security.sessionActive": "Active session",
         "profile.security.thisDeviceNow": "This device · now",
+        "profile.security.adminMfaRequiredTitle": "Two-factor authentication required",
+        "profile.security.adminMfaRequiredHint": "Backoffice access requires MFA. Set up an authenticator app below, then sign out and back in to reach the admin area.",
 
         // Orders
         "orders.searchPlaceholder": "Search for a product",
@@ -785,6 +787,8 @@ const translations = {
         "profile.security.sessionsHint": "Si vous remarquez une activité suspecte, déconnectez-vous puis réinitialisez votre mot de passe.",
         "profile.security.sessionActive": "Session active",
         "profile.security.thisDeviceNow": "Cet appareil · maintenant",
+        "profile.security.adminMfaRequiredTitle": "Authentification à deux facteurs requise",
+        "profile.security.adminMfaRequiredHint": "L'accès au backoffice exige la MFA. Configurez une application d'authentification ci-dessous, puis déconnectez-vous et reconnectez-vous pour accéder à l'administration.",
 
         // Orders
         "orders.searchPlaceholder": "Rechercher un produit",
@@ -1298,6 +1302,8 @@ const translations = {
         "profile.security.sessionsHint": "إذا لاحظت نشاطًا مشبوهًا، سجّل الخروج ثم أعد تعيين كلمة المرور.",
         "profile.security.sessionActive": "جلسة نشطة",
         "profile.security.thisDeviceNow": "هذا الجهاز · الآن",
+        "profile.security.adminMfaRequiredTitle": "المصادقة الثنائية مطلوبة",
+        "profile.security.adminMfaRequiredHint": "يتطلّب الوصول إلى لوحة الإدارة المصادقة الثنائية. أعدّ تطبيقَ مصادقة أدناه، ثم سجّل الخروج وأعد تسجيل الدخول للوصول إلى منطقة الإدارة.",
 
         // Orders
         "orders.searchPlaceholder": "البحث عن منتج",
@@ -1811,6 +1817,8 @@ const translations = {
         "profile.security.sessionsHint": "אם זיהית פעילות חשודה, התנתק ואפס סיסמה.",
         "profile.security.sessionActive": "סשן פעיל",
         "profile.security.thisDeviceNow": "המכשיר הזה · עכשיו",
+        "profile.security.adminMfaRequiredTitle": "נדרשת אימות דו-שלבי",
+        "profile.security.adminMfaRequiredHint": "גישה לבק-אופיס דורשת MFA. הגדר אפליקציית מאמת למטה, ואז התנתק והתחבר מחדש כדי להגיע לאזור הניהול.",
 
         // Orders
         "orders.searchPlaceholder": "חיפוש מוצר",
