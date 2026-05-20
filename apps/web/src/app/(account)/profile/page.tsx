@@ -22,7 +22,8 @@ import {
   type OrderStatus,
   type OrdersByYear,
 } from "@/lib/api";
-import { useT } from "@/context/LocaleContext";
+import { useT, useLocale } from "@/context/LocaleContext";
+import { intlLocale } from "@/lib/i18n.shared";
 import { isPasswordTooWeakApiMessage, firstHttpErrorMessage } from "@/lib/password-api-error";
 import { passwordMeetsPolicy, getPasswordMissingSummary } from "@/lib/password-policy";
 import { PasswordRequirementHints } from "@/components/account/PasswordRequirementHints";
@@ -336,6 +337,7 @@ function SectionCard({
 
 /* ── Personal info ───────────────────────────────────────────── */
 function PersonalInfoCard() {
+  const t = useT();
   const { user, updateUser } = useAuth();
   const [flash, setFlash] = useState<{ kind: "success" | "error"; text: string } | null>(null);
   const [resending, setResending] = useState(false);
@@ -381,7 +383,7 @@ function PersonalInfoCard() {
     const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
     if (!res.ok) {
       const message =
-        typeof data?.message === "string" ? data.message : "Mise à jour impossible.";
+        typeof data?.message === "string" ? data.message : t("profile.personal.updateError");
       throw new Error(message);
     }
     updateUser({
@@ -396,10 +398,10 @@ function PersonalInfoCard() {
     if (typeof data.pendingEmail === "string" && data.pendingEmail) {
       flashAndClear(
         "success",
-        `Un e-mail de confirmation a été envoyé à ${data.pendingEmail}.`,
+        `${t("profile.personal.confirmEmailSent")} ${data.pendingEmail}.`,
       );
     } else {
-      flashAndClear("success", "Informations mises à jour.");
+      flashAndClear("success", t("profile.personal.updated"));
     }
   };
 
@@ -411,10 +413,10 @@ function PersonalInfoCard() {
       const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
       if (!res.ok) {
         const message =
-          typeof data?.message === "string" ? data.message : "Renvoi impossible.";
+          typeof data?.message === "string" ? data.message : t("profile.personal.resendError");
         throw new Error(message);
       }
-      flashAndClear("success", "Lien de confirmation renvoyé.");
+      flashAndClear("success", t("profile.personal.resendSuccess"));
     } catch (e) {
       flashAndClear("error", (e as Error).message);
     } finally {
@@ -424,30 +426,30 @@ function PersonalInfoCard() {
 
   return (
     <SectionCard
-      eyebrow="Informations personnelles"
-      title="Vos coordonnées"
-      hint="Cliquez sur l'icône crayon pour modifier un champ. Utilisé pour vos commandes et notifications."
+      eyebrow={t("profile.personal.eyebrow")}
+      title={t("profile.personal.title")}
+      hint={t("profile.personal.hint")}
     >
       <dl className="grid gap-4 sm:grid-cols-2">
         <EditableField
-          label="Prénom"
+          label={t("common.firstName")}
           value={user?.firstName ?? ""}
           placeholder="—"
           onSave={(v) => save({ firstName: v })}
           onError={(e) => flashAndClear("error", e)}
         />
         <EditableField
-          label="Nom"
+          label={t("common.lastName")}
           value={user?.lastName ?? ""}
           placeholder="—"
           onSave={(v) => save({ lastName: v })}
           onError={(e) => flashAndClear("error", e)}
         />
         <EditableField
-          label="Email"
+          label={t("common.email")}
           value={user?.email ?? ""}
           type="email"
-          placeholder="vous@exemple.fr"
+          placeholder={t("profile.personal.emailPlaceholder")}
           onSave={(v) => save({ email: v })}
           onError={(e) => flashAndClear("error", e)}
         />
@@ -457,7 +459,7 @@ function PersonalInfoCard() {
             className="sm:col-span-2 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-[13px] text-amber-900"
           >
             <span>
-              En attente de validation : <b>{user.pendingEmail}</b>. Vérifiez la nouvelle boîte mail pour confirmer le changement.
+              {t("profile.personal.pendingPrefix")} <b>{user.pendingEmail}</b>. {t("profile.personal.pendingSuffix")}
             </span>
             <button
               type="button"
@@ -465,11 +467,11 @@ function PersonalInfoCard() {
               disabled={resending}
               className="inline-flex items-center rounded-md border border-amber-400 bg-white px-2.5 py-1 text-[12px] font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-60"
             >
-              {resending ? "Envoi…" : "Renvoyer"}
+              {resending ? t("profile.personal.resending") : t("profile.personal.resend")}
             </button>
           </div>
         )}
-        <ReadOnlyField label="Rôle">
+        <ReadOnlyField label={t("profile.personal.role")}>
           <span
             className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
               user?.role === "admin"
@@ -477,10 +479,10 @@ function PersonalInfoCard() {
                 : "bg-background text-foreground/70"
             }`}
           >
-            {user?.role === "admin" ? "Administrateur" : "Client"}
+            {user?.role === "admin" ? t("profile.personal.roleAdmin") : t("profile.personal.roleClient")}
           </span>
         </ReadOnlyField>
-        <ReadOnlyField label="Identifiant">
+        <ReadOnlyField label={t("profile.personal.identifier")}>
           <span className="font-mono text-[12px] text-foreground/65">
             {user?.id?.slice(0, 8) ?? "—"}
           </span>
@@ -541,6 +543,7 @@ function EditableField({
   onError: (msg: string) => void;
   className?: string;
 }) {
+  const t = useT();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [saving, setSaving] = useState(false);
@@ -559,7 +562,7 @@ function EditableField({
     e?.preventDefault();
     const next = draft.trim();
     if (!next) {
-      onError("Le champ ne peut pas être vide.");
+      onError(t("profile.field.emptyError"));
       return;
     }
     if (next === value) {
@@ -571,7 +574,7 @@ function EditableField({
       await onSave(next);
       setEditing(false);
     } catch (err) {
-      onError(err instanceof Error ? err.message : "Mise à jour impossible.");
+      onError(err instanceof Error ? err.message : t("profile.personal.updateError"));
     } finally {
       setSaving(false);
     }
@@ -600,7 +603,7 @@ function EditableField({
           <button
             type="submit"
             disabled={saving}
-            aria-label="Enregistrer"
+            aria-label={t("profile.field.saveAria")}
             style={{ color: "#fff" }}
             className="grid h-8 w-8 place-items-center rounded-md bg-primary transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -616,7 +619,7 @@ function EditableField({
             type="button"
             onClick={cancel}
             disabled={saving}
-            aria-label="Annuler"
+            aria-label={t("profile.field.cancelAria")}
             className="grid h-8 w-8 place-items-center rounded-md border border-foreground/15 bg-white text-foreground/65 transition hover:border-error/30 hover:text-error disabled:cursor-not-allowed disabled:opacity-60"
           >
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true" className="h-3.5 w-3.5">
@@ -630,7 +633,7 @@ function EditableField({
           <button
             type="button"
             onClick={startEdit}
-            aria-label={`Modifier ${label.toLowerCase()}`}
+            aria-label={`${t("profile.field.editAria")} ${label}`}
             className="grid h-7 w-7 place-items-center rounded-md text-foreground/55 transition hover:bg-primary/10 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
@@ -645,14 +648,6 @@ function EditableField({
 }
 
 /* ── Orders shortcut ────────────────────────────────────────── */
-
-const STATUS_LABELS: Record<OrderStatus, string> = {
-  pending: "En attente",
-  processing: "En traitement",
-  shipped: "Expédiée",
-  delivered: "Livrée",
-  cancelled: "Annulée",
-};
 
 const ACTIVE_STATUSES: OrderStatus[] = ["pending", "processing", "shipped"];
 
@@ -669,28 +664,9 @@ function statusTone(status: OrderStatus): string {
   }
 }
 
-function formatPrice(value: number, currency: string) {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: currency || "EUR",
-  }).format(value);
-}
-
-function formatDate(iso?: string | Date) {
-  if (!iso) return "";
-  try {
-    return new Date(iso).toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return String(iso);
-  }
-}
-
 function OrdersShortcut() {
   const t = useT();
+  const locale = useLocale();
   const [data, setData] = useState<OrdersByYear | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -791,7 +767,11 @@ function OrdersShortcut() {
                         {number}
                       </p>
                       <p className="mt-0.5 text-[11.5px] text-foreground/55">
-                        {formatDate(o.createdAt)}
+                        {new Date(o.createdAt).toLocaleDateString(intlLocale[locale], {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
                       </p>
                     </div>
                     <span
@@ -807,7 +787,10 @@ function OrdersShortcut() {
                       } as const)[o.status])}
                     </span>
                     <span className="font-heading text-[13.5px] font-bold tabular-nums text-foreground">
-                      {formatPrice(Number(o.total), o.currency)}
+                      {new Intl.NumberFormat(intlLocale[locale], {
+                        style: "currency",
+                        currency: o.currency || "EUR",
+                      }).format(Number(o.total))}
                     </span>
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5 justify-self-end text-foreground/35">
                       <path d="M6 4l4 4-4 4" />
@@ -935,6 +918,7 @@ interface MfaSetupPayload {
 }
 
 function MfaCard() {
+  const t = useT();
   const [status, setStatus] = useState<MfaStatus>("loading");
   const [backupRemaining, setBackupRemaining] = useState<number>(0);
   const [setupData, setSetupData] = useState<MfaSetupPayload | null>(null);
@@ -990,19 +974,19 @@ function MfaCard() {
           await refresh();
           setFlash({
             kind: "success",
-            text: "La MFA est déjà activée sur votre compte.",
+            text: t("profile.mfa.alreadyEnabled"),
           });
           return;
         }
-        throw new Error(parsed.message || "Initialisation impossible.");
+        throw new Error(parsed.message || t("profile.mfa.initError"));
       }
-      if (!raw.qrDataUrl || !raw.secret || !raw.backupCodes) throw new Error("Réponse invalide.");
+      if (!raw.qrDataUrl || !raw.secret || !raw.backupCodes) throw new Error(t("profile.mfa.invalidResponse"));
       setSetupData(raw as MfaSetupPayload);
       setCode("");
     } catch (err) {
       setFlash({
         kind: "error",
-        text: err instanceof Error ? err.message : "Initialisation impossible.",
+        text: err instanceof Error ? err.message : t("profile.mfa.initError"),
       });
     } finally {
       setSubmitting(false);
@@ -1019,11 +1003,10 @@ function MfaCard() {
         body: JSON.stringify({ code: code.trim() }),
       });
       const data = (await res.json().catch(() => ({}))) as { message?: string };
-      if (!res.ok) throw new Error(data.message ?? "Code incorrect.");
+      if (!res.ok) throw new Error(data.message ?? t("profile.mfa.incorrectCode"));
       setFlash({
         kind: "success",
-        text:
-          "MFA activée. Une connexion future demandera votre code à 6 chiffres ou un code de secours.",
+        text: t("profile.mfa.enabledSuccess"),
       });
       setSetupData(null);
       setCode("");
@@ -1031,7 +1014,7 @@ function MfaCard() {
     } catch (err) {
       setFlash({
         kind: "error",
-        text: err instanceof Error ? err.message : "Vérification impossible.",
+        text: err instanceof Error ? err.message : t("profile.mfa.verifyError"),
       });
     } finally {
       setSubmitting(false);
@@ -1048,14 +1031,14 @@ function MfaCard() {
         body: JSON.stringify({ code: code.trim() }),
       });
       const data = (await res.json().catch(() => ({}))) as { message?: string };
-      if (!res.ok) throw new Error(data.message ?? "Code incorrect.");
-      setFlash({ kind: "success", text: "MFA désactivée." });
+      if (!res.ok) throw new Error(data.message ?? t("profile.mfa.incorrectCode"));
+      setFlash({ kind: "success", text: t("profile.mfa.disabledSuccess") });
       setCode("");
       await refresh();
     } catch (err) {
       setFlash({
         kind: "error",
-        text: err instanceof Error ? err.message : "Désactivation impossible.",
+        text: err instanceof Error ? err.message : t("profile.mfa.disableError"),
       });
     } finally {
       setSubmitting(false);
@@ -1064,8 +1047,8 @@ function MfaCard() {
 
   const downloadBackupCodes = (codes: string[]) => {
     const body = [
-      "Codes de secours Althea Systems",
-      "Chaque code est utilisable une seule fois.",
+      t("profile.mfa.backupFileTitle"),
+      t("profile.mfa.backupFileLine2"),
       "",
       ...codes,
     ].join("\n");
@@ -1085,9 +1068,9 @@ function MfaCard() {
 
   return (
     <SectionCard
-      eyebrow="Authentification à deux facteurs"
-      title="MFA — Application d'authentification"
-      hint="Une couche de sécurité supplémentaire à la connexion : votre mot de passe + un code à 6 chiffres généré par Google Authenticator, Authy, 1Password, etc."
+      eyebrow={t("profile.mfa.eyebrow")}
+      title={t("profile.mfa.title")}
+      hint={t("profile.mfa.hint")}
     >
       {flash && (
         <div
@@ -1103,16 +1086,16 @@ function MfaCard() {
       )}
 
       {status === "loading" && (
-        <p className="text-[13px] text-foreground/55">Chargement…</p>
+        <p className="text-[13px] text-foreground/55">{t("common.loading")}</p>
       )}
 
       {status === "error" && (
         <div className="space-y-3">
           <div className="rounded-lg border border-error/30 bg-error/5 px-3.5 py-2.5 text-[13px] text-error">
-            <p>Impossible de récupérer l&apos;état MFA. Reconnectez-vous ou réessayez.</p>
+            <p>{t("profile.mfa.errorFetch")}</p>
             {errorDetail && (
               <p className="mt-1 font-mono text-[11.5px] text-error/80">
-                Détail : {errorDetail}
+                {t("profile.mfa.errorDetail")} {errorDetail}
               </p>
             )}
           </div>
@@ -1121,7 +1104,7 @@ function MfaCard() {
             onClick={() => void refresh()}
             className="rounded-lg border border-foreground/10 bg-white px-4 py-2 text-[13px] font-semibold text-foreground/70 hover:bg-foreground/5"
           >
-            Réessayer
+            {t("profile.mfa.retry")}
           </button>
         </div>
       )}
@@ -1134,7 +1117,7 @@ function MfaCard() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={setupData.qrDataUrl}
-                alt="QR code MFA"
+                alt={t("profile.mfa.qrAlt")}
                 width={180}
                 height={180}
                 className="h-[180px] w-[180px]"
@@ -1142,15 +1125,14 @@ function MfaCard() {
             </div>
             <div className="space-y-3 text-[13px] text-foreground/75">
               <p className="font-semibold text-foreground">
-                Étape 1 — Scannez le QR code
+                {t("profile.mfa.step1Title")}
               </p>
               <p>
-                Ouvrez votre application d&apos;authentification (Google Authenticator,
-                Authy, 1Password…) puis scannez ce QR code.
+                {t("profile.mfa.step1Body")}
               </p>
               <div className="rounded-lg border border-foreground/10 bg-background/40 px-3 py-2">
                 <p className="mb-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/55">
-                  Saisie manuelle
+                  {t("profile.mfa.manualEntry")}
                 </p>
                 <code className="block break-all font-mono text-[12px] text-foreground/85">
                   {setupData.secret}
@@ -1161,12 +1143,12 @@ function MfaCard() {
 
           <div className="rounded-xl border border-warning/30 bg-warning/5 px-4 py-3.5">
             <p className="mb-2 text-[13px] font-semibold text-foreground">
-              Étape 2 — Conservez vos codes de secours
+              {t("profile.mfa.step2Title")}
             </p>
             <p className="mb-3 text-[12.5px] text-foreground/70">
-              Ces 8 codes vous permettent de vous connecter si vous perdez l&apos;accès à
-              votre application. <b>Ils ne seront affichés qu&apos;une seule fois.</b>{" "}
-              Téléchargez-les ou copiez-les avant de continuer.
+              {t("profile.mfa.step2BodyPrefix")}{" "}
+              <b>{t("profile.mfa.step2BodyBold")}</b>{" "}
+              {t("profile.mfa.step2BodySuffix")}
             </p>
             <div className="grid gap-2 font-mono text-[12.5px] sm:grid-cols-2">
               {setupData.backupCodes.map((c) => (
@@ -1184,17 +1166,17 @@ function MfaCard() {
                 onClick={() => downloadBackupCodes(setupData.backupCodes)}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-foreground/10 bg-white px-3 py-1.5 text-[12.5px] font-semibold text-foreground/75 hover:bg-foreground/5"
               >
-                Télécharger (.txt)
+                {t("profile.mfa.download")}
               </button>
               <button
                 type="button"
                 onClick={() => {
                   void navigator.clipboard.writeText(setupData.backupCodes.join("\n"));
-                  setFlash({ kind: "success", text: "Codes copiés dans le presse-papiers." });
+                  setFlash({ kind: "success", text: t("profile.mfa.codesCopied") });
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-foreground/10 bg-white px-3 py-1.5 text-[12.5px] font-semibold text-foreground/75 hover:bg-foreground/5"
               >
-                Copier
+                {t("profile.mfa.copy")}
               </button>
             </div>
           </div>
@@ -1202,7 +1184,7 @@ function MfaCard() {
           <form onSubmit={confirmSetup} className="space-y-3">
             <div>
               <label htmlFor="mfa-setup-code" className={labelCls}>
-                Étape 3 — Code à 6 chiffres
+                {t("profile.mfa.step3Label")}
               </label>
               <input
                 id="mfa-setup-code"
@@ -1224,7 +1206,7 @@ function MfaCard() {
                 style={{ color: "#fff" }}
                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-[13px] font-semibold transition hover:bg-primary-hover disabled:opacity-60"
               >
-                {submitting ? "Vérification…" : "Activer la MFA"}
+                {submitting ? t("profile.mfa.verifying") : t("profile.mfa.activate")}
               </button>
               <button
                 type="button"
@@ -1235,7 +1217,7 @@ function MfaCard() {
                 }}
                 className="rounded-lg border border-foreground/10 bg-white px-4 py-2 text-[13px] font-semibold text-foreground/70 hover:bg-foreground/5"
               >
-                Annuler
+                {t("common.cancel")}
               </button>
             </div>
           </form>
@@ -1246,7 +1228,7 @@ function MfaCard() {
       {!setupData && status === "disabled" && (
         <div className="space-y-3">
           <p className="text-[13px] text-foreground/70">
-            La MFA n&apos;est pas activée sur votre compte.
+            {t("profile.mfa.notEnabled")}
           </p>
           <button
             type="button"
@@ -1255,7 +1237,7 @@ function MfaCard() {
             style={{ color: "#fff" }}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-[13px] font-semibold transition hover:bg-primary-hover disabled:opacity-60"
           >
-            {submitting ? "Initialisation…" : "Activer la MFA"}
+            {submitting ? t("profile.mfa.initializing") : t("profile.mfa.activate")}
           </button>
         </div>
       )}
@@ -1274,27 +1256,26 @@ function MfaCard() {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-[14px] font-semibold text-foreground">
-                    MFA activée
+                    {t("profile.mfa.enabledBadge")}
                   </p>
                   <span className="inline-flex items-center gap-1 rounded-full bg-success/20 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.06em] text-success">
                     <span className="h-1.5 w-1.5 rounded-full bg-success" />
-                    Actif
+                    {t("profile.mfa.activeBadge")}
                   </span>
                 </div>
                 <p className="mt-1 text-[12.5px] text-foreground/70">
-                  Votre compte est protégé par un second facteur. Vos prochaines connexions
-                  demanderont un code à 6 chiffres ou un code de secours.
+                  {t("profile.mfa.enabledDescription")}
                 </p>
                 <p className="mt-2 text-[11.5px] font-medium text-foreground/65">
                   {backupRemaining > 0 ? (
-                    <>
-                      {backupRemaining} code{backupRemaining > 1 ? "s" : ""} de secours restant
-                      {backupRemaining > 1 ? "s" : ""}.
-                    </>
+                    backupRemaining === 1 ? (
+                      t("profile.mfa.backupRemainingOne")
+                    ) : (
+                      `${backupRemaining} ${t("profile.mfa.backupRemainingMany")}`
+                    )
                   ) : (
                     <span className="text-warning">
-                      Plus aucun code de secours disponible — désactivez puis réactivez la MFA
-                      pour en regénérer 8 nouveaux.
+                      {t("profile.mfa.backupNone")}
                     </span>
                   )}
                 </p>
@@ -1305,7 +1286,7 @@ function MfaCard() {
           <form onSubmit={disable} className="space-y-3">
             <div>
               <label htmlFor="mfa-disable-code" className={labelCls}>
-                Désactiver — saisir un code à 6 chiffres pour confirmer
+                {t("profile.mfa.disableLabel")}
               </label>
               <input
                 id="mfa-disable-code"
@@ -1324,7 +1305,7 @@ function MfaCard() {
               disabled={submitting}
               className="inline-flex items-center gap-2 rounded-lg border border-error/30 bg-error/5 px-4 py-2 text-[13px] font-semibold text-error transition hover:bg-error/10 disabled:opacity-60"
             >
-              {submitting ? "Désactivation…" : "Désactiver la MFA"}
+              {submitting ? t("profile.mfa.disabling") : t("profile.mfa.disableCta")}
             </button>
           </form>
         </div>
@@ -1354,7 +1335,7 @@ function ChangePasswordForm() {
       return;
     }
     if (next !== confirm) {
-      setFlash({ kind: "error", text: "Les deux mots de passe ne correspondent pas." });
+      setFlash({ kind: "error", text: t("profile.password.mismatch") });
       return;
     }
     setSubmitting(true);
@@ -1379,7 +1360,7 @@ function ChangePasswordForm() {
         });
         return;
       }
-      setFlash({ kind: "success", text: "Mot de passe mis à jour." });
+      setFlash({ kind: "success", text: t("profile.password.updated") });
       setCurrent("");
       setNext("");
       setConfirm("");
@@ -1402,7 +1383,7 @@ function ChangePasswordForm() {
     <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
       <div className="sm:col-span-2">
         <label htmlFor="pw-current" className={labelCls}>
-          Mot de passe actuel
+          {t("profile.password.current")}
         </label>
         <input
           id="pw-current"
@@ -1417,7 +1398,7 @@ function ChangePasswordForm() {
 
       <div>
         <label htmlFor="pw-new" className={labelCls}>
-          Nouveau mot de passe
+          {t("profile.password.new")}
         </label>
         <div className="relative">
           <input
@@ -1432,7 +1413,7 @@ function ChangePasswordForm() {
           <button
             type="button"
             onClick={() => setShowNext((s) => !s)}
-            aria-label={showNext ? "Masquer" : "Afficher"}
+            aria-label={showNext ? t("profile.password.hide") : t("profile.password.show")}
             className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded text-foreground/55 transition hover:bg-background hover:text-primary"
           >
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="h-3.5 w-3.5">
@@ -1455,7 +1436,7 @@ function ChangePasswordForm() {
 
       <div>
         <label htmlFor="pw-confirm" className={labelCls}>
-          Confirmer
+          {t("profile.password.confirm")}
         </label>
         <input
           id="pw-confirm"
@@ -1500,14 +1481,14 @@ function ChangePasswordForm() {
         {submitting ? (
           <>
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-            Mise à jour…
+            {t("profile.password.updating")}
           </>
         ) : (
           <>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
               <path d="m3 8 3.5 3.5L13 5" />
             </svg>
-            Mettre à jour le mot de passe
+            {t("profile.password.submit")}
           </>
         )}
       </button>

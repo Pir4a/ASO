@@ -18,8 +18,10 @@ import {
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { AddressForm, type AddressFormData } from "@/components/account/AddressForm";
 import { useAuth } from "@/context/AuthContext";
-import { useT } from "@/context/LocaleContext";
+import { useLocale, useT } from "@/context/LocaleContext";
 import { useCart } from "@/hooks/useCart";
+import { formatMoney } from "@/lib/format";
+import type { Locale } from "@/lib/i18n.shared";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -40,13 +42,13 @@ const STEP_META: { key: Step; labelKey: "checkout.step.identify" | "checkout.ste
   { key: "review", labelKey: "checkout.step.review" },
 ];
 
-function formatPrice(cents: number, currency = "EUR") {
-  const v = cents / 100;
-  return `${v >= 1000 ? v.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : v.toFixed(2)} ${currency}`;
+function formatPrice(locale: Locale, cents: number, currency = "EUR") {
+  return formatMoney(locale, cents, currency);
 }
 
 export default function CheckoutPage() {
   const t = useT();
+  const locale = useLocale();
   const { refreshCart, discount: cartDiscount, promoCode: cartPromoCode } = useCart();
   const { user, isAuthenticated } = useAuth();
 
@@ -139,7 +141,7 @@ export default function CheckoutPage() {
         setShowNewAddress(false);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Erreur lors de la création.");
+      setError(e instanceof Error ? e.message : t("checkout.errCreateAddress"));
     } finally {
       setIsLoading(false);
     }
@@ -148,7 +150,7 @@ export default function CheckoutPage() {
   const handleGoToPayment = async () => {
     if (!selectedAddressId) return;
     if (!isAuthenticated && !guestEmail.trim()) {
-      setError("Indiquez votre adresse e-mail pour finaliser la commande en invité.");
+      setError(t("checkout.errGuestEmail"));
       return;
     }
     setIsLoading(true);
@@ -157,7 +159,7 @@ export default function CheckoutPage() {
       let order: { id: string };
       if (!isAuthenticated) {
         const sel = addresses.find((a) => a.id === selectedAddressId);
-        if (!sel) throw new Error("Adresse introuvable.");
+        if (!sel) throw new Error(t("checkout.errAddressNotFound"));
         const inlineAddress: GuestCheckoutAddress = {
           firstName: sel.firstName,
           lastName: sel.lastName,
@@ -188,7 +190,7 @@ export default function CheckoutPage() {
       setError(
         e instanceof Error
           ? e.message
-          : "Impossible d'initialiser le paiement.",
+          : t("checkout.errPaymentInit"),
       );
     } finally {
       setIsLoading(false);
@@ -218,7 +220,7 @@ export default function CheckoutPage() {
   if (step === "confirmation" && orderResult) {
     return (
       <div className="space-y-6">
-        <Breadcrumb here="Confirmation" />
+        <Breadcrumb here={t("checkout.breadcrumbConfirm")} />
         <section className="overflow-hidden rounded-2xl border border-foreground/10 bg-white px-6 py-12 text-center">
           <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-success/10 text-success">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-8 w-8">
@@ -230,10 +232,10 @@ export default function CheckoutPage() {
             {t("checkout.confirmedBadge")}
           </p>
           <h1 className="mt-2 font-heading text-[28px] font-bold tracking-tight text-foreground md:text-[32px]">
-            {t("cart.title")}
+            {t("checkout.confirmedTitle")}
           </h1>
           <p className="mx-auto mt-2 max-w-xl text-[14px] text-foreground/70">
-            Un email de confirmation vient d&apos;être envoyé. Votre numéro de commande est{" "}
+            {t("checkout.confirmedEmailBefore")}{" "}
             <span className="font-mono font-semibold text-foreground">
               {orderResult.orderNumber ?? orderResult.id.slice(0, 8)}
             </span>
@@ -269,12 +271,12 @@ export default function CheckoutPage() {
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                   <path d="M2 4h12v8H2zM2 4l6 5 6-5" />
                 </svg>
-                Compte créé
+                {t("checkout.guestAccountEyebrow")}
               </p>
               <p className="mt-1.5 text-[13.5px] text-foreground">
-                Un compte a été créé pour <span className="font-semibold">{guestEmail}</span>.
-                Consultez votre boîte mail : un lien vous attend pour définir votre
-                mot de passe et retrouver votre commande dans votre espace client.
+                {t("checkout.guestAccountBodyBefore")}{" "}
+                <span className="font-semibold">{guestEmail}</span>.{" "}
+                {t("checkout.guestAccountBodyAfter")}
               </p>
             </div>
           )}
@@ -344,9 +346,9 @@ export default function CheckoutPage() {
 
           {step === "address" && (
             <SectionCard
-              eyebrow={isAuthenticated ? "Étape 2" : "Étape 1"}
-              title="Adresse de facturation et de livraison"
-              hint="Choisissez une adresse enregistrée ou ajoutez-en une nouvelle."
+              eyebrow={isAuthenticated ? t("checkout.stepNumAddressAuth") : t("checkout.stepNumAddressGuest")}
+              title={t("checkout.addressTitle")}
+              hint={t("checkout.addressHint")}
             >
               {!isAuthenticated && (
                 <div className="mb-5 rounded-2xl border border-foreground/10 bg-background/40 p-4">
@@ -354,21 +356,20 @@ export default function CheckoutPage() {
                     htmlFor="checkout-guest-email"
                     className="mb-1.5 block text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/65"
                   >
-                    Email de contact
+                    {t("checkout.guestEmailLabel")}
                   </label>
                   <input
                     id="checkout-guest-email"
                     type="email"
                     required
-                    placeholder="vous@exemple.fr"
+                    placeholder={t("checkout.guestEmailPlaceholder")}
                     autoComplete="email"
                     value={guestEmail}
                     onChange={(e) => setGuestEmail(e.target.value)}
                     className="w-full rounded-lg border border-foreground/10 bg-white px-3.5 py-2.5 text-[14px] text-foreground placeholder:text-foreground/45 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                   />
                   <p className="mt-1.5 text-[12px] text-foreground/65">
-                    Nous enverrons votre confirmation de commande et un lien pour
-                    créer votre mot de passe à cette adresse.
+                    {t("checkout.guestEmailHint")}
                   </p>
                 </div>
               )}
@@ -411,7 +412,7 @@ export default function CheckoutPage() {
                               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="h-2.5 w-2.5">
                                 <path d="m3 8 3.5 3.5L13 5" />
                               </svg>
-                              Sélectionnée
+                              {t("checkout.addressSelected")}
                             </span>
                           )}
                         </button>
@@ -431,7 +432,7 @@ export default function CheckoutPage() {
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                       <path d="M8 3v10M3 8h10" />
                     </svg>
-                    Ajouter une adresse
+                    {t("checkout.addAddress")}
                   </button>
                   <button
                     type="button"
@@ -440,7 +441,7 @@ export default function CheckoutPage() {
                     style={{ color: "#fff" }}
                     className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-5 text-[14px] font-semibold transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {isLoading ? "Initialisation…" : "Passer au paiement"}
+                    {isLoading ? t("checkout.initializing") : t("checkout.goToPayment")}
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                       <path d="M3 8h10m-3-3 3 3-3 3" />
                     </svg>
@@ -450,12 +451,12 @@ export default function CheckoutPage() {
                 <div className="mt-5 rounded-2xl border border-foreground/10 bg-background/40 p-5">
                   <p className="mb-3 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
                     <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-                    Nouvelle adresse
+                    {t("checkout.newAddress")}
                   </p>
                   <AddressForm
                     onSubmit={handleCreateAddress}
                     onCancel={() => setShowNewAddress(false)}
-                    submitLabel="Enregistrer l'adresse"
+                    submitLabel={t("checkout.saveAddress")}
                   />
                 </div>
               )}
@@ -466,8 +467,7 @@ export default function CheckoutPage() {
                     <circle cx="8" cy="8" r="6" />
                     <path d="M8 7v4M8 5v.01" />
                   </svg>
-                  En tant qu&apos;invité, l&apos;adresse sera utilisée uniquement pour cette
-                  commande.
+                  {t("checkout.guestAddressNote")}
                 </p>
               )}
             </SectionCard>
@@ -477,8 +477,12 @@ export default function CheckoutPage() {
             <SectionCard
               eyebrow={
                 step === "review"
-                  ? isAuthenticated ? "Étape 4" : "Étape 3"
-                  : isAuthenticated ? "Étape 3" : "Étape 2"
+                  ? isAuthenticated
+                    ? t("checkout.stepNumReviewAuth")
+                    : t("checkout.stepNumReviewGuest")
+                  : isAuthenticated
+                    ? t("checkout.stepNumPaymentAuth")
+                    : t("checkout.stepNumPaymentGuest")
               }
               title={
                 step === "review"
@@ -488,7 +492,7 @@ export default function CheckoutPage() {
               hint={
                 step === "review"
                   ? t("checkout.review.hint")
-                  : "Vos cartes enregistrées apparaissent automatiquement. Toutes les transactions sont protégées par Stripe (PCI-DSS)."
+                  : t("checkout.paymentHint")
               }
             >
               <Elements
@@ -509,6 +513,7 @@ export default function CheckoutPage() {
                   reviewContent={
                     <ReviewSummary
                       t={t}
+                      locale={locale}
                       cartItems={cartItems}
                       cartSubtotal={cartSubtotal}
                       cartVat={cartVat}
@@ -536,14 +541,14 @@ export default function CheckoutPage() {
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3 w-3">
                     <path d="M13 8H3m3-3-3 3 3 3" />
                   </svg>
-                  Retour à l&apos;adresse
+                  {t("checkout.backToAddress")}
                 </button>
                 <span className="inline-flex items-center gap-2">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5 text-primary">
                     <rect x="3" y="11" width="18" height="11" rx="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
-                  Connexion sécurisée · Stripe
+                  {t("checkout.secureStripe")}
                 </span>
               </div>
             </SectionCard>
@@ -574,11 +579,11 @@ export default function CheckoutPage() {
                         {it.name ?? it.productId}
                       </span>
                       <span className="text-[11.5px] text-foreground/55 tabular-nums">
-                        {formatPrice(it.priceCents, it.currency)} × {it.quantity}
+                        {formatMoney(locale, it.priceCents, it.currency)} × {it.quantity}
                       </span>
                     </span>
                     <span className="font-heading font-semibold tabular-nums text-foreground">
-                      {formatPrice(it.priceCents * it.quantity, it.currency)}
+                      {formatMoney(locale, it.priceCents * it.quantity, it.currency)}
                     </span>
                   </li>
                 ))}
@@ -588,13 +593,13 @@ export default function CheckoutPage() {
                 <div className="flex justify-between">
                   <dt className="text-foreground/65">{t("cart.subtotal")}</dt>
                   <dd className="tabular-nums text-foreground">
-                    {formatPrice(cartSubtotal, currency)}
+                    {formatMoney(locale, cartSubtotal, currency)}
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-foreground/65">TVA</dt>
+                  <dt className="text-foreground/65">{t("cart.vat")}</dt>
                   <dd className="tabular-nums text-foreground">
-                    {formatPrice(cartVat, currency)}
+                    {formatMoney(locale, cartVat, currency)}
                   </dd>
                 </div>
                 {cartDiscount > 0 && (
@@ -603,7 +608,7 @@ export default function CheckoutPage() {
                       {t("cart.discount")}{cartPromoCode ? ` (${cartPromoCode})` : ""}
                     </dt>
                     <dd className="tabular-nums text-success">
-                      −{formatPrice(cartDiscount, currency)}
+                      −{formatPrice(locale, cartDiscount, currency)}
                     </dd>
                   </div>
                 )}
@@ -614,7 +619,7 @@ export default function CheckoutPage() {
                   {t("cart.totalIncludingVat")}
                 </span>
                 <span className="font-heading text-[20px] font-bold tabular-nums text-foreground">
-                  {formatPrice(Math.max(0, cartTotal - cartDiscount), currency)}
+                  {formatPrice(locale, Math.max(0, cartTotal - cartDiscount), currency)}
                 </span>
               </div>
 
@@ -623,15 +628,15 @@ export default function CheckoutPage() {
                 <div className="rounded-xl border border-foreground/10 bg-background/40 p-3.5">
                   <p className="mb-1 inline-flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/60">
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="h-3 w-3 text-primary">
-                      <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6c0 3 4.5 8.5 4.5 8.5s4.5-5.5 4.5-8.5c0-2.5-2-4.5-4.5-4.5Z" />
+                      <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6c0 3 3 4.5 8.5 4.5 8.5s4.5-5.5 4.5-8.5c0-2.5-2-4.5-4.5-4.5Z" />
                       <circle cx="8" cy="6" r="1.6" />
                     </svg>
-                    Livraison
+                    {t("checkout.deliverySummary")}
                   </p>
                   <p className="text-[12.5px] text-foreground/80">
                     {[selectedAddress.firstName, selectedAddress.lastName]
                       .filter(Boolean)
-                      .join(" ") || "Adresse sélectionnée"}{" "}
+                      .join(" ") || t("checkout.selectedAddressFallback")}{" "}
                     · {selectedAddress.street}
                     {selectedAddress.address2 ? `, ${selectedAddress.address2}` : ""}
                     {", "}
@@ -708,8 +713,6 @@ function Stepper({
 }) {
   const t = useT();
   const steps = STEP_META.filter((s) => (authenticated ? s.key !== "identify" : true));
-  // The post-payment "confirmation" page has its own UI; while there, we
-  // still want to display the stepper as if "review" were the active step.
   const stepperCurrent: Step = current === "confirmation" ? "review" : current;
   const currentIndex = steps.findIndex((s) => s.key === stepperCurrent);
 
@@ -773,6 +776,7 @@ function Stepper({
 /* ── Review summary ─────────────────────────────────────── */
 function ReviewSummary({
   t,
+  locale,
   cartItems,
   cartSubtotal,
   cartVat,
@@ -784,6 +788,7 @@ function ReviewSummary({
   email,
 }: {
   t: ReturnType<typeof useT>;
+  locale: Locale;
   cartItems: CartItem[];
   cartSubtotal: number;
   cartVat: number;
@@ -814,11 +819,11 @@ function ReviewSummary({
                   {it.name ?? it.productId}
                 </span>
                 <span className="text-[11.5px] text-foreground/55 tabular-nums">
-                  {formatPrice(it.priceCents, it.currency)} × {it.quantity}
+                  {formatPrice(locale, it.priceCents, it.currency)} × {it.quantity}
                 </span>
               </span>
               <span className="font-heading font-semibold tabular-nums text-foreground">
-                {formatPrice(it.priceCents * it.quantity, it.currency)}
+                {formatPrice(locale, it.priceCents * it.quantity, it.currency)}
               </span>
             </li>
           ))}
@@ -882,13 +887,13 @@ function ReviewSummary({
         <div className="flex justify-between">
           <dt className="text-foreground/65">{t("cart.subtotal")}</dt>
           <dd className="tabular-nums text-foreground">
-            {formatPrice(cartSubtotal, currency)}
+            {formatPrice(locale, cartSubtotal, currency)}
           </dd>
         </div>
         <div className="flex justify-between">
           <dt className="text-foreground/65">{t("cart.vat")}</dt>
           <dd className="tabular-nums text-foreground">
-            {formatPrice(cartVat, currency)}
+            {formatPrice(locale, cartVat, currency)}
           </dd>
         </div>
         {cartDiscount > 0 && (
@@ -898,7 +903,7 @@ function ReviewSummary({
               {cartPromoCode ? ` (${cartPromoCode})` : ""}
             </dt>
             <dd className="tabular-nums text-success">
-              −{formatPrice(cartDiscount, currency)}
+              −{formatPrice(locale, cartDiscount, currency)}
             </dd>
           </div>
         )}
@@ -907,7 +912,7 @@ function ReviewSummary({
             {t("cart.totalIncludingVat")}
           </dt>
           <dd className="font-heading text-[18px] font-bold tabular-nums text-foreground">
-            {formatPrice(Math.max(0, cartTotal - cartDiscount), currency)}
+            {formatPrice(locale, Math.max(0, cartTotal - cartDiscount), currency)}
           </dd>
         </div>
       </dl>
@@ -998,14 +1003,13 @@ function IdentifyStep({
         <div className="relative">
           <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#b3eef2]">
             <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary-hover" />
-            Étape 1 · Identification
+            {t("checkout.identifyEyebrow")}
           </p>
           <h2 className="font-heading text-[22px] font-semibold leading-tight tracking-tight md:text-[26px]">
-            Avant de finaliser votre commande
+            {t("checkout.identifyTitle")}
           </h2>
           <p className="mt-1.5 max-w-xl text-[13.5px] text-white/75">
-            Connectez-vous pour récupérer vos adresses et cartes enregistrées,
-            ou continuez en tant qu&apos;invité.
+            {t("checkout.identifySubtitle")}
           </p>
         </div>
       </header>
@@ -1014,7 +1018,7 @@ function IdentifyStep({
         {/* Left: inline login */}
         <div className="space-y-4 px-6 py-6 lg:border-r lg:border-foreground/5">
           <h3 className="font-heading text-[15px] font-semibold text-foreground">
-            J&apos;ai déjà un compte
+            {t("checkout.hasAccount")}
           </h3>
 
           <form onSubmit={handleLogin} className="space-y-3.5">
@@ -1023,14 +1027,14 @@ function IdentifyStep({
                 htmlFor="checkout-login-email"
                 className="mb-1.5 block text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/65"
               >
-                Email
+                {t("checkout.emailLabel")}
               </label>
               <input
                 id="checkout-login-email"
                 type="email"
                 required
                 autoComplete="email"
-                placeholder="vous@exemple.fr"
+                placeholder={t("checkout.guestEmailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-lg border border-foreground/10 bg-white px-3.5 py-2.5 text-[14px] text-foreground placeholder:text-foreground/45 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
@@ -1043,13 +1047,13 @@ function IdentifyStep({
                   htmlFor="checkout-login-pw"
                   className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/65"
                 >
-                  Mot de passe
+                  {t("checkout.passwordLabel")}
                 </label>
                 <Link
                   href="/forgot-password"
                   className="text-[11.5px] font-semibold text-primary transition hover:text-primary-hover"
                 >
-                  Oublié ?
+                  {t("checkout.forgotPassword")}
                 </Link>
               </div>
               <div className="relative">
@@ -1066,7 +1070,7 @@ function IdentifyStep({
                 <button
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
-                  aria-label={showPassword ? "Masquer" : "Afficher"}
+                  aria-label={showPassword ? t("checkout.hidePassword") : t("checkout.showPassword")}
                   className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded text-foreground/55 transition hover:bg-background hover:text-primary"
                 >
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="h-3.5 w-3.5">
@@ -1093,7 +1097,7 @@ function IdentifyStep({
                 onChange={(e) => setRememberMe(e.target.checked)}
                 className="h-4 w-4 rounded border-foreground/25 text-primary focus:ring-2 focus:ring-primary/30"
               />
-              Se souvenir de moi (7 jours)
+              {t("checkout.rememberMe")}
             </label>
 
             {error && (
@@ -1136,21 +1140,16 @@ function IdentifyStep({
         <div className="space-y-5 bg-background/30 px-6 py-6">
           <div>
             <h3 className="font-heading text-[15px] font-semibold text-foreground">
-              Pas encore de compte ?
+              {t("checkout.noAccount")}
             </h3>
             <p className="mt-1.5 text-[13px] text-foreground/65">
-              Créez-en un en quelques secondes pour suivre vos commandes,
-              télécharger vos factures et réutiliser vos cartes.
+              {t("checkout.noAccountBody")}
             </p>
             <ul
               role="list"
               className="mt-3 space-y-1.5 text-[12.5px] text-foreground/75"
             >
-              {[
-                "Suivi de livraison + historique des commandes",
-                "Adresses et cartes enregistrées (paiement en 1 clic)",
-                "Factures PDF Althea Systems",
-              ].map((b) => (
+              {[t("checkout.benefit1"), t("checkout.benefit2"), t("checkout.benefit3")].map((b) => (
                 <li key={b} className="inline-flex items-start gap-2">
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 flex-none text-primary">
                     <path d="m3 8 3.5 3.5L13 5" />
@@ -1178,14 +1177,14 @@ function IdentifyStep({
               {t("cart.continueShopping")}
             </p>
             <p className="mt-1 text-[12px] text-foreground/65">
-              Vous pourrez créer un compte plus tard pour retrouver vos achats.
+              {t("checkout.guestLaterBody")}
             </p>
             <button
               type="button"
               onClick={onContinueAsGuest}
               className="mt-3 inline-flex h-9 items-center gap-1.5 text-[12.5px] font-semibold text-primary transition hover:text-primary-hover"
             >
-              Continuer sans compte
+              {t("checkout.continueGuest")}
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3 w-3">
                 <path d="M3 8h10m-3-3 3 3-3 3" />
               </svg>

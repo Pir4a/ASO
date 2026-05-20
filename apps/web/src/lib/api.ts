@@ -9,38 +9,6 @@ export const API_URL = typeof window === 'undefined'
   : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api");
 
 const KNOWN_LOCALES = new Set(["fr", "en", "ar", "he"]);
-const CATEGORY_NAME_BY_SLUG: Record<string, Partial<Record<Locale, string>>> = {
-  "imaging-diagnostics": {
-    en: "Imaging & Diagnostics",
-    fr: "Imagerie & Diagnostics",
-    ar: "التصوير والتشخيص",
-    he: "הדמיה ואבחון",
-  },
-  "surgical-operating-room": {
-    en: "Surgical & Operating Room",
-    fr: "Bloc opératoire",
-    ar: "الجراحة وغرفة العمليات",
-    he: "כירורגיה וחדר ניתוח",
-  },
-  "patient-monitoring": {
-    en: "Patient Monitoring",
-    fr: "Monitoring patient",
-    ar: "مراقبة المرضى",
-    he: "ניטור מטופלים",
-  },
-  "protective-equipment": {
-    en: "Protective Equipment",
-    fr: "Équipements de protection",
-    ar: "معدات الوقاية",
-    he: "ציוד מגן",
-  },
-  "mobility-rehabilitation": {
-    en: "Mobility & Rehabilitation",
-    fr: "Mobilité & Rééducation",
-    ar: "الحركة وإعادة التأهيل",
-    he: "ניידות ושיקום",
-  },
-};
 
 async function getCurrentLocale(): Promise<string> {
   if (typeof window !== "undefined") {
@@ -58,18 +26,11 @@ async function getCurrentLocale(): Promise<string> {
   }
 }
 
-function localizeCategoryName(category: Category, locale: string): Category {
-  const key = locale as Locale;
-  const localized = CATEGORY_NAME_BY_SLUG[category.slug]?.[key];
-  if (!localized) return category;
-  return { ...category, name: localized };
-}
-
 async function fetchJson<T>(path: string): Promise<T> {
   const lang = await getCurrentLocale();
   const sep = path.includes("?") ? "&" : "?";
   const url = `${API_URL}${path}${sep}lang=${encodeURIComponent(lang)}`;
-  const res = await fetch(url, { next: { revalidate: 60 } });
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`API error ${res.status}`);
   }
@@ -102,6 +63,43 @@ function mapProduct(p: any): Product {
     };
   }
   return { ...p, vatRate, listPriority, galleryUrls, specs, stock };
+}
+
+/** Align nested product.category labels with the localized categories list. */
+function enrichProductCategories(products: Product[], categories: Category[]): Product[] {
+  if (!categories.length) return products;
+  const byId = new Map(categories.map((c) => [c.id, c]));
+  const bySlug = new Map(categories.map((c) => [c.slug, c]));
+  return products.map((p) => {
+    const ref = p.category?.id ?? p.categoryId;
+    const localized =
+      (ref ? byId.get(ref) : undefined) ??
+      (p.category?.slug ? bySlug.get(p.category.slug) : undefined);
+    if (!localized) return p;
+    return {
+      ...p,
+      category: p.category
+        ? {
+            ...p.category,
+            name: localized.name,
+            description: localized.description ?? p.category.description,
+          }
+        : {
+            id: localized.id,
+            slug: localized.slug,
+            name: localized.name,
+            description: localized.description,
+          },
+    };
+  });
+}
+
+async function fetchLocalizedCategories(): Promise<Category[]> {
+  try {
+    return await fetchJson<Category[]>("/categories");
+  } catch {
+    return mockCategories;
+  }
 }
 
 export type ProductBrowseMeta = {
@@ -159,6 +157,7 @@ export async function getProductsSearch(filters: {
   sp.set("sort", sort);
   sp.set("page", String(page));
   sp.set("limit", String(limit));
+  sp.set("lang", await getCurrentLocale());
 
   const res = await fetch(`${API_URL}/products/search?${sp.toString()}`, { cache: "no-store" });
   if (!res.ok) {
@@ -170,7 +169,7 @@ export async function getProductsSearch(filters: {
     facets?: ProductSearchFacets;
   };
   return {
-    products: (body.data ?? []).map(mapProduct),
+    products: enrichProductCategories((body.data ?? []).map(mapProduct), await fetchLocalizedCategories()),
     meta: {
       total: body.meta?.total ?? 0,
       page: body.meta?.page ?? page,
@@ -207,8 +206,9 @@ export async function getProductsByCategorySlug(
   });
   try {
     const raw = await fetchJson<{ data: any[]; meta: ProductBrowseMeta }>(`/products?${qs.toString()}`);
+    const categories = await fetchLocalizedCategories();
     return {
-      products: (raw.data ?? []).map(mapProduct),
+      products: enrichProductCategories((raw.data ?? []).map(mapProduct), categories),
       meta: raw.meta,
     };
   } catch {
@@ -236,7 +236,7 @@ export async function getProductsByCategorySlug(
 export async function getRelatedProducts(productSlug: string, limit = 6): Promise<Product[]> {
   try {
     const list = await fetchJson<any[]>(`/products/${encodeURIComponent(productSlug)}/related?limit=${limit}`);
-    return (list ?? []).map(mapProduct);
+    return enrichProductCategories((list ?? []).map(mapProduct), await fetchLocalizedCategories());
   } catch {
     return [];
   }
@@ -254,8 +254,9 @@ export async function getProductsCatalog(
   });
   try {
     const raw = await fetchJson<{ data: any[]; meta: ProductBrowseMeta }>(`/products?${qs.toString()}`);
+    const categories = await fetchLocalizedCategories();
     return {
-      products: (raw.data ?? []).map(mapProduct),
+      products: enrichProductCategories((raw.data ?? []).map(mapProduct), categories),
       meta: raw.meta,
     };
   } catch {
@@ -286,8 +287,8 @@ export async function getHomepageData(): Promise<{
       fetchJson<{ id?: string; type: string; payload?: Record<string, unknown>; order?: number }[]>("/content"),
     ]);
 
-    const products = productsRaw.map(mapProduct);
-    const featuredProducts = (featuredRaw ?? []).map(mapProduct);
+    const products = enrichProductCategories(productsRaw.map(mapProduct), categories);
+    const featuredProducts = enrichProductCategories((featuredRaw ?? []).map(mapProduct), categories);
 
     const slides = content
       .filter((c) => c.type === "carousel")
@@ -336,9 +337,7 @@ export async function getHomepageData(): Promise<{
 
 export async function getCategories(): Promise<Category[]> {
   try {
-    const locale = await getCurrentLocale();
-    const categories = await fetchJson<Category[]>("/categories");
-    return categories.map((c) => localizeCategoryName(c, locale));
+    return await fetchJson<Category[]>("/categories");
   } catch {
     return mockCategories;
   }
@@ -346,8 +345,11 @@ export async function getCategories(): Promise<Category[]> {
 
 export async function getProducts(): Promise<Product[]> {
   try {
-    const products = await fetchJson<any[]>("/products");
-    return products.map(mapProduct);
+    const [categories, productsRaw] = await Promise.all([
+      fetchLocalizedCategories(),
+      fetchJson<any[]>("/products"),
+    ]);
+    return enrichProductCategories(productsRaw.map(mapProduct), categories);
   } catch {
     return mockProducts;
   }
@@ -355,8 +357,12 @@ export async function getProducts(): Promise<Product[]> {
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
   try {
-    const product = await fetchJson<any>(`/products/${slug}`);
-    return mapProduct(product);
+    const [categories, product] = await Promise.all([
+      fetchLocalizedCategories(),
+      fetchJson<any>(`/products/${slug}`),
+    ]);
+    const mapped = mapProduct(product);
+    return enrichProductCategories([mapped], categories)[0];
   } catch {
     return mockProducts.find((p) => p.slug === slug);
   }

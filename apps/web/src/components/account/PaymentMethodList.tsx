@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AddPaymentMethod } from "./AddPaymentMethod";
 import { authFetch } from "@/lib/auth";
+import { useT } from "@/context/LocaleContext";
 
 interface PaymentMethod {
     id: string;
@@ -23,8 +24,8 @@ const BRAND_LABEL: Record<string, string> = {
     unionpay: "UnionPay",
 };
 
-function brandLabel(b?: string) {
-    if (!b) return "Carte";
+function brandLabel(b: string | undefined, fallback: string) {
+    if (!b) return fallback;
     return BRAND_LABEL[b.toLowerCase()] ?? b.charAt(0).toUpperCase() + b.slice(1);
 }
 
@@ -34,6 +35,7 @@ function formatExpiry(m?: number, y?: number) {
 }
 
 export function PaymentMethodList() {
+    const t = useT();
     const [methods, setMethods] = useState<PaymentMethod[]>([]);
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState<string | null>(null);
@@ -50,7 +52,7 @@ export function PaymentMethodList() {
             if (res.ok) {
                 setMethods((await res.json()) as PaymentMethod[]);
             } else if (res.status === 503) {
-                flashAndClear("error", "Stripe n'est pas configuré sur le serveur.");
+                flashAndClear("error", t("profile.payments.stripeNotConfigured"));
                 setMethods([]);
             } else {
                 setMethods([]);
@@ -60,24 +62,24 @@ export function PaymentMethodList() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [t]);
 
     useEffect(() => {
         void fetchMethods();
     }, [fetchMethods]);
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Supprimer ce moyen de paiement ?")) return;
+        if (!confirm(t("profile.payments.deleteConfirm"))) return;
         setBusy(id);
         try {
             const res = await authFetch(`/payment/methods/${id}`, { method: "DELETE" });
-            if (!res.ok) throw new Error("Suppression impossible.");
+            if (!res.ok) throw new Error(t("profile.payments.deleteError"));
             await fetchMethods();
-            flashAndClear("success", "Moyen de paiement retiré.");
+            flashAndClear("success", t("profile.payments.removed"));
         } catch (e) {
             flashAndClear(
                 "error",
-                e instanceof Error ? e.message : "Suppression impossible.",
+                e instanceof Error ? e.message : t("profile.payments.deleteError"),
             );
         } finally {
             setBusy(null);
@@ -88,13 +90,13 @@ export function PaymentMethodList() {
         setBusy(id);
         try {
             const res = await authFetch(`/payment/methods/${id}/default`, { method: "PATCH" });
-            if (!res.ok) throw new Error("Mise à jour impossible.");
+            if (!res.ok) throw new Error(t("profile.payments.updateError"));
             await fetchMethods();
-            flashAndClear("success", "Carte définie par défaut.");
+            flashAndClear("success", t("profile.payments.defaultSet"));
         } catch (e) {
             flashAndClear(
                 "error",
-                e instanceof Error ? e.message : "Mise à jour impossible.",
+                e instanceof Error ? e.message : t("profile.payments.updateError"),
             );
         } finally {
             setBusy(null);
@@ -105,17 +107,18 @@ export function PaymentMethodList() {
         <div className="space-y-4">
             {loading ? (
                 <div className="rounded-xl border border-dashed border-foreground/15 bg-background/40 px-6 py-10 text-center text-sm text-foreground/55">
-                    Chargement…
+                    {t("common.loading")}
                 </div>
             ) : methods.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-foreground/15 bg-background/40 px-6 py-10 text-center text-sm text-foreground/55">
-                    Aucune carte enregistrée. Ajoutez-en une pour accélérer vos achats.
+                    {t("profile.payments.empty")}
                 </div>
             ) : (
                 <ul className="space-y-3" role="list">
                     {methods.map((pm) => {
                         const isDefault = !!pm.isDefault;
                         const isBusy = busy === pm.id;
+                        const cardBrand = brandLabel(pm.brand, t("profile.payments.card"));
                         return (
                             <li
                                 key={pm.id}
@@ -129,17 +132,17 @@ export function PaymentMethodList() {
                                     aria-hidden="true"
                                     className="grid h-10 w-14 place-items-center rounded-lg bg-foreground text-[10.5px] font-bold uppercase tracking-[0.08em] text-white"
                                 >
-                                    {brandLabel(pm.brand).slice(0, 4)}
+                                    {cardBrand.slice(0, 4)}
                                 </span>
                                 <div className="min-w-0 flex-1">
                                     <p className="font-heading text-[14.5px] font-semibold text-foreground">
-                                        {brandLabel(pm.brand)}{" "}
+                                        {cardBrand}{" "}
                                         <span className="font-mono text-foreground/65">
                                             •••• {pm.last4 ?? "••••"}
                                         </span>
                                     </p>
                                     <p className="mt-0.5 text-[12px] text-foreground/55">
-                                        Expire {formatExpiry(pm.expMonth, pm.expYear)}
+                                        {t("profile.payments.expires")} {formatExpiry(pm.expMonth, pm.expYear)}
                                     </p>
                                 </div>
                                 {isDefault && (
@@ -147,7 +150,7 @@ export function PaymentMethodList() {
                                         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="h-3 w-3">
                                             <path d="m3 8 3.5 3.5L13 5" />
                                         </svg>
-                                        Par défaut
+                                        {t("profile.payments.default")}
                                     </span>
                                 )}
                                 <div className="flex flex-wrap items-center gap-2">
@@ -161,20 +164,20 @@ export function PaymentMethodList() {
                                             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3 w-3">
                                                 <path d="m3 8 3.5 3.5L13 5" />
                                             </svg>
-                                            Définir par défaut
+                                            {t("profile.payments.setDefault")}
                                         </button>
                                     )}
                                     <button
                                         type="button"
                                         onClick={() => handleDelete(pm.id)}
                                         disabled={isBusy}
-                                        aria-label="Supprimer la carte"
+                                        aria-label={t("profile.payments.deleteAria")}
                                         className="inline-flex h-8 items-center gap-1.5 rounded-md border border-error/25 bg-white px-3 text-[12px] font-semibold text-error transition hover:bg-error/10 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3 w-3">
                                             <path d="M3 4h10M6 4V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1m-5 0v9a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V4" />
                                         </svg>
-                                        Supprimer
+                                        {t("profile.payments.delete")}
                                     </button>
                                 </div>
                             </li>

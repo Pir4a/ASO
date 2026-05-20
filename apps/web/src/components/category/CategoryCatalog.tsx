@@ -4,7 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useT } from "@/context/LocaleContext";
+import { useT, useLocale } from "@/context/LocaleContext";
+import { formatAmount } from "@/lib/format";
+import type { Locale } from "@/lib/i18n.shared";
 import type { Category, Product } from "@bootstrap/types";
 
 /**
@@ -44,9 +46,8 @@ function isOutOfStock(p: Product) {
   return p.status === "out_of_stock" || (p.stock !== undefined && p.stock <= 0);
 }
 
-function formatPrice(p: Product) {
-  const value = p.priceCents / 100;
-  return value >= 1000 ? value.toLocaleString("fr-FR") : value.toFixed(2);
+function formatPrice(p: Product, locale: Locale) {
+  return formatAmount(locale, p.priceCents / 100);
 }
 
 function StockBadge({
@@ -139,6 +140,7 @@ export function CategoryCatalog({
   serverDriven?: boolean;
 }) {
   const t = useT();
+  const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -159,7 +161,7 @@ export function CategoryCatalog({
   const facetsActive = isProductsCatalogPage || serverDriven;
   const sortOptions: { value: SortKey; label: string }[] = [
     { value: "priority", label: t("search.sort.relevance") },
-    { value: "name", label: "A→Z" },
+    { value: "name", label: t("search.sort.name_asc") },
     { value: "price-asc", label: t("search.sort.price_asc") },
     { value: "price-desc", label: t("search.sort.price_desc") },
   ];
@@ -409,7 +411,9 @@ export function CategoryCatalog({
             <span className="font-heading">{sortedProducts.length}</span>{" "}
             <span className="font-normal text-foreground/55">
               {sortedProducts.length > 1 ? t("products.countPlural") : t("products.countSingle")}
-              {query.trim() ? ` correspondant à "${query.trim()}"` : ""}
+              {query.trim()
+                ? ` ${t("catalog.matchQueryPrefix")} "${query.trim()}"`
+                : ""}
             </span>
           </p>
 
@@ -494,7 +498,7 @@ export function CategoryCatalog({
           {/* View toggle */}
           <div
             role="tablist"
-            aria-label="Mode d'affichage"
+            aria-label={t("catalog.viewMode")}
             className="hidden items-center rounded-lg border border-foreground/10 bg-background/60 p-0.5 sm:inline-flex"
           >
             <button
@@ -502,7 +506,7 @@ export function CategoryCatalog({
               role="tab"
               aria-selected={view === "grid"}
               onClick={() => setView("grid")}
-              title="Grille"
+              title={t("catalog.viewGrid")}
               className={`grid h-7 w-8 place-items-center rounded transition ${
                 view === "grid" ? "bg-white text-primary shadow-sm" : "text-foreground/55 hover:text-foreground"
               }`}
@@ -519,7 +523,7 @@ export function CategoryCatalog({
               role="tab"
               aria-selected={view === "list"}
               onClick={() => setView("list")}
-              title="Liste"
+              title={t("catalog.viewList")}
               className={`grid h-7 w-8 place-items-center rounded transition ${
                 view === "list" ? "bg-white text-primary shadow-sm" : "text-foreground/55 hover:text-foreground"
               }`}
@@ -593,7 +597,7 @@ export function CategoryCatalog({
                           oos ? "text-foreground/55" : "text-foreground"
                         }`}
                       >
-                        <span className="num tabular-nums">{formatPrice(product)}</span>{" "}
+                        <span className="num tabular-nums">{formatPrice(product, locale)}</span>{" "}
                         <span className="text-xs font-medium text-foreground/55">{product.currency}</span>
                       </p>
                       <div className="mt-1.5">
@@ -661,7 +665,7 @@ export function CategoryCatalog({
                           oos ? "text-foreground/55" : "text-foreground"
                         }`}
                       >
-                        <span className="num tabular-nums">{formatPrice(product)}</span>{" "}
+                        <span className="num tabular-nums">{formatPrice(product, locale)}</span>{" "}
                         <span className="text-xs font-medium text-foreground/55">{product.currency}</span>
                       </p>
                       <div className="mt-1.5">
@@ -679,7 +683,7 @@ export function CategoryCatalog({
                           oos ? "text-foreground/55" : "text-foreground"
                         }`}
                       >
-                        <span className="num tabular-nums">{formatPrice(product)}</span>{" "}
+                        <span className="num tabular-nums">{formatPrice(product, locale)}</span>{" "}
                         <span className="text-xs font-medium text-foreground/55">{product.currency}</span>
                       </p>
                     </div>

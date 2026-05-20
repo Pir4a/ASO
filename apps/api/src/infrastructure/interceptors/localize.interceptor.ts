@@ -21,10 +21,15 @@ const LOCALIZABLE_KEYS = [
   'ctaLabel',
 ] as const;
 
+function isProductRecord(obj: Record<string, unknown>): boolean {
+  return typeof obj.sku === 'string' && typeof obj.slug === 'string';
+}
+
 /**
  * Walks the response shape and, on any object that carries a
  * `translations[lang]` block, overrides the known localizable string fields:
- * - products / categories: `name`, `description`
+ * - categories:            `name`, `description`
+ * - products:              `description` only (names stay in base English)
  * - carousel slides:       `title`, `subtitle`, `ctaLabel`
  * - homepage_text:         `headline`, `body`
  * Locale comes from the `?lang=` query param. Default base locale is English.
@@ -45,6 +50,7 @@ function localize(value: unknown, lang: string): unknown {
     const localized = tField[lang];
     if (localized && typeof localized === 'object') {
       for (const key of LOCALIZABLE_KEYS) {
+        if (key === 'name' && isProductRecord(obj)) continue;
         const v = localized[key];
         if (typeof v === 'string' && v.trim()) {
           out[key] = v;

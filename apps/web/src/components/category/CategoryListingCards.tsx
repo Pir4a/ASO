@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import type { Category } from "@bootstrap/types";
+import { useT } from "@/context/LocaleContext";
 
 /**
  * Rich category cards for /categories.
@@ -13,6 +16,8 @@ export function CategoryListingCards({
   categories: Category[];
   productCounts?: Record<string, number>;
 }) {
+  const t = useT();
+
   return (
     <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-[22px]">
       {categories.map((cat, i) => {
@@ -48,19 +53,16 @@ export function CategoryListingCards({
                 <div className="absolute inset-0 bg-gradient-to-br from-[#00557e] via-foreground to-foreground" />
               )}
 
-              {/* Bottom gradient for legibility of overlaid title */}
               <div
                 aria-hidden="true"
                 className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,37,58,0)_0%,rgba(0,37,58,0)_40%,rgba(0,37,58,0.85)_100%)]"
               />
 
-              {/* Order pill (top-left) */}
               <span className="absolute left-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1 text-[11px] font-bold tracking-wide text-foreground backdrop-blur tabular-nums">
                 {orderTag.split("·")[0]}
                 <span className="text-primary">·{orderTag.split("·")[1]}</span>
               </span>
 
-              {/* Title overlay (bottom of image) */}
               <div className="absolute inset-x-5 bottom-4 z-10 md:inset-x-6">
                 <h3
                   className={`m-0 font-heading font-semibold leading-tight tracking-tight text-white drop-shadow-[0_2px_18px_rgba(0,37,58,0.5)] ${
@@ -75,6 +77,7 @@ export function CategoryListingCards({
             <div className="flex flex-1 flex-col gap-3.5 px-5 py-5 md:px-[22px]">
               {cat.description ? (
                 <p
+                  dir="auto"
                   className={`m-0 leading-[1.55] text-foreground/70 ${
                     isFeature
                       ? "max-w-[640px] text-[14.5px] [-webkit-line-clamp:4]"
@@ -85,7 +88,7 @@ export function CategoryListingCards({
                 </p>
               ) : (
                 <p className="m-0 text-[13.5px] text-foreground/55">
-                  Découvrir les produits de cette catégorie.
+                  {t("categories.fallbackDescription")}
                 </p>
               )}
 
@@ -95,11 +98,11 @@ export function CategoryListingCards({
                     {count}
                   </b>
                   <span className="text-foreground/55">
-                    produit{count > 1 ? "s" : ""}
+                    {count > 1 ? t("categories.productPlural") : t("categories.productSingular")}
                   </span>
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary transition-[gap] group-hover:gap-2.5">
-                  Voir le catalogue
+                  {t("categories.viewCatalog")}
                   <svg
                     viewBox="0 0 24 24"
                     fill="none"

@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useT } from "@/context/LocaleContext";
 
 type Stat = { value: string; label: string };
 
@@ -22,10 +25,12 @@ export function CategoryHero({
   imageUrl,
   productsTotal,
   availableTotal,
-  eyebrow = "Catégorie",
+  eyebrow,
   stats,
   compact = false,
 }: CategoryHeroProps) {
+  const t = useT();
+  const eyebrowLabel = eyebrow ?? t("categories.eyebrow");
   return (
     <section className="overflow-hidden rounded-2xl border border-foreground/10 bg-white shadow-[0_8px_28px_rgba(0,61,92,0.08)]">
       {/* Image with overlay title — mandatory per spec */}
@@ -58,7 +63,7 @@ export function CategoryHero({
               <path d="M8 1.5C5 1.5 3 3.5 3 6.5c0 3.5 5 8 5 8s5-4.5 5-8c0-3-2-5-5-5Z" />
               <circle cx="8" cy="6" r="1.5" />
             </svg>
-            {eyebrow}
+            {eyebrowLabel}
           </span>
           <h1 className={`font-heading font-bold leading-[1.05] tracking-tight text-white drop-shadow-[0_2px_18px_rgba(0,37,58,0.3)] ${compact ? "text-[28px] md:text-[34px] lg:text-[36px]" : "text-3xl md:text-[40px] lg:text-[44px]"}`}>
             {name}
@@ -67,8 +72,8 @@ export function CategoryHero({
             <div className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-background ${compact ? "mt-2" : "mt-3"}`}>
               {productsTotal !== undefined && (
                 <span>
-                  <b className="font-semibold text-white">{productsTotal}</b> produit
-                  {productsTotal > 1 ? "s" : ""} référencé{productsTotal > 1 ? "s" : ""}
+                  <b className="font-semibold text-white">{productsTotal}</b>{" "}
+                  {productsTotal > 1 ? t("products.referencedMany") : t("products.referencedOne")}
                 </span>
               )}
               {productsTotal !== undefined && availableTotal !== undefined && (
@@ -76,8 +81,8 @@ export function CategoryHero({
               )}
               {availableTotal !== undefined && (
                 <span>
-                  <b className="font-semibold text-white">{availableTotal}</b> disponible
-                  {availableTotal > 1 ? "s" : ""} immédiatement
+                  <b className="font-semibold text-white">{availableTotal}</b>{" "}
+                  {availableTotal > 1 ? t("products.availableMany") : t("products.availableOne")}
                 </span>
               )}
             </div>

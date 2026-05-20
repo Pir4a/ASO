@@ -8,7 +8,8 @@ import { ProductImageGallery } from "@/components/product/ProductImageGallery";
 import { ProductSpecs } from "@/components/product/ProductSpecs";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
 import { StockNotifySection } from "@/components/product/StockNotifySection";
-import { useT } from "@/context/LocaleContext";
+import { useT, useLocale } from "@/context/LocaleContext";
+import { formatAmount } from "@/lib/format";
 import type { Category, Product } from "@bootstrap/types";
 
 interface ProductDetailClientProps {
@@ -23,17 +24,13 @@ function buildGalleryImages(product: Product): string[] {
   return [...new Set(urls.filter(Boolean))];
 }
 
-function formatPrice(p: Product) {
-  const value = p.priceCents / 100;
-  return value >= 1000 ? value.toLocaleString("fr-FR") : value.toFixed(2);
-}
-
 export function ProductDetailClient({
   product,
   category,
   relatedProducts,
 }: ProductDetailClientProps) {
   const t = useT();
+  const locale = useLocale();
   const images = buildGalleryImages(product);
   const outOfStock =
     product.status === "out_of_stock" || (product.stock !== undefined && product.stock <= 0);
@@ -92,12 +89,12 @@ export function ProductDetailClient({
             </h1>
 
             {product.sku && (
-              <p className="font-mono text-[12px] text-foreground/55">RÉF · {product.sku}</p>
+              <p className="font-mono text-[12px] text-foreground/55">{t("product.skuRef")} {product.sku}</p>
             )}
 
             <div className="flex items-baseline gap-3">
               <p className="font-heading text-[34px] font-bold leading-none tabular-nums text-foreground">
-                {formatPrice(product)}
+                {formatAmount(locale, product.priceCents / 100)}
               </p>
               <p className="text-base font-medium text-foreground/55">{product.currency}</p>
               {product.vatRate !== undefined && product.vatRate !== null && (
@@ -213,7 +210,7 @@ export function ProductDetailClient({
                   <rect x="2" y="3.5" width="12" height="9" rx="1" />
                   <path d="m2.5 4.5 5.5 4 5.5-4" />
                 </svg>
-                {t("contact.formSend")}
+                {t("product.contactCta")}
               </Link>
             </div>
 

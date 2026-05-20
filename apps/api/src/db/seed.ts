@@ -6,6 +6,13 @@ import { ContentBlock } from '../infrastructure/persistence/typeorm/entities/con
 import { User } from '../infrastructure/persistence/typeorm/entities/user.entity';
 import { getInitialSeedUsers } from './seed-initial-users';
 import { Promotion } from '../infrastructure/persistence/typeorm/entities/promotion.entity';
+import {
+  categoryTranslationPatches,
+  productTranslationPatches,
+  carouselTranslationPatches,
+  homepageTextTranslationPatches,
+  mergeTranslationPatches,
+} from './content-translations.data';
 
 /**
  * Build an Unsplash CDN URL from a photo id, sized for product cards.
@@ -33,13 +40,16 @@ async function seed() {
         'MRI systems, CT scanners, ultrasound machines, and X-ray equipment for precise medical imaging.',
       imageUrl: img('1530497610245-94d3c16cda28'),
       order: 1,
-      translations: {
-        fr: {
-          name: 'Imagerie & Diagnostics',
-          description:
-            'IRM, scanners CT, échographes et systèmes de radiographie numérique pour une imagerie médicale précise.',
+      translations: mergeTranslationPatches(
+        {
+          fr: {
+            name: 'Imagerie & Diagnostics',
+            description:
+              'IRM, scanners CT, échographes et systèmes de radiographie numérique pour une imagerie médicale précise.',
+          },
         },
-      },
+        categoryTranslationPatches['imaging-diagnostics'],
+      ),
     },
     {
       slug: 'surgical-operating-room',
@@ -48,13 +58,16 @@ async function seed() {
         'Surgical instruments, anesthesia stations, operating lights, and sterile field equipment.',
       imageUrl: img('1551601651-bc60f254d532'),
       order: 2,
-      translations: {
-        fr: {
-          name: 'Bloc opératoire',
-          description:
-            "Instruments chirurgicaux, stations d'anesthésie, éclairages scialytiques et équipements stériles.",
+      translations: mergeTranslationPatches(
+        {
+          fr: {
+            name: 'Bloc opératoire',
+            description:
+              "Instruments chirurgicaux, stations d'anesthésie, éclairages scialytiques et équipements stériles.",
+          },
         },
-      },
+        categoryTranslationPatches['surgical-operating-room'],
+      ),
     },
     {
       slug: 'patient-monitoring',
@@ -63,13 +76,16 @@ async function seed() {
         'Vital sign monitors, pulse oximeters, ECG machines, and connected care devices.',
       imageUrl: img('1576765608535-5f04d1e3f289'),
       order: 3,
-      translations: {
-        fr: {
-          name: 'Monitoring patient',
-          description:
-            'Moniteurs multiparamètres, oxymètres de pouls, ECG et solutions de soins connectés.',
+      translations: mergeTranslationPatches(
+        {
+          fr: {
+            name: 'Monitoring patient',
+            description:
+              'Moniteurs multiparamètres, oxymètres de pouls, ECG et solutions de soins connectés.',
+          },
         },
-      },
+        categoryTranslationPatches['patient-monitoring'],
+      ),
     },
     {
       slug: 'protective-equipment',
@@ -78,13 +94,16 @@ async function seed() {
         'Medical-grade gloves, masks, gowns, face shields, and isolation gear.',
       imageUrl: img('1583912086096-8c60d75a53f9'),
       order: 4,
-      translations: {
-        fr: {
-          name: 'Équipements de protection',
-          description:
-            "Gants médicaux, masques, blouses, écrans faciaux et équipements d'isolation.",
+      translations: mergeTranslationPatches(
+        {
+          fr: {
+            name: 'Équipements de protection',
+            description:
+              "Gants médicaux, masques, blouses, écrans faciaux et équipements d'isolation.",
+          },
         },
-      },
+        categoryTranslationPatches['protective-equipment'],
+      ),
     },
     {
       slug: 'mobility-rehabilitation',
@@ -93,13 +112,16 @@ async function seed() {
         'Wheelchairs, walkers, orthopedic braces, and physiotherapy equipment.',
       imageUrl: img('1559757175-5700dde675bc'),
       order: 5,
-      translations: {
-        fr: {
-          name: 'Mobilité & Rééducation',
-          description:
-            'Fauteuils roulants, déambulateurs, attelles orthopédiques et matériel de kinésithérapie.',
+      translations: mergeTranslationPatches(
+        {
+          fr: {
+            name: 'Mobilité & Rééducation',
+            description:
+              'Fauteuils roulants, déambulateurs, attelles orthopédiques et matériel de kinésithérapie.',
+          },
         },
-      },
+        categoryTranslationPatches['mobility-rehabilitation'],
+      ),
     },
   ];
 
@@ -421,6 +443,16 @@ async function seed() {
     },
   ];
 
+  for (const p of products) {
+    const patch = productTranslationPatches[p.slug as string];
+    if (patch) {
+      p.translations = mergeTranslationPatches(
+        p.translations as Record<string, Record<string, string>> | undefined,
+        patch,
+      ) as typeof p.translations;
+    }
+  }
+
   await productRepo.save(products);
   console.log(`✓ ${products.length} products created`);
 
@@ -500,6 +532,29 @@ async function seed() {
       order: 3,
     },
   ];
+
+  for (const block of contentBlocks) {
+    const payload = { ...block.payload } as Record<string, unknown>;
+    if (block.type === 'homepage_text') {
+      payload.translations = mergeTranslationPatches(
+        payload.translations as Record<string, Record<string, string>> | undefined,
+        homepageTextTranslationPatches,
+      );
+      block.payload = payload as typeof block.payload;
+      continue;
+    }
+    if (block.type === 'carousel') {
+      const href = typeof payload.href === 'string' ? payload.href : '';
+      const patch = carouselTranslationPatches[href];
+      if (patch) {
+        payload.translations = mergeTranslationPatches(
+          payload.translations as Record<string, Record<string, string>> | undefined,
+          patch,
+        );
+        block.payload = payload as typeof block.payload;
+      }
+    }
+  }
 
   await contentRepo.save(contentBlocks);
   console.log(`✓ ${contentBlocks.length} content blocks created`);

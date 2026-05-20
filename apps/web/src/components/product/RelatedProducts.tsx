@@ -1,14 +1,13 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useT, useLocale } from "@/context/LocaleContext";
+import { formatAmount } from "@/lib/format";
 import type { Product } from "@bootstrap/types";
 
 function isOutOfStock(p: Product) {
   return p.status === "out_of_stock" || (p.stock !== undefined && p.stock <= 0);
-}
-
-function formatPrice(p: Product) {
-  const value = p.priceCents / 100;
-  return value >= 1000 ? value.toLocaleString("fr-FR") : value.toFixed(2);
 }
 
 const PLACEHOLDER_ICON = (
@@ -26,6 +25,9 @@ export function RelatedProducts({
   categoryName?: string;
   categorySlug?: string;
 }) {
+  const t = useT();
+  const locale = useLocale();
+
   if (!products.length) return null;
 
   return (
@@ -34,13 +36,15 @@ export function RelatedProducts({
         <div>
           <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
             <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-            Produits similaires
+            {t("product.related.eyebrow")}
           </p>
           <h2
             id="related-title"
             className="font-heading text-2xl font-semibold tracking-tight text-foreground md:text-[26px]"
           >
-            {categoryName ? `Aussi dans ${categoryName}` : "Vous pourriez aussi aimer"}
+            {categoryName
+              ? `${t("product.related.titleInCategoryPrefix")} ${categoryName}`
+              : t("product.related.titleFallback")}
           </h2>
         </div>
         {categorySlug && (
@@ -48,7 +52,7 @@ export function RelatedProducts({
             href={`/categories/${categorySlug}`}
             className="hidden items-center gap-1.5 text-sm font-semibold text-primary transition hover:text-primary-hover sm:inline-flex"
           >
-            Voir la catégorie
+            {t("product.related.viewCategory")}
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
               <path d="M3 8h10m-3-3 3 3-3 3" />
             </svg>
@@ -101,7 +105,7 @@ export function RelatedProducts({
                       oos ? "text-foreground/55" : "text-foreground"
                     }`}
                   >
-                    <span className="num tabular-nums">{formatPrice(p)}</span>{" "}
+                    <span className="num tabular-nums">{formatAmount(locale, p.priceCents / 100)}</span>{" "}
                     <span className="text-xs font-medium text-foreground/55">{p.currency}</span>
                   </p>
                   {oos && (
@@ -110,7 +114,7 @@ export function RelatedProducts({
                         <circle cx="8" cy="8" r="6" />
                         <path d="m4.5 4.5 7 7" />
                       </svg>
-                      En rupture de stock
+                      {t("products.status.out_of_stock")}
                     </span>
                   )}
                 </div>

@@ -60,7 +60,7 @@ export async function TopProducts({ products }: { products: Product[] }) {
           </div>
           <div className="px-4 py-3.5">
             {product.category?.name && (
-              <p className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-primary">
+              <p dir="auto" className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-primary">
                 {product.category.name}
               </p>
             )}

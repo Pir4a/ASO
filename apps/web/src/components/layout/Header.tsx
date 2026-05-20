@@ -69,7 +69,7 @@ export function Header({ locale }: HeaderProps) {
 
   useEffect(() => {
     let aborted = false;
-    fetch(`${API_URL}/categories`)
+    fetch(`${API_URL}/categories?lang=${encodeURIComponent(locale)}`)
       .then((r) => (r.ok ? r.json() : []))
       .then((data: Category[]) => {
         if (!aborted) setCategories(Array.isArray(data) ? data : []);
@@ -78,7 +78,7 @@ export function Header({ locale }: HeaderProps) {
     return () => {
       aborted = true;
     };
-  }, []);
+  }, [locale]);
 
   // Debounced suggestion fetch. Server-side `inStockOnly=1` already filters
   // unavailable products, so we don't re-check stock client-side.
@@ -106,7 +106,7 @@ export function Header({ locale }: HeaderProps) {
       let productSuggestions: Suggestion[] = [];
       try {
         const res = await fetch(
-          `${API_URL}/products/search?q=${encodeURIComponent(q)}&page=1&limit=6&sort=relevance&inStockOnly=1`,
+          `${API_URL}/products/search?q=${encodeURIComponent(q)}&page=1&limit=6&sort=relevance&inStockOnly=1&lang=${encodeURIComponent(locale)}`,
           { signal: controller.signal },
         );
         if (res.ok) {
@@ -140,7 +140,7 @@ export function Header({ locale }: HeaderProps) {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [query]);
+  }, [query, locale]);
 
   useEffect(() => {
     setActiveSuggestionIndex(-1);

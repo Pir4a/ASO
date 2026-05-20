@@ -40,8 +40,9 @@ export function CategoryPagination({
       aria-label={t("search.title")}
     >
       <div className="text-sm text-foreground/70">
-        Page <span className="font-semibold text-foreground">{page}</span> /{" "}
-        <span className="font-semibold text-foreground">{totalPages}</span>
+        {t("pagination.pageOf")
+          .replace("{current}", String(page))
+          .replace("{total}", String(totalPages))}
       </div>
       <div className="flex gap-2">
         {prev ? (
