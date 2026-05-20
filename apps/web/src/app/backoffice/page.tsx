@@ -97,6 +97,8 @@ type ContactMessage = {
   email: string;
   message: string;
   createdAt: string;
+  // CDC XVI.1 — drives the "non traités" badge in the sidebar.
+  isRead: boolean;
 };
 
 type AdminOrderListRow = {
@@ -213,6 +215,10 @@ function BackofficeDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
+  // CDC XVI.1 — sidebar badge counts only unread; we keep it as its own piece
+  // of state so an admin who hasn't opened the Messages tab still sees the
+  // correct count (the full list isn't loaded yet at that point).
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
 
   const [search, setSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
@@ -367,11 +373,54 @@ function BackofficeDashboard() {
     try {
       const res = await authFetch(`${API_URL}/contact/admin`);
       if (!res.ok) throw new Error();
-      setContactMessages(await res.json());
+      const list = (await res.json()) as ContactMessage[];
+      setContactMessages(list);
+      // Keep the sidebar badge in sync without an extra round-trip when the
+      // full list has just been fetched.
+      setUnreadMessagesCount(list.filter((m) => !m.isRead).length);
     } catch {
       flash("error", "Chargement des messages impossible.");
     } finally {
       setLoadingMessages(false);
+    }
+  };
+
+  // Cheap COUNT(*) endpoint, called from the dashboard so the sidebar badge is
+  // accurate even before the admin opens the Messages section.
+  const loadUnreadMessagesCount = async () => {
+    try {
+      const res = await authFetch(`${API_URL}/contact/admin/unread-count`);
+      if (!res.ok) throw new Error();
+      const body = (await res.json()) as { unread: number };
+      setUnreadMessagesCount(body.unread);
+    } catch {
+      // Silent — the sidebar badge just falls back to "no badge" rather than
+      // surfacing an error toast on every dashboard load.
+    }
+  };
+
+  // CDC XVI.1 — clicking a row marks it as read. We optimistically update
+  // local state so the dot vanishes immediately, then reconcile with the
+  // server response.
+  const markMessageAsRead = async (id: string) => {
+    const target = contactMessages.find((m) => m.id === id);
+    if (!target || target.isRead) return;
+    setContactMessages((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, isRead: true } : m)),
+    );
+    setUnreadMessagesCount((c) => Math.max(0, c - 1));
+    try {
+      const res = await authFetch(`${API_URL}/contact/admin/${id}/read`, {
+        method: "PATCH",
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      // Roll back on failure so the badge stays truthful.
+      setContactMessages((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, isRead: false } : m)),
+      );
+      setUnreadMessagesCount((c) => c + 1);
+      flash("error", "Impossible de marquer le message comme lu.");
     }
   };
 
@@ -455,6 +504,9 @@ function BackofficeDashboard() {
       loadProducts(),
       loadUsers(),
       loadContactMessages(),
+      // Fallback path: if loadContactMessages errors, the cheap count endpoint
+      // still keeps the sidebar badge truthful.
+      loadUnreadMessagesCount(),
       loadDashboard(),
       section === "orders"
         ? loadAdminOrders(
@@ -496,6 +548,7 @@ function BackofficeDashboard() {
       loadProducts(),
       loadUsers(),
       loadContactMessages(),
+      loadUnreadMessagesCount(),
       loadDashboard(),
       loadAdminOrders(),
     ]);
@@ -1088,6 +1141,8 @@ function BackofficeDashboard() {
     orders: ordersMeta?.total ?? adminOrders.length,
     users: users.length,
     messages: contactMessages.length,
+    // CDC XVI.1 — the sidebar uses *unread*, not total, to light up the dot.
+    unreadMessages: unreadMessagesCount,
   };
 
   const sparkSeed = (key: string) => {
@@ -1130,7 +1185,15 @@ function BackofficeDashboard() {
         { id: "orders", name: "Commandes", icon: "Orders", count: counts.orders },
         { id: "invoices", name: "Factures & Avoirs", icon: "Doc" },
         { id: "users", name: "Utilisateurs", icon: "Users", count: counts.users },
-        { id: "messages", name: "Messages", icon: "Messages", dot: counts.messages > 0 },
+        {
+          id: "messages",
+          name: "Messages",
+          icon: "Messages",
+          // Sidebar count shows non-traités; we hide the badge entirely once
+          // every message has been opened (CDC XVI.1 acceptance criterion).
+          count: counts.unreadMessages > 0 ? counts.unreadMessages : undefined,
+          dot: counts.unreadMessages > 0,
+        },
         { id: "chat", name: "Chat", icon: "Messages" },
       ],
     },
@@ -1487,10 +1550,12 @@ function BackofficeDashboard() {
                 <KpiCard
                   label="Messages"
                   value={contactMessages.length}
-                  hint={contactMessages.length === 0 ? "0 non lus" : `${contactMessages.length} non lus`}
+                  // CDC XVI.1 — the "hint" must reflect the real unread count
+                  // backed by isRead, not the total list size.
+                  hint={`${unreadMessagesCount} non lu${unreadMessagesCount > 1 ? "s" : ""}`}
                   delta={
-                    contactMessages.length > 0
-                      ? { dir: "up", txt: "+" + contactMessages.length }
+                    unreadMessagesCount > 0
+                      ? { dir: "up", txt: "+" + unreadMessagesCount }
                       : { dir: "flat", txt: "—" }
                   }
                   spark={sparkSeed("m" + contactMessages.length)}
@@ -1816,7 +1881,10 @@ function BackofficeDashboard() {
                   <div className="bo-card-head">
                     <div>
                       <div className="bo-card-title">Derniers messages</div>
-                      <div className="bo-card-sub">{contactMessages.length} au total</div>
+                      <div className="bo-card-sub">
+                        {contactMessages.length} au total · {unreadMessagesCount} non lu
+                        {unreadMessagesCount > 1 ? "s" : ""}
+                      </div>
                     </div>
                     <button className="bo-btn" type="button" onClick={() => setSection("messages")}>
                       Voir tout <Icon.ChevR />
@@ -1841,7 +1909,21 @@ function BackofficeDashboard() {
                             <span className="bo-mono" style={{ fontSize: 11.5, color: "var(--bo-text-muted)" }}>
                               {m.email}
                             </span>
-                            <span style={{ fontWeight: 500 }}>{m.subject}</span>
+                            <span style={{ fontWeight: m.isRead ? 500 : 700 }}>{m.subject}</span>
+                            {!m.isRead && (
+                              <span
+                                title="Non lu"
+                                aria-label="Non lu"
+                                style={{
+                                  display: "inline-block",
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: 999,
+                                  background: "var(--bo-brand)",
+                                  marginInlineStart: 6,
+                                }}
+                              />
+                            )}
                           </div>
                         </div>
                       ))
@@ -3236,7 +3318,7 @@ function BackofficeDashboard() {
           {section === "messages" && (
             <Panel
               title="Messages contact"
-              subtitle={`${contactMessages.length} message${contactMessages.length > 1 ? "s" : ""}`}
+              subtitle={`${contactMessages.length} message${contactMessages.length > 1 ? "s" : ""} · ${unreadMessagesCount} non lu${unreadMessagesCount > 1 ? "s" : ""}`}
               actions={
                 <button className="bo-btn primary" type="button" onClick={loadContactMessages}>
                   <Icon.Refresh /> Rafraîchir
@@ -3268,16 +3350,30 @@ function BackofficeDashboard() {
               ) : (
                 <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                   {contactMessages
+                    .slice()
                     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                     .map((msg) => (
                       <li
                         key={msg.id}
+                        // CDC XVI.1 — opening (clicking) a message flips
+                        // isRead. Optimistic update lives in markMessageAsRead.
+                        onClick={() => void markMessageAsRead(msg.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            void markMessageAsRead(msg.id);
+                          }
+                        }}
                         style={{
-                          padding: "12px 0",
+                          padding: "12px 8px",
                           borderTop: "1px solid var(--bo-border)",
                           display: "flex",
                           gap: 12,
                           alignItems: "flex-start",
+                          cursor: msg.isRead ? "default" : "pointer",
+                          background: msg.isRead ? "transparent" : "var(--bo-panel-2)",
                         }}
                       >
                         <span
@@ -3298,9 +3394,32 @@ function BackofficeDashboard() {
                               justifyContent: "space-between",
                               gap: 8,
                               flexWrap: "wrap",
+                              alignItems: "center",
                             }}
                           >
-                            <span style={{ fontWeight: 600 }}>{msg.subject}</span>
+                            <span
+                              style={{
+                                fontWeight: msg.isRead ? 500 : 700,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                              }}
+                            >
+                              {!msg.isRead && (
+                                <span
+                                  title="Non lu"
+                                  aria-label="Message non lu"
+                                  style={{
+                                    display: "inline-block",
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: 999,
+                                    background: "var(--bo-brand)",
+                                  }}
+                                />
+                              )}
+                              {msg.subject}
+                            </span>
                             <span className="bo-dim bo-mono" style={{ fontSize: 10 }}>
                               {new Date(msg.createdAt).toLocaleString("fr-FR")}
                             </span>
@@ -3308,6 +3427,7 @@ function BackofficeDashboard() {
                           <a
                             href={`mailto:${msg.email}`}
                             style={{ color: "var(--bo-brand)", fontSize: 11.5 }}
+                            onClick={(e) => e.stopPropagation()}
                           >
                             {msg.email}
                           </a>
