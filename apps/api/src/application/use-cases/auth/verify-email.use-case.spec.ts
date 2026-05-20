@@ -12,6 +12,8 @@ describe('VerifyEmailUseCase', () => {
     findById: jest.fn(),
     findByEmail: jest.fn(),
     findByVerificationToken: jest.fn(),
+    findByPasswordResetToken: jest.fn(),
+    findByPendingEmailToken: jest.fn(),
     findAll: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
