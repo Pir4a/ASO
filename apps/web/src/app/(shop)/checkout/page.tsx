@@ -46,7 +46,7 @@ function formatPrice(cents: number, currency = "EUR") {
 
 export default function CheckoutPage() {
   const t = useT();
-  const { refreshCart } = useCart();
+  const { refreshCart, discount: cartDiscount, promoCode: cartPromoCode } = useCart();
   const { user, isAuthenticated } = useAuth();
 
   const [step, setStep] = useState<Step>(isAuthenticated ? "address" : "identify");
@@ -171,9 +171,13 @@ export default function CheckoutPage() {
         order = await createOrder({
           address: inlineAddress,
           guestCartId: guestCartId ?? undefined,
+          promoCode: cartPromoCode ?? undefined,
         });
       } else {
-        order = await createOrder({ addressId: selectedAddressId });
+        order = await createOrder({
+          addressId: selectedAddressId,
+          promoCode: cartPromoCode ?? undefined,
+        });
       }
       setOrderResult(order);
       const intent = await createPaymentIntent(order.id, user?.id);
@@ -478,7 +482,7 @@ export default function CheckoutPage() {
                 options={{ clientSecret, appearance: { theme: "stripe" } }}
               >
                 <CheckoutForm
-                  amount={cartTotal}
+                  amount={Math.max(0, cartTotal - cartDiscount)}
                   currency={currency}
                   onSuccess={handlePaymentSuccess}
                 />
@@ -554,6 +558,16 @@ export default function CheckoutPage() {
                     {formatPrice(cartVat, currency)}
                   </dd>
                 </div>
+                {cartDiscount > 0 && (
+                  <div className="flex justify-between">
+                    <dt className="text-success">
+                      {t("cart.discount")}{cartPromoCode ? ` (${cartPromoCode})` : ""}
+                    </dt>
+                    <dd className="tabular-nums text-success">
+                      −{formatPrice(cartDiscount, currency)}
+                    </dd>
+                  </div>
+                )}
               </dl>
 
               <div className="flex items-baseline justify-between border-t border-foreground/10 pt-4">
@@ -561,7 +575,7 @@ export default function CheckoutPage() {
                   {t("cart.totalIncludingVat")}
                 </span>
                 <span className="font-heading text-[20px] font-bold tabular-nums text-foreground">
-                  {formatPrice(cartTotal, currency)}
+                  {formatPrice(Math.max(0, cartTotal - cartDiscount), currency)}
                 </span>
               </div>
 

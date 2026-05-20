@@ -21,6 +21,7 @@ import { AuthModule } from './auth.module';
 import { ProductsModule } from './products.module';
 import { PaymentModule } from './payment.module';
 import { InvoicesModule } from './invoices.module';
+import { PromotionModule } from './promotion.module';
 import { PdfService } from '../services/pdf.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../guards/optional-jwt-auth.guard';
@@ -35,6 +36,7 @@ import { RolesGuard } from '../guards/roles.guard';
         AuthModule,
         ProductsModule,
         InvoicesModule,
+        PromotionModule,
         forwardRef(() => PaymentModule),
     ],
     controllers: [CheckoutController, OrdersController, AdminController],

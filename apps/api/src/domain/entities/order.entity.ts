@@ -31,6 +31,10 @@ export class Order {
     userId: string | null;
     status: OrderStatus;
     total: number;
+    /** Promo code applied at order creation; null if none. */
+    promotionCode?: string | null;
+    /** Absolute discount in the same unit as `total` (€, not cents). */
+    discountAmount?: number | null;
     currency: string;
     shippingAddress: Address;
     billingAddress?: Address;

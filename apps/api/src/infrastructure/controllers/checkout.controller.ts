@@ -20,6 +20,8 @@ interface CreateCheckoutBody {
     addressId?: string;
     /** Inline shipping address (used by guests with no saved address). */
     address?: GuestAddressInput;
+    /** Promo code applied at the cart step. */
+    promoCode?: string;
 }
 
 interface ConfirmCheckoutBody {
@@ -59,6 +61,7 @@ export class CheckoutController {
             guestCartId: userId ? undefined : guestCartId,
             addressId: body.addressId,
             address: body.address,
+            promoCode: body.promoCode,
         });
     }
 

@@ -536,7 +536,12 @@ export type GuestCheckoutAddress = {
 };
 
 export async function createOrder(
-  input: { addressId?: string; address?: GuestCheckoutAddress; guestCartId?: string },
+  input: {
+    addressId?: string;
+    address?: GuestCheckoutAddress;
+    guestCartId?: string;
+    promoCode?: string;
+  },
 ): Promise<any> {
   const { authFetch } = await import("./auth");
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -544,6 +549,7 @@ export async function createOrder(
   const body: Record<string, unknown> = {};
   if (input.addressId) body.addressId = input.addressId;
   if (input.address) body.address = input.address;
+  if (input.promoCode?.trim()) body.promoCode = input.promoCode.trim();
   const res = await authFetch("/checkout", {
     method: "POST",
     headers,

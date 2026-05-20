@@ -1,4 +1,4 @@
-import { Inject, Injectable, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { Order, OrderItem } from '../../../domain/entities/order.entity';
 import { Address } from '../../../domain/entities/address.entity';
 import type { OrderRepository } from '../../../domain/repositories/order.repository.interface';
@@ -9,6 +9,8 @@ import type { AddressRepository } from '../../../domain/repositories/address.rep
 import { ADDRESS_REPOSITORY_TOKEN } from '../../../domain/repositories/address.repository.interface';
 import type { ProductRepository } from '../../../domain/repositories/product.repository.interface';
 import { PRODUCT_REPOSITORY_TOKEN } from '../../../domain/repositories/product.repository.interface';
+import type { PromotionRepository } from '../../../domain/repositories/promotion.repository.interface';
+import { PROMOTION_REPOSITORY_TOKEN } from '../../../domain/repositories/promotion.repository.interface';
 import { OrderNumberService } from './order-number.service';
 
 export interface GuestAddressInput {
@@ -32,10 +34,14 @@ export interface CreateOrderInput {
     addressId?: string;
     /** Inline address payload, used by guests with no saved addresses. */
     address?: GuestAddressInput;
+    /** Promo code applied at cart step. Validated and persisted on the order. */
+    promoCode?: string;
 }
 
 @Injectable()
 export class CreateOrderUseCase {
+    private readonly logger = new Logger(CreateOrderUseCase.name);
+
     constructor(
         @Inject(ORDER_REPOSITORY_TOKEN)
         private readonly orderRepository: OrderRepository,
@@ -45,6 +51,8 @@ export class CreateOrderUseCase {
         private readonly addressRepository: AddressRepository,
         @Inject(PRODUCT_REPOSITORY_TOKEN)
         private readonly productRepository: ProductRepository,
+        @Inject(PROMOTION_REPOSITORY_TOKEN)
+        private readonly promotionRepository: PromotionRepository,
         private readonly orderNumberService: OrderNumberService,
     ) { }
 
@@ -79,7 +87,14 @@ export class CreateOrderUseCase {
             });
         });
 
-        const total = items.reduce((sum, it) => sum + it.price * it.quantity, 0);
+        const grossTotal = items.reduce((sum, it) => sum + it.price * it.quantity, 0);
+
+        // Promo handling. The cart-page promo endpoint is stateless: it only
+        // returns a discount preview. The Stripe payment intent is later
+        // created from `order.total`, so the discount MUST live on the order
+        // — otherwise the customer would be charged the gross amount.
+        const { finalTotal, discountAmount, promotionCode } =
+            await this.applyPromo(grossTotal, input.promoCode);
 
         const now = new Date();
         const orderNumber = await this.orderNumberService.generate(now);
@@ -90,7 +105,9 @@ export class CreateOrderUseCase {
             // will create the User and attach them on confirm.
             userId: input.userId ?? '',
             status: 'pending',
-            total,
+            total: finalTotal,
+            promotionCode,
+            discountAmount,
             currency: 'EUR',
             shippingAddress,
             billingAddress: shippingAddress,
@@ -105,6 +122,65 @@ export class CreateOrderUseCase {
 
         // Cart is closed only on payment confirmation, never here.
         return this.orderRepository.create(order);
+    }
+
+    /**
+     * Resolves an optional promo code into a discount applied to the order
+     * total. Validates the code against the live `Promotion` row (active,
+     * within validity window, under usage cap, min-order respected) and
+     * increments `currentUsages` once per persisted order. Throws when the
+     * caller asked for a code that's invalid — we'd rather fail the order
+     * than silently overcharge.
+     *
+     * `grossTotal` is in € (decimal). `Promotion.calculateDiscount` works in
+     * the same unit it receives, so we convert through cents internally to
+     * preserve the int-precision the entity expects for `value` /
+     * `minOrderAmount`.
+     */
+    private async applyPromo(
+        grossTotal: number,
+        rawCode?: string,
+    ): Promise<{ finalTotal: number; discountAmount: number | null; promotionCode: string | null }> {
+        const code = rawCode?.trim().toUpperCase();
+        if (!code) {
+            return { finalTotal: grossTotal, discountAmount: null, promotionCode: null };
+        }
+
+        const promotion = await this.promotionRepository.findByCode(code);
+        if (!promotion || !promotion.isValid()) {
+            throw new BadRequestException('Code promo invalide ou expiré.');
+        }
+
+        const grossCents = Math.round(grossTotal * 100);
+        if (promotion.minOrderAmount && grossCents < promotion.minOrderAmount) {
+            throw new BadRequestException(
+                `Montant minimum requis : ${(promotion.minOrderAmount / 100).toFixed(2)} €.`,
+            );
+        }
+
+        const discountCents = promotion.calculateDiscount(grossCents);
+        if (discountCents <= 0) {
+            return { finalTotal: grossTotal, discountAmount: null, promotionCode: null };
+        }
+
+        const discountAmount = Math.min(grossTotal, discountCents / 100);
+        const finalTotal = Math.max(0, grossTotal - discountAmount);
+
+        promotion.currentUsages += 1;
+        try {
+            await this.promotionRepository.update(promotion);
+        } catch (err) {
+            // Usage tracking is best-effort — never block an order over it.
+            this.logger.warn(
+                `Failed to increment usage for ${promotion.code}: ${(err as Error).message}`,
+            );
+        }
+
+        return {
+            finalTotal: Math.round(finalTotal * 100) / 100,
+            discountAmount: Math.round(discountAmount * 100) / 100,
+            promotionCode: promotion.code,
+        };
     }
 
     private async resolveAddress(input: CreateOrderInput): Promise<Address> {

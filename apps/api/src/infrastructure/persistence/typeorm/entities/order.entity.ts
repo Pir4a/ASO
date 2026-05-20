@@ -33,6 +33,14 @@ export class Order {
     @Column({ type: 'decimal', precision: 10, scale: 2 })
     total: number;
 
+    /** Promo code applied at order creation (`WELCOME10`, …); null when no discount. */
+    @Column({ type: 'varchar', length: 64, nullable: true })
+    promotionCode: string | null;
+
+    /** Discount in the same unit as `total` (€). 0 / null when no promo. */
+    @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+    discountAmount: number | null;
+
     @Column({ length: 3, default: 'EUR' })
     currency: string;
 

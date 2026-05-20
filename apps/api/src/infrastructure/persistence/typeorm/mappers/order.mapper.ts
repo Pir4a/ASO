@@ -13,6 +13,11 @@ export class OrderMapper {
             userId: entity.userId ?? '',
             status: entity.status,
             total: Number(entity.total),
+            promotionCode: entity.promotionCode ?? null,
+            discountAmount:
+                entity.discountAmount !== null && entity.discountAmount !== undefined
+                    ? Number(entity.discountAmount)
+                    : null,
             currency: entity.currency,
             shippingAddress: new DomainAddress(entity.shippingAddress),
             billingAddress: entity.billingAddress ? new DomainAddress(entity.billingAddress) : undefined,
@@ -47,6 +52,8 @@ export class OrderMapper {
         entity.userId = domain.userId ? domain.userId : null;
         entity.status = domain.status;
         entity.total = domain.total;
+        entity.promotionCode = domain.promotionCode ?? null;
+        entity.discountAmount = domain.discountAmount ?? null;
         entity.currency = domain.currency;
         entity.shippingAddress = domain.shippingAddress; // JSONB stores object directly
         entity.billingAddress = domain.billingAddress;
