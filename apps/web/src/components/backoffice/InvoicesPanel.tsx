@@ -176,7 +176,7 @@ export function InvoicesPanel({ flash }: { flash?: (kind: "success" | "error", t
                             </tr>
                         ) : (
                             invoices.map((inv) => (
-                                <tr key={inv.id}>
+                                <tr key={inv.id} data-bo-target={`invoice:${inv.number}`}>
                                     <td className="bo-mono">{inv.number}</td>
                                     <td>{inv.customerEmail ?? <span className="bo-muted">—</span>}</td>
                                     <td>{formatDate(inv.issuedAt)}</td>

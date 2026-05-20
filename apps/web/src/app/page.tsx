@@ -4,6 +4,7 @@ import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { TopProducts } from "@/components/home/TopProducts";
 import { getHomepageData } from "@/lib/api";
 import { getLocaleFromCookie } from "@/lib/i18n.server";
+import { sanitizeRichText } from "@/lib/sanitize-rich-text";
 import { getTranslations } from "@/lib/translations";
 
 export default async function Home() {
@@ -41,9 +42,14 @@ export default async function Home() {
               </p>
             )}
             {homepageText.body && (
-              <p className="mt-1 max-w-3xl text-sm leading-relaxed text-foreground/70">
-                {homepageText.body}
-              </p>
+              // Rich-text body (CDC XVI.6). Sanitized server-side: only b /
+              // strong / i / em / a / span / br survive, plus colored
+              // <span style="color:…">. The surrounding <html dir> attribute
+              // keeps RTL locales rendering correctly.
+              <div
+                className="mt-1 max-w-3xl text-sm leading-relaxed text-foreground/70 [&_a]:text-primary [&_a]:underline"
+                dangerouslySetInnerHTML={{ __html: sanitizeRichText(homepageText.body) }}
+              />
             )}
           </div>
           <ul className="flex justify-around gap-6 border-t border-foreground/10 pt-4 text-center md:border-l md:border-t-0 md:pl-6 md:pt-0">

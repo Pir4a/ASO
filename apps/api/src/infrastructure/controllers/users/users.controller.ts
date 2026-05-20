@@ -37,7 +37,17 @@ export class UsersController {
   async findAll(
     @Query('q') query?: string,
     @Query('status') status?: 'active' | 'inactive' | 'pending',
-    @Query('sort') sort?: 'email' | 'created' | 'lastLogin',
+    // CDC §XVI — every column in the BO users table is clickable to sort.
+    @Query('sort')
+    sort?:
+      | 'email'
+      | 'created'
+      | 'lastLogin'
+      | 'name'
+      | 'status'
+      | 'orderCount'
+      | 'revenue',
+    @Query('dir') dir?: 'asc' | 'desc',
   ) {
     const users = await this.getUsersUseCase.execute();
     const filtered = users.filter((u) => {
@@ -48,13 +58,6 @@ export class UsersController {
       return true;
     });
 
-    filtered.sort((a, b) => {
-      if (sort === 'lastLogin') {
-        return new Date(b.lastLoginAt || 0).getTime() - new Date(a.lastLoginAt || 0).getTime();
-      }
-      return a.email.localeCompare(b.email);
-    });
-
     // Aggregate per-customer order count + revenue (cancelled excluded) and
     // address counts in two batched queries — much cheaper than N+1.
     const ids = filtered.map((u) => u.id);
@@ -63,6 +66,58 @@ export class UsersController {
       ids.map(async (id) => [id, (await this.addressRepository.findAllByUserId(id)).length] as const),
     );
     const addressMap = new Map(addressCounts);
+
+    // We need the aggregated stats for the orderCount / revenue sorts, so sort
+    // after the aggregation step. Default order matches the previous behaviour
+    // (alphabetical by email, ascending) so existing UX is preserved.
+    const direction = dir === 'desc' ? -1 : 1;
+    const dateKey = (v: Date | string | null | undefined): number =>
+      v ? new Date(v).getTime() : 0;
+    filtered.sort((a, b) => {
+      switch (sort) {
+        case 'lastLogin':
+          // Historical default for this field was DESC (most recent first).
+          return (
+            (dateKey(b.lastLoginAt) - dateKey(a.lastLoginAt)) *
+            (dir === 'asc' ? -1 : 1)
+          );
+        case 'created':
+          return (
+            (dateKey(b.createdAt) - dateKey(a.createdAt)) *
+            (dir === 'asc' ? -1 : 1)
+          );
+        case 'name': {
+          const an = [a.firstName, a.lastName].filter(Boolean).join(' ').trim().toLowerCase()
+            || a.email.toLowerCase();
+          const bn = [b.firstName, b.lastName].filter(Boolean).join(' ').trim().toLowerCase()
+            || b.email.toLowerCase();
+          return an.localeCompare(bn) * direction;
+        }
+        case 'status': {
+          // active < pending < inactive in display order — sort accordingly.
+          const rank = (u: typeof a): number => {
+            if (u.isActive === false) return 2;
+            return u.isVerified ? 0 : 1;
+          };
+          return (rank(a) - rank(b)) * direction;
+        }
+        case 'orderCount':
+          return (
+            ((stats.get(a.id)?.orderCount ?? 0) -
+              (stats.get(b.id)?.orderCount ?? 0)) *
+            direction
+          );
+        case 'revenue':
+          return (
+            ((stats.get(a.id)?.revenue ?? 0) -
+              (stats.get(b.id)?.revenue ?? 0)) *
+            direction
+          );
+        case 'email':
+        default:
+          return a.email.localeCompare(b.email) * direction;
+      }
+    });
 
     return filtered.map((u) => {
       const s = stats.get(u.id);

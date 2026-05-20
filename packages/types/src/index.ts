@@ -48,6 +48,12 @@ export interface CarouselSlide {
   order: number;
   href?: string;
   ctaLabel?: string;
+  /**
+   * Marks the slide as the carousel's "image principale" (CDC XVI.6).
+   * Exactly one slide should be flagged at a time; the storefront surfaces
+   * the principal slide first.
+   */
+  isPrincipal?: boolean;
 }
 
 export interface HomepageText {

@@ -114,8 +114,22 @@ export class AuthController {
   }
 
   @Get('verify')
-  async verifyEmail(@Query('token') token: string) {
-    return this.authService.verifyEmail(token);
+  async verifyEmail(
+    @Query('token') token: string,
+    @Res({ passthrough: true }) res: ExpressResponse,
+  ) {
+    const result = await this.authService.verifyEmail(token);
+    // MFA path: no tokens issued; front-end will route to /login.
+    if ('mfaRequired' in result && result.mfaRequired) {
+      return { verified: true, mfaRequired: true, email: result.email };
+    }
+    // Reuse the same cookie helper as /login — same name, flags, scope.
+    this.setRefreshCookie(res, result.refresh_token, result.rememberMe);
+    return {
+      verified: true,
+      access_token: result.access_token,
+      user: result.user,
+    };
   }
 
   @HttpCode(HttpStatus.OK)

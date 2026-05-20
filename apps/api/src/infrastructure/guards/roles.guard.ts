@@ -23,17 +23,28 @@ export class RolesGuard implements CanActivate {
       | undefined;
     if (!user?.role || !requiredRoles.includes(user.role)) return false;
 
-    // CDC §XVI.9 — admin endpoints require an MFA-cleared session. We enforce
-    // it only for admins who have already enrolled MFA: an unenrolled admin
-    // still needs to reach the BO to enable it. Once mfaEnabled flips to true
-    // (after /auth/mfa/setup + /verify), the gate becomes mandatory for that
-    // user's subsequent sessions and the front-end is expected to walk them
-    // through the second-step challenge at login.
-    if (requiredRoles.includes('admin') && user.mfaEnabled === true && user.mfa !== true) {
-      throw new ForbiddenException({
-        message: 'MFA required for admin operations.',
-        code: 'MFA_REQUIRED',
-      });
+    // CDC §XVI.10 — admin endpoints REQUIRE strong (MFA-cleared) auth. Two
+    // failure modes to surface distinctly so the front-end can route the user
+    // correctly:
+    //   1. The admin has no MFA enrolled at all → block all /admin/* routes
+    //      and tell them to enroll. /profile remains reachable because it is
+    //      gated by JwtAuthGuard only.
+    //   2. The admin enrolled MFA but the current session never cleared the
+    //      challenge (refresh-only re-auth, stale token, etc.) → block and
+    //      ask them to log in again so the MFA challenge is presented.
+    if (requiredRoles.includes('admin') && user.role === 'admin') {
+      if (user.mfaEnabled !== true) {
+        throw new ForbiddenException({
+          message: 'MFA enrollment is required for admin access.',
+          code: 'ADMIN_MFA_REQUIRED',
+        });
+      }
+      if (user.mfa !== true) {
+        throw new ForbiddenException({
+          message: 'MFA required for admin operations.',
+          code: 'MFA_REQUIRED',
+        });
+      }
     }
     return true;
   }

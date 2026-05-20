@@ -88,8 +88,54 @@ export class AuthService {
     return this.resendVerificationEmailUseCase.execute(email);
   }
 
+  /** Verifies the email-confirmation token and, on success, either auto-signs
+      the user in (issuing access + refresh tokens like /login does) or — when
+      MFA is enabled on the account — short-circuits with `{ mfaRequired }` so
+      the front-end can route the user to /login for the second factor. We do
+      NOT bypass MFA: a verified-but-MFA-enabled user must still post their
+      TOTP to /auth/mfa/challenge (here we just hand them back to /login). */
   async verifyEmail(token: string) {
-    return this.verifyEmailUseCase.execute(token);
+    const user = await this.verifyEmailUseCase.execute(token);
+
+    if (user.isActive === false) {
+      // Same shape as resend-verification so the UI can disambiguate from
+      // "bad token". We don't expose this on the verify path normally, but
+      // an admin could have disabled the account between signup and click.
+      throw new UnauthorizedException('Ce compte a été désactivé par un administrateur.');
+    }
+
+    if (user.mfaEnabled) {
+      // No tokens minted — front-end will route to /login?email=<email> so the
+      // user re-enters their password and clears the MFA challenge there.
+      return {
+        verified: true as const,
+        mfaRequired: true as const,
+        email: user.email,
+      };
+    }
+
+    user.lastLoginAt = new Date();
+    const refresh_token = await this.rotateRefreshToken(user);
+    await this.updateUserUseCase.execute(user);
+
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      mfa: false,
+      mfaEnabled: false,
+    };
+    const access_token = this.jwtService.sign(payload, { expiresIn: ACCESS_TOKEN_TTL });
+
+    return {
+      verified: true as const,
+      access_token,
+      refresh_token,
+      // Auto-login after verification keeps the session for the lifetime of
+      // the refresh cookie's default — treat it as a non-rememberMe session.
+      rememberMe: false,
+      user: { id: user.id, email: user.email, role: user.role, mfaEnabled: false },
+    };
   }
 
   async login(loginDto: LoginDto) {

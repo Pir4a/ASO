@@ -24,7 +24,7 @@ import { useCart } from "@/hooks/useCart";
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 type Address = AddressFormData & { id: string };
-type Step = "identify" | "address" | "payment" | "confirmation";
+type Step = "identify" | "address" | "payment" | "review" | "confirmation";
 type CartItem = {
   productId: string;
   quantity: number;
@@ -33,10 +33,11 @@ type CartItem = {
   name?: string;
 };
 
-const STEP_META: { key: Step; label: string }[] = [
-  { key: "identify", label: "Identification" },
-  { key: "address", label: "Adresse" },
-  { key: "payment", label: "Paiement" },
+const STEP_META: { key: Step; labelKey: "checkout.step.identify" | "checkout.step.address" | "checkout.step.payment" | "checkout.step.review" }[] = [
+  { key: "identify", labelKey: "checkout.step.identify" },
+  { key: "address", labelKey: "checkout.step.address" },
+  { key: "payment", labelKey: "checkout.step.payment" },
+  { key: "review", labelKey: "checkout.step.review" },
 ];
 
 function formatPrice(cents: number, currency = "EUR") {
@@ -315,6 +316,7 @@ export default function CheckoutPage() {
         // allow going back; can't skip forward
         if (s === "identify" && !isAuthenticated) setStep("identify");
         if (s === "address") setStep("address");
+        if (s === "payment" && (step === "review" || step === "payment")) setStep("payment");
       }} />
 
       {error && (
@@ -471,11 +473,23 @@ export default function CheckoutPage() {
             </SectionCard>
           )}
 
-          {step === "payment" && clientSecret && (
+          {(step === "payment" || step === "review") && clientSecret && (
             <SectionCard
-              eyebrow={isAuthenticated ? "Étape 3" : "Étape 2"}
-              title={t("cart.perkSecurePayment")}
-              hint="Vos cartes enregistrées apparaissent automatiquement. Toutes les transactions sont protégées par Stripe (PCI-DSS)."
+              eyebrow={
+                step === "review"
+                  ? isAuthenticated ? "Étape 4" : "Étape 3"
+                  : isAuthenticated ? "Étape 3" : "Étape 2"
+              }
+              title={
+                step === "review"
+                  ? t("checkout.review.title")
+                  : t("cart.perkSecurePayment")
+              }
+              hint={
+                step === "review"
+                  ? t("checkout.review.hint")
+                  : "Vos cartes enregistrées apparaissent automatiquement. Toutes les transactions sont protégées par Stripe (PCI-DSS)."
+              }
             >
               <Elements
                 stripe={stripePromise}
@@ -485,6 +499,31 @@ export default function CheckoutPage() {
                   amount={Math.max(0, cartTotal - cartDiscount)}
                   currency={currency}
                   onSuccess={handlePaymentSuccess}
+                  mode={step === "review" ? "review" : "input"}
+                  onValidated={() => setStep("review")}
+                  onBackToInput={() => setStep("payment")}
+                  continueLabel={t("checkout.review.continueCta")}
+                  confirmLabel={t("checkout.review.confirmCta")}
+                  confirmingLabel={t("checkout.review.confirming")}
+                  backLabel={t("checkout.review.editCta")}
+                  reviewContent={
+                    <ReviewSummary
+                      t={t}
+                      cartItems={cartItems}
+                      cartSubtotal={cartSubtotal}
+                      cartVat={cartVat}
+                      cartTotal={cartTotal}
+                      cartDiscount={cartDiscount}
+                      cartPromoCode={cartPromoCode}
+                      currency={currency}
+                      address={selectedAddress}
+                      email={
+                        isAuthenticated
+                          ? user?.email ?? null
+                          : guestEmail.trim() || null
+                      }
+                    />
+                  }
                 />
               </Elements>
 
@@ -667,13 +706,17 @@ function Stepper({
   authenticated: boolean;
   onStepClick: (s: Step) => void;
 }) {
+  const t = useT();
   const steps = STEP_META.filter((s) => (authenticated ? s.key !== "identify" : true));
-  const currentIndex = steps.findIndex((s) => s.key === current);
+  // The post-payment "confirmation" page has its own UI; while there, we
+  // still want to display the stepper as if "review" were the active step.
+  const stepperCurrent: Step = current === "confirmation" ? "review" : current;
+  const currentIndex = steps.findIndex((s) => s.key === stepperCurrent);
 
   return (
     <ol className="flex items-center gap-2 overflow-x-auto rounded-xl border border-foreground/10 bg-white px-3 py-3 sm:gap-3 sm:px-5">
       {steps.map((s, i) => {
-        const isCurrent = s.key === current;
+        const isCurrent = s.key === stepperCurrent;
         const isDone = i < currentIndex;
         const clickable = i <= currentIndex;
         return (
@@ -714,7 +757,7 @@ function Stepper({
                   isCurrent ? "text-foreground" : "text-foreground/65"
                 }`}
               >
-                {s.label}
+                {t(s.labelKey)}
               </span>
             </button>
             {i < steps.length - 1 && (
@@ -724,6 +767,151 @@ function Stepper({
         );
       })}
     </ol>
+  );
+}
+
+/* ── Review summary ─────────────────────────────────────── */
+function ReviewSummary({
+  t,
+  cartItems,
+  cartSubtotal,
+  cartVat,
+  cartTotal,
+  cartDiscount,
+  cartPromoCode,
+  currency,
+  address,
+  email,
+}: {
+  t: ReturnType<typeof useT>;
+  cartItems: CartItem[];
+  cartSubtotal: number;
+  cartVat: number;
+  cartTotal: number;
+  cartDiscount: number;
+  cartPromoCode: string | null;
+  currency: string;
+  address: Address | null;
+  email: string | null;
+}) {
+  return (
+    <div className="space-y-5">
+      <p className="text-[13px] text-foreground/70">{t("checkout.review.intro")}</p>
+
+      {/* Items */}
+      <div className="rounded-xl border border-foreground/10 bg-background/40 p-4">
+        <p className="mb-2 inline-flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/60">
+          {t("checkout.review.itemsLabel")}
+        </p>
+        <ul className="space-y-1.5 text-[13px]" role="list">
+          {cartItems.map((it) => (
+            <li
+              key={it.productId}
+              className="flex items-baseline justify-between gap-3"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium text-foreground">
+                  {it.name ?? it.productId}
+                </span>
+                <span className="text-[11.5px] text-foreground/55 tabular-nums">
+                  {formatPrice(it.priceCents, it.currency)} × {it.quantity}
+                </span>
+              </span>
+              <span className="font-heading font-semibold tabular-nums text-foreground">
+                {formatPrice(it.priceCents * it.quantity, it.currency)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Address */}
+      {address && (
+        <div className="rounded-xl border border-foreground/10 bg-background/40 p-4">
+          <p className="mb-2 inline-flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/60">
+            {t("checkout.review.addressLabel")}
+          </p>
+          <p className="text-[13px] text-foreground/80">
+            {[address.firstName, address.lastName].filter(Boolean).join(" ")}
+            <br />
+            {address.street}
+            {address.address2 ? `, ${address.address2}` : ""}
+            <br />
+            <span className="tabular-nums">{address.postalCode}</span>{" "}
+            {address.city}
+            {address.region ? `, ${address.region}` : ""}
+            <br />
+            {address.country}
+            {address.phone && (
+              <>
+                <br />
+                <span className="text-foreground/65">{address.phone}</span>
+              </>
+            )}
+          </p>
+        </div>
+      )}
+
+      {/* Email */}
+      {email && (
+        <div className="rounded-xl border border-foreground/10 bg-background/40 p-4">
+          <p className="mb-2 inline-flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/60">
+            {t("checkout.review.emailLabel")}
+          </p>
+          <p className="text-[13px] text-foreground/80">{email}</p>
+        </div>
+      )}
+
+      {/* Payment method (Stripe doesn't expose the card before confirmation;
+          we just remind the user a card has been entered in the previous step). */}
+      <div className="rounded-xl border border-foreground/10 bg-background/40 p-4">
+        <p className="mb-2 inline-flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.08em] text-foreground/60">
+          {t("checkout.review.paymentLabel")}
+        </p>
+        <p className="inline-flex items-center gap-2 text-[13px] text-foreground/80">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-4 w-4 text-primary">
+            <rect x="2" y="6" width="20" height="12" rx="2" />
+            <path d="M2 10h20" />
+          </svg>
+          {t("checkout.review.paymentValue")}
+        </p>
+      </div>
+
+      {/* Totals */}
+      <dl className="space-y-1.5 rounded-xl border border-foreground/10 bg-white p-4 text-[13px]">
+        <div className="flex justify-between">
+          <dt className="text-foreground/65">{t("cart.subtotal")}</dt>
+          <dd className="tabular-nums text-foreground">
+            {formatPrice(cartSubtotal, currency)}
+          </dd>
+        </div>
+        <div className="flex justify-between">
+          <dt className="text-foreground/65">{t("cart.vat")}</dt>
+          <dd className="tabular-nums text-foreground">
+            {formatPrice(cartVat, currency)}
+          </dd>
+        </div>
+        {cartDiscount > 0 && (
+          <div className="flex justify-between">
+            <dt className="text-success">
+              {t("cart.discount")}
+              {cartPromoCode ? ` (${cartPromoCode})` : ""}
+            </dt>
+            <dd className="tabular-nums text-success">
+              −{formatPrice(cartDiscount, currency)}
+            </dd>
+          </div>
+        )}
+        <div className="flex items-baseline justify-between border-t border-foreground/10 pt-2.5">
+          <dt className="font-heading text-[14px] font-semibold text-foreground">
+            {t("cart.totalIncludingVat")}
+          </dt>
+          <dd className="font-heading text-[18px] font-bold tabular-nums text-foreground">
+            {formatPrice(Math.max(0, cartTotal - cartDiscount), currency)}
+          </dd>
+        </div>
+      </dl>
+    </div>
   );
 }
 

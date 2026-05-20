@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository, Like } from 'typeorm';
 import { CreditNoteOrm } from '../entities/credit-note.entity';
+import { InvoiceOrm } from '../entities/invoice.entity';
+import { User } from '../entities/user.entity';
 import { CreditNote as DomainCreditNote } from '../../../../domain/entities/credit-note.entity';
 import {
     CreditNoteRepository,
@@ -12,9 +14,13 @@ import { CreditNoteMapper } from '../mappers/credit-note.mapper';
 @Injectable()
 export class CreditNoteOrmRepository implements CreditNoteRepository {
     private readonly repository: Repository<CreditNoteOrm>;
+    private readonly invoiceRepository: Repository<InvoiceOrm>;
+    private readonly userRepository: Repository<User>;
 
     constructor(dataSource: DataSource) {
         this.repository = dataSource.getRepository(CreditNoteOrm);
+        this.invoiceRepository = dataSource.getRepository(InvoiceOrm);
+        this.userRepository = dataSource.getRepository(User);
     }
 
     async create(creditNote: DomainCreditNote): Promise<DomainCreditNote> {
@@ -51,8 +57,36 @@ export class CreditNoteOrmRepository implements CreditNoteRepository {
 
         qb.skip((page - 1) * pageSize).take(pageSize);
         const [entities, total] = await qb.getManyAndCount();
+
+        // Batch-resolve linked invoice numbers and customer emails so the BO
+        // can render the "facture liée" + "client" columns without N+1 calls.
+        const invoiceIds = Array.from(new Set(entities.map((e) => e.invoiceId)));
+        const userIds = Array.from(
+            new Set(entities.map((e) => e.userId).filter((u): u is string => !!u)),
+        );
+        const [invoices, users] = await Promise.all([
+            invoiceIds.length
+                ? this.invoiceRepository.find({
+                      where: invoiceIds.map((id) => ({ id })),
+                      select: ['id', 'number'],
+                  })
+                : Promise.resolve([] as InvoiceOrm[]),
+            userIds.length
+                ? this.userRepository.find({
+                      where: userIds.map((id) => ({ id })),
+                      select: ['id', 'email'],
+                  })
+                : Promise.resolve([] as User[]),
+        ]);
+        const invoiceNumberById = new Map(invoices.map((inv) => [inv.id, inv.number]));
+        const emailByUserId = new Map(users.map((u) => [u.id, u.email]));
+
         return {
-            items: entities.map(CreditNoteMapper.toDomain),
+            items: entities.map((entity) => ({
+                creditNote: CreditNoteMapper.toDomain(entity),
+                invoiceNumber: invoiceNumberById.get(entity.invoiceId) ?? null,
+                customerEmail: entity.userId ? emailByUserId.get(entity.userId) ?? null : null,
+            })),
             total,
             page,
             pageSize,

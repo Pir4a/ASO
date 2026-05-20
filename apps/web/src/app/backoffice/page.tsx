@@ -97,6 +97,8 @@ type ContactMessage = {
   email: string;
   message: string;
   createdAt: string;
+  // CDC XVI.1 — drives the "non traités" badge in the sidebar.
+  isRead: boolean;
 };
 
 type AdminOrderListRow = {
@@ -213,6 +215,10 @@ function BackofficeDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
+  // CDC XVI.1 — sidebar badge counts only unread; we keep it as its own piece
+  // of state so an admin who hasn't opened the Messages tab still sees the
+  // correct count (the full list isn't loaded yet at that point).
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
 
   const [search, setSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
@@ -260,6 +266,20 @@ function BackofficeDashboard() {
   const [ordersPaymentMethodFilter, setOrdersPaymentMethodFilter] = useState<string>("");
   const [adminOrderModalOpen, setAdminOrderModalOpen] = useState(false);
   const [ordersPaymentStatusFilter, setOrdersPaymentStatusFilter] = useState<string>("");
+  // CDC §XVI — clickable column headers on the BO orders + users tables.
+  type OrdersSortKey = "orderNumber" | "createdAt" | "customerEmail" | "total";
+  const [ordersSortBy, setOrdersSortBy] = useState<OrdersSortKey>("createdAt");
+  const [ordersSortDir, setOrdersSortDir] = useState<"asc" | "desc">("desc");
+  type UsersSortKey =
+    | "name"
+    | "email"
+    | "created"
+    | "status"
+    | "orderCount"
+    | "revenue"
+    | "lastLogin";
+  const [usersSortBy, setUsersSortBy] = useState<UsersSortKey>("email");
+  const [usersSortDir, setUsersSortDir] = useState<"asc" | "desc">("asc");
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [orderDetail, setOrderDetail] = useState<AdminOrderDetail | null>(null);
   const [loadingOrderDetail, setLoadingOrderDetail] = useState(false);
@@ -321,13 +341,65 @@ function BackofficeDashboard() {
     }
   };
 
+  // CDC §XVI — bulk-selection export. We build the CSV client-side rather
+  // than re-fetching, because the table already holds the rows the operator
+  // ticked and the columns mirror the backend's products/admin/export.csv.
+  const csvEscape = (value: unknown): string => {
+    if (value === null || value === undefined) return "";
+    const s = String(value);
+    return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const downloadProductsSelectionCsv = (rows: Product[], filename: string) => {
+    try {
+      const columns: { header: string; value: (p: Product) => unknown }[] = [
+        { header: "sku", value: (p) => p.sku ?? "" },
+        { header: "slug", value: (p) => p.slug ?? "" },
+        { header: "name", value: (p) => p.name ?? "" },
+        { header: "category", value: (p) => p.category?.name ?? "" },
+        { header: "price", value: (p) => Number(p.price ?? 0).toFixed(2) },
+        { header: "currency", value: () => "EUR" },
+        { header: "vatRate", value: (p) => p.vatRate ?? 20 },
+        { header: "stock", value: (p) => p.stock ?? 0 },
+        { header: "status", value: (p) => p.status ?? "" },
+        { header: "published", value: (p) => (p.published === false ? "false" : "true") },
+        { header: "featured", value: (p) => (p.featured ? "true" : "false") },
+        { header: "listPriority", value: (p) => p.listPriority ?? 0 },
+      ];
+      const headerLine = columns.map((c) => csvEscape(c.header)).join(",");
+      const lines = rows.map((r) => columns.map((c) => csvEscape(c.value(r))).join(","));
+      // Prepend the UTF-8 BOM so Excel picks up encoding correctly (matches
+      // the backend buildCsv() helper).
+      const body = "﻿" + [headerLine, ...lines].join("\r\n");
+      const blob = new Blob([body], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      flash("success", `${filename} téléchargé.`);
+    } catch (e) {
+      flash("error", `Export impossible: ${(e as Error).message}`);
+    }
+  };
+
   /* ------------------------------- Loaders -------------------------------- */
 
-  const loadUsers = async (q?: string) => {
+  const loadUsers = async (
+    q?: string,
+    sortBy: UsersSortKey = usersSortBy,
+    sortDir: "asc" | "desc" = usersSortDir,
+  ) => {
     setLoadingUsers(true);
     try {
       const params = new URLSearchParams();
       if (q) params.set("q", q);
+      // CDC §XVI — push the requested sort to the API so server-side
+      // aggregates (CA, # commandes) stay authoritative.
+      params.set("sort", sortBy);
+      params.set("dir", sortDir);
       const res = await authFetch(`${API_URL}/users?${params.toString()}`);
       if (!res.ok) throw new Error("Impossible de charger les utilisateurs.");
       setUsers(await res.json());
@@ -367,11 +439,54 @@ function BackofficeDashboard() {
     try {
       const res = await authFetch(`${API_URL}/contact/admin`);
       if (!res.ok) throw new Error();
-      setContactMessages(await res.json());
+      const list = (await res.json()) as ContactMessage[];
+      setContactMessages(list);
+      // Keep the sidebar badge in sync without an extra round-trip when the
+      // full list has just been fetched.
+      setUnreadMessagesCount(list.filter((m) => !m.isRead).length);
     } catch {
       flash("error", "Chargement des messages impossible.");
     } finally {
       setLoadingMessages(false);
+    }
+  };
+
+  // Cheap COUNT(*) endpoint, called from the dashboard so the sidebar badge is
+  // accurate even before the admin opens the Messages section.
+  const loadUnreadMessagesCount = async () => {
+    try {
+      const res = await authFetch(`${API_URL}/contact/admin/unread-count`);
+      if (!res.ok) throw new Error();
+      const body = (await res.json()) as { unread: number };
+      setUnreadMessagesCount(body.unread);
+    } catch {
+      // Silent — the sidebar badge just falls back to "no badge" rather than
+      // surfacing an error toast on every dashboard load.
+    }
+  };
+
+  // CDC XVI.1 — clicking a row marks it as read. We optimistically update
+  // local state so the dot vanishes immediately, then reconcile with the
+  // server response.
+  const markMessageAsRead = async (id: string) => {
+    const target = contactMessages.find((m) => m.id === id);
+    if (!target || target.isRead) return;
+    setContactMessages((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, isRead: true } : m)),
+    );
+    setUnreadMessagesCount((c) => Math.max(0, c - 1));
+    try {
+      const res = await authFetch(`${API_URL}/contact/admin/${id}/read`, {
+        method: "PATCH",
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      // Roll back on failure so the badge stays truthful.
+      setContactMessages((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, isRead: false } : m)),
+      );
+      setUnreadMessagesCount((c) => c + 1);
+      flash("error", "Impossible de marquer le message comme lu.");
     }
   };
 
@@ -394,6 +509,8 @@ function BackofficeDashboard() {
     status = ordersStatusFilter,
     paymentMethod = ordersPaymentMethodFilter,
     paymentStatus = ordersPaymentStatusFilter,
+    sortBy: OrdersSortKey = ordersSortBy,
+    sortDir: "asc" | "desc" = ordersSortDir,
   ) => {
     setLoadingOrders(true);
     try {
@@ -401,6 +518,9 @@ function BackofficeDashboard() {
       if (status) sp.set("status", status);
       if (paymentMethod) sp.set("paymentMethod", paymentMethod);
       if (paymentStatus) sp.set("paymentStatus", paymentStatus);
+      // CDC §XVI — server-side sort so pagination stays correct.
+      sp.set("sort", sortBy);
+      sp.set("dir", sortDir);
       const res = await authFetch(`${API_URL}/admin/orders?${sp.toString()}`);
       if (!res.ok) throw new Error();
       const body = (await res.json()) as {
@@ -455,6 +575,9 @@ function BackofficeDashboard() {
       loadProducts(),
       loadUsers(),
       loadContactMessages(),
+      // Fallback path: if loadContactMessages errors, the cheap count endpoint
+      // still keeps the sidebar badge truthful.
+      loadUnreadMessagesCount(),
       loadDashboard(),
       section === "orders"
         ? loadAdminOrders(
@@ -496,6 +619,7 @@ function BackofficeDashboard() {
       loadProducts(),
       loadUsers(),
       loadContactMessages(),
+      loadUnreadMessagesCount(),
       loadDashboard(),
       loadAdminOrders(),
     ]);
@@ -509,6 +633,8 @@ function BackofficeDashboard() {
       ordersStatusFilter,
       ordersPaymentMethodFilter,
       ordersPaymentStatusFilter,
+      ordersSortBy,
+      ordersSortDir,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -517,7 +643,16 @@ function BackofficeDashboard() {
     ordersStatusFilter,
     ordersPaymentMethodFilter,
     ordersPaymentStatusFilter,
+    ordersSortBy,
+    ordersSortDir,
   ]);
+
+  // CDC §XVI — re-fetch users when the operator clicks a sortable header.
+  useEffect(() => {
+    if (section !== "users") return;
+    void loadUsers(search, usersSortBy, usersSortDir);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section, usersSortBy, usersSortDir]);
 
   useEffect(() => {
     setGlobalSearchActiveIndex(-1);
@@ -928,6 +1063,53 @@ function BackofficeDashboard() {
   const sortIndicator = (key: ProductSortKey) =>
     productSortBy === key ? (productSortDir === "asc" ? " ↑" : " ↓") : "";
 
+  // CDC §XVI — reusable header cell for the orders + users tables. Clicking
+  // toggles asc/desc on the active column; switching to another column resets
+  // the direction to a sensible default (asc for text, desc for date/number).
+  const renderSortableTh = <K extends string>(
+    key: K,
+    label: string,
+    options: {
+      activeKey: K;
+      direction: "asc" | "desc";
+      defaultDir?: "asc" | "desc";
+      onSort: (key: K, dir: "asc" | "desc") => void;
+      className?: string;
+    },
+  ) => {
+    const isActive = options.activeKey === key;
+    const arrow = isActive ? (options.direction === "asc" ? " ↑" : " ↓") : "";
+    return (
+      <th
+        className={options.className}
+        onClick={() => {
+          if (isActive) {
+            options.onSort(key, options.direction === "asc" ? "desc" : "asc");
+          } else {
+            options.onSort(key, options.defaultDir ?? "asc");
+          }
+        }}
+        style={{ cursor: "pointer", userSelect: "none" }}
+        aria-sort={isActive ? (options.direction === "asc" ? "ascending" : "descending") : "none"}
+      >
+        {label}
+        {arrow}
+      </th>
+    );
+  };
+
+  const setOrdersSort = (key: OrdersSortKey, dir: "asc" | "desc") => {
+    setOrdersSortBy(key);
+    setOrdersSortDir(dir);
+    // Pagination resets to page 1 — the new ordering would otherwise leak
+    // rows from an unrelated page.
+    setOrdersPage(1);
+  };
+  const setUsersSort = (key: UsersSortKey, dir: "asc" | "desc") => {
+    setUsersSortBy(key);
+    setUsersSortDir(dir);
+  };
+
   const allOnPageSelected =
     paginatedProducts.length > 0 &&
     paginatedProducts.every((p) => selectedProductIds.has(p.id));
@@ -1088,6 +1270,8 @@ function BackofficeDashboard() {
     orders: ordersMeta?.total ?? adminOrders.length,
     users: users.length,
     messages: contactMessages.length,
+    // CDC XVI.1 — the sidebar uses *unread*, not total, to light up the dot.
+    unreadMessages: unreadMessagesCount,
   };
 
   const sparkSeed = (key: string) => {
@@ -1130,7 +1314,15 @@ function BackofficeDashboard() {
         { id: "orders", name: "Commandes", icon: "Orders", count: counts.orders },
         { id: "invoices", name: "Factures & Avoirs", icon: "Doc" },
         { id: "users", name: "Utilisateurs", icon: "Users", count: counts.users },
-        { id: "messages", name: "Messages", icon: "Messages", dot: counts.messages > 0 },
+        {
+          id: "messages",
+          name: "Messages",
+          icon: "Messages",
+          // Sidebar count shows non-traités; we hide the badge entirely once
+          // every message has been opened (CDC XVI.1 acceptance criterion).
+          count: counts.unreadMessages > 0 ? counts.unreadMessages : undefined,
+          dot: counts.unreadMessages > 0,
+        },
         { id: "chat", name: "Chat", icon: "Messages" },
       ],
     },
@@ -1487,10 +1679,12 @@ function BackofficeDashboard() {
                 <KpiCard
                   label="Messages"
                   value={contactMessages.length}
-                  hint={contactMessages.length === 0 ? "0 non lus" : `${contactMessages.length} non lus`}
+                  // CDC XVI.1 — the "hint" must reflect the real unread count
+                  // backed by isRead, not the total list size.
+                  hint={`${unreadMessagesCount} non lu${unreadMessagesCount > 1 ? "s" : ""}`}
                   delta={
-                    contactMessages.length > 0
-                      ? { dir: "up", txt: "+" + contactMessages.length }
+                    unreadMessagesCount > 0
+                      ? { dir: "up", txt: "+" + unreadMessagesCount }
                       : { dir: "flat", txt: "—" }
                   }
                   spark={sparkSeed("m" + contactMessages.length)}
@@ -1816,7 +2010,10 @@ function BackofficeDashboard() {
                   <div className="bo-card-head">
                     <div>
                       <div className="bo-card-title">Derniers messages</div>
-                      <div className="bo-card-sub">{contactMessages.length} au total</div>
+                      <div className="bo-card-sub">
+                        {contactMessages.length} au total · {unreadMessagesCount} non lu
+                        {unreadMessagesCount > 1 ? "s" : ""}
+                      </div>
                     </div>
                     <button className="bo-btn" type="button" onClick={() => setSection("messages")}>
                       Voir tout <Icon.ChevR />
@@ -1841,7 +2038,21 @@ function BackofficeDashboard() {
                             <span className="bo-mono" style={{ fontSize: 11.5, color: "var(--bo-text-muted)" }}>
                               {m.email}
                             </span>
-                            <span style={{ fontWeight: 500 }}>{m.subject}</span>
+                            <span style={{ fontWeight: m.isRead ? 500 : 700 }}>{m.subject}</span>
+                            {!m.isRead && (
+                              <span
+                                title="Non lu"
+                                aria-label="Non lu"
+                                style={{
+                                  display: "inline-block",
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: 999,
+                                  background: "var(--bo-brand)",
+                                  marginInlineStart: 6,
+                                }}
+                              />
+                            )}
                           </div>
                         </div>
                       ))
@@ -1936,10 +2147,35 @@ function BackofficeDashboard() {
                     <button
                       className="bo-btn"
                       type="button"
-                      onClick={() => void downloadCsv("/products/admin/export.csv", "products.csv")}
-                      title="Télécharger en CSV"
+                      onClick={() => {
+                        // CDC §XVI — when at least one row is selected, the
+                        // export becomes "Exporter la sélection (N)" and is
+                        // built client-side from the rows already loaded.
+                        // Otherwise we hit the backend's full-catalogue CSV.
+                        if (selectedProductIds.size > 0) {
+                          const selected = products.filter((p) =>
+                            selectedProductIds.has(p.id),
+                          );
+                          downloadProductsSelectionCsv(
+                            selected,
+                            "products-selection.csv",
+                          );
+                          return;
+                        }
+                        void downloadCsv(
+                          "/products/admin/export.csv",
+                          "products.csv",
+                        );
+                      }}
+                      title={
+                        selectedProductIds.size > 0
+                          ? "Télécharger les produits sélectionnés en CSV"
+                          : "Télécharger en CSV"
+                      }
                     >
-                      Export CSV
+                      {selectedProductIds.size > 0
+                        ? `Exporter la sélection (${selectedProductIds.size})`
+                        : "Export CSV"}
                     </button>
                     <button className="bo-btn primary" type="button" onClick={() => setShowProductForm((v) => !v)}>
                       <Icon.Plus /> Ajouter
@@ -2848,12 +3084,33 @@ function BackofficeDashboard() {
                     <table className="bo-data">
                       <thead>
                         <tr>
-                          <th>N°</th>
-                          <th>Date</th>
-                          <th>Client</th>
+                          {renderSortableTh("orderNumber", "N°", {
+                            activeKey: ordersSortBy,
+                            direction: ordersSortDir,
+                            defaultDir: "desc",
+                            onSort: setOrdersSort,
+                          })}
+                          {renderSortableTh("createdAt", "Date", {
+                            activeKey: ordersSortBy,
+                            direction: ordersSortDir,
+                            defaultDir: "desc",
+                            onSort: setOrdersSort,
+                          })}
+                          {renderSortableTh("customerEmail", "Client", {
+                            activeKey: ordersSortBy,
+                            direction: ordersSortDir,
+                            defaultDir: "asc",
+                            onSort: setOrdersSort,
+                          })}
                           <th>Statut</th>
                           <th>Paiement</th>
-                          <th className="num">Total</th>
+                          {renderSortableTh("total", "Total", {
+                            activeKey: ordersSortBy,
+                            direction: ordersSortDir,
+                            defaultDir: "desc",
+                            onSort: setOrdersSort,
+                            className: "num",
+                          })}
                           <th className="num">Lignes</th>
                           <th className="num">Voir</th>
                         </tr>
@@ -3119,13 +3376,45 @@ function BackofficeDashboard() {
                     <table className="bo-data">
                       <thead>
                         <tr>
-                          <th>Utilisateur</th>
+                          {renderSortableTh("name", "Utilisateur", {
+                            activeKey: usersSortBy,
+                            direction: usersSortDir,
+                            defaultDir: "asc",
+                            onSort: setUsersSort,
+                          })}
                           <th>Rôle</th>
-                          <th>Statut</th>
-                          <th>Inscription</th>
-                          <th>Dernière connexion</th>
-                          <th className="num">Cmd</th>
-                          <th className="num">CA</th>
+                          {renderSortableTh("status", "Statut", {
+                            activeKey: usersSortBy,
+                            direction: usersSortDir,
+                            defaultDir: "asc",
+                            onSort: setUsersSort,
+                          })}
+                          {renderSortableTh("created", "Inscription", {
+                            activeKey: usersSortBy,
+                            direction: usersSortDir,
+                            defaultDir: "desc",
+                            onSort: setUsersSort,
+                          })}
+                          {renderSortableTh("lastLogin", "Dernière connexion", {
+                            activeKey: usersSortBy,
+                            direction: usersSortDir,
+                            defaultDir: "desc",
+                            onSort: setUsersSort,
+                          })}
+                          {renderSortableTh("orderCount", "Cmd", {
+                            activeKey: usersSortBy,
+                            direction: usersSortDir,
+                            defaultDir: "desc",
+                            onSort: setUsersSort,
+                            className: "num",
+                          })}
+                          {renderSortableTh("revenue", "CA", {
+                            activeKey: usersSortBy,
+                            direction: usersSortDir,
+                            defaultDir: "desc",
+                            onSort: setUsersSort,
+                            className: "num",
+                          })}
                           <th className="num">Adr.</th>
                           <th className="num">Actions</th>
                         </tr>
@@ -3236,7 +3525,7 @@ function BackofficeDashboard() {
           {section === "messages" && (
             <Panel
               title="Messages contact"
-              subtitle={`${contactMessages.length} message${contactMessages.length > 1 ? "s" : ""}`}
+              subtitle={`${contactMessages.length} message${contactMessages.length > 1 ? "s" : ""} · ${unreadMessagesCount} non lu${unreadMessagesCount > 1 ? "s" : ""}`}
               actions={
                 <button className="bo-btn primary" type="button" onClick={loadContactMessages}>
                   <Icon.Refresh /> Rafraîchir
@@ -3268,16 +3557,30 @@ function BackofficeDashboard() {
               ) : (
                 <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                   {contactMessages
+                    .slice()
                     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                     .map((msg) => (
                       <li
                         key={msg.id}
+                        // CDC XVI.1 — opening (clicking) a message flips
+                        // isRead. Optimistic update lives in markMessageAsRead.
+                        onClick={() => void markMessageAsRead(msg.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            void markMessageAsRead(msg.id);
+                          }
+                        }}
                         style={{
-                          padding: "12px 0",
+                          padding: "12px 8px",
                           borderTop: "1px solid var(--bo-border)",
                           display: "flex",
                           gap: 12,
                           alignItems: "flex-start",
+                          cursor: msg.isRead ? "default" : "pointer",
+                          background: msg.isRead ? "transparent" : "var(--bo-panel-2)",
                         }}
                       >
                         <span
@@ -3298,9 +3601,32 @@ function BackofficeDashboard() {
                               justifyContent: "space-between",
                               gap: 8,
                               flexWrap: "wrap",
+                              alignItems: "center",
                             }}
                           >
-                            <span style={{ fontWeight: 600 }}>{msg.subject}</span>
+                            <span
+                              style={{
+                                fontWeight: msg.isRead ? 500 : 700,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                              }}
+                            >
+                              {!msg.isRead && (
+                                <span
+                                  title="Non lu"
+                                  aria-label="Message non lu"
+                                  style={{
+                                    display: "inline-block",
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: 999,
+                                    background: "var(--bo-brand)",
+                                  }}
+                                />
+                              )}
+                              {msg.subject}
+                            </span>
                             <span className="bo-dim bo-mono" style={{ fontSize: 10 }}>
                               {new Date(msg.createdAt).toLocaleString("fr-FR")}
                             </span>
@@ -3308,6 +3634,7 @@ function BackofficeDashboard() {
                           <a
                             href={`mailto:${msg.email}`}
                             style={{ color: "var(--bo-brand)", fontSize: 11.5 }}
+                            onClick={(e) => e.stopPropagation()}
                           >
                             {msg.email}
                           </a>

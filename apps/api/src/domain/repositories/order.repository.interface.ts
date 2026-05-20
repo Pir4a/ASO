@@ -37,6 +37,18 @@ export interface AdminOrderListFilters {
     paymentStatus?: string;
 }
 
+// CDC §XVI — admin orders table supports clicking any column header to sort.
+export type AdminOrderSortField =
+    | 'orderNumber'
+    | 'createdAt'
+    | 'customerEmail'
+    | 'total';
+
+export interface AdminOrderSort {
+    field: AdminOrderSortField;
+    direction: 'asc' | 'desc';
+}
+
 export interface OrderRepository {
     findAllByUserId(userId: string): Promise<Order[]>;
     findByUserIdWithFilters(userId: string, filters: OrderFilters): Promise<Order[]>;
@@ -49,6 +61,7 @@ export interface OrderRepository {
         skip: number;
         take: number;
         filters?: AdminOrderListFilters;
+        sort?: AdminOrderSort;
     }): Promise<{ rows: { order: Order; customerEmail: string | null }[]; total: number }>;
     getAdminDashboard(): Promise<AdminDashboardSnapshot>;
     /** Per-customer aggregations for the BO users table (#12). */

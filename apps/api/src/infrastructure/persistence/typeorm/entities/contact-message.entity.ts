@@ -14,6 +14,11 @@ export class ContactMessage {
   @Column({ type: 'text' })
   message: string;
 
+  // CDC XVI.1 — BO sidebar must show "non traités" count, so each row needs an
+  // explicit read flag (defaults to false so historical rows surface as unread).
+  @Column({ name: 'is_read', type: 'boolean', default: false })
+  isRead: boolean;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }

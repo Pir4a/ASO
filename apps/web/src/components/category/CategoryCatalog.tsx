@@ -2,13 +2,43 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useT } from "@/context/LocaleContext";
 import type { Category, Product } from "@bootstrap/types";
 
+/**
+ * Client-side sort keys (used only when the parent does NOT drive the
+ * results server-side). When `serverDriven` is true, the parent has
+ * already applied the chosen sort via the API, so we render as-is.
+ */
 type SortKey = "priority" | "name" | "price-asc" | "price-desc";
+
+/**
+ * URL-backed sort keys, mirroring `PRODUCT_SEARCH_SORT` from `@/lib/api`.
+ * Kept as a local literal union to avoid importing the array at module
+ * scope (this file is the only consumer and the list is tiny).
+ */
+type UrlSortKey =
+  | "relevance"
+  | "price_asc"
+  | "price_desc"
+  | "novelty_desc"
+  | "novelty_asc"
+  | "availability_asc"
+  | "availability_desc";
+
 type ViewMode = "grid" | "list";
+
+const URL_SORT_KEYS: readonly UrlSortKey[] = [
+  "relevance",
+  "price_asc",
+  "price_desc",
+  "novelty_desc",
+  "novelty_asc",
+  "availability_asc",
+  "availability_desc",
+] as const;
 
 function isOutOfStock(p: Product) {
   return p.status === "out_of_stock" || (p.stock !== undefined && p.stock <= 0);
@@ -75,6 +105,11 @@ export function CategoryCatalog({
   allHref,
   allCount,
   initialQuery = "",
+  initialMinPrice = "",
+  initialMaxPrice = "",
+  initialInStockOnly = false,
+  initialSort,
+  serverDriven = false,
 }: {
   categories: Category[];
   /** Slug of the active category, or `null`/`undefined` when showing all products. */
@@ -87,6 +122,21 @@ export function CategoryCatalog({
   allCount?: number;
   /** Pre-fills the toolbar search input (e.g. from `?q=` URL param). */
   initialQuery?: string;
+  /** Pre-fills the min price input (raw string, e.g. "10" or ""). */
+  initialMinPrice?: string;
+  /** Pre-fills the max price input (raw string). */
+  initialMaxPrice?: string;
+  /** Pre-fills the "in stock only" toggle. */
+  initialInStockOnly?: boolean;
+  /** Pre-selects the sort dropdown. Defaults to "relevance". */
+  initialSort?: UrlSortKey;
+  /**
+   * When true, the parent has already filtered & sorted the products via
+   * the search API: this component renders `products` as-is, skipping the
+   * local sort/filter pass. Toolbar still controls URL params (which the
+   * server re-reads on the next request).
+   */
+  serverDriven?: boolean;
 }) {
   const t = useT();
   const router = useRouter();
@@ -95,50 +145,137 @@ export function CategoryCatalog({
   const [view, setView] = useState<ViewMode>("grid");
   const [sortKey, setSortKey] = useState<SortKey>("priority");
   const [query, setQuery] = useState(initialQuery);
+  const [minPrice, setMinPrice] = useState(initialMinPrice);
+  const [maxPrice, setMaxPrice] = useState(initialMaxPrice);
+  const [inStockOnly, setInStockOnly] = useState(initialInStockOnly);
+  const [urlSort, setUrlSort] = useState<UrlSortKey>(initialSort ?? "relevance");
+  /**
+   * Pages that read facet params server-side and call `getProductsSearch`
+   * with them. Today: `/products` always, plus any `/categories/[slug]`
+   * page when at least one facet/sort is active (the parent flips
+   * `serverDriven` on in that case).
+   */
   const isProductsCatalogPage = allHref === "/products" && !activeSlug;
+  const facetsActive = isProductsCatalogPage || serverDriven;
   const sortOptions: { value: SortKey; label: string }[] = [
     { value: "priority", label: t("search.sort.relevance") },
     { value: "name", label: "A→Z" },
     { value: "price-asc", label: t("search.sort.price_asc") },
     { value: "price-desc", label: t("search.sort.price_desc") },
   ];
+  const urlSortOptions: { value: UrlSortKey; label: string }[] = [
+    { value: "relevance", label: t("search.sort.relevance") },
+    { value: "price_asc", label: t("search.sort.price_asc") },
+    { value: "price_desc", label: t("search.sort.price_desc") },
+    { value: "novelty_desc", label: t("search.sort.novelty_desc") },
+    { value: "novelty_asc", label: t("search.sort.novelty_asc") },
+    { value: "availability_asc", label: t("search.sort.availability_asc") },
+    { value: "availability_desc", label: t("search.sort.availability_desc") },
+  ];
 
-  // Tracks the value we last pushed to the URL ourselves. Lets us tell
-  // apart "URL changed because we navigated" (skip prop sync) from "URL
-  // changed externally — back/forward, deep link" (adopt prop). Without
-  // this guard, the prop sync below would stomp keystrokes that landed
-  // while the server was still computing the previous query's response.
-  const lastSyncedQueryRef = useRef(initialQuery);
+  // Tracks the values we last reconciled with the URL. Using `useState`
+  // (not `useRef`) for the previous snapshot lets us compare and update
+  // safely during render — React's blessed pattern for "adjust state on
+  // prop change". https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  // Without these guards, a slow server round-trip would stomp keystrokes
+  // or clicks that landed before the URL caught up.
+  const [lastSyncedQuery, setLastSyncedQuery] = useState(initialQuery);
+  const [lastSyncedMin, setLastSyncedMin] = useState(initialMinPrice);
+  const [lastSyncedMax, setLastSyncedMax] = useState(initialMaxPrice);
+  const [lastSyncedStock, setLastSyncedStock] = useState(initialInStockOnly);
+  const [lastSyncedSort, setLastSyncedSort] = useState<UrlSortKey>(
+    initialSort ?? "relevance",
+  );
+  const initialSortNormalized: UrlSortKey = initialSort ?? "relevance";
 
-  useEffect(() => {
-    if (initialQuery === lastSyncedQueryRef.current) return;
+  if (initialQuery !== lastSyncedQuery) {
+    setLastSyncedQuery(initialQuery);
     setQuery(initialQuery);
-    lastSyncedQueryRef.current = initialQuery;
-  }, [initialQuery]);
+  }
+  if (initialMinPrice !== lastSyncedMin) {
+    setLastSyncedMin(initialMinPrice);
+    setMinPrice(initialMinPrice);
+  }
+  if (initialMaxPrice !== lastSyncedMax) {
+    setLastSyncedMax(initialMaxPrice);
+    setMaxPrice(initialMaxPrice);
+  }
+  if (initialInStockOnly !== lastSyncedStock) {
+    setLastSyncedStock(initialInStockOnly);
+    setInStockOnly(initialInStockOnly);
+  }
+  if (initialSortNormalized !== lastSyncedSort) {
+    setLastSyncedSort(initialSortNormalized);
+    setUrlSort(initialSortNormalized);
+  }
 
   useEffect(() => {
-    if (!isProductsCatalogPage) return;
+    if (!facetsActive) return;
     const currentQ = (searchParams.get("q") ?? "").trim();
+    const currentMin = (searchParams.get("minPrice") ?? "").trim();
+    const currentMax = (searchParams.get("maxPrice") ?? "").trim();
+    const currentStock = searchParams.get("inStock") === "1";
+    const currentSort = (searchParams.get("sort") ?? "relevance") as UrlSortKey;
     const nextQ = query.trim();
-    if (currentQ === nextQ) return;
+    const nextMin = minPrice.trim();
+    const nextMax = maxPrice.trim();
+    const nextStock = inStockOnly;
+    const nextSort: UrlSortKey = URL_SORT_KEYS.includes(urlSort) ? urlSort : "relevance";
+
+    if (
+      currentQ === nextQ &&
+      currentMin === nextMin &&
+      currentMax === nextMax &&
+      currentStock === nextStock &&
+      currentSort === nextSort
+    ) {
+      return;
+    }
 
     const handle = window.setTimeout(() => {
       const next = new URLSearchParams(searchParams.toString());
-      if (nextQ) {
-        next.set("q", nextQ);
-      } else {
-        next.delete("q");
-      }
+      if (nextQ) next.set("q", nextQ);
+      else next.delete("q");
+      if (nextMin) next.set("minPrice", nextMin);
+      else next.delete("minPrice");
+      if (nextMax) next.set("maxPrice", nextMax);
+      else next.delete("maxPrice");
+      if (nextStock) next.set("inStock", "1");
+      else next.delete("inStock");
+      if (nextSort && nextSort !== "relevance") next.set("sort", nextSort);
+      else next.delete("sort");
       next.set("page", "1");
       const qs = next.toString();
-      lastSyncedQueryRef.current = nextQ;
+      // Tell the render-phase reconciler that this exact value pushed by us
+      // is what the URL now reflects, so it won't re-adopt it as "external".
+      setLastSyncedQuery(nextQ);
+      setLastSyncedMin(nextMin);
+      setLastSyncedMax(nextMax);
+      setLastSyncedStock(nextStock);
+      setLastSyncedSort(nextSort);
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     }, 250);
 
     return () => window.clearTimeout(handle);
-  }, [isProductsCatalogPage, pathname, query, router, searchParams]);
+  }, [
+    facetsActive,
+    pathname,
+    query,
+    minPrice,
+    maxPrice,
+    inStockOnly,
+    urlSort,
+    router,
+    searchParams,
+  ]);
 
   const sortedProducts = useMemo(() => {
+    if (serverDriven) {
+      // Server already filtered & sorted via getProductsSearch — preserve
+      // the order it returned (e.g. availability tiebreakers happen in SQL).
+      return products;
+    }
+
     const q = query.trim().toLowerCase();
     let list = !isProductsCatalogPage && q
       ? products.filter(
@@ -172,7 +309,7 @@ export function CategoryCatalog({
     });
 
     return list;
-  }, [isProductsCatalogPage, products, query, sortKey]);
+  }, [serverDriven, isProductsCatalogPage, products, query, sortKey]);
 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[248px_1fr]">
@@ -278,6 +415,43 @@ export function CategoryCatalog({
 
           <div className="flex-1" />
 
+          {/* Price range (min / max in EUR) */}
+          <div className="flex items-center gap-1.5 rounded-lg border border-foreground/10 bg-background/60 px-3 py-1.5 text-[13px] font-medium text-foreground">
+            <span aria-hidden="true" className="text-foreground/55">€</span>
+            <input
+              type="number"
+              min="0"
+              inputMode="decimal"
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
+              placeholder="Min"
+              aria-label={t("search.minPrice")}
+              className="w-16 min-w-0 bg-transparent text-[13px] text-foreground placeholder:text-foreground/40 focus:outline-none"
+            />
+            <span aria-hidden="true" className="text-foreground/40">–</span>
+            <input
+              type="number"
+              min="0"
+              inputMode="decimal"
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+              placeholder="Max"
+              aria-label={t("search.maxPrice")}
+              className="w-16 min-w-0 bg-transparent text-[13px] text-foreground placeholder:text-foreground/40 focus:outline-none"
+            />
+          </div>
+
+          {/* In-stock only toggle */}
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-foreground/10 bg-background/60 px-3 py-1.5 text-[13px] font-medium text-foreground transition hover:border-primary-hover">
+            <input
+              type="checkbox"
+              checked={inStockOnly}
+              onChange={(e) => setInStockOnly(e.target.checked)}
+              className="h-3.5 w-3.5 cursor-pointer accent-primary"
+            />
+            <span>{t("search.inStockOnly")}</span>
+          </label>
+
           {/* Sort */}
           <label className="flex items-center gap-2 rounded-lg border border-foreground/10 bg-background/60 px-3 py-1.5 text-[13px] font-medium text-foreground transition hover:border-primary-hover">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5 text-primary">
@@ -285,18 +459,33 @@ export function CategoryCatalog({
             </svg>
             <span>{t("search.sortLabel")}</span>
             <span aria-hidden="true" className="h-4 w-px bg-foreground/15" />
-            <select
-              value={sortKey}
-              onChange={(e) => setSortKey(e.target.value as SortKey)}
-              className="appearance-none border-0 bg-transparent pr-4 text-[13px] font-medium text-foreground focus:outline-none"
-              aria-label={t("search.sortLabel")}
-            >
-              {sortOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+            {facetsActive ? (
+              <select
+                value={urlSort}
+                onChange={(e) => setUrlSort(e.target.value as UrlSortKey)}
+                className="appearance-none border-0 bg-transparent pr-4 text-[13px] font-medium text-foreground focus:outline-none"
+                aria-label={t("search.sortLabel")}
+              >
+                {urlSortOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <select
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
+                className="appearance-none border-0 bg-transparent pr-4 text-[13px] font-medium text-foreground focus:outline-none"
+                aria-label={t("search.sortLabel")}
+              >
+                {sortOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            )}
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="h-3 w-3 text-foreground/55">
               <path d="m4 6 4 4 4-4" />
             </svg>

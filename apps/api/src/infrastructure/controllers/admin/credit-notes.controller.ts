@@ -47,11 +47,13 @@ export class AdminCreditNotesController {
             page: result.page,
             pageSize: result.pageSize,
             total: result.total,
-            creditNotes: result.items.map((cn) => ({
+            creditNotes: result.items.map(({ creditNote: cn, invoiceNumber, customerEmail }) => ({
                 id: cn.id,
                 number: cn.number,
                 invoiceId: cn.invoiceId,
+                invoiceNumber,
                 userId: cn.userId,
+                customerEmail,
                 amountTtcCents: cn.amountTtcCents,
                 currency: cn.currency,
                 reason: cn.reason,
