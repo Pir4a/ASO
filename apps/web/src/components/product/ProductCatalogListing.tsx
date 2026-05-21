@@ -119,13 +119,13 @@ export async function ProductCatalogListing({ products }: { products: Product[] 
                     <div className="flex h-full w-full items-center justify-center text-xs text-foreground/50">{noImage}</div>
                   )}
                   {product.category?.name && (
-                    <span className="absolute left-3 top-3 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+                    <span className="absolute start-3 top-3 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
                       {product.category.name}
                     </span>
                   )}
                   {product.featured && (
                     <span
-                      className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.04em] text-white shadow-sm"
+                      className="absolute end-3 top-3 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.04em] text-white shadow-sm"
                       style={{ color: "#fff" }}
                     >
                       <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="h-2.5 w-2.5">

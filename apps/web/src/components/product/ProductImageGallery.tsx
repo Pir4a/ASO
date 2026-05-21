@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { useT } from "@/context/LocaleContext";
 
 type ProductImageGalleryProps = {
   productName: string;
@@ -15,6 +16,7 @@ const PLACEHOLDER_ICON = (
 );
 
 export function ProductImageGallery({ productName, images }: ProductImageGalleryProps) {
+  const t = useT();
   const safe = images.filter(Boolean);
   const [rawIndex, setIndex] = useState(0);
 
@@ -47,7 +49,7 @@ export function ProductImageGallery({ productName, images }: ProductImageGallery
         {current ? (
           <Image
             src={current}
-            alt={`${productName} — visuel ${index + 1} sur ${safe.length}`}
+            alt={t("gallery.imageAlt", { name: productName, index: index + 1, total: safe.length })}
             fill
             sizes="(max-width: 768px) 100vw, 60vw"
             className="object-cover"
@@ -62,20 +64,20 @@ export function ProductImageGallery({ productName, images }: ProductImageGallery
             <button
               type="button"
               onClick={() => go(-1)}
-              aria-label="Image précédente"
+              aria-label={t("gallery.previous")}
               className="absolute start-4 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-foreground shadow-md transition hover:bg-white hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true" className="h-4 w-4">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true" className="h-4 w-4 rtl:rotate-180">
                 <path d="M13 8H3m3-3-3 3 3 3" />
               </svg>
             </button>
             <button
               type="button"
               onClick={() => go(1)}
-              aria-label="Image suivante"
+              aria-label={t("gallery.next")}
               className="absolute end-4 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-foreground shadow-md transition hover:bg-white hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true" className="h-4 w-4">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true" className="h-4 w-4 rtl:rotate-180">
                 <path d="M3 8h10m-3-3 3 3-3 3" />
               </svg>
             </button>
@@ -88,7 +90,7 @@ export function ProductImageGallery({ productName, images }: ProductImageGallery
                     key={i}
                     type="button"
                     onClick={() => setIndex(i)}
-                    aria-label={`Afficher l'image ${i + 1}`}
+                    aria-label={t("gallery.goToImage", { index: i + 1 })}
                     aria-current={isActive}
                     className={`h-1 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-primary ${
                       isActive ? "w-7 bg-primary" : "w-4 bg-foreground/25 hover:bg-foreground/45"
@@ -110,7 +112,7 @@ export function ProductImageGallery({ productName, images }: ProductImageGallery
                 <button
                   type="button"
                   onClick={() => setIndex(i)}
-                  aria-label={`Miniature ${i + 1}`}
+                  aria-label={t("gallery.thumbnail", { index: i + 1 })}
                   aria-current={isActive}
                   className={`relative h-16 w-20 overflow-hidden rounded-lg border-2 transition ${
                     isActive

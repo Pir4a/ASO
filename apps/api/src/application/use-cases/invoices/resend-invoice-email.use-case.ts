@@ -29,9 +29,14 @@ export class ResendInvoiceEmailUseCase {
         if (!invoice) throw new NotFoundException('Invoice not found');
 
         let recipient = overrideEmail ?? null;
+        let recipientLocale: string | undefined;
         if (!recipient && invoice.userId) {
             const user = await this.userRepository.findById(invoice.userId);
             recipient = user?.email ?? null;
+            recipientLocale = user?.preferredLocale ?? undefined;
+        } else if (invoice.userId) {
+            const user = await this.userRepository.findById(invoice.userId);
+            recipientLocale = user?.preferredLocale ?? undefined;
         }
         if (!recipient) {
             throw new NotFoundException('No recipient email available for this invoice');
@@ -50,7 +55,7 @@ export class ResendInvoiceEmailUseCase {
         }
 
         const orderNumber = order ? resolveOrderNumber(order) : undefined;
-        await this.emailGateway.sendInvoiceEmail(recipient, invoice.number, pdfBuffer, orderNumber);
+        await this.emailGateway.sendInvoiceEmail(recipient, invoice.number, pdfBuffer, orderNumber, recipientLocale);
 
         return { ok: true, sentTo: recipient };
     }

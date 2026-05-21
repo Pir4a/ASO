@@ -175,7 +175,7 @@ export function MobileMenu({ open, onClose, locale }: MobileMenuProps) {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="rounded-lg px-3 py-2 text-left text-sm font-medium text-error hover:bg-error/10 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="rounded-lg px-3 py-2 text-start text-sm font-medium text-error hover:bg-error/10 focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {t("header.logout")}
               </button>

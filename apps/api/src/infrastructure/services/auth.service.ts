@@ -124,6 +124,7 @@ export class AuthService {
       role: user.role,
       mfa: false,
       mfaEnabled: false,
+      locale: user.preferredLocale ?? undefined,
     };
     const access_token = this.jwtService.sign(payload, { expiresIn: ACCESS_TOKEN_TTL });
 
@@ -135,6 +136,7 @@ export class AuthService {
       // the refresh cookie's default — treat it as a non-rememberMe session.
       rememberMe: false,
       user: { id: user.id, email: user.email, role: user.role, mfaEnabled: false },
+      locale: user.preferredLocale ?? undefined,
     };
   }
 
@@ -177,6 +179,7 @@ export class AuthService {
       role: user.role,
       mfa: false,
       mfaEnabled: false,
+      locale: user.preferredLocale ?? undefined,
     };
     const access_token = this.jwtService.sign(payload, { expiresIn: ACCESS_TOKEN_TTL });
 
@@ -185,6 +188,7 @@ export class AuthService {
       refresh_token,
       rememberMe: !!rememberMe,
       user: { id: user.id, email: user.email, role: user.role, mfaEnabled: false },
+      locale: user.preferredLocale ?? undefined,
     };
   }
 
@@ -228,6 +232,7 @@ export class AuthService {
       // upgrade a non-MFA-cleared session.
       mfa: false,
       mfaEnabled: user.mfaEnabled === true,
+      locale: user.preferredLocale ?? undefined,
     };
     const access_token = this.jwtService.sign(payload, { expiresIn: ACCESS_TOKEN_TTL });
     return {

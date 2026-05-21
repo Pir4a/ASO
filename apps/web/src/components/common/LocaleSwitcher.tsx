@@ -31,11 +31,11 @@ export function LocaleSwitcher({
 
   const selectClass =
     tone === "dark"
-      ? "appearance-none rounded bg-transparent py-0.5 pl-2 pr-6 text-[12px] font-semibold text-white/90 cursor-pointer transition-colors hover:bg-white/10 focus:outline-none focus:ring-1 focus:ring-white/40"
-      : "appearance-none rounded-lg border border-foreground/10 bg-white py-1.5 pl-3 pr-7 text-sm font-semibold text-foreground shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary";
+      ? "appearance-none rounded bg-transparent py-0.5 ps-2 pe-6 text-[12px] font-semibold text-white/90 cursor-pointer transition-colors hover:bg-white/10 focus:outline-none focus:ring-1 focus:ring-white/40"
+      : "appearance-none rounded-lg border border-foreground/10 bg-white py-1.5 ps-3 pe-7 text-sm font-semibold text-foreground shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary";
 
   const chevClass =
-    tone === "dark" ? "pointer-events-none absolute right-1.5 text-white/65" : "pointer-events-none absolute right-2 text-foreground/60";
+    tone === "dark" ? "pointer-events-none absolute end-1.5 text-white/65" : "pointer-events-none absolute end-2 text-foreground/60";
 
   return (
     <label className="relative inline-flex items-center">

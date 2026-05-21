@@ -32,7 +32,7 @@ export class RequestPasswordResetUseCase {
         await this.userRepository.update(user);
 
         try {
-            await this.emailGateway.sendPasswordResetEmail(email, token);
+            await this.emailGateway.sendPasswordResetEmail(email, token, user.preferredLocale ?? undefined);
         } catch (e) {
             this.logger.error(`Failed to send password reset email to ${email}`, e as Error);
         }

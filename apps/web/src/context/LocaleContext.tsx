@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext } from "react";
 import type { Locale } from "@/lib/i18n.shared";
 import { defaultLocale } from "@/lib/i18n.shared";
-import { getTranslations, type TranslationKey } from "@/lib/translations";
+import { getTranslations, tPlural, type TranslationKey, type TranslationVars } from "@/lib/translations";
 
 const LocaleContext = createContext<Locale>(defaultLocale);
 
@@ -18,7 +18,15 @@ export function useLocale(): Locale {
 export function useT() {
     const locale = useContext(LocaleContext);
     return useCallback(
-        (key: TranslationKey) => getTranslations(locale)(key),
+        (key: TranslationKey, vars?: TranslationVars) => getTranslations(locale)(key, vars),
+        [locale],
+    );
+}
+
+export function useTPlural() {
+    const locale = useContext(LocaleContext);
+    return useCallback(
+        (base: string, count: number, vars?: TranslationVars) => tPlural(locale, base, count, vars),
         [locale],
     );
 }

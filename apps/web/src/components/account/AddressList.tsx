@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { AddressForm, type AddressFormData } from "./AddressForm";
 import { authFetch } from "@/lib/auth";
+import { useT } from "@/context/LocaleContext";
 
 interface Address extends AddressFormData {
     id: string;
 }
 
 export function AddressList() {
+    const t = useT();
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState<Address | null>(null);
@@ -44,13 +46,13 @@ export function AddressList() {
         });
         if (!res.ok) {
             const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-            const msg = typeof body.message === "string" ? body.message : "Création impossible.";
+            const msg = typeof body.message === "string" ? body.message : t("address.list.createFailed");
             flashAndClear("error", msg);
             throw new Error(msg);
         }
         setCreating(false);
         await fetchAddresses();
-        flashAndClear("success", "Adresse ajoutée.");
+        flashAndClear("success", t("address.list.created"));
     };
 
     const handleUpdate = async (data: AddressFormData) => {
@@ -61,30 +63,30 @@ export function AddressList() {
         });
         if (!res.ok) {
             const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-            const msg = typeof body.message === "string" ? body.message : "Mise à jour impossible.";
+            const msg = typeof body.message === "string" ? body.message : t("address.list.updateFailed");
             flashAndClear("error", msg);
             throw new Error(msg);
         }
         setEditing(null);
         await fetchAddresses();
-        flashAndClear("success", "Adresse mise à jour.");
+        flashAndClear("success", t("address.list.updated"));
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Supprimer cette adresse ?")) return;
+        if (!confirm(t("address.list.confirmDelete"))) return;
         const res = await authFetch(`/profile/addresses/${id}`, { method: "DELETE" });
         if (res.ok) {
             await fetchAddresses();
-            flashAndClear("success", "Adresse supprimée.");
+            flashAndClear("success", t("address.list.deleted"));
         } else {
-            flashAndClear("error", "Suppression impossible.");
+            flashAndClear("error", t("address.list.deleteFailed"));
         }
     };
 
     if (loading) {
         return (
             <div className="rounded-xl border border-dashed border-foreground/15 bg-background/40 px-6 py-10 text-center text-sm text-foreground/55">
-                Chargement…
+                {t("address.list.loading")}
             </div>
         );
     }
@@ -94,7 +96,7 @@ export function AddressList() {
             <div className="rounded-2xl border border-foreground/10 bg-background/40 p-5">
                 <p className="mb-3 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
                     <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-                    Nouvelle adresse
+                    {t("address.list.newSection")}
                 </p>
                 <AddressForm onSubmit={handleCreate} onCancel={() => setCreating(false)} />
             </div>
@@ -106,7 +108,7 @@ export function AddressList() {
             <div className="rounded-2xl border border-foreground/10 bg-background/40 p-5">
                 <p className="mb-3 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
                     <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-                    Modifier l&apos;adresse
+                    {t("address.list.editSection")}
                 </p>
                 <AddressForm
                     initialData={editing}
@@ -121,7 +123,7 @@ export function AddressList() {
         <div className="space-y-4">
             {addresses.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-foreground/15 bg-background/40 px-6 py-10 text-center text-sm text-foreground/55">
-                    Aucune adresse enregistrée.
+                    {t("address.list.empty")}
                 </div>
             ) : (
                 <ul className="grid gap-3 sm:grid-cols-2" role="list">
@@ -162,7 +164,7 @@ export function AddressList() {
                                             <path d="M3 13h3L13 6l-3-3L3 10v3z" />
                                             <path d="m9 4 3 3" />
                                         </svg>
-                                        Modifier
+                                        {t("common.edit")}
                                     </button>
                                     <button
                                         type="button"
@@ -172,7 +174,7 @@ export function AddressList() {
                                         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3 w-3">
                                             <path d="M3 4h10M6 4V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1m-5 0v9a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V4" />
                                         </svg>
-                                        Supprimer
+                                        {t("payment.deleteBtn")}
                                     </button>
                                 </div>
                             </li>
@@ -190,7 +192,7 @@ export function AddressList() {
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                     <path d="M8 3v10M3 8h10" />
                 </svg>
-                Ajouter une adresse
+                {t("address.list.addCta")}
             </button>
 
             {flash && (

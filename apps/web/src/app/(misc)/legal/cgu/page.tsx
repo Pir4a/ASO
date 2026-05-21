@@ -19,7 +19,7 @@ export default async function CguPage() {
     <article
       lang="fr"
       dir="ltr"
-      className="mx-auto max-w-3xl space-y-4 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-foreground [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-foreground [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-foreground/70 [&_li]:text-sm [&_li]:leading-relaxed [&_li]:text-foreground/70 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5"
+      className="mx-auto max-w-3xl space-y-4 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-foreground [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-foreground [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-foreground/70 [&_li]:text-sm [&_li]:leading-relaxed [&_li]:text-foreground/70 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:ps-5"
     >
       <header className="card space-y-2 p-6">
         <h1 className="text-2xl font-semibold text-foreground">{t("legal.cgu.title")}</h1>

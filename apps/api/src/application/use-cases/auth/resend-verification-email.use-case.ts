@@ -28,7 +28,7 @@ export class ResendVerificationEmailUseCase {
     await this.userRepository.update(user);
 
     try {
-      await this.emailGateway.sendVerificationEmail(normalized, verificationToken);
+      await this.emailGateway.sendVerificationEmail(normalized, verificationToken, user.preferredLocale ?? undefined);
     } catch (e) {
       console.error('Failed to resend verification email:', e);
     }

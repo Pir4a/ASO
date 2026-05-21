@@ -8,7 +8,7 @@ import { ProductImageGallery } from "@/components/product/ProductImageGallery";
 import { ProductSpecs } from "@/components/product/ProductSpecs";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
 import { StockNotifySection } from "@/components/product/StockNotifySection";
-import { useT } from "@/context/LocaleContext";
+import { useT, useLocale } from "@/context/LocaleContext";
 import type { Category, Product } from "@bootstrap/types";
 
 interface ProductDetailClientProps {
@@ -23,9 +23,9 @@ function buildGalleryImages(product: Product): string[] {
   return [...new Set(urls.filter(Boolean))];
 }
 
-function formatPrice(p: Product) {
+function formatProductPrice(p: Product, locale: string) {
   const value = p.priceCents / 100;
-  return value >= 1000 ? value.toLocaleString("fr-FR") : value.toFixed(2);
+  return value >= 1000 ? value.toLocaleString(locale) : value.toFixed(2);
 }
 
 export function ProductDetailClient({
@@ -34,6 +34,7 @@ export function ProductDetailClient({
   relatedProducts,
 }: ProductDetailClientProps) {
   const t = useT();
+  const locale = useLocale();
   const images = buildGalleryImages(product);
   const outOfStock =
     product.status === "out_of_stock" || (product.stock !== undefined && product.stock <= 0);
@@ -97,7 +98,7 @@ export function ProductDetailClient({
 
             <div className="flex items-baseline gap-3">
               <p className="font-heading text-[34px] font-bold leading-none tabular-nums text-foreground">
-                {formatPrice(product)}
+                {formatProductPrice(product, locale)}
               </p>
               <p className="text-base font-medium text-foreground/55">{product.currency}</p>
               {product.vatRate !== undefined && product.vatRate !== null && (

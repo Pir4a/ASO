@@ -27,6 +27,8 @@ export class User {
     refreshTokenHash: string | null;
     refreshTokenExpiresAt: Date | null;
     stripeCustomerId?: string;
+    /** Preferred UI / email locale; null means "no choice" (fall back to request). */
+    preferredLocale: 'en' | 'fr' | 'ar' | 'he' | null;
     createdAt?: Date;
 
     constructor(partial: Partial<User>) {

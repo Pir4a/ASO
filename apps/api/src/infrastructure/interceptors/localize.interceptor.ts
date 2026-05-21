@@ -6,9 +6,9 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { resolveLocaleFromRequest, DEFAULT_LOCALE } from '../../i18n/locale-resolver';
 
-const KNOWN_LOCALES = new Set(['en', 'fr', 'ar', 'he']);
-const DEFAULT_BASE_LOCALE = 'en';
+const DEFAULT_BASE_LOCALE = DEFAULT_LOCALE;
 
 /** Fields we'll override when a matching translation exists. */
 const LOCALIZABLE_KEYS = [
@@ -60,20 +60,12 @@ function localize(value: unknown, lang: string): unknown {
   return out;
 }
 
-interface RequestWithLang {
-  query?: { lang?: unknown };
-}
-
 @Injectable()
 export class LocalizeInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const req = context.switchToHttp().getRequest<RequestWithLang>();
-    const langRaw = req?.query?.lang;
-    const lang =
-      typeof langRaw === 'string' && KNOWN_LOCALES.has(langRaw)
-        ? langRaw
-        : null;
-    if (!lang || lang === DEFAULT_BASE_LOCALE) {
+    const req = context.switchToHttp().getRequest();
+    const lang = resolveLocaleFromRequest(req, DEFAULT_BASE_LOCALE);
+    if (lang === DEFAULT_BASE_LOCALE) {
       return next.handle();
     }
     return next.handle().pipe(map((data) => localize(data, lang)));

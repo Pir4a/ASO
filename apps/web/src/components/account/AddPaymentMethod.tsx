@@ -9,6 +9,7 @@ import {
     useElements,
 } from "@stripe/react-stripe-js";
 import { authFetch } from "@/lib/auth";
+import { useT } from "@/context/LocaleContext";
 
 if (typeof window !== "undefined" && !process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
     console.error("Missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY");
@@ -22,6 +23,7 @@ function SetupForm({
     onSuccess: () => void;
     onCancel: () => void;
 }) {
+    const t = useT();
     const stripe = useStripe();
     const elements = useElements();
     const [error, setError] = useState<string | null>(null);
@@ -42,7 +44,7 @@ function SetupForm({
         });
 
         if (stripeErr) {
-            setError(stripeErr.message || "Une erreur est survenue.");
+            setError(stripeErr.message || t("payment.errorGeneric"));
             setLoading(false);
         } else {
             onSuccess();
@@ -74,7 +76,7 @@ function SetupForm({
                     disabled={loading}
                     className="inline-flex h-10 items-center gap-2 rounded-lg border border-foreground/15 bg-white px-4 text-[13px] font-semibold text-foreground transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                    Annuler
+                    {t("common.cancel")}
                 </button>
                 <button
                     type="submit"
@@ -85,14 +87,14 @@ function SetupForm({
                     {loading ? (
                         <>
                             <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                            Enregistrement…
+                            {t("payment.savingCard")}
                         </>
                     ) : (
                         <>
                             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                                 <path d="m3 8 3.5 3.5L13 5" />
                             </svg>
-                            Enregistrer la carte
+                            {t("payment.saveCard")}
                         </>
                     )}
                 </button>
@@ -102,6 +104,7 @@ function SetupForm({
 }
 
 export function AddPaymentMethod({ onAdded }: { onAdded: () => void }) {
+    const t = useT();
     const [clientSecret, setClientSecret] = useState<string | null>(null);
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -117,14 +120,14 @@ export function AddPaymentMethod({ onAdded }: { onAdded: () => void }) {
                 const msg =
                     typeof body?.message === "string"
                         ? body.message
-                        : "Initialisation du paiement impossible.";
+                        : t("payment.initPaymentFailed");
                 throw new Error(msg);
             }
             const data = (await res.json()) as { clientSecret: string };
             setClientSecret(data.clientSecret);
             setIsOpen(true);
         } catch (e) {
-            setError(e instanceof Error ? e.message : "Erreur inattendue.");
+            setError(e instanceof Error ? e.message : t("payment.unexpectedError"));
         } finally {
             setLoading(false);
         }
@@ -143,14 +146,14 @@ export function AddPaymentMethod({ onAdded }: { onAdded: () => void }) {
                     {loading ? (
                         <>
                             <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                            Préparation…
+                            {t("payment.preparing")}
                         </>
                     ) : (
                         <>
                             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
                                 <path d="M8 3v10M3 8h10" />
                             </svg>
-                            Ajouter une carte
+                            {t("payment.addCardCta")}
                         </>
                     )}
                 </button>
@@ -174,7 +177,7 @@ export function AddPaymentMethod({ onAdded }: { onAdded: () => void }) {
         <div className="rounded-2xl border border-foreground/10 bg-background/40 p-5">
             <p className="mb-3 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
                 <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-                Nouvelle carte
+                {t("payment.newCardSection")}
             </p>
             {clientSecret ? (
                 <Elements stripe={stripePromise} options={{ clientSecret }}>
@@ -191,7 +194,7 @@ export function AddPaymentMethod({ onAdded }: { onAdded: () => void }) {
                     />
                 </Elements>
             ) : (
-                <p className="text-sm text-foreground/55">Chargement…</p>
+                <p className="text-sm text-foreground/55">{t("common.loading")}</p>
             )}
         </div>
     );

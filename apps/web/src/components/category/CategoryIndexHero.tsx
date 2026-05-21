@@ -36,7 +36,7 @@ export function CategoryIndexHero({
       {/* Diagonal stripes circle */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-10 -top-10 h-[280px] w-[280px] rounded-full"
+        className="pointer-events-none absolute -end-10 -top-10 h-[280px] w-[280px] rounded-full"
         style={{
           backgroundImage:
             "repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0 12px, transparent 12px 24px)",
@@ -71,7 +71,7 @@ export function CategoryIndexHero({
             {stats.map((s, i) => (
               <li
                 key={s.label}
-                className={`pr-8 ${i < stats.length - 1 ? "mr-8 border-r border-white/15" : ""}`}
+                className={`pe-8 ${i < stats.length - 1 ? "me-8 border-e border-white/15" : ""}`}
               >
                 <p className="font-heading text-[28px] font-semibold leading-none tabular-nums text-white">
                   {s.value}

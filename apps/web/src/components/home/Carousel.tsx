@@ -198,7 +198,7 @@ export function Carousel({ slides: slidesProp }: { slides: CarouselSlide[] }) {
               aria-hidden="true"
               className="pointer-events-none absolute start-5 top-1/2 grid h-12 w-12 -translate-y-1/2 scale-90 place-items-center rounded-full bg-white/0 text-transparent shadow-none transition-all duration-200 group-hover:scale-100 group-hover:bg-white/90 group-hover:text-foreground group-hover:shadow-lg md:start-7"
             >
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-5 w-5">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-5 w-5 rtl:rotate-180">
                 <path d="M13 8H3m3-3-3 3 3 3" />
               </svg>
             </span>
@@ -219,7 +219,7 @@ export function Carousel({ slides: slidesProp }: { slides: CarouselSlide[] }) {
               aria-hidden="true"
               className="pointer-events-none absolute end-5 top-1/2 grid h-12 w-12 -translate-y-1/2 scale-90 place-items-center rounded-full bg-white/0 text-transparent shadow-none transition-all duration-200 group-hover:scale-100 group-hover:bg-white/90 group-hover:text-foreground group-hover:shadow-lg md:end-7"
             >
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-5 w-5">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-5 w-5 rtl:rotate-180">
                 <path d="M3 8h10m-3-3 3 3-3 3" />
               </svg>
             </span>
@@ -227,14 +227,14 @@ export function Carousel({ slides: slidesProp }: { slides: CarouselSlide[] }) {
           </button>
 
           {/* Top-right arrow controls */}
-          <div className="absolute right-5 top-5 z-30 flex gap-2">
+          <div className="absolute end-5 top-5 z-30 flex gap-2">
             <button
               type="button"
               onClick={prev}
               aria-label={t("a11y.carouselPrev")}
               className="grid h-9 w-9 cursor-pointer place-items-center rounded-full border border-white/25 bg-white/10 text-white backdrop-blur-sm transition hover:border-primary hover:bg-primary focus:outline-none focus:ring-2 focus:ring-white"
             >
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-4 w-4">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-4 w-4 rtl:rotate-180">
                 <path d="M13 8H3m3-3-3 3 3 3" />
               </svg>
             </button>
@@ -244,7 +244,7 @@ export function Carousel({ slides: slidesProp }: { slides: CarouselSlide[] }) {
               aria-label={t("a11y.carouselNext")}
               className="grid h-9 w-9 cursor-pointer place-items-center rounded-full border border-white/25 bg-white/10 text-white backdrop-blur-sm transition hover:border-primary hover:bg-primary focus:outline-none focus:ring-2 focus:ring-white"
             >
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-4 w-4">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-4 w-4 rtl:rotate-180">
                 <path d="M3 8h10m-3-3 3 3-3 3" />
               </svg>
             </button>

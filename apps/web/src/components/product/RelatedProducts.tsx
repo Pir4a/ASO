@@ -1,14 +1,17 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@bootstrap/types";
+import { useT, useLocale } from "@/context/LocaleContext";
 
 function isOutOfStock(p: Product) {
   return p.status === "out_of_stock" || (p.stock !== undefined && p.stock <= 0);
 }
 
-function formatPrice(p: Product) {
+function formatProductPrice(p: Product, locale: string) {
   const value = p.priceCents / 100;
-  return value >= 1000 ? value.toLocaleString("fr-FR") : value.toFixed(2);
+  return value >= 1000 ? value.toLocaleString(locale) : value.toFixed(2);
 }
 
 const PLACEHOLDER_ICON = (
@@ -26,6 +29,8 @@ export function RelatedProducts({
   categoryName?: string;
   categorySlug?: string;
 }) {
+  const t = useT();
+  const locale = useLocale();
   if (!products.length) return null;
 
   return (
@@ -34,13 +39,13 @@ export function RelatedProducts({
         <div>
           <p className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
             <span aria-hidden="true" className="block h-0.5 w-4 rounded-full bg-primary" />
-            Produits similaires
+            {t("related.eyebrow")}
           </p>
           <h2
             id="related-title"
             className="font-heading text-2xl font-semibold tracking-tight text-foreground md:text-[26px]"
           >
-            {categoryName ? `Aussi dans ${categoryName}` : "Vous pourriez aussi aimer"}
+            {categoryName ? t("related.alsoInCategory", { name: categoryName }) : t("related.youMayAlsoLike")}
           </h2>
         </div>
         {categorySlug && (
@@ -48,8 +53,8 @@ export function RelatedProducts({
             href={`/categories/${categorySlug}`}
             className="hidden items-center gap-1.5 text-sm font-semibold text-primary transition hover:text-primary-hover sm:inline-flex"
           >
-            Voir la catégorie
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
+            {t("related.viewCategory")}
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5 rtl:rotate-180">
               <path d="M3 8h10m-3-3 3 3-3 3" />
             </svg>
           </Link>
@@ -101,7 +106,7 @@ export function RelatedProducts({
                       oos ? "text-foreground/55" : "text-foreground"
                     }`}
                   >
-                    <span className="num tabular-nums">{formatPrice(p)}</span>{" "}
+                    <span className="num tabular-nums">{formatProductPrice(p, locale)}</span>{" "}
                     <span className="text-xs font-medium text-foreground/55">{p.currency}</span>
                   </p>
                   {oos && (
@@ -110,7 +115,7 @@ export function RelatedProducts({
                         <circle cx="8" cy="8" r="6" />
                         <path d="m4.5 4.5 7 7" />
                       </svg>
-                      En rupture de stock
+                      {t("products.status.out_of_stock")}
                     </span>
                   )}
                 </div>

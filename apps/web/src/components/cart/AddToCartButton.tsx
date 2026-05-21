@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/components/ui/Toast";
+import { useT } from "@/context/LocaleContext";
 
 interface AddToCartButtonProps {
     productId: string;
@@ -19,6 +20,7 @@ export function AddToCartButton({
     variant = "primary",
     quantity = 1,
 }: AddToCartButtonProps) {
+    const t = useT();
     const { addItem, isLoading } = useCart();
     const { addToast } = useToast();
     const [isAdding, setIsAdding] = useState(false);
@@ -33,12 +35,12 @@ export function AddToCartButton({
         try {
             await addItem(productId, qty);
             setShowSuccess(true);
-            const name = productName ?? "Produit";
-            const msg = qty > 1 ? `${name} ajouté au panier ×${qty}` : `${name} ajouté au panier`;
+            const name = productName ?? t("atc.fallbackProductName");
+            const msg = qty > 1 ? t("atc.addedWithQty", { name, qty }) : t("atc.added", { name });
             addToast(msg, "success");
             setTimeout(() => setShowSuccess(false), 2000);
         } catch (error: unknown) {
-            const msg = error instanceof Error ? error.message : "Erreur lors de l'ajout au panier";
+            const msg = error instanceof Error ? error.message : t("atc.error");
             addToast(msg, "error");
         } finally {
             setIsAdding(false);
@@ -58,17 +60,17 @@ export function AddToCartButton({
             {isAdding ? (
                 <span className="flex items-center justify-center gap-2">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Ajout...
+                    {t("atc.adding")}
                 </span>
             ) : showSuccess ? (
                 <span className="flex items-center justify-center gap-1">
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Ajouté !
+                    {t("atc.success")}
                 </span>
             ) : (
-                "Ajouter au panier"
+                t("atc.addToCart")
             )}
         </button>
     );

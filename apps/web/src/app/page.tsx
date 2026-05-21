@@ -25,7 +25,7 @@ export default async function Home() {
       {homepageText && (homepageText.headline || homepageText.body) && (
         <section
           aria-label={homepageText.headline || t("home.infoFallback")}
-          className="grid items-center gap-5 rounded-xl border border-foreground/10 border-l-4 border-l-primary bg-white p-6 md:grid-cols-[44px_1fr_auto] md:gap-6 md:p-7"
+          className="grid items-center gap-5 rounded-xl border border-foreground/10 border-s-4 border-s-primary bg-white p-6 md:grid-cols-[44px_1fr_auto] md:gap-6 md:p-7"
         >
           <div
             aria-hidden="true"
@@ -52,19 +52,20 @@ export default async function Home() {
               />
             )}
           </div>
-          <ul className="flex justify-around gap-6 border-t border-foreground/10 pt-4 text-center md:border-l md:border-t-0 md:pl-6 md:pt-0">
+          <ul className="flex justify-around gap-6 border-t border-foreground/10 pt-4 text-center md:border-s md:border-t-0 md:ps-6 md:pt-0">
             <li>
-              <p className="font-heading text-lg font-semibold text-foreground leading-tight">
+              {/* Bidi-isolate numeric stats so they don't reorder visually in RTL. */}
+              <p className="font-heading text-lg font-semibold text-foreground leading-tight" dir="ltr">
                 {products.length}+
               </p>
               <p className="text-[11px] uppercase tracking-wide text-foreground/60">{t("home.statsRefs")}</p>
             </li>
             <li>
-              <p className="font-heading text-lg font-semibold text-foreground leading-tight">48 h</p>
+              <p className="font-heading text-lg font-semibold text-foreground leading-tight" dir="ltr">{t("home.statsDeliveryValue")}</p>
               <p className="text-[11px] uppercase tracking-wide text-foreground/60">{t("home.statsDelivery")}</p>
             </li>
             <li>
-              <p className="font-heading text-lg font-semibold text-foreground leading-tight">24/7</p>
+              <p className="font-heading text-lg font-semibold text-foreground leading-tight" dir="ltr">24/7</p>
               <p className="text-[11px] uppercase tracking-wide text-foreground/60">{t("home.statsSupport")}</p>
             </li>
           </ul>

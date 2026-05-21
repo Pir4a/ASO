@@ -168,7 +168,7 @@ function ProfileShell() {
               <p className="mt-1 text-[13.5px] text-white/70">
                 {user.email}
                 {user.role === "admin" && (
-                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-white">
+                  <span className="ms-2 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-white">
                     {t("header.admin")}
                   </span>
                 )}
@@ -208,7 +208,7 @@ function ProfileShell() {
                       type="button"
                       onClick={() => setSection(key)}
                       aria-current={isActive ? "page" : undefined}
-                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition ${
+                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start transition ${
                         isActive
                           ? "bg-background font-semibold text-foreground"
                           : "text-foreground hover:bg-background/60 hover:text-primary"
@@ -1427,13 +1427,13 @@ function ChangePasswordForm() {
             required
             value={next}
             onChange={(e) => setNext(e.target.value)}
-            className={`${inputCls} pr-10`}
+            className={`${inputCls} pe-10`}
           />
           <button
             type="button"
             onClick={() => setShowNext((s) => !s)}
             aria-label={showNext ? "Masquer" : "Afficher"}
-            className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded text-foreground/55 transition hover:bg-background hover:text-primary"
+            className="absolute end-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded text-foreground/55 transition hover:bg-background hover:text-primary"
           >
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="h-3.5 w-3.5">
               {showNext ? (

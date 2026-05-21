@@ -220,7 +220,7 @@ export function Header({ locale }: HeaderProps) {
               </li>
             </ul>
 
-            <div className="ml-auto flex items-center gap-2.5 text-[12.5px] font-medium sm:gap-3.5">
+            <div className="ms-auto flex items-center gap-2.5 text-[12.5px] font-medium sm:gap-3.5">
               {isAuthenticated ? (
                 <>
                   <Link href="/orders" className="hidden text-white/80 transition hover:text-white sm:inline">
@@ -266,8 +266,9 @@ export function Header({ locale }: HeaderProps) {
                   <Link href="/login" className="text-white/80 transition hover:text-white">
                     {t("header.login")}
                   </Link>
-                  <Link href="/signup" className="font-semibold text-primary-hover transition hover:text-white">
-                    {t("header.signup")} →
+                  <Link href="/signup" className="inline-flex items-center gap-1 font-semibold text-primary-hover transition hover:text-white">
+                    <span>{t("header.signup")}</span>
+                    <span aria-hidden="true" className="rtl:rotate-180">→</span>
                   </Link>
                 </>
               )}
@@ -326,12 +327,12 @@ export function Header({ locale }: HeaderProps) {
             className="relative flex h-11 min-w-0 flex-1 items-stretch overflow-visible rounded-[10px] border-[1.5px] border-foreground/10 bg-white transition focus-within:border-primary focus-within:shadow-[0_0_0_4px_rgba(0,168,181,0.12)]"
           >
             {/* Category prefix */}
-            <label className="relative hidden min-w-0 items-center border-r border-foreground/10 bg-background/60 transition hover:bg-background sm:inline-flex">
+            <label className="relative hidden min-w-0 items-center border-e border-foreground/10 bg-background/60 transition hover:bg-background sm:inline-flex">
               <span className="sr-only">{t("search.category")}</span>
               <select
                 value={searchSlug}
                 onChange={(e) => setSearchSlug(e.target.value)}
-                className="appearance-none border-0 bg-transparent py-0 pl-3.5 pr-7 text-[13px] font-semibold text-foreground focus:outline-none"
+                className="appearance-none border-0 bg-transparent py-0 ps-3.5 pe-7 text-[13px] font-semibold text-foreground focus:outline-none"
               >
                 <option value="">{t("search.categoryAll")}</option>
                 {categories.map((c) => (
@@ -340,7 +341,7 @@ export function Header({ locale }: HeaderProps) {
                   </option>
                 ))}
               </select>
-              <span aria-hidden="true" className="pointer-events-none absolute right-2.5 text-foreground/55">
+              <span aria-hidden="true" className="pointer-events-none absolute end-2.5 text-foreground/55">
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-2.5 w-2.5">
                   <path d="m4 6 4 4 4-4" />
                 </svg>
@@ -401,7 +402,7 @@ export function Header({ locale }: HeaderProps) {
               <div
                 id="header-suggestions"
                 role="listbox"
-                className="absolute left-0 right-0 top-[calc(100%+6px)] z-[80] overflow-hidden rounded-xl border border-foreground/10 bg-white shadow-xl"
+                className="absolute start-0 end-0 top-[calc(100%+6px)] z-[80] overflow-hidden rounded-xl border border-foreground/10 bg-white shadow-xl"
               >
                 <ul className="max-h-72 overflow-y-auto py-1">
                   {suggestions.map((s, idx) => {
@@ -423,7 +424,7 @@ export function Header({ locale }: HeaderProps) {
                           onMouseDown={(e) => e.preventDefault()}
                           onMouseEnter={() => setActiveSuggestionIndex(idx)}
                           onClick={() => applySuggestion(s)}
-                          className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm text-foreground hover:bg-foreground/5 ${
+                          className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-start text-sm text-foreground hover:bg-foreground/5 ${
                             idx === activeSuggestionIndex ? "bg-foreground/5" : ""
                           }`}
                         >
@@ -444,7 +445,7 @@ export function Header({ locale }: HeaderProps) {
           <Link
             href="/cart"
             style={{ color: "#fff" }}
-            className="hidden h-11 items-center gap-3 whitespace-nowrap rounded-full bg-primary pl-4 pr-2 transition hover:bg-primary-hover md:inline-flex"
+            className="hidden h-11 items-center gap-3 whitespace-nowrap rounded-full bg-primary ps-4 pe-2 transition hover:bg-primary-hover md:inline-flex"
             aria-label={
               itemCount > 0
                 ? `${t("header.cart")}, ${itemCount} ${t("a11y.cartItems")}`
@@ -468,7 +469,7 @@ export function Header({ locale }: HeaderProps) {
               {itemCount > 0 && (
                 <span
                   aria-hidden="true"
-                  className="absolute -right-1 -top-1 inline-flex min-w-[16px] justify-center rounded-full border-2 border-primary bg-foreground px-1 text-[10px] font-bold leading-[1.4] text-white tabular-nums"
+                  className="absolute -end-1 -top-1 inline-flex min-w-[16px] justify-center rounded-full border-2 border-primary bg-foreground px-1 text-[10px] font-bold leading-[1.4] text-white tabular-nums"
                 >
                   {itemCount > 99 ? "99+" : itemCount}
                 </span>
@@ -490,7 +491,7 @@ export function Header({ locale }: HeaderProps) {
             {itemCount > 0 && (
               <span
                 aria-hidden="true"
-                className="absolute -right-1 -top-1 inline-flex min-w-[18px] justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-[1.4] text-white"
+                className="absolute -end-1 -top-1 inline-flex min-w-[18px] justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-[1.4] text-white"
               >
                 {itemCount > 99 ? "99+" : itemCount}
               </span>
@@ -527,7 +528,7 @@ export function Header({ locale }: HeaderProps) {
               href="/profile"
               aria-current={isActive("/profile") ? "page" : undefined}
               style={isActive("/profile") ? { color: "#fff" } : undefined}
-              className={`ml-auto inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold transition ${
+              className={`ms-auto inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold transition ${
                 isActive("/profile")
                   ? "bg-foreground hover:bg-[#00253a]"
                   : "bg-background text-foreground hover:bg-primary/15 hover:text-primary"

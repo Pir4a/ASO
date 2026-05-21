@@ -42,7 +42,7 @@ export function PasswordRequirementHints({ password, className = "" }: Props) {
                                 : "text-foreground/60"
                         }
                     >
-                        <span aria-hidden="true" className="mr-1.5 inline-block w-3.5 text-center">
+                        <span aria-hidden="true" className="me-1.5 inline-block w-3.5 text-center">
                             {c.ok ? "✓" : "·"}
                         </span>
                         {c.label}
