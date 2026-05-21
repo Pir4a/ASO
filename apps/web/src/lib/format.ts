@@ -1,4 +1,4 @@
-import type { Locale } from "./i18n.shared";
+import { intlLocale, type Locale } from "./i18n.shared";
 
 /**
  * Locale-aware price formatter. Keeps the project's existing display rule
@@ -7,10 +7,11 @@ import type { Locale } from "./i18n.shared";
  * the right glyph.
  */
 export function formatPrice(cents: number, currency: string, locale: Locale): string {
+    const tag = intlLocale[locale];
     const v = cents / 100;
     const num =
         v >= 1000
-            ? v.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            ? v.toLocaleString(tag, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
             : v.toFixed(2);
     return `${num} ${currency}`;
 }
@@ -20,13 +21,13 @@ export function formatPrice(cents: number, currency: string, locale: Locale): st
  * native locale formatting (currency symbol position, separators, RTL).
  */
 export function formatCurrency(cents: number, currency: string, locale: Locale): string {
-    return new Intl.NumberFormat(locale, { style: "currency", currency }).format(cents / 100);
+    return new Intl.NumberFormat(intlLocale[locale], { style: "currency", currency }).format(cents / 100);
 }
 
 export function formatDate(iso: string | Date, locale: Locale, opts?: Intl.DateTimeFormatOptions): string {
-    return new Date(iso).toLocaleDateString(locale, opts);
+    return new Date(iso).toLocaleDateString(intlLocale[locale], opts);
 }
 
 export function formatDateTime(iso: string | Date, locale: Locale, opts?: Intl.DateTimeFormatOptions): string {
-    return new Date(iso).toLocaleString(locale, opts);
+    return new Date(iso).toLocaleString(intlLocale[locale], opts);
 }
