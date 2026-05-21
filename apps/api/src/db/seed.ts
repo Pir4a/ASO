@@ -39,6 +39,16 @@ async function seed() {
           description:
             'IRM, scanners CT, échographes et systèmes de radiographie numérique pour une imagerie médicale précise.',
         },
+        ar: {
+          name: 'التصوير والتشخيص',
+          description:
+            'أنظمة الرنين المغناطيسي والأشعة المقطعية وأجهزة الموجات فوق الصوتية ومعدات الأشعة السينية لتصوير طبي دقيق.',
+        },
+        he: {
+          name: 'הדמיה ואבחון',
+          description:
+            'מערכות MRI, סורקי CT, מכשירי אולטרסאונד וציוד רנטגן להדמיה רפואית מדויקת.',
+        },
       },
     },
     {
@@ -53,6 +63,16 @@ async function seed() {
           name: 'Bloc opératoire',
           description:
             "Instruments chirurgicaux, stations d'anesthésie, éclairages scialytiques et équipements stériles.",
+        },
+        ar: {
+          name: 'الجراحة وغرفة العمليات',
+          description:
+            'أدوات جراحية ومحطات تخدير وأضواء عمليات ومعدات حقل معقمة.',
+        },
+        he: {
+          name: 'כירורגיה וחדר ניתוח',
+          description:
+            'מכשירי ניתוח, עמדות הרדמה, תאורת ניתוח וציוד שדה סטרילי.',
         },
       },
     },
@@ -69,6 +89,16 @@ async function seed() {
           description:
             'Moniteurs multiparamètres, oxymètres de pouls, ECG et solutions de soins connectés.',
         },
+        ar: {
+          name: 'مراقبة المرضى',
+          description:
+            'أجهزة مراقبة العلامات الحيوية وأجهزة قياس التأكسج النبضي ومخططات كهربية القلب وأجهزة الرعاية المتصلة.',
+        },
+        he: {
+          name: 'ניטור מטופלים',
+          description:
+            'מוניטורים לסימנים חיוניים, אוקסימטרים, מכשירי אק"ג ופתרונות טיפול מחובר.',
+        },
       },
     },
     {
@@ -84,6 +114,15 @@ async function seed() {
           description:
             "Gants médicaux, masques, blouses, écrans faciaux et équipements d'isolation.",
         },
+        ar: {
+          name: 'معدات الحماية',
+          description: 'قفازات طبية وكمامات وعباءات وواقيات للوجه ومعدات العزل.',
+        },
+        he: {
+          name: 'ציוד מגן',
+          description:
+            'כפפות רפואיות, מסכות, חלוקים, מגיני פנים וציוד בידוד.',
+        },
       },
     },
     {
@@ -98,6 +137,15 @@ async function seed() {
           name: 'Mobilité & Rééducation',
           description:
             'Fauteuils roulants, déambulateurs, attelles orthopédiques et matériel de kinésithérapie.',
+        },
+        ar: {
+          name: 'التنقل وإعادة التأهيل',
+          description:
+            'كراسي متحركة ومشّايات وجبائر تقويم العظام ومعدات العلاج الطبيعي.',
+        },
+        he: {
+          name: 'ניידות ושיקום',
+          description: 'כיסאות גלגלים, הליכונים, סדים אורתופדיים וציוד פיזיותרפיה.',
         },
       },
     },
@@ -436,6 +484,14 @@ async function seed() {
             headline: 'Équipement médical professionnel, livré avec excellence',
             body: "Votre partenaire de confiance pour les dispositifs et équipements médicaux haut de gamme. Certifié ISO 13485. Livraison rapide partout en Europe.",
           },
+          ar: {
+            headline: 'معدات طبية فاخرة، تُسلَّم بتميز',
+            body: 'شريكك الموثوق لأجهزة ومعدات طبية عالية الجودة. معتمد ISO 13485. شحن سريع في جميع أنحاء أوروبا.',
+          },
+          he: {
+            headline: 'ציוד רפואי מובחר, נשלח במצוינות',
+            body: 'שותפך המהימן לציוד ולמכשירים רפואיים איכותיים. מאושר ISO 13485. משלוח מהיר בכל אירופה.',
+          },
         },
       },
       order: 1,
@@ -457,6 +513,16 @@ async function seed() {
               'Radiographie numérique au plafond avec prévisualisation immédiate',
             ctaLabel: 'Découvrir',
           },
+          ar: {
+            title: 'جديد · نظام الأشعة السينية الرقمي 100',
+            subtitle: 'أشعة سينية رقمية مثبتة بالسقف مع معاينة فورية للصور',
+            ctaLabel: 'اكتشف',
+          },
+          he: {
+            title: 'חדש · מערכת רנטגן דיגיטלית 100',
+            subtitle: 'רנטגן דיגיטלי מותקן בתקרה עם תצוגה מקדימה מיידית',
+            ctaLabel: 'גלה',
+          },
         },
       },
       order: 1,
@@ -476,6 +542,16 @@ async function seed() {
             subtitle: 'Bloc opératoire connecté avec traçabilité en temps réel',
             ctaLabel: 'Voir le produit',
           },
+          ar: {
+            title: 'محطة العمليات 900',
+            subtitle: 'غرفة عمليات متصلة مع إمكانية التتبع في الوقت الحقيقي',
+            ctaLabel: 'اعرض المنتج',
+          },
+          he: {
+            title: 'עמדת ניתוח 900',
+            subtitle: 'חדר ניתוח מחובר עם מעקב בזמן אמת',
+            ctaLabel: 'הצג מוצר',
+          },
         },
       },
       order: 2,
@@ -494,6 +570,16 @@ async function seed() {
             title: 'Support expert & maintenance',
             subtitle: 'Conseillers dédiés et assistance technique 24/7',
             ctaLabel: 'Nous contacter',
+          },
+          ar: {
+            title: 'دعم وصيانة من الخبراء',
+            subtitle: 'مديرو حسابات مخصصون ومساعدة تقنية على مدار الساعة',
+            ctaLabel: 'تواصل معنا',
+          },
+          he: {
+            title: 'תמיכה ותחזוקה של מומחים',
+            subtitle: 'מנהלי לקוחות ייעודיים וסיוע טכני 24/7',
+            ctaLabel: 'צור קשר',
           },
         },
       },

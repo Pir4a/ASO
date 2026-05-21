@@ -654,6 +654,8 @@ const translations = {
         "buynow.redirecting": "Redirecting…",
         "buynow.label": "Buy now",
         "cart.errors.loadFailed": "Failed to load cart.",
+        // Home stat values (locale-aware notation for delivery window)
+        "home.statsDeliveryValue": "48 h",
     },
 
     fr: {
@@ -1309,6 +1311,8 @@ const translations = {
         "buynow.redirecting": "Redirection…",
         "buynow.label": "Acheter maintenant",
         "cart.errors.loadFailed": "Le panier n'a pas pu être chargé.",
+        // Home stat values (locale-aware notation for delivery window)
+        "home.statsDeliveryValue": "48 h",
     },
 
     ar: {
@@ -1963,6 +1967,8 @@ const translations = {
         "buynow.redirecting": "جارٍ التحويل…",
         "buynow.label": "اشترِ الآن",
         "cart.errors.loadFailed": "تعذّر تحميل السلة.",
+        // Home stat values (locale-aware notation for delivery window)
+        "home.statsDeliveryValue": "48 س",
     },
 
     he: {
@@ -2617,6 +2623,8 @@ const translations = {
         "buynow.redirecting": "מעביר…",
         "buynow.label": "קנה עכשיו",
         "cart.errors.loadFailed": "טעינת העגלה נכשלה.",
+        // Home stat values (locale-aware notation for delivery window)
+        "home.statsDeliveryValue": "48 שע׳",
     },
 } as const;
 
