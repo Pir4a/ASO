@@ -40,7 +40,7 @@ export class RequestEmailChangeUseCase {
         user.pendingEmailExpires = new Date(Date.now() + PENDING_TOKEN_TTL_MS);
 
         await this.userRepository.update(user);
-        await this.emailGateway.sendEmailChangeConfirmation(trimmed, user.pendingEmailToken);
+        await this.emailGateway.sendEmailChangeConfirmation(trimmed, user.pendingEmailToken, user.preferredLocale ?? undefined);
 
         return { pendingEmail: trimmed };
     }

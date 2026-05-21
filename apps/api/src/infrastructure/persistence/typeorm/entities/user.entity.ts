@@ -56,6 +56,15 @@ export class User {
     @Column({ nullable: true })
     stripeCustomerId?: string;
 
+    /**
+     * User's preferred UI / email locale. Null means "no explicit choice" —
+     * the runtime falls back to the request locale (Accept-Language / cookie /
+     * ?lang= query). Stored separately so out-of-band emails (welcome,
+     * reset, invoice) can pick the right language without a request context.
+     */
+    @Column({ name: 'preferred_locale', type: 'varchar', length: 4, nullable: true })
+    preferredLocale: 'en' | 'fr' | 'ar' | 'he' | null;
+
     @Column({ name: 'mfa_enabled', type: 'boolean', default: false })
     mfaEnabled: boolean;
 

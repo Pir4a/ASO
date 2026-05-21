@@ -16,7 +16,7 @@ export interface CreditNoteEmailContext {
 }
 
 export interface EmailGateway {
-    sendVerificationEmail(to: string, token: string): Promise<void>;
+    sendVerificationEmail(to: string, token: string, locale?: string): Promise<void>;
     sendPasswordResetEmail(to: string, token: string, locale?: string): Promise<void>;
     sendInvoiceEmail(
         to: string,

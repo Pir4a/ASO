@@ -10,6 +10,9 @@ interface JwtPayload {
     mfa?: boolean;
     /** Whether the user has MFA enrolled — drives the soft gate in RolesGuard. */
     mfaEnabled?: boolean;
+    /** Optional cached locale so out-of-band emails can pick the right copy
+     *  without an extra DB hop. Authoritative copy lives on the user row. */
+    locale?: string;
 }
 
 @Injectable()
@@ -29,6 +32,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             role: payload.role,
             mfa: payload.mfa === true,
             mfaEnabled: payload.mfaEnabled === true,
+            preferredLocale: payload.locale,
         };
     }
 }

@@ -10,7 +10,7 @@ import { resolveOrderNumber } from '../../../application/use-cases/orders/get-or
 import { getEmailLogoAttachment, wrapEmailHtml } from './email-layout';
 import type { Attachment } from 'nodemailer/lib/mailer';
 
-type Locale = 'fr' | 'en';
+type Locale = 'fr' | 'en' | 'ar' | 'he';
 
 const ORDER_CONFIRMATION_T: Record<Locale, Record<string, string>> = {
   fr: {
@@ -44,7 +44,167 @@ const ORDER_CONFIRMATION_T: Record<Locale, Record<string, string>> = {
     invoiceAttached: 'Your invoice PDF is attached to this email.',
     footer: 'If you have any questions, feel free to contact us.',
   },
+  ar: {
+    subject: 'تأكيد طلبك',
+    greeting: 'شكراً لطلبك!',
+    orderNumber: 'رقم الطلب',
+    invoiceNumber: 'رقم الفاتورة',
+    items: 'العناصر',
+    quantity: 'الكمية',
+    unitPrice: 'سعر الوحدة',
+    lineTotal: 'المجموع',
+    shippingAddress: 'عنوان الشحن',
+    total: 'المجموع شاملاً الضريبة',
+    viewOrder: 'عرض طلبي',
+    invoiceAttached: 'فاتورة PDF مرفقة بهذا البريد الإلكتروني.',
+    footer: 'إذا كان لديك أي أسئلة، يسعدنا التواصل معك.',
+  },
+  he: {
+    subject: 'אישור ההזמנה שלך',
+    greeting: 'תודה על ההזמנה!',
+    orderNumber: 'מספר הזמנה',
+    invoiceNumber: 'מספר חשבונית',
+    items: 'פריטים',
+    quantity: 'כמות',
+    unitPrice: 'מחיר ליחידה',
+    lineTotal: 'סה״כ',
+    shippingAddress: 'כתובת משלוח',
+    total: 'סה״כ כולל מע״מ',
+    viewOrder: 'צפה בהזמנה',
+    invoiceAttached: 'חשבונית ה-PDF מצורפת למייל זה.',
+    footer: 'אם יש לך שאלות, נשמח לעמוד לרשותך.',
+  },
 };
+
+const VERIFICATION_T: Record<Locale, Record<string, string>> = {
+  fr: {
+    subject: 'Activez votre compte Althea Systems',
+    welcome: 'Bienvenue chez Althea Systems',
+    body: 'Merci pour votre inscription. Cliquez sur le bouton ci-dessous pour activer votre compte :',
+    cta: 'Vérifier mon adresse e-mail',
+    hint: "Ce lien expire dans 24 heures. Si vous n'avez pas créé de compte, ignorez ce message.",
+  },
+  en: {
+    subject: 'Activate your Althea Systems account',
+    welcome: 'Welcome to Althea Systems',
+    body: 'Thanks for signing up. Click the button below to activate your account:',
+    cta: 'Verify my email address',
+    hint: "This link expires in 24 hours. If you didn't create an account, ignore this message.",
+  },
+  ar: {
+    subject: 'فعّل حساب Althea Systems',
+    welcome: 'مرحباً بك في Althea Systems',
+    body: 'شكراً لتسجيلك. انقر على الزر أدناه لتفعيل حسابك:',
+    cta: 'تحقّق من بريدي الإلكتروني',
+    hint: 'تنتهي صلاحية هذا الرابط خلال 24 ساعة. إذا لم تنشئ حساباً، يرجى تجاهل هذه الرسالة.',
+  },
+  he: {
+    subject: 'הפעל את חשבון Althea Systems שלך',
+    welcome: 'ברוכים הבאים ל-Althea Systems',
+    body: 'תודה שנרשמת. לחץ על הכפתור למטה כדי להפעיל את חשבונך:',
+    cta: 'אמת את כתובת המייל שלי',
+    hint: 'הקישור פג תוקף בעוד 24 שעות. אם לא יצרת חשבון, התעלם מהמייל.',
+  },
+};
+
+const PASSWORD_RESET_T: Record<Locale, Record<string, string>> = {
+  fr: {
+    subject: 'Réinitialisation de votre mot de passe Althea Systems',
+    heading: 'Réinitialisation du mot de passe',
+    body: 'Cliquez sur le bouton pour choisir un nouveau mot de passe :',
+    cta: 'Réinitialiser mon mot de passe',
+    hint: 'Ce lien expire dans 24 heures.',
+  },
+  en: {
+    subject: 'Reset your Althea Systems password',
+    heading: 'Password reset',
+    body: 'Click the button to choose a new password:',
+    cta: 'Reset my password',
+    hint: 'This link expires in 24 hours.',
+  },
+  ar: {
+    subject: 'إعادة تعيين كلمة مرور Althea Systems',
+    heading: 'إعادة تعيين كلمة المرور',
+    body: 'انقر على الزر لاختيار كلمة مرور جديدة:',
+    cta: 'إعادة تعيين كلمة المرور',
+    hint: 'تنتهي صلاحية هذا الرابط خلال 24 ساعة.',
+  },
+  he: {
+    subject: 'איפוס סיסמת Althea Systems',
+    heading: 'איפוס סיסמה',
+    body: 'לחץ על הכפתור כדי לבחור סיסמה חדשה:',
+    cta: 'אפס את הסיסמה שלי',
+    hint: 'הקישור פג תוקף בעוד 24 שעות.',
+  },
+};
+
+const EMAIL_CHANGE_T: Record<Locale, Record<string, string>> = {
+  fr: {
+    subject: 'Confirmez votre nouvelle adresse e-mail Althea Systems',
+    heading: 'Nouvelle adresse e-mail',
+    body: "Confirmez le changement d'adresse pour votre compte :",
+    cta: 'Confirmer mon e-mail',
+    hint: 'Ce lien expire dans 24 heures.',
+  },
+  en: {
+    subject: 'Confirm your new Althea Systems email address',
+    heading: 'New email address',
+    body: 'Confirm the email change for your account:',
+    cta: 'Confirm my email',
+    hint: 'This link expires in 24 hours.',
+  },
+  ar: {
+    subject: 'أكّد عنوان بريدك الإلكتروني الجديد على Althea Systems',
+    heading: 'عنوان بريد إلكتروني جديد',
+    body: 'أكّد تغيير عنوان البريد الإلكتروني لحسابك:',
+    cta: 'تأكيد البريد الإلكتروني',
+    hint: 'تنتهي صلاحية هذا الرابط خلال 24 ساعة.',
+  },
+  he: {
+    subject: 'אישור כתובת המייל החדשה שלך ב-Althea Systems',
+    heading: 'כתובת מייל חדשה',
+    body: 'אשר את שינוי כתובת המייל לחשבונך:',
+    cta: 'אשר את המייל שלי',
+    hint: 'הקישור פג תוקף בעוד 24 שעות.',
+  },
+};
+
+const INVOICE_T: Record<Locale, Record<string, string>> = {
+  fr: {
+    subjectPrefix: 'Votre facture Althea Systems',
+    heading: 'Votre facture',
+    bodyThanks: 'Merci pour votre commande',
+    bodyAttached: 'La facture est jointe à cet e-mail au format PDF.',
+    filenamePrefix: 'facture',
+  },
+  en: {
+    subjectPrefix: 'Your Althea Systems invoice',
+    heading: 'Your invoice',
+    bodyThanks: 'Thank you for your order',
+    bodyAttached: 'The invoice is attached to this email as a PDF.',
+    filenamePrefix: 'invoice',
+  },
+  ar: {
+    subjectPrefix: 'فاتورتك من Althea Systems',
+    heading: 'فاتورتك',
+    bodyThanks: 'شكراً لطلبك',
+    bodyAttached: 'الفاتورة مرفقة بهذا البريد الإلكتروني بصيغة PDF.',
+    filenamePrefix: 'facture',
+  },
+  he: {
+    subjectPrefix: 'החשבונית שלך מ-Althea Systems',
+    heading: 'החשבונית שלך',
+    bodyThanks: 'תודה על ההזמנה',
+    bodyAttached: 'החשבונית מצורפת למייל זה כקובץ PDF.',
+    filenamePrefix: 'invoice',
+  },
+};
+
+const SUPPORTED_LOCALES = new Set<Locale>(['fr', 'en', 'ar', 'he']);
+function pickLocale(input: string | undefined | null): Locale {
+  if (input && SUPPORTED_LOCALES.has(input as Locale)) return input as Locale;
+  return 'en';
+}
 
 function defaultFrom(): string {
   return process.env.SMTP_FROM || '"Althea Systems" <no-reply@althea.local>';
@@ -128,21 +288,22 @@ export class NodemailerService implements EmailGateway {
     }
   }
 
-  async sendVerificationEmail(to: string, token: string): Promise<void> {
+  async sendVerificationEmail(to: string, token: string, locale?: string): Promise<void> {
     const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify?token=${token}`;
+    const tt = VERIFICATION_T[pickLocale(locale)];
 
     await this.mail(
       to,
-      'Activez votre compte Althea Systems',
+      tt.subject,
       `
-          <h1 style="color:#003d5c;font-size:22px;margin:0 0 16px">Bienvenue chez Althea Systems</h1>
-          <p>Merci pour votre inscription. Cliquez sur le bouton ci-dessous pour activer votre compte :</p>
+          <h1 style="color:#003d5c;font-size:22px;margin:0 0 16px">${tt.welcome}</h1>
+          <p>${tt.body}</p>
           <p style="margin:28px 0">
             <a href="${verificationLink}" style="background:#00a8b5;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">
-              Vérifier mon adresse e-mail
+              ${tt.cta}
             </a>
           </p>
-          <p style="font-size:13px;color:#555">Ce lien expire dans 24 heures. Si vous n'avez pas créé de compte, ignorez ce message.</p>
+          <p style="font-size:13px;color:#555">${tt.hint}</p>
       `,
       undefined,
       verificationLink,
@@ -151,21 +312,22 @@ export class NodemailerService implements EmailGateway {
     this.logger.log(`Verification email sent to ${to}`);
   }
 
-  async sendPasswordResetEmail(to: string, token: string, _locale?: string): Promise<void> {
+  async sendPasswordResetEmail(to: string, token: string, locale?: string): Promise<void> {
     const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
+    const tt = PASSWORD_RESET_T[pickLocale(locale)];
 
     await this.mail(
       to,
-      'Réinitialisation de votre mot de passe Althea Systems',
+      tt.subject,
       `
-          <h1 style="color:#003d5c;font-size:20px;margin:0 0 12px">Réinitialisation du mot de passe</h1>
-          <p>Cliquez sur le bouton pour choisir un nouveau mot de passe :</p>
+          <h1 style="color:#003d5c;font-size:20px;margin:0 0 12px">${tt.heading}</h1>
+          <p>${tt.body}</p>
           <p style="margin:24px 0">
             <a href="${resetLink}" style="background:#00a8b5;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">
-              Réinitialiser mon mot de passe
+              ${tt.cta}
             </a>
           </p>
-          <p style="font-size:13px;color:#555">Ce lien expire dans 24 heures.</p>
+          <p style="font-size:13px;color:#555">${tt.hint}</p>
       `,
       undefined,
       resetLink,
@@ -179,19 +341,20 @@ export class NodemailerService implements EmailGateway {
     invoiceNumber: string,
     pdfBuffer: Buffer,
     orderNumber?: string,
-    _locale?: string,
+    locale?: string,
   ): Promise<void> {
+    const tt = INVOICE_T[pickLocale(locale)];
     await this.mail(
       to,
-      `Votre facture Althea Systems ${invoiceNumber}`,
+      `${tt.subjectPrefix} ${invoiceNumber}`,
       `
-          <h1 style="color:#003d5c;font-size:20px;margin:0 0 12px">Votre facture</h1>
-          <p>Merci pour votre commande${orderNumber ? ` <strong>${this.escapeHtml(orderNumber)}</strong>` : ''}.</p>
-          <p>La facture <strong>${this.escapeHtml(invoiceNumber)}</strong> est jointe à cet e-mail au format PDF.</p>
+          <h1 style="color:#003d5c;font-size:20px;margin:0 0 12px">${tt.heading}</h1>
+          <p>${tt.bodyThanks}${orderNumber ? ` <strong>${this.escapeHtml(orderNumber)}</strong>` : ''}.</p>
+          <p><strong>${this.escapeHtml(invoiceNumber)}</strong> — ${tt.bodyAttached}</p>
       `,
       [
         {
-          filename: `facture-${invoiceNumber}.pdf`,
+          filename: `${tt.filenamePrefix}-${invoiceNumber}.pdf`,
           content: pdfBuffer,
           contentType: 'application/pdf',
         },
@@ -204,22 +367,23 @@ export class NodemailerService implements EmailGateway {
   async sendEmailChangeConfirmation(
     newEmail: string,
     token: string,
-    _locale?: string,
+    locale?: string,
   ): Promise<void> {
     const confirmLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/account/confirm-email-change?token=${token}`;
+    const tt = EMAIL_CHANGE_T[pickLocale(locale)];
 
     await this.mail(
       newEmail,
-      'Confirmez votre nouvelle adresse e-mail Althea Systems',
+      tt.subject,
       `
-          <h1 style="color:#003d5c;font-size:20px;margin:0 0 12px">Nouvelle adresse e-mail</h1>
-          <p>Confirmez le changement d'adresse pour votre compte :</p>
+          <h1 style="color:#003d5c;font-size:20px;margin:0 0 12px">${tt.heading}</h1>
+          <p>${tt.body}</p>
           <p style="margin:24px 0">
             <a href="${confirmLink}" style="background:#00a8b5;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">
-              Confirmer mon e-mail
+              ${tt.cta}
             </a>
           </p>
-          <p style="font-size:13px;color:#555">Ce lien expire dans 24 heures.</p>
+          <p style="font-size:13px;color:#555">${tt.hint}</p>
       `,
       undefined,
       confirmLink,

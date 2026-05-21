@@ -26,6 +26,7 @@ export class UserMapper {
             refreshTokenHash: entity.refreshTokenHash ?? null,
             refreshTokenExpiresAt: entity.refreshTokenExpiresAt ?? null,
             lastLoginAt: entity.lastLoginAt,
+            preferredLocale: entity.preferredLocale ?? null,
             createdAt: entity.createdAt,
         });
         return user;
@@ -55,6 +56,7 @@ export class UserMapper {
         entity.refreshTokenHash = domain.refreshTokenHash ?? null;
         entity.refreshTokenExpiresAt = domain.refreshTokenExpiresAt ?? null;
         entity.lastLoginAt = domain.lastLoginAt;
+        entity.preferredLocale = domain.preferredLocale ?? null;
         return entity;
     }
 }
