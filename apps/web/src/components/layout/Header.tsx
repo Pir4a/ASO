@@ -305,10 +305,10 @@ export function Header({ locale }: HeaderProps) {
             <Image
               src="/logo-mark.png"
               alt=""
-              width={42}
-              height={42}
+              width={50}
+              height={40}
               priority
-              className="h-10 w-auto rounded-[9px]"
+              className="h-10 w-auto"
             />
             <div className="hidden flex-col leading-none lg:flex">
               <span className="font-heading text-[17px] font-bold tracking-tight text-foreground">
