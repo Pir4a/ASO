@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useT } from "@/context/LocaleContext";
+import { sanitizePhone } from "@/lib/phone";
 
 export interface AddressFormData {
     id?: string;
@@ -154,9 +155,13 @@ export function AddressForm({
                 <input
                     id="addr-phone"
                     type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    pattern="\+?\d{4,20}"
+                    maxLength={21}
                     placeholder={t("address.phonePlaceholder")}
                     value={data.phone}
-                    onChange={(e) => set("phone", e.target.value)}
+                    onChange={(e) => set("phone", sanitizePhone(e.target.value))}
                     className={inputCls}
                 />
             </div>
