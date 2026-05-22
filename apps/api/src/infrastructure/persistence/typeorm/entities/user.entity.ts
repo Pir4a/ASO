@@ -80,6 +80,9 @@ export class User {
     @Column({ name: 'refresh_token_expires_at', type: 'timestamptz', nullable: true })
     refreshTokenExpiresAt: Date | null;
 
+    @Column({ name: 'terms_accepted_at', type: 'timestamptz', nullable: true })
+    termsAcceptedAt?: Date;
+
     @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
 }

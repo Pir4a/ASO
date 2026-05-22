@@ -6,6 +6,7 @@ import {
   IsOptional,
   Matches,
   MaxLength,
+  Equals,
 } from 'class-validator';
 import {
   PASSWORD_STRENGTH_PATTERN,
@@ -28,6 +29,14 @@ export class RegisterDto {
 
   @IsString()
   lastName: string;
+
+  /** CDC §XI / CNIL — the user must explicitly accept the CGU + privacy
+      notice on signup. We require the literal value `true` (not just truthy)
+      so a missing checkbox is rejected with a clear validation error. */
+  @Equals(true, {
+    message: 'TERMS_NOT_ACCEPTED',
+  })
+  acceptTerms: boolean;
 }
 
 export class LoginDto {

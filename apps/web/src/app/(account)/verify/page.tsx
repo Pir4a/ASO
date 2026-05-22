@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { API_URL } from "@/lib/api";
@@ -24,6 +24,12 @@ function VerifyContent() {
   const [errorKind, setErrorKind] = useState<VerifyErrorKind>("generic");
   const router = useRouter();
   const { login } = useAuth();
+  // The verification token is single-use — the API consumes it on the first
+  // call and any retry hits VERIFY_EMAIL_TOKEN_INVALID. The effect's deps
+  // include `t` and `login`, whose refs change as soon as `login()` writes
+  // to AuthContext, so without this guard React fires the effect twice and
+  // the second run flashes the error UI before the redirect.
+  const hasRun = useRef(false);
 
   useEffect(() => {
     if (!token) {
@@ -31,6 +37,8 @@ function VerifyContent() {
       setErrorKind("invalid");
       return;
     }
+    if (hasRun.current) return;
+    hasRun.current = true;
 
     const verify = async () => {
       try {

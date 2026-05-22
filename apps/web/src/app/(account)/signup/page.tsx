@@ -15,6 +15,7 @@ export default function SignupPage() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -30,13 +31,19 @@ export default function SignupPage() {
       return;
     }
 
+    if (!acceptTerms) {
+      setError(t("signup.terms.error"));
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password, firstName, lastName }),
+        body: JSON.stringify({ email, password, firstName, lastName, acceptTerms }),
       });
 
       const data = (await response.json()) as { message?: unknown };
@@ -46,7 +53,14 @@ export default function SignupPage() {
           setError(getPasswordMissingSummary(password, t) || t("auth.password.tooWeak"));
           return;
         }
-        setError(firstHttpErrorMessage(data.message) ?? t("auth.signup.errorRegisterGeneric"));
+        // Surface a friendly error when the server rejects a missing
+        // acceptance instead of leaking the raw `TERMS_NOT_ACCEPTED` code.
+        const raw = firstHttpErrorMessage(data.message);
+        if (raw === "TERMS_NOT_ACCEPTED") {
+          setError(t("signup.terms.error"));
+          return;
+        }
+        setError(raw ?? t("auth.signup.errorRegisterGeneric"));
         return;
       }
 
@@ -105,6 +119,26 @@ export default function SignupPage() {
           />
           <PasswordRequirementHints password={password} />
         </div>
+        <label className="flex items-start gap-2 text-sm text-foreground/80">
+          <input
+            type="checkbox"
+            checked={acceptTerms}
+            onChange={(e) => setAcceptTerms(e.target.checked)}
+            required
+            className="mt-1 h-4 w-4 shrink-0 rounded border-foreground/30 text-primary focus:ring-2 focus:ring-primary/30"
+          />
+          <span>
+            {t("signup.terms.prefix")}{" "}
+            <Link href="/legal/cgu" target="_blank" rel="noopener" className="font-semibold text-primary hover:underline">
+              {t("signup.terms.cgu")}
+            </Link>{" "}
+            {t("signup.terms.and")}{" "}
+            <Link href="/legal/mentions" target="_blank" rel="noopener" className="font-semibold text-primary hover:underline">
+              {t("signup.terms.privacy")}
+            </Link>
+            {t("signup.terms.suffix")}
+          </span>
+        </label>
         {error && (
           <p key={error} className="aso-anim-shake text-sm text-error">
             {error}

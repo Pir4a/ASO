@@ -27,6 +27,7 @@ export class UserMapper {
             refreshTokenExpiresAt: entity.refreshTokenExpiresAt ?? null,
             lastLoginAt: entity.lastLoginAt,
             preferredLocale: entity.preferredLocale ?? null,
+            termsAcceptedAt: entity.termsAcceptedAt,
             createdAt: entity.createdAt,
         });
         return user;
@@ -57,6 +58,7 @@ export class UserMapper {
         entity.refreshTokenExpiresAt = domain.refreshTokenExpiresAt ?? null;
         entity.lastLoginAt = domain.lastLoginAt;
         entity.preferredLocale = domain.preferredLocale ?? null;
+        entity.termsAcceptedAt = domain.termsAcceptedAt;
         return entity;
     }
 }

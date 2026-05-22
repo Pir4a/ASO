@@ -347,7 +347,11 @@ function PersonalInfoCard() {
     window.setTimeout(() => setFlash(null), 3500);
   };
 
-  // Hydrate pendingEmail from /profile/me on mount so the banner appears even after a reload.
+  // Hydrate the auth user from /profile/me on mount. This covers two cases:
+  // (1) showing the pendingEmail banner after a reload, and (2) populating
+  // firstName/lastName when the user has just landed here from /verify —
+  // the verify endpoint historically returned a minimal user payload, so the
+  // cached AuthContext user can be missing those fields until we refetch.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -357,6 +361,9 @@ function PersonalInfoCard() {
         const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
         if (!cancelled) {
           updateUser({
+            firstName: typeof data.firstName === "string" ? data.firstName : undefined,
+            lastName: typeof data.lastName === "string" ? data.lastName : undefined,
+            email: typeof data.email === "string" ? data.email : undefined,
             pendingEmail:
               typeof data.pendingEmail === "string" || data.pendingEmail === null
                 ? (data.pendingEmail as string | null)
