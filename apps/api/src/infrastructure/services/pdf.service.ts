@@ -130,6 +130,9 @@ export class PdfService {
             const addr = (order.billingAddress || order.shippingAddress) as unknown as
                 | Record<string, string | undefined>
                 | undefined;
+            // Track where the bill-to block actually ended so the items table
+            // can sit safely below it instead of overlapping a long address.
+            let billEndY = billY + 14;
             if (addr) {
                 const firstName = cleanLine(addr.firstName);
                 const lastName = cleanLine(addr.lastName);
@@ -163,13 +166,20 @@ export class PdfService {
                 const phone = cleanLine(addr.phone);
                 if (phone) {
                     doc.fillColor(INK_MUTED).fontSize(9).text(phone, margin, y);
+                    y += 13;
                 }
+                billEndY = y;
             } else {
                 doc.fillColor(INK_MUTED).fontSize(9.5).text('Adresse non renseignée.', margin, billY + 14);
+                billEndY = billY + 28;
             }
 
             /* ── Items table ────────────────────────────────────── */
-            const tableTop = 290;
+            // Keep the historical floor of 290 so short addresses don't push
+            // the table up unnecessarily, but slide it down with a 16 px gap
+            // when the address block grew taller (e.g. invoice number panel +
+            // phone line).
+            const tableTop = Math.max(290, billEndY + 16);
             // Column widths: product, qty, unit, line
             const colProd = margin;
             const colQty = pageW - margin - 270;
@@ -396,6 +406,7 @@ export class PdfService {
             const addr = (order.billingAddress || order.shippingAddress) as unknown as
                 | Record<string, string | undefined>
                 | undefined;
+            let billEndY = billY + 14;
             if (addr) {
                 const firstName = cleanLine(addr.firstName);
                 const lastName = cleanLine(addr.lastName);
@@ -422,11 +433,15 @@ export class PdfService {
                         .join(' '),
                 );
                 writeLine(addr.country);
+                billEndY = yA;
             } else {
                 doc.fillColor(INK_MUTED).fontSize(9.5).text('Adresse non renseignee.', margin, billY + 14);
+                billEndY = billY + 28;
             }
 
-            const reasonY = 310;
+            // Slide the MOTIF panel below the bill-to block if it grew taller
+            // than the historical 310 px floor (long addresses with phone).
+            const reasonY = Math.max(310, billEndY + 16);
             doc.save();
             doc.roundedRect(margin, reasonY, contentW, 40, 6).fillColor(PANEL).fill();
             doc.restore();
