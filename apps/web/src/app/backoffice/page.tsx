@@ -1425,7 +1425,7 @@ function BackofficeDashboard() {
           <Image
             src="/logo-mark.png"
             alt=""
-            width={32}
+            width={40}
             height={32}
             priority
             className="bo-brand-logo"
