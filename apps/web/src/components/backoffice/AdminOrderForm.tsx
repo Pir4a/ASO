@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { authFetch } from "@/lib/auth";
+import { sanitizePhone } from "@/lib/phone";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
@@ -484,9 +485,14 @@ export function AdminOrderForm({ onClose, onCreated, flash }: AdminOrderFormProp
                                     className="bo-input"
                                 />
                                 <input
+                                    type="tel"
+                                    inputMode="tel"
+                                    autoComplete="tel"
+                                    pattern="\+?\d{4,20}"
+                                    maxLength={21}
                                     placeholder="Téléphone"
                                     value={address.phone}
-                                    onChange={(e) => setAddress({ ...address, phone: e.target.value })}
+                                    onChange={(e) => setAddress({ ...address, phone: sanitizePhone(e.target.value) })}
                                     className="bo-input"
                                     style={{ gridColumn: "span 2" }}
                                 />

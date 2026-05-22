@@ -206,16 +206,6 @@ export function ProductDetailClient({
                   <BuyNowButton productId={product.id} productName={product.name} />
                 </>
               )}
-              <Link
-                href="/contact"
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-foreground/15 bg-white px-5 text-[14px] font-semibold text-foreground transition hover:border-primary hover:text-primary"
-              >
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-3.5 w-3.5">
-                  <rect x="2" y="3.5" width="12" height="9" rx="1" />
-                  <path d="m2.5 4.5 5.5 4 5.5-4" />
-                </svg>
-                {t("contact.formSend")}
-              </Link>
             </div>
 
             {/* Reassurance row */}

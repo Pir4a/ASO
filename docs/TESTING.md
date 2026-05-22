@@ -4,24 +4,51 @@
 
 | Type de test | Outillage | Status |
 |---|---|---|
-| Unitaires API | **Jest** + `ts-jest` | ✅ Démarré (tests use-cases auth + products en plus du squelette Nest). |
-| E2E API | **Supertest** + Jest | ⚠️ Squelette (`apps/api/test/app.e2e-spec.ts`, config `jest-e2e.json`) — à compléter. |
-| Unitaires Web | — | **TODO** : aucun framework branché côté `apps/web`. |
-| E2E Web (parcours utilisateur) | — | **TODO** : Playwright recommandé. |
-| Tests fonctionnels manuels | Doc | ⚠️ À documenter par sprint. |
+| Unitaires API | **Jest** + `ts-jest` | ✅ 20 suites · 83 tests verts (lib + use-cases auth, users, products, cart, contact, invoices, credit-notes). |
+| Fonctionnels / smoke E2E API | **Supertest** + Jest | ✅ `apps/api/test/app.e2e-spec.ts` (3 tests : `/api`, `/api/health`, 404). |
+| Unitaires Web | — | TODO : aucun framework branché côté `apps/web` (Vitest + RTL recommandé). |
+| E2E Web (parcours utilisateur) | — | TODO : Playwright recommandé. |
+| Tests fonctionnels manuels | Doc (§7 ci-dessous) | ⚠️ Checklist à exécuter par sprint. |
 
-> **TODO majeur** : la couverture reste partielle. Cette page documente la **stratégie cible** ; la mise en œuvre complète est un livrable progressif.
+### Inventaire des specs (CDC §XVIII.3.d)
 
-### Derniers tests ajoutés
-- `apps/api/src/application/use-cases/auth/verify-email.use-case.spec.ts`
-  - token invalide -> code stable `VERIFY_EMAIL_TOKEN_INVALID`
-  - token expiré -> code stable `VERIFY_EMAIL_TOKEN_EXPIRED`
-  - succès -> compte vérifié + token nettoyé
-- `apps/api/src/application/use-cases/products/create-product.use-case.spec.ts`
-  - slug explicite respecté (URL personnalisée SEO)
-  - fallback auto slug si absent
-  - rejet catégorie inexistante
-  - rejet collision slug
+Tous lancés en parallèle par `npm test` dans `apps/api/`. Chaque spec mocke ses dépendances (repositories, email gateway) — pas de DB requise.
+
+**Lib (purs)**
+- `apps/api/src/lib/password-policy.spec.ts` — 9 tests (CDC §XI / CNIL : ≥12 car., majuscule, chiffre, symbole, plafond 128 ; constantes exportées).
+
+**Auth (CDC §XI, §XII, §XIII)**
+- `apps/api/src/application/use-cases/auth/verify-email.use-case.spec.ts` — 3 tests (token invalide / expiré / succès).
+- `apps/api/src/application/use-cases/auth/request-password-reset.use-case.spec.ts` — 3 tests (anti-enumeration, token 32 octets + TTL 24h, persistance malgré échec SMTP).
+- `apps/api/src/application/use-cases/auth/reset-password.use-case.spec.ts` — 4 tests (token vide, inconnu, expiré, succès bcrypt + nettoyage).
+- `apps/api/src/application/use-cases/auth/resend-verification-email.use-case.spec.ts` — 4 tests (email vide, inconnu, déjà vérifié, rotation + envoi).
+- `apps/api/src/application/use-cases/auth/confirm-email-change.use-case.spec.ts` — 6 tests (token vide / inconnu / expiré / collision email / succès / réutilisation idempotente).
+
+**Users (CDC §XIII, §XVI.10)**
+- `apps/api/src/application/use-cases/users/create-user.use-case.spec.ts` — 4 tests (persistance, expiry 24h, sans token, `termsAcceptedAt` CNIL).
+- `apps/api/src/application/use-cases/users/request-email-change.use-case.spec.ts` — 5 tests (email mal formé, user introuvable, même email actuel, collision, succès).
+- `apps/api/src/application/use-cases/users/delete-user.use-case.spec.ts` — 2 tests (RGPD droit à l'effacement, propagation d'erreur).
+
+**Products (CDC §VII, §VIII, §XVI)**
+- `apps/api/src/application/use-cases/products/create-product.use-case.spec.ts` — 4 tests (slug SEO custom, slug auto, catégorie inexistante, collision slug).
+- `apps/api/src/application/use-cases/products/find-product-by-slug.use-case.spec.ts` — 3 tests (succès, absent, masquage des brouillons côté storefront).
+- `apps/api/src/application/use-cases/products/subscribe-product-stock-notify.use-case.spec.ts` — 6 tests (produit absent, produit en stock rejeté, email requis, doublon, succès + email, best-effort SMTP).
+
+**Cart (CDC §IX)**
+- `apps/api/src/application/use-cases/cart/add-to-cart.use-case.spec.ts` — 5 tests (produit absent, création panier, merge quantité, dépassement stock, dépassement après merge).
+- `apps/api/src/application/use-cases/cart/update-cart-item.use-case.spec.ts` — 5 tests (panier absent, ligne absente, suppression si quantité ≤ 0, dépassement stock, mise à jour + rafraîchissement prix).
+- `apps/api/src/application/use-cases/cart/remove-from-cart.use-case.spec.ts` — 3 tests (panier absent, ligne absente, suppression et persistance des autres lignes).
+
+**Contact (CDC §XV)**
+- `apps/api/src/application/use-cases/contact/create-contact-message.use-case.spec.ts` — 2 tests (normalisation trim + lowercase, retour de l'id ORM).
+- `apps/api/src/application/use-cases/contact/mark-contact-message-read.use-case.spec.ts` — 3 tests (introuvable, flip false→true, idempotence sur déjà lu).
+
+**Invoices + Credit notes (CDC §X.6, §XIV)**
+- `apps/api/src/application/use-cases/invoices/update-invoice.use-case.spec.ts` — 4 tests (introuvable, statut non autorisé, mise à jour des totaux + currency uppercase, transition `paid`/`cancelled`).
+- `apps/api/src/application/use-cases/credit-notes/cancel-invoice.use-case.spec.ts` — 8 tests (facture introuvable, idempotence si AVO existant, annulation + commande + AVO miroir, raison par défaut, échec de l'annulation de commande best-effort, formats `formatCreditNoteNumber` + `creditNotePrefix`).
+
+**Smoke E2E API**
+- `apps/api/test/app.e2e-spec.ts` — 3 tests (`GET /api` → hello, `GET /api/health` → `{status:"ok",date}`, route inconnue → 404). Boot trimmé (HealthController + AppController) → ne dépend pas de Postgres/Mongo.
 
 ---
 
