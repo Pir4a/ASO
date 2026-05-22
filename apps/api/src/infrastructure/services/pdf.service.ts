@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { promises as fs } from 'fs';
+import { promises as fs, existsSync } from 'fs';
 import { dirname, join, resolve } from 'path';
 import PDFDocument from 'pdfkit';
 import { Order } from '../../domain/entities/order.entity';
@@ -15,6 +15,31 @@ const INK = '#1a1d1a';
 const INK_MUTED = '#6b6f69';
 const LINE = '#e3f1f3';
 const PANEL = '#fafaf8';
+
+// Path to the cropped Althea cloud-mark PNG, copied into the API bundle by
+// nest-cli (src/assets -> dist/assets per nest-cli.json). Returns null when
+// none of the candidate locations exist so the PDF can fall back gracefully
+// to the typographic placeholder.
+function resolveLogoPath(): string | null {
+    const candidates = [
+        join(process.cwd(), 'apps', 'api', 'dist', 'assets', 'logo-mark.png'),
+        join(process.cwd(), 'dist', 'assets', 'logo-mark.png'),
+        join(__dirname, '..', '..', 'assets', 'logo-mark.png'),
+        join(__dirname, '..', '..', '..', 'assets', 'logo-mark.png'),
+    ];
+    return candidates.find((p) => existsSync(p)) ?? null;
+}
+
+const LOGO_PATH = resolveLogoPath();
+
+/** Trim, normalise CR/LF/tabs/repeated spaces to a single space. PDFKit
+    renders embedded `\n` as real line breaks, which historically produced the
+    "fzefef" overlap with the SKU when an admin pasted a multi-line value
+    into the product name. */
+function cleanLine(value: string | null | undefined): string {
+    if (value == null) return '';
+    return String(value).replace(/\s+/g, ' ').trim();
+}
 
 @Injectable()
 export class PdfService {
@@ -36,15 +61,21 @@ export class PdfService {
             /* ── Top brand band (navy) ─────────────────────────── */
             doc.save();
             doc.rect(0, 0, pageW, 88).fill(NAVY);
-            // Brand mark
-            doc.roundedRect(margin, 24, 40, 40, 6).fill(TEAL);
-            doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(18)
-                .text('A+', margin + 9, 35, { width: 22, align: 'center', lineBreak: false });
+            // Brand mark — the cropped cloud logo. We fall back to the teal
+            // square + "A+" placeholder when the asset isn't on disk (e.g.
+            // when running from a stripped bundle in CI).
+            if (LOGO_PATH) {
+                doc.image(LOGO_PATH, margin, 22, { fit: [44, 44] });
+            } else {
+                doc.roundedRect(margin, 24, 40, 40, 6).fill(TEAL);
+                doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(18)
+                    .text('A+', margin + 9, 35, { width: 22, align: 'center', lineBreak: false });
+            }
             // Brand name
             doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(18)
-                .text('Althea Systems', margin + 52, 30);
+                .text('Althea Systems', margin + 56, 30);
             doc.fillColor('#b3eef2').font('Helvetica').fontSize(9.5)
-                .text('Matériel médical professionnel · ISO 13485', margin + 52, 52);
+                .text('Matériel médical professionnel · ISO 13485', margin + 56, 52);
             // FACTURE pill on the right
             doc.fontSize(11).fillColor('#ffffff').font('Helvetica-Bold')
                 .text('FACTURE', pageW - margin - 80, 38, { width: 80, align: 'right', lineBreak: false });
@@ -100,19 +131,38 @@ export class PdfService {
                 | Record<string, string | undefined>
                 | undefined;
             if (addr) {
-                const fullName = [addr.firstName, addr.lastName].filter(Boolean).join(' ');
+                const firstName = cleanLine(addr.firstName);
+                const lastName = cleanLine(addr.lastName);
+                // Dedupe when an admin (or the form) wrote the same value in
+                // both fields; produces "x" instead of "x x" on the PDF.
+                const fullName = firstName && firstName === lastName
+                    ? firstName
+                    : [firstName, lastName].filter(Boolean).join(' ');
                 doc.fillColor(INK).font('Helvetica-Bold').fontSize(11)
                     .text(fullName || 'Client', margin, billY + 14);
                 doc.fillColor(INK).font('Helvetica').fontSize(9.5);
                 let y = billY + 30;
-                if (addr.street) { doc.text(String(addr.street), margin, y); y += 13; }
-                if (addr.address2) { doc.text(String(addr.address2), margin, y); y += 13; }
-                const cityLine = [addr.postalCode, addr.city, addr.region]
-                    .filter(Boolean).join(' ');
-                if (cityLine) { doc.text(cityLine, margin, y); y += 13; }
-                if (addr.country) { doc.text(String(addr.country), margin, y); y += 13; }
-                if (addr.phone) {
-                    doc.fillColor(INK_MUTED).fontSize(9).text(String(addr.phone), margin, y);
+                // Track the previous line so we never render two identical
+                // consecutive rows (e.g. street == address2 == city).
+                let prev = '';
+                const writeLine = (raw: string | undefined) => {
+                    const line = cleanLine(raw);
+                    if (!line || line === prev) return;
+                    doc.text(line, margin, y);
+                    y += 13;
+                    prev = line;
+                };
+                writeLine(addr.street);
+                writeLine(addr.address2);
+                writeLine(
+                    [cleanLine(addr.postalCode), cleanLine(addr.city), cleanLine(addr.region)]
+                        .filter(Boolean)
+                        .join(' '),
+                );
+                writeLine(addr.country);
+                const phone = cleanLine(addr.phone);
+                if (phone) {
+                    doc.fillColor(INK_MUTED).fontSize(9).text(phone, margin, y);
                 }
             } else {
                 doc.fillColor(INK_MUTED).fontSize(9.5).text('Adresse non renseignée.', margin, billY + 14);
@@ -141,6 +191,7 @@ export class PdfService {
             let y = tableTop + 28;
             doc.font('Helvetica').fontSize(10).fillColor(INK);
             const rowH = 22;
+            const nameColW = colQty - colProd - 20;
             (order.items || []).forEach((item, i) => {
                 if (i % 2 === 1) {
                     doc.save();
@@ -148,11 +199,22 @@ export class PdfService {
                     doc.restore();
                 }
                 const lineTotal = Number(item.price) * item.quantity;
+                // `lineBreak: false` prevents a multi-line product name from
+                // colliding with the SKU drawn at y + 11.
                 doc.fillColor(INK).font('Helvetica-Bold').fontSize(9.5)
-                    .text(item.productName, colProd + 8, y, { width: colQty - colProd - 20 });
-                if (item.productSku) {
+                    .text(cleanLine(item.productName) || 'Produit', colProd + 8, y, {
+                        width: nameColW,
+                        lineBreak: false,
+                        ellipsis: true,
+                    });
+                const sku = cleanLine(item.productSku);
+                if (sku) {
                     doc.fillColor(INK_MUTED).font('Helvetica').fontSize(8.5)
-                        .text(`Réf. ${item.productSku}`, colProd + 8, y + 11, { width: colQty - colProd - 20 });
+                        .text(`Réf. ${sku}`, colProd + 8, y + 11, {
+                            width: nameColW,
+                            lineBreak: false,
+                            ellipsis: true,
+                        });
                 }
                 doc.fillColor(INK).font('Helvetica').fontSize(10);
                 doc.text(String(item.quantity), colQty, y + 4, { width: 60, align: 'right' });
@@ -278,13 +340,17 @@ export class PdfService {
 
             doc.save();
             doc.rect(0, 0, pageW, 88).fill(NAVY);
-            doc.roundedRect(margin, 24, 40, 40, 6).fill(TEAL);
+            if (LOGO_PATH) {
+                doc.image(LOGO_PATH, margin, 22, { fit: [44, 44] });
+            } else {
+                doc.roundedRect(margin, 24, 40, 40, 6).fill(TEAL);
+                doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(18)
+                    .text('A+', margin + 9, 35, { width: 22, align: 'center', lineBreak: false });
+            }
             doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(18)
-                .text('A+', margin + 9, 35, { width: 22, align: 'center', lineBreak: false });
-            doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(18)
-                .text('Althea Systems', margin + 52, 30);
+                .text('Althea Systems', margin + 56, 30);
             doc.fillColor('#b3eef2').font('Helvetica').fontSize(9.5)
-                .text('Materiel medical professionnel - ISO 13485', margin + 52, 52);
+                .text('Materiel medical professionnel - ISO 13485', margin + 56, 52);
             doc.fontSize(11).fillColor('#ffffff').font('Helvetica-Bold')
                 .text('AVOIR', pageW - margin - 80, 38, { width: 80, align: 'right', lineBreak: false });
             doc.font('Helvetica').fontSize(9).fillColor('#b3eef2')
@@ -331,17 +397,31 @@ export class PdfService {
                 | Record<string, string | undefined>
                 | undefined;
             if (addr) {
-                const fullName = [addr.firstName, addr.lastName].filter(Boolean).join(' ');
+                const firstName = cleanLine(addr.firstName);
+                const lastName = cleanLine(addr.lastName);
+                const fullName = firstName && firstName === lastName
+                    ? firstName
+                    : [firstName, lastName].filter(Boolean).join(' ');
                 doc.fillColor(INK).font('Helvetica-Bold').fontSize(11)
                     .text(fullName || 'Client', margin, billY + 14);
                 doc.fillColor(INK).font('Helvetica').fontSize(9.5);
                 let yA = billY + 30;
-                if (addr.street) { doc.text(String(addr.street), margin, yA); yA += 13; }
-                if (addr.address2) { doc.text(String(addr.address2), margin, yA); yA += 13; }
-                const cityLine = [addr.postalCode, addr.city, addr.region]
-                    .filter(Boolean).join(' ');
-                if (cityLine) { doc.text(cityLine, margin, yA); yA += 13; }
-                if (addr.country) { doc.text(String(addr.country), margin, yA); yA += 13; }
+                let prev = '';
+                const writeLine = (raw: string | undefined) => {
+                    const line = cleanLine(raw);
+                    if (!line || line === prev) return;
+                    doc.text(line, margin, yA);
+                    yA += 13;
+                    prev = line;
+                };
+                writeLine(addr.street);
+                writeLine(addr.address2);
+                writeLine(
+                    [cleanLine(addr.postalCode), cleanLine(addr.city), cleanLine(addr.region)]
+                        .filter(Boolean)
+                        .join(' '),
+                );
+                writeLine(addr.country);
             } else {
                 doc.fillColor(INK_MUTED).fontSize(9.5).text('Adresse non renseignee.', margin, billY + 14);
             }
@@ -374,6 +454,7 @@ export class PdfService {
             let y = tableTop + 28;
             doc.font('Helvetica').fontSize(10).fillColor(INK);
             const rowH = 22;
+            const nameColW = colQty - colProd - 20;
             (order.items || []).forEach((item, i) => {
                 if (i % 2 === 1) {
                     doc.save();
@@ -383,10 +464,19 @@ export class PdfService {
                 const negQty = -item.quantity;
                 const lineTotal = Number(item.price) * negQty;
                 doc.fillColor(INK).font('Helvetica-Bold').fontSize(9.5)
-                    .text(item.productName, colProd + 8, y, { width: colQty - colProd - 20 });
-                if (item.productSku) {
+                    .text(cleanLine(item.productName) || 'Produit', colProd + 8, y, {
+                        width: nameColW,
+                        lineBreak: false,
+                        ellipsis: true,
+                    });
+                const sku = cleanLine(item.productSku);
+                if (sku) {
                     doc.fillColor(INK_MUTED).font('Helvetica').fontSize(8.5)
-                        .text(`Ref. ${item.productSku}`, colProd + 8, y + 11, { width: colQty - colProd - 20 });
+                        .text(`Ref. ${sku}`, colProd + 8, y + 11, {
+                            width: nameColW,
+                            lineBreak: false,
+                            ellipsis: true,
+                        });
                 }
                 doc.fillColor(INK).font('Helvetica').fontSize(10);
                 doc.text(String(negQty), colQty, y + 4, { width: 60, align: 'right' });
