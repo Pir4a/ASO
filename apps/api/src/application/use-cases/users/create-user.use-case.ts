@@ -15,7 +15,8 @@ export class CreateUserUseCase {
         passwordHash: string,
         firstName?: string,
         lastName?: string,
-        verificationToken?: string
+        verificationToken?: string,
+        termsAcceptedAt?: Date,
     ): Promise<User> {
         const user = new User({
             email,
@@ -24,7 +25,8 @@ export class CreateUserUseCase {
             lastName,
             isVerified: false,
             verificationToken,
-            verificationTokenExpires: verificationToken ? new Date(Date.now() + 24 * 60 * 60 * 1000) : undefined // 24h
+            verificationTokenExpires: verificationToken ? new Date(Date.now() + 24 * 60 * 60 * 1000) : undefined, // 24h
+            termsAcceptedAt,
         });
         return this.userRepository.create(user);
     }

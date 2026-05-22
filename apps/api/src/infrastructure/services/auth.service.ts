@@ -65,7 +65,8 @@ export class AuthService {
       passwordHash,
       firstName,
       lastName,
-      verificationToken
+      verificationToken,
+      new Date(),
     );
 
     try {
@@ -135,7 +136,14 @@ export class AuthService {
       // Auto-login after verification keeps the session for the lifetime of
       // the refresh cookie's default — treat it as a non-rememberMe session.
       rememberMe: false,
-      user: { id: user.id, email: user.email, role: user.role, mfaEnabled: false },
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        mfaEnabled: false,
+      },
       locale: user.preferredLocale ?? undefined,
     };
   }
@@ -187,7 +195,14 @@ export class AuthService {
       access_token,
       refresh_token,
       rememberMe: !!rememberMe,
-      user: { id: user.id, email: user.email, role: user.role, mfaEnabled: false },
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        mfaEnabled: false,
+      },
       locale: user.preferredLocale ?? undefined,
     };
   }
@@ -242,6 +257,8 @@ export class AuthService {
         id: user.id,
         email: user.email,
         role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
         mfaEnabled: user.mfaEnabled === true,
       },
     };

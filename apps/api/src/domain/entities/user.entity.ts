@@ -29,6 +29,9 @@ export class User {
     stripeCustomerId?: string;
     /** Preferred UI / email locale; null means "no choice" (fall back to request). */
     preferredLocale: 'en' | 'fr' | 'ar' | 'he' | null;
+    /** Timestamp at which the user accepted the CGU + privacy notice on
+        signup. Required by CDC §XI / CNIL — kept for the audit trail. */
+    termsAcceptedAt?: Date;
     createdAt?: Date;
 
     constructor(partial: Partial<User>) {
