@@ -27,6 +27,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { RolesGuard } from '../../guards/roles.guard';
 import { Roles } from '../../auth/roles.decorator';
@@ -110,6 +111,8 @@ class CreateAdminOrderDto {
   paymentMethod?: string;
 }
 
+@ApiTags('Orders (admin)')
+@ApiBearerAuth('jwt')
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin')

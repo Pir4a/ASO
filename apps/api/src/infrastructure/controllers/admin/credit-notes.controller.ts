@@ -11,6 +11,7 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { RolesGuard } from '../../guards/roles.guard';
 import { Roles } from '../../auth/roles.decorator';
@@ -21,6 +22,8 @@ import { SendCreditNoteEmailUseCase } from '../../../application/use-cases/credi
 import { ListCreditNotesQueryDto } from '../../dto/credit-notes/list-credit-notes-query.dto';
 import { SendCreditNoteEmailDto } from '../../dto/credit-notes/send-credit-note-email.dto';
 
+@ApiTags('Credit notes (admin)')
+@ApiBearerAuth('jwt')
 @Controller('admin/credit-notes')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin')

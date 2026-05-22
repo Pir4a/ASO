@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { CountUnreadContactMessagesUseCase } from '../../../application/use-cases/contact/count-unread-contact-messages.use-case';
 import { CreateContactMessageUseCase } from '../../../application/use-cases/contact/create-contact-message.use-case';
 import { GetContactMessagesUseCase } from '../../../application/use-cases/contact/get-contact-messages.use-case';
@@ -8,6 +9,7 @@ import { CreateContactMessageDto } from '../../dto/contact/contact-message.dto';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { RolesGuard } from '../../guards/roles.guard';
 
+@ApiTags('Contact')
 @Controller('contact')
 export class ContactController {
   constructor(

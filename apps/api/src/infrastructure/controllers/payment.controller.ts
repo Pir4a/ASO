@@ -13,6 +13,7 @@ import {
     Request,
     UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CreatePaymentIntentUseCase } from '../../application/use-cases/payment/create-payment-intent.use-case';
 import { CreateSetupIntentUseCase } from '../../application/use-cases/payment/create-setup-intent.use-case';
 import { GetPaymentMethodsUseCase } from '../../application/use-cases/payment/get-payment-methods.use-case';
@@ -24,6 +25,8 @@ interface AuthedRequest {
     user: { sub: string };
 }
 
+@ApiTags('Payment')
+@ApiBearerAuth('jwt')
 @Controller('payment')
 export class PaymentController {
     constructor(

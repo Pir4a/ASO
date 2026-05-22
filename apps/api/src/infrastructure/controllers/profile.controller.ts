@@ -13,6 +13,7 @@ import {
     UnauthorizedException,
     UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import * as bcrypt from 'bcryptjs';
 import { GetUserAddressesUseCase } from '../../application/use-cases/users/get-user-addresses.use-case';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
@@ -44,6 +45,8 @@ interface ChangePasswordBody {
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+@ApiTags('Profile')
+@ApiBearerAuth('jwt')
 @Controller('profile')
 @UseGuards(JwtAuthGuard)
 export class ProfileController {

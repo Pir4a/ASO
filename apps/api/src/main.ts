@@ -61,19 +61,52 @@ async function bootstrap() {
   );
 
   // /api/docs — exposed in dev/staging only by default; flip SWAGGER_ENABLED
-  // to "true" in prod to expose it there too.
+  // to "true" in prod to expose it there too. CDC §XVIII.3.b mandates an
+  // interactive API doc surface (Swagger or Postman).
   const swaggerEnabled =
     process.env.NODE_ENV !== 'production' || process.env.SWAGGER_ENABLED === 'true';
   if (swaggerEnabled) {
     const config = new DocumentBuilder()
       .setTitle('Althea Systems API')
-      .setDescription('REST endpoints for the Althea e-commerce platform.')
+      .setDescription(
+        [
+          'REST endpoints for the Althea Systems e-commerce platform.',
+          '',
+          'All authenticated endpoints expect a Bearer JWT in the `Authorization` header.',
+          'Cookie-based refresh + CSRF protection live on `/auth/refresh` and `/auth/logout`.',
+        ].join('\n'),
+      )
       .setVersion('1.0')
+      .setContact('Althea Systems', 'https://althea-group.com/fr/', 'contact@althea.fr')
+      .setLicense('UNLICENSED', 'https://althea-group.com/fr/')
+      .addServer(`http://localhost:${process.env.PORT ?? 3001}`, 'Local development')
       .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'jwt')
+      .addTag('Auth', 'Signup, login, password reset, MFA, refresh.')
+      .addTag('Profile', 'Authenticated user profile, addresses, MFA.')
+      .addTag('Users (admin)', 'Backoffice user management — CDC §XVI.10.')
+      .addTag('Products', 'Public catalogue, search, stock-notify subscriptions.')
+      .addTag('Categories', 'Catalogue categories — flat tree (CDC §XVI.8).')
+      .addTag('Cart', 'Guest + authenticated cart (CDC §IX).')
+      .addTag('Checkout', 'Checkout orchestration + Stripe payment intents.')
+      .addTag('Payment', 'Saved payment methods (CDC §XIII).')
+      .addTag('Orders', 'Customer order history + detail (CDC §XIV).')
+      .addTag('Orders (admin)', 'Backoffice order list, status updates, audit log.')
+      .addTag('Invoices (admin)', 'Backoffice invoice CRUD + PDF + email (CDC §XVI.12).')
+      .addTag('Credit notes (admin)', 'Backoffice avoirs (CDC §X.6).')
+      .addTag('Content', 'Homepage carousel + content blocks (CDC §V).')
+      .addTag('Contact', 'Public contact form + admin inbox (CDC §XV).')
+      .addTag('Chat', 'AI chat sessions + admin escalation (CDC §XV).')
+      .addTag('Media', 'Image uploads for products / carousel / categories.')
+      .addTag('Health', 'Liveness probe.')
       .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api/docs', app, document, {
-      swaggerOptions: { persistAuthorization: true },
+      swaggerOptions: {
+        persistAuthorization: true,
+        docExpansion: 'none',
+        tagsSorter: 'alpha',
+      },
+      customSiteTitle: 'Althea Systems API · Swagger UI',
     });
   }
 

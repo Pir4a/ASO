@@ -12,6 +12,7 @@ import {
     UseGuards,
     UseInterceptors,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { MediaService } from '../services/media.service';
@@ -22,6 +23,8 @@ import { Roles } from '../auth/roles.decorator';
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_MIME = /^image\/(jpe?g|png|gif|webp|avif|svg\+xml)$/i;
 
+@ApiTags('Media')
+@ApiBearerAuth('jwt')
 @Controller()
 export class MediaController {
     constructor(private readonly mediaService: MediaService) { }

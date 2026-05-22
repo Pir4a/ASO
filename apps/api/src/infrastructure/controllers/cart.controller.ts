@@ -10,6 +10,7 @@ import {
     Request,
     UseGuards,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { AddToCartUseCase } from '../../application/use-cases/cart/add-to-cart.use-case';
 import { GetCartUseCase } from '../../application/use-cases/cart/get-cart.use-case';
 import { UpdateCartItemUseCase } from '../../application/use-cases/cart/update-cart-item.use-case';
@@ -33,6 +34,7 @@ function resolveCartOwner(req: { user?: { sub?: string }; headers: Record<string
     return null;
 }
 
+@ApiTags('Cart')
 @Controller('cart')
 export class CartController {
     constructor(

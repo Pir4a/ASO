@@ -38,9 +38,11 @@ import { UnsubscribeProductStockNotifyUseCase } from '../../../application/use-c
 import { CountProductStockNotifySubscribersUseCase } from '../../../application/use-cases/products/count-product-stock-notify-subscribers.use-case';
 import { NotifyProductStockSubscribersUseCase } from '../../../application/use-cases/products/notify-product-stock-subscribers.use-case';
 import { isProductRestock } from '../../../application/use-cases/products/stock-restock';
+import { ApiTags } from '@nestjs/swagger';
 
 type RequestWithOptionalUser = { user?: { sub: string; email: string } };
 
+@ApiTags('Products')
 @Controller('products')
 export class ProductsController {
     constructor(

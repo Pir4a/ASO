@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { GetCategoriesUseCase } from '../../../application/use-cases/categories/get-categories.use-case';
 import { FindCategoryByIdUseCase } from '../../../application/use-cases/categories/find-category-by-id.use-case';
 import { CATEGORY_REPOSITORY_TOKEN } from '../../../domain/repositories/category.repository.interface';
@@ -10,6 +11,7 @@ import { RolesGuard } from '../../guards/roles.guard';
 import { Roles } from '../../auth/roles.decorator';
 import { BulkCategoryActionDto, CreateCategoryDto, ReorderCategoriesDto, UpdateCategoryDto } from '../../dto/categories/category-admin.dto';
 
+@ApiTags('Categories')
 @Controller('categories')
 export class CategoriesController {
     constructor(

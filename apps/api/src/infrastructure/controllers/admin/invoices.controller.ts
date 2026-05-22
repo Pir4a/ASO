@@ -13,6 +13,7 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { RolesGuard } from '../../guards/roles.guard';
 import { Roles } from '../../auth/roles.decorator';
@@ -26,6 +27,8 @@ import { ListInvoicesQueryDto } from '../../dto/invoices/list-invoices-query.dto
 import { PatchInvoiceDto, ResendInvoiceEmailDto } from '../../dto/invoices/patch-invoice.dto';
 import { CancelInvoiceDto } from '../../dto/credit-notes/send-credit-note-email.dto';
 
+@ApiTags('Invoices (admin)')
+@ApiBearerAuth('jwt')
 @Controller('admin/invoices')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin')

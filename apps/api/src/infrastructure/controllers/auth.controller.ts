@@ -1,4 +1,5 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, Patch, Param, Get, Query, Req, Res, Request, UnauthorizedException, UseGuards, Logger } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import type { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { IsString, IsNotEmpty, MaxLength } from 'class-validator';
 import { AuthService, REFRESH_TOKEN_TTL_DAYS } from '../services/auth.service';
@@ -40,6 +41,7 @@ interface AuthedRequest {
 
 const REFRESH_COOKIE_NAME = 'refresh_token';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);

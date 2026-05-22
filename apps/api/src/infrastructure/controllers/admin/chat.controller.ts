@@ -10,6 +10,7 @@ import {
     Query,
     UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { RolesGuard } from '../../guards/roles.guard';
 import { Roles } from '../../auth/roles.decorator';
@@ -31,6 +32,8 @@ import { ChatMessage } from '../../../domain/entities/chat-message.entity';
 import type { ChatSessionStatus } from '../../../domain/entities/chat-session.entity';
 import { ChatAdminReplyDto } from '../../dto/chat/chat.dto';
 
+@ApiTags('Chat')
+@ApiBearerAuth('jwt')
 @Controller('admin/chat')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin')

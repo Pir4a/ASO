@@ -1,4 +1,5 @@
 import { Controller, Get, Param, Query, Req, Res, UseGuards, StreamableFile } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
@@ -10,6 +11,8 @@ interface AuthenticatedRequest extends Request {
     user: { sub: string; email: string };
 }
 
+@ApiTags('Orders')
+@ApiBearerAuth('jwt')
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
 export class OrdersController {

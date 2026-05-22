@@ -10,6 +10,7 @@ import {
     Post,
     UseGuards,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { ContentBlock } from '../../persistence/typeorm/entities/content-block.entity';
@@ -25,6 +26,7 @@ import {
 
 export const MAX_CAROUSEL_SLIDES = 3;
 
+@ApiTags('Content')
 @Controller('content')
 export class ContentController {
     constructor(

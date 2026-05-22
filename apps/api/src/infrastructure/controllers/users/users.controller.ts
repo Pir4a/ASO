@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Inject, NotFoundException, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { GetUsersUseCase } from '../../../application/use-cases/users/get-users.use-case';
 import { FindUserByIdUseCase } from '../../../application/use-cases/users/find-user-by-id.use-case';
 import { UpdateUserUseCase } from '../../../application/use-cases/users/update-user.use-case';
@@ -17,6 +18,8 @@ import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { RolesGuard } from '../../guards/roles.guard';
 import { Roles } from '../../auth/roles.decorator';
 
+@ApiTags('Users (admin)')
+@ApiBearerAuth('jwt')
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin')

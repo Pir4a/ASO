@@ -8,6 +8,7 @@ import {
     Request,
     UseGuards,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import {
     CreateOrderUseCase,
     type GuestAddressInput,
@@ -30,6 +31,7 @@ interface ConfirmCheckoutBody {
     guestEmail?: string;
 }
 
+@ApiTags('Checkout')
 @Controller('checkout')
 @UseGuards(OptionalJwtAuthGuard)
 export class CheckoutController {
